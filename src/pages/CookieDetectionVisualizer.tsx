@@ -4,7 +4,6 @@ import styles from './CookieDetectionVisualizer.module.css';
 
 export default function CookieDetectionVisualizer() {
   const [imageUrl, setImageUrl] = useState<string>('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [jsonInput, setJsonInput] = useState<string>('');
   const [detectedCookies, setDetectedCookies] = useState<DetectedCookie[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +11,6 @@ export default function CookieDetectionVisualizer() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
         setImageUrl(event.target?.result as string);
@@ -23,7 +21,6 @@ export default function CookieDetectionVisualizer() {
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
-    setImageFile(null);
   };
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -53,7 +50,16 @@ export default function CookieDetectionVisualizer() {
       }
 
       // Convert to DetectedCookie format
-      const cookies: DetectedCookie[] = parsed.map((cookie: any, index: number) => {
+      interface RawCookieData {
+        x?: unknown;
+        y?: unknown;
+        width?: unknown;
+        height?: unknown;
+        polygon?: unknown;
+        confidence?: unknown;
+        [key: string]: unknown;
+      }
+      const cookies: DetectedCookie[] = parsed.map((cookie: RawCookieData, index: number) => {
         // Validate required fields
         if (typeof cookie.x !== 'number' || typeof cookie.y !== 'number') {
           throw new Error(`Cookie ${index} is missing x or y coordinates`);
@@ -71,7 +77,7 @@ export default function CookieDetectionVisualizer() {
           width: cookie.width,
           height: cookie.height,
           polygon: cookie.polygon && Array.isArray(cookie.polygon) 
-            ? cookie.polygon.map((point: any) => {
+            ? (cookie.polygon as unknown[]).map((point: unknown) => {
                 if (Array.isArray(point) && point.length === 2) {
                   return [point[0], point[1]] as [number, number];
                 }

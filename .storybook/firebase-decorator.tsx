@@ -5,7 +5,12 @@ import { areEmulatorsConnected } from '../src/lib/firebase';
  * Decorator that ensures Firebase emulators are connected before rendering stories
  * This is useful for components that depend on Firebase services
  */
-export const withFirebaseEmulator = (Story: React.ComponentType) => {
+interface WithFirebaseEmulatorProps {
+  Story: React.ComponentType;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+const WithFirebaseEmulator: React.FC<WithFirebaseEmulatorProps> = ({ Story }) => {
   const [emulatorReady, setEmulatorReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,5 +54,9 @@ export const withFirebaseEmulator = (Story: React.ComponentType) => {
   }
 
   return <Story />;
+};
+
+export const withFirebaseEmulator = (Story: React.ComponentType) => {
+  return <WithFirebaseEmulator Story={Story} />;
 };
 

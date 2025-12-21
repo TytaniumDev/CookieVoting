@@ -5,7 +5,7 @@
  * and validates detection accuracy.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { detectCookiesGemini } from '../lib/cookieDetectionGemini';
 import styles from './CookieDetectionTest.module.css';
 
@@ -24,7 +24,6 @@ export default function CookieDetectionTest() {
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
   const [currentTest, setCurrentTest] = useState<string | null>(null);
-  const [autoTesting, setAutoTesting] = useState(false);
 
   // Test images organized by expected cookie count
   const testImages = [

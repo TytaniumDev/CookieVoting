@@ -119,6 +119,7 @@ function smoothPolygon(points: Array<[number, number]>, radius: number = 2): str
  * @param detected - Detected cookie object with position and shape data
  * @returns Object containing top-left position, bottom position, and center coordinates
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function calculateCookieBounds(detected: DetectedCookie): CookieBounds {
   if (detected.polygon && detected.polygon.length >= 3) {
     // Use actual polygon bounds
@@ -194,7 +195,7 @@ export function ImageWithDetections({
       cookiesWithPolygons: detectedCookies.filter(c => c.polygon && c.polygon.length >= 3).length,
       hoveredIndex,
     });
-  }, [imageUrl, detectedCookies.length, hoveredIndex]);
+  }, [imageUrl, detectedCookies, hoveredIndex]);
   
   React.useEffect(() => {
     if (hoveredIndex !== null) {

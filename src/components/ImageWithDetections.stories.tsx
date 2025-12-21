@@ -179,7 +179,7 @@ export const WithCustomOverlays: Story = {
     imageUrl: '/test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     onCookieClick: fn(),
-    renderTopLeft: ({ detected, index: _index }) => (
+    renderTopLeft: ({ detected }) => (
       <div
         style={{
           background: 'rgba(0, 0, 0, 0.7)',

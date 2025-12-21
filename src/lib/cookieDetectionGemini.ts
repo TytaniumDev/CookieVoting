@@ -57,7 +57,11 @@ export async function detectCookiesGemini(
       console.error('[CookieDetection] Error stack:', error.stack);
       
       // Check if it's a Firebase error with code/details
-      const firebaseError = error as any;
+      interface FirebaseError {
+        code?: string;
+        details?: unknown;
+      }
+      const firebaseError = error as FirebaseError;
       if (firebaseError.code) {
         console.error('[CookieDetection] Firebase error code:', firebaseError.code);
       }

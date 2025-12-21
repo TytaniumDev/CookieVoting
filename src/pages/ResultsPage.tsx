@@ -148,7 +148,8 @@ export default function ResultsPage() {
 
     // Find the cookie score that matches a detected cookie
     // This matches the logic used in the tagging wizard (5% threshold)
-    const findMatchingCookieScore = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _findMatchingCookieScore = (
         detected: DetectedCookie,
         scores: CookieScore[]
     ): { score: CookieScore; rank: number } | null => {

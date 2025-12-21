@@ -2,7 +2,6 @@ import type { Preview } from '@storybook/react-vite';
 import React from 'react';
 import '../src/styles/global.css';
 import '../src/styles/variables.css';
-import { withFirebaseEmulator } from './firebase-decorator';
 
 // Configure environment for Storybook to use Firebase emulators
 // Set VITE_USE_EMULATOR=true in your .env file or start emulators before running Storybook

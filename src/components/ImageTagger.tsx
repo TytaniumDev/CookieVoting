@@ -225,7 +225,7 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
                     {(() => {
                         // Filter out already-tagged cookies
                         const untaggedCookies: DetectedCookie[] = detectedCookies
-                            .map((detected, index) => {
+                            .map((detected) => {
                                 // Check if this detected cookie is already tagged
                                 const isTagged = cookies.some(cookie => {
                                     const distance = Math.sqrt(

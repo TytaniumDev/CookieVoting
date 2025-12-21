@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { createEvent, getAllEvents, deleteEvent, getCategories, isGlobalAdmin } from '../lib/firestore';
 import { validateEventName, sanitizeInput } from '../lib/validation';
@@ -346,7 +346,7 @@ export default function AdminHome() {
         setCurrentJobId(null);
 
         try {
-            const detectAllImages = httpsCallable<{}, {
+            const detectAllImages = httpsCallable<Record<string, never>, {
                 jobId: string;
                 status: string;
                 message: string;

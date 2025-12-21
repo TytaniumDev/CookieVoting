@@ -346,9 +346,20 @@ DETECTION PRIORITY:
     detectedCookies = [];
   }
   
+  // Type for raw cookie data from API before validation
+  interface RawCookieData {
+    x?: unknown;
+    y?: unknown;
+    width?: unknown;
+    height?: unknown;
+    polygon?: unknown;
+    confidence?: unknown;
+    [key: string]: unknown;
+  }
+
   // Validate and normalize the results
   const validatedCookies: DetectedCookie[] = detectedCookies
-    .filter((cookie: any, index: number) => {
+    .filter((cookie: RawCookieData, index: number) => {
       // Check if cookie is an object
       if (!cookie || typeof cookie !== 'object') {
         console.warn('[DetectCookies] Cookie at index', index, 'is not an object:', cookie);
@@ -372,7 +383,7 @@ DETECTION PRIORITY:
       }
       return isValid;
     })
-    .map((cookie: any, index: number) => {
+    .map((cookie: RawCookieData, index: number) => {
       // Validate and normalize polygon if present
       let polygon: Array<[number, number]> | undefined = undefined;
       if (cookie.polygon) {
@@ -380,8 +391,8 @@ DETECTION PRIORITY:
           console.warn(`[DetectCookies] Cookie ${index} has invalid polygon (not an array):`, typeof cookie.polygon);
         } else {
           try {
-            const filteredPolygon = cookie.polygon
-              .filter((point: any, pointIndex: number) => {
+            const filteredPolygon = (cookie.polygon as unknown[])
+              .filter((point: unknown, pointIndex: number) => {
                 const isValid = Array.isArray(point) && 
                   point.length === 2 &&
                   typeof point[0] === 'number' &&

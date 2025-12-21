@@ -422,7 +422,16 @@ export async function getImageDetectionResults(imageUrl: string): Promise<Array<
       if (cookies && Array.isArray(cookies)) {
         console.log(`[getImageDetectionResults] Found ${cookies.length} detected cookies`);
         // Convert polygons from Firestore format back to tuple format
-        const convertedCookies = cookies.map((cookie: any) => {
+        interface FirestoreCookie {
+          x?: unknown;
+          y?: unknown;
+          width?: unknown;
+          height?: unknown;
+          polygon?: unknown;
+          confidence?: unknown;
+          [key: string]: unknown;
+        }
+        const convertedCookies = cookies.map((cookie: FirestoreCookie) => {
           const converted = {
             ...cookie,
             polygon: convertPolygonFromFirestore(cookie.polygon),
@@ -492,7 +501,16 @@ export function watchImageDetectionResults(
         if (cookies && Array.isArray(cookies)) {
           console.log(`[watchImageDetectionResults] Found ${cookies.length} detected cookies`);
           // Convert polygons from Firestore format to tuple format
-          const convertedCookies = cookies.map((cookie: any) => {
+          interface FirestoreCookie {
+            x?: unknown;
+            y?: unknown;
+            width?: unknown;
+            height?: unknown;
+            polygon?: unknown;
+            confidence?: unknown;
+            [key: string]: unknown;
+          }
+          const convertedCookies = cookies.map((cookie: FirestoreCookie) => {
             const converted = {
               ...cookie,
               polygon: convertPolygonFromFirestore(cookie.polygon),
@@ -536,7 +554,7 @@ export async function getAllImageDetections(): Promise<Array<{
     confidence: number;
   }>;
   count: number;
-  detectedAt?: any;
+  detectedAt?: unknown;
   contentType?: string;
 }>> {
   try {
@@ -548,7 +566,16 @@ export async function getAllImageDetections(): Promise<Array<{
       const cookies = data.detectedCookies || [];
       
       // Convert polygons from Firestore format to tuple format
-      const convertedCookies = cookies.map((cookie: any) => ({
+      interface FirestoreCookie {
+        x?: unknown;
+        y?: unknown;
+        width?: unknown;
+        height?: unknown;
+        polygon?: unknown;
+        confidence?: unknown;
+        [key: string]: unknown;
+      }
+      const convertedCookies = cookies.map((cookie: FirestoreCookie) => ({
         ...cookie,
         polygon: convertPolygonFromFirestore(cookie.polygon),
       }));

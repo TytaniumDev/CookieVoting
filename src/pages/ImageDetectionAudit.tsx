@@ -12,7 +12,7 @@ interface ImageDetection {
   imageUrl: string;
   detectedCookies: DetectedCookie[];
   count: number;
-  detectedAt?: any;
+  detectedAt?: unknown;
   contentType?: string;
 }
 

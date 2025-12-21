@@ -69,7 +69,7 @@ interface Baker {
     name: string;
 }
 
-export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, initialCategoryId, autoAdvance = false }: Props) {
+export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, initialCategoryId }: Props) {
     const [step, setStep] = useState<SetupStep>('upload');
     const [images, setImages] = useState<UploadedImage[]>([]);
     const [bakers, setBakers] = useState<Baker[]>([]);
@@ -77,11 +77,9 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
     const [loading, setLoading] = useState(true);
     const [currentBakerIndex, setCurrentBakerIndex] = useState(0);
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
-    const [hasManuallyChangedBaker, setHasManuallyChangedBaker] = useState(false);
     const [taggedCookies, setTaggedCookies] = useState<Record<string, Record<string, CookieCoordinate[]>>>({}); // categoryId -> bakerId -> cookies[]
     const [categories, setCategories] = useState<Category[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [detecting, setDetecting] = useState(false);
     const [detectionError, setDetectionError] = useState<string | null>(null);
     const [detectedCookies, setDetectedCookies] = useState<DetectedCookie[]>([]);
     const [loadingDetection, setLoadingDetection] = useState(false);
@@ -287,7 +285,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         };
         
         findFirstIncompleteCategory();
-    }, [step, categories, taggedCookies, loading]);
+    }, [step, categories, taggedCookies, loading, initialCategoryId]);
 
     // Track completion status for each category (all detected cookies tagged)
     useEffect(() => {
@@ -493,7 +491,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         };
         
         checkCategoryCompletion();
-    }, [step, categories, taggedCookies, loading, detectedCookies, currentCategoryIndex]);
+    }, [step, categories, taggedCookies, loading, detectedCookies, currentCategoryIndex, eventId]);
 
     // Refresh bakers when navigating to the "addBakers" step
     // This ensures we see bakers that were added on the admin page
@@ -906,7 +904,6 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
     // Step 4: Tag Cookies
     const currentBaker = bakers[currentBakerIndex];
     const currentCategory = categories[currentCategoryIndex];
-    const currentCookies = currentCategory && currentBaker ? (taggedCookies[currentCategory.id]?.[currentBaker.id] || []) : [];
 
     // Handle clicking on a detected cookie to assign a baker
     // ImageWithDetections already filters out tagged cookies, so this callback
@@ -1076,7 +1073,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
 
     // Manual click-to-add removed - use polygon click-to-assign instead via ImageWithDetections component
 
-    const handleAutoDetect = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _handleAutoDetect = async () => {
         console.log('[EventSetupWizard] handleAutoDetect called');
         console.log('[EventSetupWizard] currentCategory:', currentCategory);
         console.log('[EventSetupWizard] currentBaker:', currentBaker);
@@ -1175,7 +1173,11 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                 console.error('[EventSetupWizard] Error stack:', error.stack);
                 
                 // Check if it's a Firebase error
-                const firebaseError = error as any;
+                interface FirebaseError {
+                    code?: string;
+                    details?: unknown;
+                }
+                const firebaseError = error as FirebaseError;
                 if (firebaseError.code) {
                     console.error('[EventSetupWizard] Firebase error code:', firebaseError.code);
                 }
@@ -1198,7 +1200,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         }
     };
 
-    const handleRemoveCookie = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _handleRemoveCookie = async () => {
         if (!currentCategory || !currentBaker) return;
         const newTagged = { ...taggedCookies };
         if (newTagged[currentCategory.id] && newTagged[currentCategory.id][currentBaker.id]) {
@@ -1227,7 +1230,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         setTaggedCookies(updatedTagged);
     };
 
-    const handleSkipCategory = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _handleSkipCategory = () => {
         // Move to next category
         if (currentCategoryIndex < categories.length - 1) {
             setCurrentCategoryIndex(currentCategoryIndex + 1);
@@ -1237,7 +1241,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         }
     };
 
-    const handleNextCategory = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _handleNextCategory = () => {
         if (currentCategoryIndex < categories.length - 1) {
             setCurrentCategoryIndex(currentCategoryIndex + 1);
         } else {
@@ -1729,8 +1734,11 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                                 
                                                 // Find the matching detected cookie to pass to reassignment handler
                                                 // Use ID-based matching first, fall back to coordinates for migration
+                                                interface DetectedCookieWithId extends DetectedCookie {
+                                                    id?: string;
+                                                }
                                                 let matchingDetected: DetectedCookie | undefined = cookie.detectedCookieId 
-                                                    ? detectedCookies.find(d => (d as any).id === cookie.detectedCookieId)
+                                                    ? detectedCookies.find((d: DetectedCookieWithId) => d.id === cookie.detectedCookieId)
                                                     : undefined;
                                                 
                                                 // Fall back to coordinate-based matching for migration

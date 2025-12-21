@@ -12,7 +12,14 @@ import styles from './CookieDetectionDebug.module.css';
 export default function CookieDetectionDebug() {
   const [detecting, setDetecting] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-  const [detectedCookies, setDetectedCookies] = useState<any[]>([]);
+  const [detectedCookies, setDetectedCookies] = useState<Array<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    confidence: number;
+    polygon?: Array<[number, number]>;
+  }>>([]);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
