@@ -1,4 +1,4 @@
-# Cookie Voting 🍪
+# [Cookie Voting 🍪](https://cookie-voting.web.app/admin)
 
 A modern web application for managing and voting on cookie competitions. This application uses AI-powered cookie detection, Firebase for backend services, and React for the frontend.
 
