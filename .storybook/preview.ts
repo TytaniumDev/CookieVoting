@@ -5,13 +5,7 @@ import '../src/styles/variables.css';
 
 // Configure environment for Storybook to use Firebase emulators
 // Set VITE_USE_EMULATOR=true in your .env file or start emulators before running Storybook
-if (typeof window !== 'undefined') {
-  // Ensure emulator mode is enabled for Storybook
-  if (!import.meta.env.VITE_USE_EMULATOR) {
-    // Auto-enable emulator mode in Storybook if not explicitly set
-    import.meta.env.VITE_USE_EMULATOR = 'true';
-  }
-}
+// Note: import.meta.env is read-only in production builds, so we cannot modify it here
 
 const preview: Preview = {
   parameters: {
