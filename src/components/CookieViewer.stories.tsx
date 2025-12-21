@@ -110,7 +110,7 @@ const sampleCookiesBoundingBox: DetectedCookie[] = [
  */
 export const Default: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     onCookieClick: fn(),
   },
@@ -121,7 +121,7 @@ export const Default: Story = {
  */
 export const NoDetections: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: [],
     onCookieClick: fn(),
   },
@@ -132,7 +132,7 @@ export const NoDetections: Story = {
  */
 export const BoundingBoxesOnly: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesBoundingBox,
     onCookieClick: fn(),
   },
@@ -180,7 +180,7 @@ export const WithNumberedMarkersAndSelection: Story = {
  */
 export const WithCustomOverlays: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     onCookieClick: fn(),
     renderTopLeft: ({ detected }) => (
@@ -224,7 +224,7 @@ export const WithCustomOverlays: Story = {
  */
 export const ManyDetections: Story = {
   args: {
-    imageUrl: '/test-cookies-6.jpg',
+    imageUrl: 'test-cookies-6.jpg',
     detectedCookies: Array.from({ length: 12 }, (_, i) => ({
       x: 20 + (i % 4) * 20,
       y: 20 + Math.floor(i / 4) * 20,
@@ -247,7 +247,7 @@ export const ManyDetections: Story = {
  */
 export const ManyNumberedMarkers: Story = {
   args: {
-    imageUrl: '/test-cookies-6.jpg',
+    imageUrl: 'test-cookies-6.jpg',
     detectedCookies: Array.from({ length: 12 }, (_, i) => ({
       x: 20 + (i % 4) * 20,
       y: 20 + Math.floor(i / 4) * 20,

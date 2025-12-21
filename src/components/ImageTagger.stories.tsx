@@ -69,7 +69,7 @@ const sampleInitialCookies: CookieCoordinate[] = [
  */
 export const Default: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     initialCookies: [],
     onSave: async (cookies) => {
       fn()(cookies);
@@ -83,7 +83,7 @@ export const Default: Story = {
  */
 export const WithExistingCookies: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     initialCookies: sampleInitialCookies,
     onSave: async (cookies) => {
       fn()(cookies);
@@ -97,7 +97,7 @@ export const WithExistingCookies: Story = {
  */
 export const DifferentImage: Story = {
   args: {
-    imageUrl: '/test-images/6-cookies/test-cookies.jpg',
+    imageUrl: 'test-images/6-cookies/test-cookies.jpg',
     initialCookies: [],
     onSave: async (cookies) => {
       fn()(cookies);
