@@ -3,6 +3,7 @@ import { ref, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from './firebase';
 import { type VoteEvent, type Category, type CookieCoordinate, type UserVote, type CookieMaker } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { isLocalTestUserEnabled } from './testAuth';
 
 // Helper function to get or create a session ID for unauthenticated users
 // This provides a persistent identifier per browser/device
@@ -140,6 +141,47 @@ export async function getAllGlobalAdmins(): Promise<string[]> {
     return await getGlobalAdmins();
 }
 
+/**
+ * Ensure the current test user is added to the global admins list
+ * Only works for test users (when isLocalTestUserEnabled() returns true)
+ * This is used in test environments to automatically grant admin privileges
+ */
+export async function ensureTestUserIsAdmin(): Promise<void> {
+    // Only proceed if test user is enabled
+    if (!isLocalTestUserEnabled()) {
+        return;
+    }
+    
+    // Get current user
+    if (!auth.currentUser) {
+        return;
+    }
+    
+    const userId = auth.currentUser.uid;
+    const adminsDocPath = getGlobalAdminsDoc();
+    const adminsDocRef = doc(db, adminsDocPath);
+    
+    // Check if admins document exists
+    const adminsDocSnap = await getDoc(adminsDocRef);
+    
+    if (!adminsDocSnap.exists()) {
+        // Document doesn't exist - create it with the test user as admin
+        await setDoc(adminsDocRef, { userIds: [userId] });
+        return;
+    }
+    
+    // Document exists - check if user is already an admin
+    const data = adminsDocSnap.data();
+    const userIds = data.userIds || [];
+    
+    if (userIds.includes(userId)) {
+        // User is already an admin - nothing to do
+        return;
+    }
+    
+    // User is not an admin - add them
+    await setDoc(adminsDocRef, { userIds: [...userIds, userId] }, { merge: true });
+}
 
 export async function createEvent(name: string): Promise<VoteEvent> {
     // For Firestore operations, we need the authenticated user's UID
