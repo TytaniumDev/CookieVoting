@@ -177,3 +177,78 @@
   transform: none;
   box-shadow: none;
 }
+
+/* Cookie Viewer Fullscreen Styles */
+.viewerContainer {
+  display: flex;
+  flex-direction: column;
+  height: 85vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: black;
+  z-index: 1000;
+}
+
+.viewerToolbar {
+  padding: var(--spacing-4);
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  z-index: 10;
+}
+
+.viewerViewport {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.viewerInstruction {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.backButton {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+  .viewerContainer {
+    height: 100vh;
+  }
+  
+  .viewerToolbar {
+    padding: var(--spacing-2);
+  }
+  
+  .backButton {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+  
+  .viewerInstruction {
+    font-size: 0.9rem;
+    padding: var(--spacing-2);
+  }
+}

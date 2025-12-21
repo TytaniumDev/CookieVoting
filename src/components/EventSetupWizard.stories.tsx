@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { EventSetupWizard } from './EventSetupWizard';
 import { BrowserRouter } from 'react-router-dom';
-import { withFirebaseEmulator } from '../../.storybook/firebase-decorator';
 import { fn } from 'storybook/test';
 
 /**
@@ -37,9 +36,6 @@ A comprehensive multi-step wizard for setting up cookie voting events.
 This component is used in the admin interface to set up new voting events or edit existing ones.
 It handles the complete workflow from image upload to cookie tagging.
 
-**Firebase Integration:**
-This component requires Firebase emulators to be running for full functionality.
-Use the \`WithFirebaseEmulator\` story to test with real Firebase services.
         `,
       },
     },
@@ -78,7 +74,6 @@ type Story = StoryObj<typeof meta>;
 
 /**
  * Default story showing the wizard in initial state (upload step)
- * Note: This story requires Firebase emulators for full functionality
  */
 export const Default: Story = {
   args: {
@@ -94,40 +89,6 @@ export const Default: Story = {
         story: `
 Default state showing the wizard at the initial upload step.
 Users can upload images for categories using drag-and-drop or the file picker.
-        `,
-      },
-    },
-  },
-};
-
-/**
- * Story with Firebase emulator integration
- * This story demonstrates the full wizard workflow with real Firebase services
- */
-export const WithFirebaseEmulator: Story = {
-  decorators: [
-    withFirebaseEmulator,
-  ],
-  args: {
-    eventId: 'storybook-test-event',
-    eventName: 'Storybook Test Event',
-    onComplete: fn(),
-    onCancel: fn(),
-    autoAdvance: false,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: `
-This story uses the Firebase emulator to provide full functionality.
-Make sure to start the Firebase emulators before viewing this story:
-\`npm run emulators:start\`
-
-The wizard will be able to:
-- Upload images to Firebase Storage
-- Save categories and bakers to Firestore
-- Load existing event data
-- Tag cookies with full persistence
         `,
       },
     },
@@ -164,9 +125,6 @@ move to the next category or step.
  * This story demonstrates loading existing event data
  */
 export const EditingExistingEvent: Story = {
-  decorators: [
-    withFirebaseEmulator,
-  ],
   args: {
     eventId: 'existing-event-123',
     eventName: 'Existing Event',
@@ -182,9 +140,6 @@ export const EditingExistingEvent: Story = {
 This story demonstrates editing an existing event.
 The wizard will load existing categories, bakers, and tagged cookies
 from Firestore and allow editing them.
-
-Note: This requires Firebase emulators to be running and the event
-to exist in the emulator database.
         `,
       },
     },

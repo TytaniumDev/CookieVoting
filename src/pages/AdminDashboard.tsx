@@ -241,7 +241,7 @@ export default function AdminDashboard() {
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleUpdateCookies = async (_cookies: CookieCoordinate[]) => {
         if (!eventId || !editingCategory) return;
 
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleMoveCategory = async (_categoryId: string, _direction: 'up' | 'down') => {
         if (!eventId) return;
         
@@ -523,6 +523,17 @@ export default function AdminDashboard() {
                                         zIndex: 998
                                     }}
                                     onClick={() => setShowOverflowMenu(false)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setShowOverflowMenu(false);
+                                        } else if (e.key === 'Escape') {
+                                            setShowOverflowMenu(false);
+                                        }
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label="Close menu"
                                 />
                                 <div className={styles.overflowMenu} style={{ right: 0, left: 'auto' }}>
                                     <button
@@ -549,9 +560,10 @@ export default function AdminDashboard() {
                                     </button>
                                     <button
                                         onClick={async () => {
+                                            if (!eventId) return;
                                             const newStatus = event.status === 'voting' ? 'completed' : 'voting';
                                             try {
-                                                await updateEventStatus(eventId!, newStatus);
+                                                await updateEventStatus(eventId, newStatus);
                                                 setEvent({ ...event, status: newStatus });
                                             } catch (err) {
                                                 console.error("Failed to update status", err);
@@ -615,11 +627,12 @@ export default function AdminDashboard() {
                             They can find this by signing in and checking the browser console or their profile.
                         </p>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--color-text-primary, #f8fafc)' }}>
+                            <label htmlFor="admin-user-id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--color-text-primary, #f8fafc)' }}>
                                 Add Admin by User ID:
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
+                                    id="admin-user-id"
                                     type="text"
                                     value={newAdminUserId}
                                     onChange={(e) => setNewAdminUserId(e.target.value)}
@@ -671,11 +684,12 @@ export default function AdminDashboard() {
                     <h2 style={{ color: 'var(--color-accent)', marginBottom: '1rem' }}>Bakers</h2>
                     <div className={styles.sectionCard}>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)', fontWeight: 'bold' }}>
+                            <label htmlFor="baker-name" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)', fontWeight: 'bold' }}>
                                 Add Baker:
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
+                                    id="baker-name"
                                     type="text"
                                     value={newBakerName}
                                     onChange={(e) => {
@@ -780,14 +794,30 @@ export default function AdminDashboard() {
                                 <div className={styles.grid}>
                                     {categories.map(category => (
                                         <div key={category.id} className={styles.card}>
-                                            <img
-                                                src={category.imageUrl}
-                                                alt={category.name}
-                                                className={styles.cardImage}
-                                                style={{ cursor: 'pointer' }}
-                                                onClick={() => navigate(`/admin/${eventId}/wizard?categoryId=${category.id}`)}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (eventId) {
+                                                        navigate(`/admin/${eventId}/wizard?categoryId=${category.id}`);
+                                                    }
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    padding: 0,
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    display: 'block'
+                                                }}
+                                                aria-label={`Tag cookies for ${category.name}`}
                                                 title="Click to tag cookies for this category"
-                                            />
+                                            >
+                                                <img
+                                                    src={category.imageUrl}
+                                                    alt={category.name}
+                                                    className={styles.cardImage}
+                                                />
+                                            </button>
                                             <div className={styles.cardContent}>
                                                 {editingCategoryName?.id === category.id ? (
                                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -805,7 +835,6 @@ export default function AdminDashboard() {
                                                             }}
                                                             className={styles.input}
                                                             style={{ flex: 1, padding: '0.5rem', fontSize: '1rem', fontWeight: 'bold' }}
-                                                            autoFocus
                                                         />
                                                         <button
                                                             onClick={handleSaveCategoryName}
@@ -826,26 +855,36 @@ export default function AdminDashboard() {
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <h3 
+                                                    <button
+                                                        type="button"
                                                         style={{ 
                                                             margin: '0 0 0.5rem 0', 
                                                             color: 'var(--color-text-primary)',
                                                             cursor: 'pointer',
                                                             textDecoration: 'underline',
                                                             textDecorationColor: 'transparent',
-                                                            transition: 'text-decoration-color 0.2s'
+                                                            transition: 'text-decoration-color 0.2s',
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            font: 'inherit',
+                                                            fontSize: '1.25rem',
+                                                            fontWeight: 'bold',
+                                                            textAlign: 'left',
+                                                            width: '100%'
                                                         }}
                                                         onClick={() => handleStartEditCategory(category)}
+                                                        aria-label={`Edit category name: ${category.name}`}
+                                                        title="Click to rename"
                                                         onMouseEnter={(e) => {
                                                             e.currentTarget.style.textDecorationColor = 'var(--color-text-primary)';
                                                         }}
                                                         onMouseLeave={(e) => {
                                                             e.currentTarget.style.textDecorationColor = 'transparent';
                                                         }}
-                                                        title="Click to rename"
                                                     >
                                                         {category.name}
-                                                    </h3>
+                                                    </button>
                                                 )}
                                                 <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
                                                     {category.cookies.length} cookie{category.cookies.length !== 1 ? 's' : ''} tagged
@@ -875,10 +914,11 @@ export default function AdminDashboard() {
                             <h3 style={{ color: 'var(--color-text-primary)', marginBottom: '1rem', fontSize: '1.1rem' }}>Add Category</h3>
                             <form onSubmit={handleAddCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>
+                                    <label htmlFor="category-name" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>
                                         Category Name:
                                     </label>
                                     <input
+                                        id="category-name"
                                         type="text"
                                         value={newCatName}
                                         onChange={(e) => {
@@ -893,10 +933,11 @@ export default function AdminDashboard() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>
+                                    <label htmlFor="category-image" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>
                                         Image:
                                     </label>
                                     <input
+                                        id="category-image"
                                         type="file"
                                         accept="image/*"
                                         multiple

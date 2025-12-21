@@ -7,7 +7,7 @@ import { CONSTANTS } from '../lib/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { detectCookiesGemini } from '../lib/cookieDetectionGemini';
 import { watchAllImageDetections } from '../lib/firestore';
-import { ImageWithDetections, type DetectedCookie } from './ImageWithDetections';
+import { CookieViewer, type DetectedCookie } from './CookieViewer';
 import { calculateSmartLabelPositions, calculateBoundsFromCookie } from '../lib/labelPositioning';
 import styles from './EventSetupWizard.module.css';
 
@@ -900,7 +900,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
     const currentCategory = categories[currentCategoryIndex];
 
     // Handle clicking on a detected cookie to assign a baker
-    // ImageWithDetections already filters out tagged cookies, so this callback
+    // CookieViewer already filters out tagged cookies, so this callback
     // will only receive untagged cookies
     const handlePolygonClick = (e: React.MouseEvent, detected: DetectedCookie) => {
         e.stopPropagation();
@@ -999,7 +999,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         setTaggedCookies(newTagged);
 
         // Note: We don't remove from detectedCookies state here anymore.
-        // The filtering happens in the render where we pass untaggedCookies to ImageWithDetections.
+        // The filtering happens in the render where we pass untaggedCookies to CookieViewer.
         // This keeps the detectedCookies as the source of truth, and we filter on render.
 
         // Autosave immediately (will calculate and save correct numbers)
@@ -1065,9 +1065,9 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         }
     }, [showBakerSelect]);
 
-    // Manual click-to-add removed - use polygon click-to-assign instead via ImageWithDetections component
+    // Manual click-to-add removed - use polygon click-to-assign instead via CookieViewer component
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleAutoDetect = async () => {
         console.log('[EventSetupWizard] handleAutoDetect called');
         console.log('[EventSetupWizard] currentCategory:', currentCategory);
@@ -1194,7 +1194,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleRemoveCookie = async () => {
         if (!currentCategory || !currentBaker) return;
         const newTagged = { ...taggedCookies };
@@ -1224,7 +1224,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         setTaggedCookies(updatedTagged);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleSkipCategory = () => {
         // Move to next category
         if (currentCategoryIndex < categories.length - 1) {
@@ -1235,7 +1235,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _handleNextCategory = () => {
         if (currentCategoryIndex < categories.length - 1) {
             setCurrentCategoryIndex(currentCategoryIndex + 1);
@@ -1336,6 +1336,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                     <div 
                         className={`${styles.step} ${step === 'upload' ? styles.active : step === 'nameCategories' || step === 'addBakers' || step === 'tagCookies' ? styles.completed : ''} ${categories.length > 0 ? styles.clickable : ''}`}
                         onClick={() => categories.length > 0 && setStep('upload')}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && categories.length > 0) {
+                                e.preventDefault();
+                                setStep('upload');
+                            }
+                        }}
+                        role={categories.length > 0 ? "button" : undefined}
+                        tabIndex={categories.length > 0 ? 0 : undefined}
+                        aria-label="Step 1: Upload Images"
                     >
                         <span className={styles.stepNumber}>1</span>
                         <span className={styles.stepLabel}>Upload Images</span>
@@ -1343,6 +1352,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                     <div 
                         className={`${styles.step} ${step === 'nameCategories' ? styles.active : step === 'addBakers' || step === 'tagCookies' ? styles.completed : ''} ${categories.length > 0 ? styles.clickable : ''}`}
                         onClick={() => categories.length > 0 && setStep('nameCategories')}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && categories.length > 0) {
+                                e.preventDefault();
+                                setStep('nameCategories');
+                            }
+                        }}
+                        role={categories.length > 0 ? "button" : undefined}
+                        tabIndex={categories.length > 0 ? 0 : undefined}
+                        aria-label="Step 2: Name Categories"
                     >
                         <span className={styles.stepNumber}>2</span>
                         <span className={styles.stepLabel}>Name Categories</span>
@@ -1350,6 +1368,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                     <div 
                         className={`${styles.step} ${step === 'addBakers' ? styles.active : step === 'tagCookies' ? styles.completed : ''} ${categories.length > 0 ? styles.clickable : ''}`}
                         onClick={() => categories.length > 0 && setStep('addBakers')}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && categories.length > 0) {
+                                e.preventDefault();
+                                setStep('addBakers');
+                            }
+                        }}
+                        role={categories.length > 0 ? "button" : undefined}
+                        tabIndex={categories.length > 0 ? 0 : undefined}
+                        aria-label="Step 3: Add Bakers"
                     >
                         <span className={styles.stepNumber}>3</span>
                         <span className={styles.stepLabel}>Add Bakers</span>
@@ -1357,6 +1384,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                     <div 
                         className={`${styles.step} ${step === 'tagCookies' ? styles.active : ''} ${categories.length > 0 && bakers.length > 0 ? styles.clickable : ''}`}
                         onClick={() => categories.length > 0 && bakers.length > 0 && setStep('tagCookies')}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && categories.length > 0 && bakers.length > 0) {
+                                e.preventDefault();
+                                setStep('tagCookies');
+                            }
+                        }}
+                        role={categories.length > 0 && bakers.length > 0 ? "button" : undefined}
+                        tabIndex={categories.length > 0 && bakers.length > 0 ? 0 : undefined}
+                        aria-label="Step 4: Tag Cookies"
                     >
                         <span className={styles.stepNumber}>4</span>
                         <span className={styles.stepLabel}>Tag Cookies</span>
@@ -1386,8 +1422,13 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
 
                         {images.length > 0 && (
                             <div className={styles.imageGrid}>
-                                {images.map((img, index) => (
-                                    <div key={index} className={styles.imageCard}>
+                                {images.map((img, index) => {
+                                    const imageKey = img.name || img.preview || `image-${index}`;
+                                    const uniqueKey = typeof imageKey === 'string' 
+                                        ? `upload-${imageKey.slice(-50)}-${index}` 
+                                        : `upload-${index}`;
+                                    return (
+                                    <div key={uniqueKey} className={styles.imageCard}>
                                         <img src={img.preview} alt={`Preview ${index + 1}`} />
                                         <button
                                             onClick={() => removeImage(index)}
@@ -1400,7 +1441,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                             <div className={styles.uploadedBadge}>✓ Uploaded</div>
                                         )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -1431,11 +1473,16 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                 {step === 'nameCategories' && (
                     <div className={styles.stepContent}>
                         <h2>Name Each Category</h2>
-                        <p className={styles.instruction}>Give each image a category name (e.g., "Sugar Cookie", "Chocolate Chip")</p>
+                        <p className={styles.instruction}>Give each image a category name (e.g., &quot;Sugar Cookie&quot;, &quot;Chocolate Chip&quot;)</p>
                         
                         <div className={styles.categoryNameGrid}>
-                            {images.map((img, index) => (
-                                <div key={index} className={styles.categoryNameCard}>
+                            {images.map((img, index) => {
+                                const imageKey = img.name || img.preview || `image-${index}`;
+                                const uniqueKey = typeof imageKey === 'string' 
+                                    ? `category-${imageKey.slice(-50)}-${index}` 
+                                    : `category-${index}`;
+                                return (
+                                <div key={uniqueKey} className={styles.categoryNameCard}>
                                     <img src={img.preview} alt={`Category ${index + 1}`} />
                                     <input
                                         ref={(el) => { categoryInputRefs.current[index] = el; }}
@@ -1457,7 +1504,8 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                         maxLength={100}
                                     />
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <div className={styles.actions}>
@@ -1580,11 +1628,19 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                         {categories.map((cat, idx) => {
                                             const isComplete = categoryCompletion[cat.id] === true;
                                             return (
-                                                <div
+                                                <button
+                                                    type="button"
                                                     key={cat.id}
                                                     className={`${styles.progressDot} ${idx === currentCategoryIndex ? styles.active : ''} ${isComplete ? styles.tagged : ''}`}
                                                     title={cat.name}
                                                     onClick={() => setCurrentCategoryIndex(idx)}
+                                                    aria-label={`Go to category: ${cat.name}`}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        padding: 0,
+                                                        cursor: 'pointer'
+                                                    }}
                                                 />
                                             );
                                         })}
@@ -1633,7 +1689,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                             : [];
                                         
                                         return (
-                                            <ImageWithDetections
+                                            <CookieViewer
                                                 imageUrl={currentCategory.imageUrl}
                                                 detectedCookies={allCookiesForDisplay}
                                                 onCookieClick={(cookie, _, e) => {
@@ -1778,6 +1834,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                                             zIndex: 11
                                                         }}
                                                         onClick={handleMarkerClick}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                e.preventDefault();
+                                                                handleMarkerClick(e as unknown as React.MouseEvent);
+                                                            }
+                                                        }}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        aria-label={`Cookie ${cookie.number}`}
                                                     >
                                                         {cookie.number}
                                                     </div>
@@ -1793,6 +1858,15 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                                                 zIndex: 11
                                                             }}
                                                             onClick={handleMarkerClick}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                                    e.preventDefault();
+                                                                    handleMarkerClick(e as unknown as React.MouseEvent);
+                                                                }
+                                                            }}
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            aria-label={`Baker: ${baker.name}`}
                                                         >
                                                             {baker.name}
                                                         </div>
@@ -1840,6 +1914,14 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                                                     maxWidth: '200px',
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Escape') {
+                                                        e.stopPropagation();
+                                                    }
+                                                }}
+                                                role="menu"
+                                                tabIndex={0}
+                                                aria-label="Baker selection menu"
                                             >
                                                 <div style={{ 
                                                     fontSize: '0.875rem', 

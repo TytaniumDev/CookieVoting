@@ -89,7 +89,11 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
 
 
     if (loading) {
-        return <div className={styles.loading}>...</div>;
+        return (
+            <div className={styles.loading}>
+                <div className={styles.spinner} />
+            </div>
+        );
     }
 
     // Show user menu if user is authenticated

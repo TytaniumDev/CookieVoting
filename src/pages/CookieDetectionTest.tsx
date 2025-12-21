@@ -144,8 +144,8 @@ export default function CookieDetectionTest() {
           <div className={styles.imageGrid}>
             <h2>Test Images with Detections</h2>
             <div className={styles.scrollableGrid}>
-              {results.map((result, i) => (
-                <div key={i} className={styles.imageCard}>
+              {results.map((result) => (
+                <div key={`result-${result.folder}-${result.imageName}-${result.imageUrl.slice(-30)}`} className={styles.imageCard}>
                   <div className={styles.imageCardHeader}>
                     <span className={styles.resultIcon}>{result.passed ? '✅' : '❌'}</span>
                     <span className={styles.imageCardTitle}>
@@ -158,7 +158,7 @@ export default function CookieDetectionTest() {
                   <div className={styles.imageContainer}>
                     <img src={result.imageUrl} alt={`${result.folder}/${result.imageName}`} />
                     {result.detectedCookies.map((cookie, index) => (
-                      <div key={`cookie-${i}-${index}`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                      <div key={`cookie-${result.folder}-${result.imageName}-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.width.toFixed(2)}-${cookie.height.toFixed(2)}`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                         {/* Bounding box outline */}
                         <div
                           className={styles.boundingBox}
@@ -214,8 +214,8 @@ export default function CookieDetectionTest() {
             </div>
 
             <div className={styles.resultList}>
-              {results.map((result, i) => (
-                <div key={i} className={`${styles.resultRow} ${result.passed ? styles.passed : styles.failed}`}>
+              {results.map((result) => (
+                <div key={`result-row-${result.folder}-${result.imageName}-${result.imageUrl.slice(-30)}`} className={`${styles.resultRow} ${result.passed ? styles.passed : styles.failed}`}>
                   <div className={styles.resultHeader}>
                     <span className={styles.resultIcon}>{result.passed ? '✅' : '❌'}</span>
                     <span className={styles.resultName}><strong>{result.folder}/{result.imageName}</strong></span>
@@ -236,15 +236,15 @@ export default function CookieDetectionTest() {
         <div className={styles.instructions}>
           <h3>Testing Instructions</h3>
           <ol>
-            <li>Click "Run All Tests" to automatically test all images</li>
-            <li>Or upload individual images and click "Detect Cookies"</li>
+            <li>Click &quot;Run All Tests&quot; to automatically test all images</li>
+            <li>Or upload individual images and click &quot;Detect Cookies&quot;</li>
             <li>Verify the detected count matches the folder name (e.g., 6-cookies should detect 6 cookies)</li>
             <li>Continue tuning the algorithm until all tests pass</li>
           </ol>
           <p><strong>Test Images Available:</strong></p>
           <ul>
-            {testImages.map((group, i) => (
-              <li key={i}>
+            {testImages.map((group) => (
+              <li key={`test-group-${group.folder}-${group.expected}-${group.images.length}`}>
                 <strong>{group.folder}</strong>: {group.images.length} image(s) - Expected {group.expected} cookies each
               </li>
             ))}

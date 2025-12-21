@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ImageTagger } from './ImageTagger';
 import { fn } from 'storybook/test';
-import { withFirebaseEmulator } from '../../.storybook/firebase-decorator';
 import type { CookieCoordinate } from '../lib/types';
 
 /**
@@ -90,38 +89,6 @@ export const WithExistingCookies: Story = {
       fn()(cookies);
     },
     onCancel: fn(),
-  },
-};
-
-/**
- * Image tagger with Firebase emulator integration
- * This story demonstrates the component working with real Firebase Storage emulator
- */
-export const WithFirebaseEmulator: Story = {
-  decorators: [withFirebaseEmulator],
-  args: {
-    imageUrl: '/test-cookies.jpg',
-    initialCookies: [],
-    onSave: async (cookies) => {
-      fn()(cookies);
-    },
-    onCancel: fn(),
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: `
-This story uses the Firebase Storage emulator to load images and detection results.
-Make sure to start the Firebase emulators before viewing this story:
-\`npm run emulators:start\`
-
-The component will automatically:
-- Load pre-detected cookies from Firestore
-- Allow you to use the auto-detect feature (requires Functions emulator)
-- Save images to Storage emulator
-        `,
-      },
-    },
   },
 };
 

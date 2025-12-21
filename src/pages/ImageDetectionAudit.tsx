@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { getAllImageDetections, isGlobalAdmin } from '../lib/firestore';
-import { ImageWithDetections, type DetectedCookie } from '../components/ImageWithDetections';
+import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
 import styles from './ImageDetectionAudit.module.css';
 
 interface ImageDetection {
@@ -22,6 +22,7 @@ export default function ImageDetectionAudit() {
   const [error, setError] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Check authentication and admin access
@@ -125,6 +126,41 @@ export default function ImageDetectionAudit() {
     event.stopPropagation();
   };
 
+  const getDetectionJson = (detection: ImageDetection): string => {
+    return JSON.stringify(detection.detectedCookies, null, 2);
+  };
+
+  const handleCopyJson = async (detection: ImageDetection) => {
+    try {
+      const json = getDetectionJson(detection);
+      await navigator.clipboard.writeText(json);
+      setCopiedId(detection.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy JSON:', err);
+      setError('Failed to copy JSON to clipboard');
+    }
+  };
+
+  const handleDownloadJson = (detection: ImageDetection) => {
+    try {
+      const json = getDetectionJson(detection);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const filename = `${detection.filePath.split('/').pop() || 'detection'}-cookies.json`;
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download JSON:', err);
+      setError('Failed to download JSON file');
+    }
+  };
+
   if (checkingAuth) {
     return <div className={styles.container}>Loading...</div>;
   }
@@ -163,7 +199,7 @@ export default function ImageDetectionAudit() {
         <div className={styles.empty}>
           <p>No image detections found.</p>
           <p className={styles.emptySubtext}>
-            Detections are created automatically when images are uploaded, or when you run "Auto-detect All Images".
+            Detections are created automatically when images are uploaded, or when you run &quot;Auto-detect All Images&quot;.
           </p>
         </div>
       ) : (
@@ -199,7 +235,7 @@ export default function ImageDetectionAudit() {
                   </div>
                 </div>
                 <div className={styles.imageContainer}>
-                  <ImageWithDetections
+                  <CookieViewer
                     imageUrl={detection.imageUrl}
                     detectedCookies={detection.detectedCookies}
                     onCookieClick={handleCookieClick}
@@ -209,6 +245,22 @@ export default function ImageDetectionAudit() {
                 <div className={styles.cardFooter}>
                   <div className={styles.filePath}>
                     <strong>Path:</strong> {detection.filePath}
+                  </div>
+                  <div className={styles.jsonActions}>
+                    <button
+                      onClick={() => handleCopyJson(detection)}
+                      className={styles.jsonButton}
+                      title="Copy detected cookie locations JSON to clipboard"
+                    >
+                      {copiedId === detection.id ? '✓ Copied!' : '📋 Copy JSON'}
+                    </button>
+                    <button
+                      onClick={() => handleDownloadJson(detection)}
+                      className={styles.jsonButton}
+                      title="Download detected cookie locations JSON file"
+                    >
+                      ⬇️ Download JSON
+                    </button>
                   </div>
                 </div>
               </div>

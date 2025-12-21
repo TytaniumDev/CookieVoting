@@ -1,5 +1,5 @@
 import { type CookieCoordinate } from './types';
-import { calculateCookieBounds, type DetectedCookie } from '../components/ImageWithDetections';
+import { calculateCookieBounds, type DetectedCookie } from '../components/CookieViewer';
 
 interface CookieWithBounds {
     cookie: CookieCoordinate;

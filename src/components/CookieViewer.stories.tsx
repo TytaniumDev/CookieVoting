@@ -1,34 +1,33 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CookieViewer } from './CookieViewer';
+import { CookieViewer, type DetectedCookie } from './CookieViewer';
 import { fn } from 'storybook/test';
-import type { CookieCoordinate } from '../lib/types';
 
 /**
  * CookieViewer Component Stories
  * 
- * An interactive image viewer component for displaying cookie images with numbered markers.
- * Supports zoom, pan, and touch gestures.
+ * Component for displaying cookie images with detection overlays.
+ * Supports polygon-based detection shapes and bounding boxes as fallback.
  */
 const meta = {
   title: 'Organisms/CookieViewer',
   component: CookieViewer,
   parameters: {
-    layout: 'fullscreen',
+    layout: 'centered',
     docs: {
       description: {
         component: `
-An interactive image viewer for displaying cookie images with numbered markers.
+Component for displaying cookie images with detection overlays.
 
 **Features:**
-- Zoom controls (1x to 4x)
-- Mouse drag to pan when zoomed
-- Touch pinch-to-zoom on mobile
-- Touch drag to pan on mobile
-- Visual highlighting of selected cookie
-- Numbered markers for each cookie
+- Polygon-based detection shapes with smooth corners
+- Bounding box fallback for detections without polygons
+- Optional numbered markers for cookies
+- Interactive hover effects and click handlers
+- Custom overlay rendering at top-left, bottom, and center positions
+- Optional toolbar with back button for fullscreen viewing
 
 **Usage:**
-This component is used in the voting interface to allow users to view and select cookies.
+This component is used throughout the application to display cookie detection results.
         `,
       },
     },
@@ -37,23 +36,7 @@ This component is used in the voting interface to allow users to view and select
   argTypes: {
     imageUrl: {
       control: 'text',
-      description: 'URL of the cookie image to display',
-    },
-    cookies: {
-      control: 'object',
-      description: 'Array of cookie coordinate objects',
-    },
-    selectedCookieId: {
-      control: 'text',
-      description: 'ID of the currently selected cookie',
-    },
-    onSelectCookie: {
-      action: 'cookie-selected',
-      description: 'Callback when a cookie marker is clicked',
-    },
-    onBack: {
-      action: 'back-clicked',
-      description: 'Callback when the back button is clicked',
+      description: 'URL of the image to display',
     },
   },
 } satisfies Meta<typeof CookieViewer>;
@@ -61,69 +44,218 @@ This component is used in the voting interface to allow users to view and select
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Sample cookie coordinates
-const sampleCookies: CookieCoordinate[] = [
-  { id: '1', number: 1, makerName: 'Alice', x: 25, y: 30 },
-  { id: '2', number: 2, makerName: 'Bob', x: 50, y: 40 },
-  { id: '3', number: 3, makerName: 'Charlie', x: 75, y: 50 },
-  { id: '4', number: 4, makerName: 'Diana', x: 30, y: 60 },
-  { id: '5', number: 5, makerName: 'Eve', x: 60, y: 70 },
+// Sample detected cookies with polygons
+const sampleCookiesWithPolygons: DetectedCookie[] = [
+  {
+    x: 25,
+    y: 30,
+    width: 8,
+    height: 8,
+    confidence: 0.95,
+    polygon: [
+      [20, 25],
+      [30, 25],
+      [30, 35],
+      [20, 35],
+    ],
+  },
+  {
+    x: 50,
+    y: 40,
+    width: 10,
+    height: 10,
+    confidence: 0.88,
+    polygon: [
+      [45, 35],
+      [55, 35],
+      [55, 45],
+      [45, 45],
+    ],
+  },
+  {
+    x: 75,
+    y: 50,
+    width: 9,
+    height: 9,
+    confidence: 0.92,
+    polygon: [
+      [70, 45],
+      [80, 45],
+      [80, 55],
+      [70, 55],
+    ],
+  },
+];
+
+// Sample detected cookies with bounding boxes only (no polygons)
+const sampleCookiesBoundingBox: DetectedCookie[] = [
+  {
+    x: 30,
+    y: 30,
+    width: 8,
+    height: 8,
+    confidence: 0.85,
+  },
+  {
+    x: 60,
+    y: 50,
+    width: 10,
+    height: 10,
+    confidence: 0.90,
+  },
 ];
 
 /**
- * Default cookie viewer with sample cookies
+ * Default story with multiple detected cookies using polygons
  */
 export const Default: Story = {
   args: {
     imageUrl: '/test-cookies.jpg',
-    cookies: sampleCookies,
-    selectedCookieId: undefined,
-    onSelectCookie: fn(),
-    onBack: fn(),
+    detectedCookies: sampleCookiesWithPolygons,
+    onCookieClick: fn(),
   },
 };
 
 /**
- * Cookie viewer with a selected cookie
+ * Story with no detected cookies (empty state)
  */
-export const WithSelection: Story = {
+export const NoDetections: Story = {
   args: {
     imageUrl: '/test-cookies.jpg',
-    cookies: sampleCookies,
-    selectedCookieId: '2',
-    onSelectCookie: fn(),
-    onBack: fn(),
+    detectedCookies: [],
+    onCookieClick: fn(),
   },
 };
 
 /**
- * Cookie viewer with many cookies
+ * Story with bounding boxes only (no polygons)
  */
-export const ManyCookies: Story = {
+export const BoundingBoxesOnly: Story = {
+  args: {
+    imageUrl: '/test-cookies.jpg',
+    detectedCookies: sampleCookiesBoundingBox,
+    onCookieClick: fn(),
+  },
+};
+
+/**
+ * Story with visible borders on cookie overlays
+ */
+export const WithBorders: Story = {
+  args: {
+    imageUrl: '/test-cookies.jpg',
+    detectedCookies: sampleCookiesWithPolygons,
+    borderColor: '#2196F3',
+    onCookieClick: fn(),
+  },
+};
+
+/**
+ * Story with numbered markers
+ */
+export const WithNumberedMarkers: Story = {
+  args: {
+    imageUrl: '/test-cookies.jpg',
+    detectedCookies: sampleCookiesWithPolygons,
+    cookieNumbers: [1, 2, 3],
+    onSelectCookie: fn(),
+  },
+};
+
+/**
+ * Story with numbered markers and selection
+ */
+export const WithNumberedMarkersAndSelection: Story = {
+  args: {
+    imageUrl: '/test-cookies.jpg',
+    detectedCookies: sampleCookiesWithPolygons,
+    cookieNumbers: [1, 2, 3],
+    selectedCookieNumber: 2,
+    onSelectCookie: fn(),
+  },
+};
+
+/**
+ * Story with custom overlays (showing confidence percentage)
+ */
+export const WithCustomOverlays: Story = {
+  args: {
+    imageUrl: '/test-cookies.jpg',
+    detectedCookies: sampleCookiesWithPolygons,
+    onCookieClick: fn(),
+    renderTopLeft: ({ detected }) => (
+      <div
+        style={{
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+        }}
+      >
+        {(detected.confidence * 100).toFixed(0)}%
+      </div>
+    ),
+    renderCenter: ({ index }) => (
+      <div
+        style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          background: 'rgba(33, 150, 243, 0.5)',
+          border: '2px solid #2196F3',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '12px',
+          fontWeight: 'bold',
+        }}
+      >
+        {index + 1}
+      </div>
+    ),
+  },
+};
+
+/**
+ * Story with many detected cookies (stress test)
+ */
+export const ManyDetections: Story = {
   args: {
     imageUrl: '/test-cookies-6.jpg',
-    cookies: Array.from({ length: 12 }, (_, i) => ({
-      id: String(i + 1),
-      number: i + 1,
-      makerName: `Maker ${i + 1}`,
+    detectedCookies: Array.from({ length: 12 }, (_, i) => ({
       x: 20 + (i % 4) * 20,
       y: 20 + Math.floor(i / 4) * 20,
+      width: 8,
+      height: 8,
+      confidence: 0.85 + Math.random() * 0.1,
+      polygon: [
+        [18 + (i % 4) * 20, 18 + Math.floor(i / 4) * 20],
+        [22 + (i % 4) * 20, 18 + Math.floor(i / 4) * 20],
+        [22 + (i % 4) * 20, 22 + Math.floor(i / 4) * 20],
+        [18 + (i % 4) * 20, 22 + Math.floor(i / 4) * 20],
+      ] as Array<[number, number]>,
     })),
-    selectedCookieId: undefined,
-    onSelectCookie: fn(),
-    onBack: fn(),
+    onCookieClick: fn(),
   },
 };
 
 /**
- * Cookie viewer with no cookies (empty state)
+ * Story with many numbered markers
  */
-export const NoCookies: Story = {
+export const ManyNumberedMarkers: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
-    cookies: [],
-    selectedCookieId: undefined,
+    imageUrl: '/test-cookies-6.jpg',
+    detectedCookies: Array.from({ length: 12 }, (_, i) => ({
+      x: 20 + (i % 4) * 20,
+      y: 20 + Math.floor(i / 4) * 20,
+      width: 8,
+      height: 8,
+      confidence: 1.0,
+    })),
+    cookieNumbers: Array.from({ length: 12 }, (_, i) => i + 1),
     onSelectCookie: fn(),
-    onBack: fn(),
   },
 };

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getEvent, getCategories, getVotes, getAllImageDetections } from '../lib/firestore';
 import { type VoteEvent, type Category, type CookieCoordinate } from '../lib/types';
 import { CONSTANTS } from '../lib/constants';
-import { ImageWithDetections, type DetectedCookie } from '../components/ImageWithDetections';
+import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
 import styles from './ResultsPage.module.css';
 
 interface CookieScore {
@@ -148,7 +148,7 @@ export default function ResultsPage() {
 
     // Find the cookie score that matches a detected cookie
     // This matches the logic used in the tagging wizard (5% threshold)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const _findMatchingCookieScore = (
         detected: DetectedCookie,
         scores: CookieScore[]
@@ -224,7 +224,7 @@ export default function ResultsPage() {
                         <div key={category.id} className={styles.categorySection}>
                             <h2 className={styles.categoryTitle}>{category.name}</h2>
                             <div className={styles.imageContainer}>
-                                <ImageWithDetections
+                                <CookieViewer
                                     imageUrl={category.imageUrl}
                                     detectedCookies={cookiesToDisplay}
                                     className={styles.imageWithDetections}
@@ -384,6 +384,15 @@ export default function ResultsPage() {
                     <div 
                         className={styles.tooltipBackdrop}
                         onClick={() => setClickedCookie(null)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                                e.preventDefault();
+                                setClickedCookie(null);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Close tooltip"
                     />
                     <div
                         className={styles.voteTooltip}
@@ -392,6 +401,15 @@ export default function ResultsPage() {
                             top: `${clickedCookie.y}px`,
                         }}
                         onClick={() => setClickedCookie(null)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                                e.preventDefault();
+                                setClickedCookie(null);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Close tooltip"
                     >
                         <div className={styles.tooltipHeader}>
                             Cookie #{clickedCookie.cookieNumber}

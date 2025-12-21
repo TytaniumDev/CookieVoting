@@ -121,7 +121,7 @@ Both test suites use the **test database** (`test_*` collections) to avoid affec
 
 **Error: "Firebase configuration is missing"**
 - Ensure `.env.test` exists (or use default demo values)
-- Check that `jest.setup.js` loads the `.env.test` file
+- Check that `../config/jest.setup.js` loads the `.env.test` file
 - Note: With emulators, exact config values don't matter
 
 **Error: "Permission denied"**
@@ -144,7 +144,7 @@ Both test suites use the **test database** (`test_*` collections) to avoid affec
 - The Playwright config should start the server automatically
 
 **Tests timeout or fail**
-- Increase timeout in `playwright.config.ts` if needed
+- Increase timeout in `../config/playwright.config.ts` if needed
 - Check that Firebase is properly configured
 - Verify test user can authenticate (check browser console)
 
@@ -178,7 +178,7 @@ Both test suites use the **test database** (`test_*` collections) to avoid affec
 - Tests the complete wizard flow: event creation → image upload → category naming → baker addition → cookie tagging
 - Validates data appears correctly on AdminHome, AdminDashboard, and VotingPage
 - Verifies Firestore document structure and data integrity
-- See `WIZARD_FLOW_TEST.md` for detailed documentation
+- See `../docs/WIZARD_FLOW_TEST.md` for detailed documentation
 
 ### `tests/e2e/fixtures.ts`
 - Playwright fixtures and helper functions

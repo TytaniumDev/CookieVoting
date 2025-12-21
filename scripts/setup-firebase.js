@@ -25,7 +25,7 @@ function getProjectId() {
       // Remove quotes if present and trim whitespace
       return match[1].trim().replace(/^["']|["']$/g, '');
     }
-  } catch (error) {
+  } catch {
     // .env file doesn't exist or can't be read
   }
   return null;

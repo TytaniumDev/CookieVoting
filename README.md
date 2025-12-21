@@ -57,9 +57,9 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 ## 📚 Documentation
 
 - **[Storybook Component Library](https://tytaniumdev.github.io/CookieVoting/)** - Browse and interact with all UI components
-- [GEMINI_SETUP.md](./GEMINI_SETUP.md) - Setup guide for Gemini AI cookie detection
-- [EMULATOR_SETUP.md](./EMULATOR_SETUP.md) - Local Firebase emulator setup
-- [STORYBOOK_SETUP.md](./STORYBOOK_SETUP.md) - Storybook development guide
+- [GEMINI_SETUP.md](./docs/GEMINI_SETUP.md) - Setup guide for Gemini AI cookie detection
+- [EMULATOR_SETUP.md](./docs/EMULATOR_SETUP.md) - Local Firebase emulator setup
+- [STORYBOOK_SETUP.md](./docs/STORYBOOK_SETUP.md) - Storybook development guide
 - [.github/DEPLOYMENT_SETUP.md](./.github/DEPLOYMENT_SETUP.md) - Deployment configuration
 
 ## 🛠️ Tech Stack

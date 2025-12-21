@@ -47,10 +47,35 @@ export function AlertModal({ message, type = 'info', onClose, title }: AlertModa
         }
     };
 
+    const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+        } else if (e.key === 'Escape') {
+            onClose();
+        }
+    };
+
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <h3 className={styles[`title${type.charAt(0).toUpperCase() + type.slice(1)}`]}>
+        <div 
+            className={styles.modalOverlay} 
+            onClick={onClose}
+            onKeyDown={handleOverlayKeyDown}
+            role="button"
+            tabIndex={0}
+            aria-label="Close modal"
+        >
+            <div 
+                className={styles.modal} 
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="alert-modal-title"
+            >
+                <h3 
+                    id="alert-modal-title"
+                    className={styles[`title${type.charAt(0).toUpperCase() + type.slice(1)}`]}
+                >
                     {getTitle()}
                 </h3>
                 <p className={styles.message}>{message}</p>

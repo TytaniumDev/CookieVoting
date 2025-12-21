@@ -33,7 +33,7 @@ async function waitForEmulators(maxRetries = 10, delay = 1000) {
             await auth.listUsers(1);
             console.log('✅ Emulators are ready!\n');
             return;
-        } catch (error) {
+        } catch {
             if (i < maxRetries - 1) {
                 console.log(`⏳ Waiting for emulators to start... (${i + 1}/${maxRetries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -66,7 +66,7 @@ async function importData() {
                 try {
                     // Check if user already exists
                     try {
-                        const existingUser = await auth.getUser(userData.uid);
+                        await auth.getUser(userData.uid);
                         // Check if user has email/password and might need password reset
                         const hasEmailPassword = userData.providerData?.some(
                             provider => provider.providerId === 'password'

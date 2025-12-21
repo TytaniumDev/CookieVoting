@@ -62,8 +62,8 @@ export default function Home() {
     return (
         <div className={styles.landingContainer}>
             <div className={styles.snowContainer}>
-                {Array.from({ length: 50 }).map((_, i) => (
-                    <div key={i} className={styles.snowflake} style={{
+                {Array.from({ length: 50 }, (_, i) => (
+                    <div key={`snowflake-${i}`} className={styles.snowflake} style={{
                         left: `${Math.random() * 100}%`,
                         animationDelay: `${Math.random() * 3}s`,
                         animationDuration: `${3 + Math.random() * 4}s`,

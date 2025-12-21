@@ -116,7 +116,7 @@ export default function CookieDetectionDebug() {
       {currentImageUrl && (
         <div className={styles.visualization}>
           <div className={styles.imageContainer}>
-            <img src={currentImageUrl} alt="Test image" />
+            <img src={currentImageUrl} alt="Test" />
             <canvas ref={canvasRef} className={styles.overlay} />
           </div>
           <div className={styles.info}>
@@ -126,7 +126,7 @@ export default function CookieDetectionDebug() {
               <div>
                 <h4>Detected Cookies ({detectedCookies.length})</h4>
                 {detectedCookies.map((cookie, i) => (
-                  <div key={i} className={styles.cookieInfo}>
+                  <div key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.confidence.toFixed(2)}`} className={styles.cookieInfo}>
                     Cookie {i + 1}: x={cookie.x.toFixed(1)}%, y={cookie.y.toFixed(1)}%, 
                     confidence={cookie.confidence.toFixed(2)}
                   </div>

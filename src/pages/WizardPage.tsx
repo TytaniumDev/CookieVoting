@@ -71,7 +71,7 @@ export default function WizardPage() {
         return <div className={styles.loading}>Loading...</div>;
     }
 
-    if (!isAdmin || !event) {
+    if (!isAdmin || !event || !eventId) {
         return null; // Will redirect
     }
 
@@ -84,7 +84,7 @@ export default function WizardPage() {
                 <h1>{event.name} - Setup Wizard</h1>
             </div>
             <EventSetupWizard
-                eventId={eventId!}
+                eventId={eventId}
                 eventName={event.name}
                 initialCategoryId={categoryId || undefined}
                 autoAdvance={!categoryId} // Only auto-advance if no categoryId (came from "Open Wizard" button)

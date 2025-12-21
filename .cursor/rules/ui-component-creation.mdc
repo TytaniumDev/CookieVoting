@@ -5,92 +5,682 @@ alwaysApply: false
 
 # Agent Instructions for UI Component Creation and Storybook Usage
 
-## Modular UI Component Best Practices with Storybook.js
+## Core Principles of Reusable React Components
 
-When developing or modifying UI components:
+When developing or modifying UI components, follow these three core principles: **modularity**, **maintainability**, and **flexibility**. These ensure components remain adaptable, easy to manage, and reusable across projects.
 
-1. **ALWAYS Build in Storybook First**
-   - All new UI components and widgets MUST be created and thoroughly tested in Storybook BEFORE integration into the application.
-   - Use the built-in browser to interactively verify **all behaviors** and **visuals** in Storybook.
+### 1. Single Responsibility Principle
+- Each component should have **one clear purpose** and handle a single responsibility.
+- Break down complex UIs into smaller, manageable sub-components.
+- If a component is doing too much, split it into multiple focused components.
 
-2. **Separation of Concerns**
-   - UI components should be **modular** and **reusable**.
-   - **Do NOT include business logic** (e.g., data fetching, external side effects) inside reusable components.
-   - Components should accept all necessary state or data via props and should not depend on global state or app-specific logic.
+### 2. Separation of Concerns
+- UI components should be **modular** and **reusable**.
+- **Do NOT include business logic** (e.g., data fetching, external side effects) inside reusable components.
+- Components should accept all necessary state or data via props and should not depend on global state or app-specific logic.
+- Use patterns like **Container/Presenter** or **Custom Hooks** to separate logic from presentation:
+  - **Container Components**: Handle data fetching, state management, and business logic
+  - **Presentational Components**: Focus solely on rendering UI based on props
+  - **Custom Hooks**: Encapsulate reusable logic that can be shared across components
 
-3. **NO Firebase Dependencies in UI Components**
-   - **UI components MUST NEVER directly import or use Firebase services** (auth, db, storage, functions).
-   - **Components should receive all data and callbacks via props** instead of fetching data themselves.
-   - Firebase logic belongs in:
-     - Custom hooks (e.g., `useAuth`, `useImageDetections`) in `src/lib/hooks/`
-     - Utility functions in `src/lib/firestore.ts`, `src/lib/storage.ts`, etc.
-     - Parent components or pages that use the hooks and pass data/callbacks to UI components
-   - **Examples:**
-     - ❌ **BAD**: `import { auth } from '../lib/firebase';` inside a component
-     - ❌ **BAD**: `import { db } from '../lib/firebase';` inside a component
-     - ✅ **GOOD**: Component accepts `user`, `onSignIn`, `onSignOut` as props
-     - ✅ **GOOD**: Component accepts data via props (e.g., `categories`, `onSave`, `onCancel`)
-     - ✅ **GOOD**: Parent component uses `useAuth()` hook and passes results as props
-   - This ensures:
-     - Components are testable without Firebase setup
-     - Components are reusable in different contexts
-     - Components work in Storybook without Firebase configuration
-     - Clear separation between UI and business logic
+### 3. NO Firebase Dependencies in UI Components
+- **UI components MUST NEVER directly import or use Firebase services** (auth, db, storage, functions).
+- **Components should receive all data and callbacks via props** instead of fetching data themselves.
+- Firebase logic belongs in:
+  - Custom hooks (e.g., `useAuth`, `useImageDetections`) in `src/lib/hooks/`
+  - Utility functions in `src/lib/firestore.ts`, `src/lib/storage.ts`, etc.
+  - Parent components or pages that use the hooks and pass data/callbacks to UI components
+- **Examples:**
+  - ❌ **BAD**: `import { auth } from '../lib/firebase';` inside a component
+  - ❌ **BAD**: `import { db } from '../lib/firebase';` inside a component
+  - ✅ **GOOD**: Component accepts `user`, `onSignIn`, `onSignOut` as props
+  - ✅ **GOOD**: Component accepts data via props (e.g., `categories`, `onSave`, `onCancel`)
+  - ✅ **GOOD**: Parent component uses `useAuth()` hook and passes results as props
+- This ensures:
+  - Components are testable without Firebase setup
+  - Components are reusable in different contexts
+  - Components work in Storybook without Firebase configuration
+  - Clear separation between UI and business logic
 
-4. **Testability and Testing**
-   - **All component states must be demonstrable in Storybook.**
-   - If your component has disabled, error, loading, empty, selected, or interactive states, **create a dedicated Story for each one**.
-   - Stories should cover:
-     - Default/initial state
-     - Loading and error states (if applicable)
-     - Edge cases and empty values
-     - Variations (e.g., different sizes, themes, disabled, etc.)
-   - Avoid requiring custom story args to "trigger" states during review – instead, provide explicit named stories.
-   - Since components don't use Firebase directly, you can pass mock data/callbacks in stories without any Firebase setup.
-   
-   - **Storybook Testing Framework:**
-     - **ALWAYS add interaction tests** using `play` functions for interactive components.
-     - Use `play` functions to test user interactions like clicks, form submissions, and state changes.
-     - Import testing utilities from `storybook/test`: `import { fn, expect } from 'storybook/test'`
-     - Use `fn()` to create mock functions that can be spied on: `onClick: fn()`
-     - Use `expect` from `storybook/test` for assertions in play functions.
-     - Test user interactions with `canvas` and `userEvent` from the play function context.
-     - Example:
-       ```tsx
-       export const Interactive: Story = {
-         args: {
-           onClick: fn(),
-         },
-         play: async ({ canvas, args }) => {
-           const button = canvas.getByRole('button');
-           await button.click();
-           await expect(args.onClick).toHaveBeenCalled();
-         },
-       };
-       ```
-     - Run tests with `npm run test-storybook` or view them in Storybook's testing widget.
-     - Tests automatically run in CI/CD as part of the deployment workflow.
+## Thinking in React: Step-by-Step Workflow
 
-5. **Reusability**
-   - Components and stories must be designed for maximal reusability.
-   - Any UI logic shared by multiple components should be extracted into helpers or lower-level components.
-   - Use TypeScript interfaces and composition to enable reuse, not duplication.
+When building new features or components, follow React's recommended 5-step process from [React.dev's "Thinking in React" guide](https://react.dev/learn/thinking-in-react):
 
-6. **Visual and Functional Review**
-   - Use the browser with Storybook to verify component accessibility, responsiveness, and intended visual design.
-   - Only after all Storybook states pass, integrate and test within the main application.
+### Step 1: Break the UI into a Component Hierarchy
+- Start by identifying all components and subcomponents in the mockup/design
+- Draw boxes around each component and name them clearly
+- Consider:
+  - **Programming perspective**: Use separation of concerns - each component should ideally do one thing
+  - **CSS perspective**: Consider what you would make class selectors for
+  - **Design perspective**: Consider how you would organize the design's layers
+- If your data model is well-structured, it will often naturally map to your component structure
+- Arrange components into a hierarchy (components that appear within another should be children)
 
-7. **Storybook Maintenance**
-   - When updating a component's API or visuals, also update affected stories.
-   - Remove obsolete stories and add new ones for new states or variants.
+**Example Hierarchy:**
+```
+FilterableProductTable
+  ├── SearchBar
+  └── ProductTable
+      ├── ProductCategoryRow
+      └── ProductRow
+```
+
+### Step 2: Build a Static Version in React
+- **Build the static version FIRST** - render the UI from your data model without any interactivity
+- This requires a lot of typing but no thinking about state or interactions
+- Use props to pass data down the component tree
+- **Do NOT use state at all** in this step - state is only for interactivity
+- You can build "top-down" (starting with higher-level components) or "bottom-up" (starting with lower-level components)
+  - Simpler examples: usually easier top-down
+  - Larger projects: usually easier bottom-up
+- This step helps you understand the component structure before adding complexity
+
+**Example:**
+```tsx
+// Static version - no state, just props
+function ProductTable({ products }) {
+  // Render products using props only
+}
+
+function FilterableProductTable({ products }) {
+  return (
+    <div>
+      <SearchBar />
+      <ProductTable products={products} />
+    </div>
+  );
+}
+```
+
+### Step 3: Find the Minimal but Complete Representation of UI State
+To make the UI interactive, you need to identify what state is required. Ask these three questions for each piece of data:
+
+1. **Is it passed in from a parent via props?** → If so, it probably isn't state
+2. **Does it remain unchanged over time?** → If so, it probably isn't state
+3. **Can you compute it based on existing state or props?** → If so, it isn't state
+
+**State should be:**
+- The minimal set of changing data that your app needs to remember
+- Not derived from other state or props
+- Not duplicated (if you can derive it, don't store it)
+
+**Common State Examples:**
+- User input in form fields
+- Whether a checkbox is checked
+- The current value of a search input
+- Items in a shopping cart
+
+**NOT State:**
+- Props passed from parent
+- Derived values (can be computed from state/props)
+- Static data that doesn't change
+
+### Step 4: Identify Where Your State Should Live
+After identifying the minimal state, determine which component should own it. For each piece of state:
+
+1. **Identify every component that renders something based on that state**
+2. **Find their common owner component** (a component above them all in the hierarchy)
+3. **Either:**
+   - The common owner should own the state, OR
+   - Another component higher up in the hierarchy should own it
+4. **If you can't find a component where it makes sense to own the state**, create a new component solely for holding the state and add it above the common owner
+
+**State Lifting Rules:**
+- State should live in the **lowest common ancestor** of all components that need it
+- If only one component needs the state, keep it local to that component
+- Lift state up only when multiple components need to coordinate
+
+### Step 5: Add Inverse Data Flow
+Currently, data flows down via props. To make the UI interactive, you need data to flow back up:
+
+1. **Pass callback functions down** from the state owner to child components
+2. **Child components call these callbacks** when user interactions occur
+3. **Callbacks update the parent's state**, causing a re-render with new data
+
+**Pattern:**
+```tsx
+// Parent owns state
+function FilterableProductTable({ products }) {
+  const [filterText, setFilterText] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+
+  return (
+    <div>
+      <SearchBar 
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+        onFilterTextChange={setFilterText}  // Callback down
+        onInStockOnlyChange={setInStockOnly}  // Callback down
+      />
+      <ProductTable 
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+      />
+    </div>
+  );
+}
+
+// Child uses callback to update parent
+function SearchBar({ filterText, inStockOnly, onFilterTextChange, onInStockOnlyChange }) {
+  return (
+    <form>
+      <input
+        type="text"
+        value={filterText}
+        onChange={(e) => onFilterTextChange(e.target.value)}  // Callback up
+      />
+      <label>
+        <input
+          type="checkbox"
+          checked={inStockOnly}
+          onChange={(e) => onInStockOnlyChange(e.target.checked)}  // Callback up
+        />
+        Only show products in stock
+      </label>
+    </form>
+  );
+}
+```
+
+**Key Points:**
+- React makes data flow explicit (unidirectional)
+- Requires more typing than two-way data binding, but makes data flow clear
+- State flows down, events flow up
+- Only the component that owns state can update it
+
+## Component Design Patterns
+
+### Atomic Design Methodology
+Organize components into a hierarchical structure for better consistency and reusability:
+
+- **Atoms**: Smallest, indivisible elements (buttons, inputs, labels, icons)
+- **Molecules**: Groups of atoms that work together (search bar = input + button)
+- **Organisms**: Complex UI sections made of molecules (navigation bar, form sections)
+- **Templates**: Page layouts defining component arrangement without specific content
+- **Pages**: Fully fleshed-out templates with real content
+
+**Example Structure:**
+```
+components/
+  atoms/
+    Button/
+    Input/
+    Label/
+  molecules/
+    SearchBar/
+    FormField/
+  organisms/
+    Navigation/
+    Card/
+  templates/
+    PageLayout/
+```
+
+### Multi-Part Components Pattern
+Use compound components for related functionality while keeping each part modular:
+
+```tsx
+const Card = ({ children }) => <div className="card">{children}</div>;
+Card.Header = ({ title }) => <div className="card-header">{title}</div>;
+Card.Body = ({ content }) => <div className="card-body">{content}</div>;
+Card.Footer = ({ actions }) => <div className="card-footer">{actions}</div>;
+
+// Usage
+<Card>
+  <Card.Header title="Product Name" />
+  <Card.Body content="Description..." />
+  <Card.Footer actions={<button>Buy Now</button>} />
+</Card>
+```
+
+### Custom Hooks for Code Reuse
+Extract reusable logic into custom hooks to keep components focused on rendering:
+
+```tsx
+// Custom hook for form validation
+const useFormValidation = (initialState) => {
+  const [values, setValues] = useState(initialState);
+  const [errors, setErrors] = useState({});
+  
+  const validate = () => { /* validation logic */ };
+  const handleChange = (e) => { /* update logic */ };
+  
+  return { values, errors, handleChange, validate };
+};
+
+// Component uses the hook
+const SignupForm = () => {
+  const { values, errors, handleChange, validate } = useFormValidation({
+    email: '',
+    password: ''
+  });
+  // Component focuses on rendering
+};
+```
+
+## Props and API Design
+
+### Working with Props for Flexibility
+Props are the primary mechanism for component customization:
+
+- **Use clear, descriptive names** that make props self-explanatory
+- **Set default values** for optional props to handle cases where they're not provided
+- **Leverage TypeScript or PropTypes** for type checking to catch errors early
+- **Keep props focused**: Avoid prop drilling by using composition or context when appropriate
+- **Use callback props** for user interactions (e.g., `onClick`, `onChange`, `onSubmit`)
+
+**Example:**
+```tsx
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'small' | 'medium' | 'large';
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}
+
+const Button = ({ 
+  variant = 'primary', 
+  size = 'medium', 
+  onClick, 
+  children, 
+  disabled = false 
+}: ButtonProps) => {
+  return (
+    <button 
+      className={`btn btn-${variant} btn-${size}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+};
+```
+
+### Props Validation
+**ALWAYS validate props** using TypeScript (preferred) or PropTypes:
+
+- **TypeScript**: Provides static type checking at compile time, better IDE support, and catches errors early
+- **PropTypes**: Runtime validation for JavaScript projects (use when TypeScript isn't available)
+
+**TypeScript Example:**
+```tsx
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant: 'primary' | 'secondary' | 'danger';
+}
+
+const Button = ({ label, onClick, variant }: ButtonProps) => {
+  // Component implementation
+};
+```
+
+## State Management
+
+Follow the "Thinking in React" workflow (see above) to identify and place state correctly. Choose the right type of state based on scope:
+
+- **Local State**: Use `useState` for changes that affect only a single component (e.g., toggling a dropdown, form input values)
+- **Lifted State**: Share state between multiple components via a common parent component (see Step 4 of "Thinking in React")
+- **Global State**: Use Context API or state management libraries (Redux, Zustand) for app-wide data
+- **Server State**: Use React Query, SWR, or similar for data fetched from APIs
+
+**Guidelines:**
+- Keep state as local as possible
+- Lift state up only when multiple components need to coordinate (find the lowest common ancestor)
+- Use global state sparingly for truly app-wide concerns (auth, theme, etc.)
+- Remember: State should be the minimal but complete representation of changing UI data
+- Use inverse data flow (callbacks) to update state in parent components (see Step 5 of "Thinking in React")
+
+## Styling and Theming
+
+### Style Management Approaches
+Choose a styling approach that fits your project needs:
+
+- **CSS Modules**: Scoped styles, prevents conflicts, good for component-level styling
+- **Styled Components / Emotion**: CSS-in-JS with component-scoped styles, supports theming
+- **Utility-First CSS (Tailwind)**: Rapid development, consistent design system
+- **CSS-in-JS**: Encapsulates styles within components, prevents style conflicts
+
+### Theming Best Practices
+- Use **design tokens** for colors, spacing, typography to maintain consistency
+- Make components themeable through props or context
+- Ensure components adapt to different design requirements without code changes
+- Support dark mode and other theme variations
+
+**Example with CSS Modules:**
+```tsx
+import styles from './Button.module.css';
+
+const Button = ({ variant, children }) => (
+  <button className={`${styles.button} ${styles[variant]}`}>
+    {children}
+  </button>
+);
+```
+
+## Performance Optimization
+
+Optimize component rendering to prevent unnecessary re-renders:
+
+- **React.memo**: Wrap functional components to prevent re-renders when props haven't changed
+- **useMemo**: Memoize expensive calculations
+- **useCallback**: Memoize callback functions passed to child components
+- **Code Splitting**: Use React.lazy() and Suspense for route-based code splitting
+
+**Example:**
+```tsx
+const ExpensiveComponent = React.memo(({ data, onUpdate }) => {
+  const processedData = useMemo(() => {
+    return expensiveCalculation(data);
+  }, [data]);
+  
+  const handleClick = useCallback(() => {
+    onUpdate(processedData);
+  }, [processedData, onUpdate]);
+  
+  return <div onClick={handleClick}>{processedData}</div>;
+});
+```
+
+**When to Optimize:**
+- Only optimize when you have performance issues (measure first!)
+- Use React DevTools Profiler to identify bottlenecks
+- Don't prematurely optimize - it can make code harder to maintain
+
+## Accessibility (A11y)
+
+**Components MUST be accessible by default:**
+
+- **Semantic HTML**: Use appropriate HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
+- **ARIA Attributes**: Add ARIA labels, roles, and states when semantic HTML isn't sufficient
+- **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
+- **Focus Management**: Properly manage focus states and focus trapping in modals
+- **Screen Reader Support**: Test with screen readers and ensure proper announcements
+- **Color Contrast**: Meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
+- **Alt Text**: Provide meaningful alt text for images
+
+**Example:**
+```tsx
+<button
+  aria-label="Close dialog"
+  aria-expanded={isOpen}
+  onClick={handleClose}
+  onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+>
+  <span aria-hidden="true">×</span>
+</button>
+```
+
+## Type Safety and Validation
+
+### TypeScript Best Practices
+- **ALWAYS use TypeScript** for new components (preferred over PropTypes)
+- Define clear interfaces/types for all component props
+- Use union types for variant props (e.g., `'primary' | 'secondary'`)
+- Leverage TypeScript's utility types (`Partial`, `Pick`, `Omit`) when appropriate
+- Export types/interfaces so they can be reused
+
+**Example:**
+```tsx
+export interface ButtonProps {
+  variant: 'primary' | 'secondary' | 'danger';
+  size?: 'small' | 'medium' | 'large';
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+  'aria-label'?: string;
+}
+
+export const Button: React.FC<ButtonProps> = ({ 
+  variant, 
+  size = 'medium',
+  onClick,
+  disabled = false,
+  children,
+  'aria-label': ariaLabel
+}) => {
+  // Implementation
+};
+```
+
+## ESLint Linting Rules
+
+**ESLint rules automatically enforce many of these best practices.** Configure ESLint with the following plugins and rules to catch violations during development:
+
+### Required ESLint Plugins
+
+Install and configure these ESLint plugins:
+
+1. **`eslint-plugin-react`** - React-specific linting rules
+   ```bash
+   npm install --save-dev eslint-plugin-react
+   ```
+2. **`eslint-plugin-jsx-a11y`** - Accessibility linting for JSX
+   ```bash
+   npm install --save-dev eslint-plugin-jsx-a11y
+   ```
+3. **`eslint-plugin-react-hooks`** - React Hooks linting (✅ already installed)
+4. **`@typescript-eslint/eslint-plugin`** - TypeScript-specific rules (✅ already installed via `typescript-eslint`)
+
+**Note**: After installing the missing plugins, uncomment the corresponding rules in `eslint.config.js`.
+
+### Recommended ESLint Rules
+
+Configure these rules in your `eslint.config.js` to enforce best practices:
+
+#### React Component Rules (`eslint-plugin-react`)
+```js
+'react/display-name': 'warn', // Component must have display name
+'react/prop-types': 'off', // Use TypeScript instead
+'react/react-in-jsx-scope': 'off', // Not needed in React 17+
+'react/jsx-uses-react': 'off', // Not needed in React 17+
+'react/jsx-uses-vars': 'error', // Prevent unused JSX variables
+'react/jsx-key': 'error', // Require keys in lists
+'react/jsx-no-duplicate-props': 'error', // Prevent duplicate props
+'react/jsx-no-undef': 'error', // Prevent undefined JSX variables
+'react/jsx-pascal-case': 'error', // Enforce PascalCase for components
+'react/no-array-index-key': 'warn', // Warn against array index as key
+'react/no-children-prop': 'error', // Prefer children as content
+'react/no-danger': 'warn', // Warn against dangerouslySetInnerHTML
+'react/no-deprecated': 'error', // Error on deprecated APIs
+'react/no-direct-mutation-state': 'error', // Prevent direct state mutation
+'react/no-unescaped-entities': 'error', // Require escaped entities
+'react/no-unknown-property': 'error', // Prevent unknown DOM properties
+'react/self-closing-comp': 'error', // Require self-closing tags
+'react/jsx-fragments': ['error', 'syntax'], // Prefer <> over <React.Fragment>
+```
+
+#### React Hooks Rules (`eslint-plugin-react-hooks`)
+```js
+'react-hooks/rules-of-hooks': 'error', // Enforce Rules of Hooks
+'react-hooks/exhaustive-deps': 'warn', // Warn about missing dependencies
+```
+
+#### Accessibility Rules (`eslint-plugin-jsx-a11y`)
+```js
+'jsx-a11y/alt-text': 'error', // Require alt text on images
+'jsx-a11y/anchor-has-content': 'error', // Anchors must have content
+'jsx-a11y/anchor-is-valid': 'error', // Valid anchor href
+'jsx-a11y/aria-activedescendant-has-tabindex': 'error',
+'jsx-a11y/aria-props': 'error', // Valid ARIA props
+'jsx-a11y/aria-proptypes': 'error', // Valid ARIA prop types
+'jsx-a11y/aria-role': 'error', // Valid ARIA roles
+'jsx-a11y/aria-unsupported-elements': 'error',
+'jsx-a11y/click-events-have-key-events': 'warn', // Click handlers need keyboard
+'jsx-a11y/heading-has-content': 'error', // Headings must have content
+'jsx-a11y/html-has-lang': 'error', // HTML must have lang
+'jsx-a11y/img-redundant-alt': 'warn', // Avoid redundant alt text
+'jsx-a11y/interactive-supports-focus': 'error',
+'jsx-a11y/label-has-associated-control': 'error', // Labels must be associated
+'jsx-a11y/mouse-events-have-key-events': 'warn',
+'jsx-a11y/no-access-key': 'error', // Avoid accesskey
+'jsx-a11y/no-autofocus': 'warn', // Warn about autofocus
+'jsx-a11y/no-distracting-elements': 'error', // No <marquee>, <blink>
+'jsx-a11y/no-interactive-element-to-noninteractive-role': 'error',
+'jsx-a11y/no-noninteractive-element-interactions': 'warn',
+'jsx-a11y/no-noninteractive-element-to-interactive-role': 'warn',
+'jsx-a11y/no-noninteractive-tabindex': 'warn',
+'jsx-a11y/no-redundant-roles': 'error', // Avoid redundant roles
+'jsx-a11y/no-static-element-interactions': 'warn',
+'jsx-a11y/role-has-required-aria-props': 'error',
+'jsx-a11y/role-supports-aria-props': 'error',
+'jsx-a11y/scope': 'error', // Valid scope attribute
+'jsx-a11y/tabindex-no-positive': 'warn', // Avoid positive tabindex
+```
+
+#### TypeScript Rules (`@typescript-eslint`)
+```js
+'@typescript-eslint/explicit-function-return-type': 'off', // Too strict for React
+'@typescript-eslint/explicit-module-boundary-types': 'off', // Too strict for React
+'@typescript-eslint/no-explicit-any': 'warn', // Warn about any types
+'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+'@typescript-eslint/prefer-const': 'error',
+'@typescript-eslint/no-non-null-assertion': 'warn', // Warn about ! operator
+```
+
+### ESLint Configuration Example
+
+Your `eslint.config.js` should include these configurations. See the project's `eslint.config.js` for the current setup, and ensure it includes:
+
+- React plugin with recommended rules
+- React Hooks plugin (already configured)
+- JSX A11y plugin for accessibility
+- TypeScript ESLint plugin (already configured)
+- Storybook plugin for Storybook files (already configured)
+
+### Running Linting
+
+- **During Development**: Most IDEs will show ESLint errors in real-time
+- **Before Committing**: Run `npm run lint` to check all files
+- **In CI/CD**: Add `npm run lint` to your build pipeline
+- **Auto-fix**: Use `npm run lint -- --fix` to automatically fix some issues
+
+### Integration with Development Workflow
+
+1. **Pre-commit Hooks**: Consider using `husky` and `lint-staged` to run ESLint on staged files
+2. **IDE Integration**: Configure your IDE to show ESLint errors and auto-fix on save
+3. **CI/CD**: Fail builds if ESLint errors are present (use `--max-warnings=0` flag)
+
+**Note**: These linting rules complement but don't replace the best practices outlined in this document. Use both together for the best results.
+
+## Naming Conventions
+
+Use clear, descriptive naming conventions:
+
+- **Component Names**: PascalCase, descriptive (e.g., `ButtonPrimary`, not `Button1`)
+- **Props**: camelCase, descriptive (e.g., `onUserClick`, not `onClick1`)
+- **Files**: Match component name (e.g., `ButtonPrimary.tsx` for `ButtonPrimary` component)
+- **Folders**: Match component name for component directories
+- **Hooks**: Start with `use` prefix (e.g., `useAuth`, `useFormValidation`)
+
+## Documentation
+
+**Comprehensive documentation is essential:**
+
+- **Usage Examples**: Show how to use the component with common scenarios
+- **Prop Documentation**: Document all props with types, defaults, and descriptions
+- **Visual States**: Document all component states and variations
+- **Code Comments**: Add JSDoc comments for complex logic
+- **Storybook Stories**: Use stories as living documentation (see Storybook section below)
+
+**Example JSDoc:**
+```tsx
+/**
+ * A flexible button component with multiple variants and sizes.
+ * 
+ * @example
+ * <Button variant="primary" onClick={handleClick}>
+ *   Click Me
+ * </Button>
+ */
+export const Button: React.FC<ButtonProps> = ({ ... }) => {
+  // Implementation
+};
+```
+
+## Storybook Development Workflow
+
+### 1. ALWAYS Build in Storybook First
+- All new UI components and widgets MUST be created and thoroughly tested in Storybook BEFORE integration into the application.
+- Use the built-in browser to interactively verify **all behaviors** and **visuals** in Storybook.
+
+### 2. Testability and Testing
+- **All component states must be demonstrable in Storybook.**
+- If your component has disabled, error, loading, empty, selected, or interactive states, **create a dedicated Story for each one**.
+- Stories should cover:
+  - Default/initial state
+  - Loading and error states (if applicable)
+  - Edge cases and empty values
+  - Variations (e.g., different sizes, themes, disabled, etc.)
+- Avoid requiring custom story args to "trigger" states during review – instead, provide explicit named stories.
+- Since components don't use Firebase directly, you can pass mock data/callbacks in stories without any Firebase setup.
+
+### 3. Storybook Testing Framework
+- **ALWAYS add interaction tests** using `play` functions for interactive components.
+- Use `play` functions to test user interactions like clicks, form submissions, and state changes.
+- Import testing utilities from `storybook/test`: `import { fn, expect } from 'storybook/test'`
+- Use `fn()` to create mock functions that can be spied on: `onClick: fn()`
+- Use `expect` from `storybook/test` for assertions in play functions.
+- Test user interactions with `canvas` and `userEvent` from the play function context.
+- Example:
+  ```tsx
+  export const Interactive: Story = {
+    args: {
+      onClick: fn(),
+    },
+    play: async ({ canvas, args }) => {
+      const button = canvas.getByRole('button');
+      await button.click();
+      await expect(args.onClick).toHaveBeenCalled();
+    },
+  };
+  ```
+- Run tests with `npm run test-storybook` or view them in Storybook's testing widget.
+- Tests automatically run in CI/CD as part of the deployment workflow.
+
+### 4. Visual and Functional Review
+- Use the browser with Storybook to verify component accessibility, responsiveness, and intended visual design.
+- Only after all Storybook states pass, integrate and test within the main application.
+
+### 5. Storybook Maintenance
+- When updating a component's API or visuals, also update affected stories.
+- Remove obsolete stories and add new ones for new states or variants.
+
+## Reusability Guidelines
+
+- Components and stories must be designed for maximal reusability.
+- Any UI logic shared by multiple components should be extracted into helpers or lower-level components.
+- Use TypeScript interfaces and composition to enable reuse, not duplication.
+- Design components to work in isolation without dependencies on parent context (unless intentionally designed as context consumers).
 
 ## Summary for the Agent
 
+### Critical Rules (NEVER Violate)
 - **NEVER** skip the Storybook stage for UI widgets.
 - **NEVER** add Firebase imports to UI components – use props and hooks instead.
-- Ensure all UX and state permutations are covered in dedicated stories.
-- **ALWAYS add interaction tests** using `play` functions for components with user interactions.
-- Prioritize clarity, modularity, and reusability.
-- No business logic inside UI components – keep concerns separated.
+- **NEVER** include business logic in presentational components.
+- **ALWAYS** validate props with TypeScript.
+- **ALWAYS** add interaction tests using `play` functions for components with user interactions.
+
+### Best Practices Checklist
+- ✅ Follow "Thinking in React" 5-step workflow for new features
+- ✅ Build static version first, then add interactivity
+- ✅ Identify minimal but complete state representation
+- ✅ Place state in the correct component (lowest common ancestor)
+- ✅ Single responsibility per component
+- ✅ Clear separation of concerns (logic vs. presentation)
+- ✅ Props-based customization with TypeScript validation
+- ✅ Default values for optional props
+- ✅ Accessible by default (semantic HTML, ARIA, keyboard navigation)
+- ✅ Performance optimized (memo, useCallback, useMemo when needed)
+- ✅ Comprehensive Storybook stories for all states
+- ✅ Well-documented with usage examples
+- ✅ Follows Atomic Design principles
+- ✅ Uses custom hooks for reusable logic
+- ✅ Consistent naming conventions
+- ✅ Inverse data flow for state updates (callbacks from children to parents)
 
 **Reminder:** You must verify, using Storybook and the built-in browser, that all UI widgets work as described and are easy for others to test via their stories. Since components use props instead of Firebase, stories can work without any Firebase configuration. Add `play` functions to test interactive behaviors and ensure components work correctly.

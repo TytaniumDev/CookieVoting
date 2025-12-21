@@ -5,7 +5,7 @@ import { sanitizeInput } from '../lib/validation';
 import { v4 as uuidv4 } from 'uuid';
 import { detectCookiesGemini } from '../lib/cookieDetectionGemini';
 import { getImageDetectionResults } from '../lib/firestore';
-import { ImageWithDetections, type DetectedCookie } from './ImageWithDetections';
+import { CookieViewer, type DetectedCookie } from './CookieViewer';
 import styles from './ImageTagger.module.css';
 
 /**
@@ -91,7 +91,7 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
     const handleImageClick = (e: MouseEvent<HTMLDivElement>) => {
         if (!imageAreaRef.current) return;
 
-        // Find the actual image element inside ImageWithDetections
+        // Find the actual image element inside CookieViewer
         const img = imageAreaRef.current.querySelector('img');
         if (!img) return;
 
@@ -221,7 +221,27 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
             </div>
 
             <div className={styles.workspace}>
-                <div className={styles.imageArea} ref={imageAreaRef} onClick={handleImageClick}>
+                <div 
+                    className={styles.imageArea} 
+                    ref={imageAreaRef} 
+                    onClick={handleImageClick}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            // Convert keyboard event to mouse event for compatibility
+                            const syntheticEvent = {
+                                ...e,
+                                clientX: 0,
+                                clientY: 0,
+                                stopPropagation: () => {},
+                            } as unknown as React.MouseEvent;
+                            handleImageClick(syntheticEvent);
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Image tagging area"
+                >
                     {(() => {
                         // Filter out already-tagged cookies
                         const untaggedCookies: DetectedCookie[] = detectedCookies
@@ -263,7 +283,7 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
                         });
                         
                         return (
-                            <ImageWithDetections
+                            <CookieViewer
                                 imageUrl={imageUrl}
                                 detectedCookies={untaggedCookies}
                                 onCookieClick={(cookie, _, e) => {
@@ -295,6 +315,15 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
                             className={styles.marker}
                             style={{ left: `${cookie.x}%`, top: `${cookie.y}%` }}
                             onClick={(e) => { e.stopPropagation(); /* Select? */ }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Cookie ${cookie.number || cookie.id}`}
                         >
                             <div className={styles.markerNumber}>{cookie.number}</div>
                         </div>
@@ -315,8 +344,9 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
                                     <span className={styles.itemNumber}>#{cookie.number}</span>
                                     <button onClick={() => removeCookie(cookie.id)} className={styles.deleteBtn}>×</button>
                                 </div>
-                                <label>Maker Name</label>
+                                <label htmlFor={`maker-name-${cookie.id}`}>Maker Name</label>
                                 <input
+                                    id={`maker-name-${cookie.id}`}
                                     type="text"
                                     value={cookie.makerName}
                                     onChange={(e) => {
@@ -326,8 +356,9 @@ export function ImageTagger({ imageUrl, initialCookies, onSave, onCancel }: Prop
                                     className={styles.input}
                                     maxLength={50}
                                 />
-                                <label>Number</label>
+                                <label htmlFor={`number-${cookie.id}`}>Number</label>
                                 <input
+                                    id={`number-${cookie.id}`}
                                     type="number"
                                     value={cookie.number}
                                     onChange={(e) => updateCookie(cookie.id, { number: parseInt(e.target.value) || 0 })}

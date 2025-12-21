@@ -543,6 +543,15 @@ export default function AdminHome() {
                                     key={event.id} 
                                     className={`${styles.eventCard} ${deleting === event.id ? styles.deletingItem : ''}`}
                                     onClick={() => navigate(`/admin/${event.id}`)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            navigate(`/admin/${event.id}`);
+                                        }
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`View event: ${event.name}`}
                                 >
                                     <div className={styles.eventHeader}>
                                         <h3>{event.name}</h3>
@@ -568,21 +577,25 @@ export default function AdminHome() {
                                                     Delete
                                                 </span>
                                                 {deleting === event.id && (
-                                                    <span className={styles.spinner}></span>
+                                                    <span className={styles.spinner} />
                                                 )}
                                             </button>
                                         </div>
                                     </div>
                                     {images.length > 0 ? (
                                         <div className={styles.imageCarousel}>
-                                            {images.map((imageUrl, index) => (
+                                            {images.map((imageUrl, index) => {
+                                                // Create a stable key from URL hash
+                                                const urlHash = imageUrl.split('/').pop() || imageUrl.slice(-30);
+                                                return (
                                                 <img 
-                                                    key={index} 
+                                                    key={`${event.id}-${urlHash}`} 
                                                     src={imageUrl} 
-                                                    alt={`${event.name} - Image ${index + 1}`}
+                                                    alt={`${event.name} - ${index + 1}`}
                                                     className={styles.carouselImage}
                                                 />
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className={styles.noImages}>No images yet</div>
@@ -597,8 +610,31 @@ export default function AdminHome() {
             </section>
 
             {confirmDelete && (
-                <div className={styles.modalOverlay} onClick={handleDeleteCancel}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <div 
+                    className={styles.modalOverlay} 
+                    onClick={handleDeleteCancel}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                            e.preventDefault();
+                            handleDeleteCancel();
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close delete confirmation"
+                >
+                    <div 
+                        className={styles.modal} 
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.stopPropagation();
+                                handleDeleteCancel();
+                            }
+                        }}
+                    >
                         <h3>Delete Event</h3>
                         <p>Are you sure you want to delete this event and all its data? This action cannot be undone.</p>
                         <div className={styles.modalActions}>

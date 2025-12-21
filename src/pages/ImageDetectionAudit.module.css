@@ -155,10 +155,42 @@
   font-size: 0.875rem;
   color: #666;
   word-break: break-all;
+  margin-bottom: 0.75rem;
 }
 
 .filePath strong {
   color: #333;
+}
+
+.jsonActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.jsonButton {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.jsonButton:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.jsonButton:active {
+  transform: translateY(0);
 }
 
 .button {

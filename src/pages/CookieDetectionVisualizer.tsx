@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ImageWithDetections, type DetectedCookie } from '../components/ImageWithDetections';
+import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
 import styles from './CookieDetectionVisualizer.module.css';
 
 export default function CookieDetectionVisualizer() {
@@ -188,7 +188,7 @@ export default function CookieDetectionVisualizer() {
             <div className={styles.visualization}>
               <h2>Visualization</h2>
               <div className={styles.imageContainer}>
-                <ImageWithDetections
+                <CookieViewer
                   imageUrl={imageUrl}
                   detectedCookies={detectedCookies}
                   onCookieClick={(cookie, index) => {
@@ -200,7 +200,7 @@ export default function CookieDetectionVisualizer() {
                 <h3>Cookie Details:</h3>
                 <div className={styles.cookieList}>
                   {detectedCookies.map((cookie, index) => (
-                    <div key={index} className={styles.cookieItem}>
+                    <div key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.width.toFixed(2)}-${cookie.height.toFixed(2)}-${cookie.confidence.toFixed(2)}`} className={styles.cookieItem}>
                       <strong>Cookie {index + 1}:</strong>
                       <ul>
                         <li>Center: ({cookie.x.toFixed(1)}%, {cookie.y.toFixed(1)}%)</li>
@@ -233,7 +233,7 @@ export default function CookieDetectionVisualizer() {
             </div>
           ) : imageUrl ? (
             <div className={styles.placeholder}>
-              <p>Enter Gemini JSON response and click "Render Detection" to see the visualization.</p>
+              <p>Enter Gemini JSON response and click &quot;Render Detection&quot; to see the visualization.</p>
             </div>
           ) : (
             <div className={styles.placeholder}>

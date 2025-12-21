@@ -35,7 +35,7 @@ async function waitForEmulators(maxRetries = 10, delay = 1000) {
             await auth.listUsers(1);
             console.log('✅ Emulators are ready!\n');
             return;
-        } catch (error) {
+        } catch {
             if (i < maxRetries - 1) {
                 console.log(`⏳ Waiting for emulators to start... (${i + 1}/${maxRetries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -59,7 +59,7 @@ async function seedData() {
             // Try to get existing user
             await auth.getUser(TEST_USER_UID);
             console.log('   ✅ Test user already exists');
-        } catch (error) {
+        } catch {
             // User doesn't exist, create it
             await auth.createUser({
                 uid: TEST_USER_UID,

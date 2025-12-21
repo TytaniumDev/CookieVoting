@@ -2,20 +2,28 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getEvent, getCategories, submitVote, getUserVote, getUserIdForVoting } from '../lib/firestore';
-import { type VoteEvent, type Category, type CookieCoordinatePublic } from '../lib/types';
+import { type VoteEvent, type Category } from '../lib/types';
 import { CookieViewer } from '../components/CookieViewer';
+import type { DetectedCookie } from '../components/CookieViewer';
 import { AlertModal } from '../components/AlertModal';
 import { CONSTANTS } from '../lib/constants';
 import { auth } from '../lib/firebase';
 import styles from './VotingPage.module.css';
 
-// Strip maker names from cookies for voting UI (privacy)
-function stripMakerNames(cookies: CookieCoordinate[]): CookieCoordinatePublic[] {
-    return cookies.map((cookie) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { makerName, ...rest } = cookie;
-        return rest as CookieCoordinatePublic;
-    });
+// Convert CookieCoordinate[] to DetectedCookie[] for voting UI
+function convertCookiesToDetected(cookies: Category['cookies']): { detectedCookies: DetectedCookie[]; cookieNumbers: number[] } {
+    const detectedCookies: DetectedCookie[] = cookies.map(cookie => ({
+        x: cookie.x,
+        y: cookie.y,
+        width: 8, // Default size
+        height: 8,
+        confidence: 1.0,
+        polygon: undefined
+    }));
+    
+    const cookieNumbers = cookies.map(cookie => cookie.number);
+    
+    return { detectedCookies, cookieNumbers };
 }
 
 // localStorage helpers for Google Forms-like voting tracking
@@ -401,16 +409,26 @@ export default function VotingPage() {
 
     // View Mode: Cookie Viewer Overlay
     if (activeCategory) {
-        // Strip maker names for privacy during voting
-        const cookiesWithoutNames = stripMakerNames(activeCategory.cookies);
+        const { detectedCookies, cookieNumbers } = convertCookiesToDetected(activeCategory.cookies);
+        const selectedCookieNumber = votes[activeCategory.id];
         return (
-            <CookieViewer
-                imageUrl={activeCategory.imageUrl}
-                cookies={cookiesWithoutNames}
-                selectedCookieId={String(votes[activeCategory.id] || '')}
-                onSelectCookie={handleSelectCookie}
-                onBack={() => setActiveCategory(null)}
-            />
+            <div className={styles.viewerContainer}>
+                <div className={styles.viewerToolbar}>
+                    <button onClick={() => setActiveCategory(null)} className={styles.backButton}>&larr; Back</button>
+                </div>
+                <div className={styles.viewerViewport}>
+                    <CookieViewer
+                        imageUrl={activeCategory.imageUrl}
+                        detectedCookies={detectedCookies}
+                        cookieNumbers={cookieNumbers}
+                        selectedCookieNumber={selectedCookieNumber}
+                        onSelectCookie={handleSelectCookie}
+                    />
+                </div>
+                <div className={styles.viewerInstruction}>
+                    Tap a number to select it.
+                </div>
+            </div>
         );
     }
 
@@ -426,7 +444,7 @@ export default function VotingPage() {
                 {hasVoted && <div className={styles.badgeSuccess}>Votes Submitted</div>}
                 {!hasVoted && (
                     <div className={styles.progress}>
-                        <div className={styles.progressBar} style={{ width: `${calculateProgress()}%` }}></div>
+                        <div className={styles.progressBar} style={{ width: `${calculateProgress()}%` }} />
                     </div>
                 )}
             </header>
@@ -434,7 +452,7 @@ export default function VotingPage() {
             <div className={styles.intro}>
                 {hasVoted ? (
                     <p style={{ color: '#4caf50', fontWeight: 'bold' }}>
-                        ✓ You've already submitted your vote. You can change your votes below and resubmit.
+                        ✓ You&apos;ve already submitted your vote. You can change your votes below and resubmit.
                     </p>
                 ) : (
                     <p>Tap a category to start voting. You can come back and change your votes anytime.</p>
@@ -449,6 +467,14 @@ export default function VotingPage() {
                             key={cat.id}
                             className={`${styles.card} ${selection ? styles.cardVoted : ''}`}
                             onClick={() => setActiveCategory(cat)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setActiveCategory(cat);
+                                }
+                            }}
+                            role="button"
+                            tabIndex={0}
                         >
                             <img src={cat.imageUrl} alt={cat.name} className={styles.cardImage} />
                             <div className={styles.cardOverlay}>
