@@ -8,6 +8,8 @@ import '../src/styles/variables.css';
 // Note: import.meta.env is read-only in production builds, so we cannot modify it here
 
 const preview: Preview = {
+  //👇 Enables auto-generated documentation for all stories
+  tags: ['autodocs'],
   parameters: {
     controls: {
       matchers: {

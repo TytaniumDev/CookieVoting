@@ -1,23 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
 import { signInAsTestUser, isUsingEmulator } from '../lib/emulatorAuth';
 import { addGlobalAdmin } from '../lib/firestore';
 import { AuthButton } from '../components/AuthButton';
+import { useAuth } from '../lib/hooks/useAuth';
 import styles from './Home.module.css';
 
 export default function Home() {
     const navigate = useNavigate();
     const [isEnablingTestUser, setIsEnablingTestUser] = useState(false);
+    const { user, loading, signIn, signOut } = useAuth();
 
     useEffect(() => {
         // Check if user is already signed in
-        let hasRedirected = false;
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            // Prevent multiple redirects
-            if (hasRedirected) return;
-            
+        if (!loading && user) {
             // Check if user is signed in
             const isSignedIn = user && (
                 user.email || 
@@ -26,13 +22,10 @@ export default function Home() {
             
             if (isSignedIn) {
                 // User is signed in, redirect to admin page
-                hasRedirected = true;
                 navigate('/admin', { replace: true });
             }
-        });
-
-        return () => unsubscribe();
-    }, [navigate]);
+        }
+    }, [user, loading, navigate]);
 
     const handleTestUserSignIn = async () => {
         setIsEnablingTestUser(true);
@@ -86,7 +79,12 @@ export default function Home() {
                 <p className={styles.subtitle}>Cast your vote for the best cookies!</p>
                 <div className={styles.authSection}>
                     <p className={styles.authPrompt}>Administrators, sign in to manage events:</p>
-                    <AuthButton />
+                    <AuthButton 
+                        user={user}
+                        loading={loading}
+                        onSignIn={signIn}
+                        onSignOut={signOut}
+                    />
                     {isUsingEmulator() && (
                         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
                             <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem', opacity: 0.8 }}>

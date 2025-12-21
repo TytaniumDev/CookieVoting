@@ -6,9 +6,7 @@ import { validateImage, validateCategoryName, validateMakerName, sanitizeInput }
 import { CONSTANTS } from '../lib/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { detectCookiesGemini } from '../lib/cookieDetectionGemini';
-import { getAllImageDetections } from '../lib/firestore';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { watchAllImageDetections } from '../lib/firestore';
 import { ImageWithDetections, type DetectedCookie } from './ImageWithDetections';
 import { calculateSmartLabelPositions, calculateBoundsFromCookie } from '../lib/labelPositioning';
 import styles from './EventSetupWizard.module.css';
@@ -662,11 +660,9 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
             const categoryFileName = extractFileName(category.imageUrl);
             
             // Set up real-time listener - watch entire collection and re-match by file identifier
-            const detectionsRef = collection(db, 'image_detections');
-            const unsubscribe = onSnapshot(detectionsRef, async () => {
+            const unsubscribe = watchAllImageDetections((allDetections) => {
                 console.log('[EventSetupWizard] Detection document changed, reloading...');
                 try {
-                    const allDetections = await getAllImageDetections();
                     const matchingDetection = categoryFileName
                         ? allDetections.find(d => {
                             const detectionFileName = extractFileName(d.imageUrl);
@@ -687,8 +683,6 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                     console.error('[EventSetupWizard] Error reloading detections on change:', error);
                     setLoadingDetection(false);
                 }
-            }, (error) => {
-                console.error('[EventSetupWizard] Error watching detections:', error);
             });
 
             // Cleanup listener when category changes or component unmounts

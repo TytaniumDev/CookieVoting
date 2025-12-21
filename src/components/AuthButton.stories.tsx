@@ -1,7 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AuthButton } from './AuthButton';
 import { BrowserRouter } from 'react-router-dom';
-import { withFirebaseEmulator } from '../../.storybook/firebase-decorator';
+import { useAuth } from '../../lib/hooks/useAuth';
+import React from 'react';
+
+/**
+ * Wrapper component that uses useAuth hook to provide props to AuthButton
+ */
+const AuthButtonWithAuth = () => {
+  const { user, loading, signIn, signOut } = useAuth();
+  return <AuthButton user={user} loading={loading} onSignIn={signIn} onSignOut={signOut} />;
+};
 
 /**
  * AuthButton Component Stories
@@ -10,7 +19,7 @@ import { withFirebaseEmulator } from '../../.storybook/firebase-decorator';
  */
 const meta = {
   title: 'Molecules/AuthButton',
-  component: AuthButton,
+  component: AuthButtonWithAuth,
   decorators: [
     (Story) => (
       <BrowserRouter>
@@ -63,27 +72,57 @@ Clicking the button will attempt to sign in via Google OAuth.
 };
 
 /**
- * Auth button with Firebase emulator
- * This story demonstrates the component working with Firebase Auth emulator
+ * Auth button with signed in user
  */
-export const WithFirebaseEmulator: Story = {
-  decorators: [
-    withFirebaseEmulator,
-    (Story) => (
-      <BrowserRouter>
-        <Story />
-      </BrowserRouter>
-    ),
-  ],
+export const SignedIn: Story = {
+  render: () => {
+    // Mock user for storybook
+    const mockUser = {
+      uid: 'storybook-user-123',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      photoURL: null,
+      providerData: [],
+      isAnonymous: false,
+    } as React.ComponentProps<typeof AuthButton>['user'];
+    
+    return (
+      <AuthButton
+        user={mockUser}
+        loading={false}
+        onSignIn={async () => console.log('Sign in clicked')}
+        onSignOut={async () => console.log('Sign out clicked')}
+      />
+    );
+  },
   parameters: {
     docs: {
       description: {
         story: `
-This story uses the Firebase Auth emulator for testing authentication.
-Make sure to start the Firebase emulators before viewing this story:
-\`npm run emulators:start\`
+Shows the user menu with avatar and sign-out option when authenticated.
+        `,
+      },
+    },
+  },
+};
 
-You can test sign-in/sign-out flows without affecting production data.
+/**
+ * Auth button in loading state
+ */
+export const Loading: Story = {
+  render: () => (
+    <AuthButton
+      user={null}
+      loading={true}
+      onSignIn={async () => console.log('Sign in clicked')}
+      onSignOut={async () => console.log('Sign out clicked')}
+    />
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Shows loading state while authentication is being initialized.
         `,
       },
     },

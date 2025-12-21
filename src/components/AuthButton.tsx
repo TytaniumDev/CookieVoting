@@ -1,99 +1,54 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../lib/firebase';
 import type { User } from 'firebase/auth';
 import { AlertModal } from './AlertModal';
 import styles from './AuthButton.module.css';
 
 /**
+ * Props for the AuthButton component
+ */
+interface AuthButtonProps {
+    /** Current authenticated user, or null if not signed in */
+    user: User | null;
+    /** Whether authentication state is still loading */
+    loading: boolean;
+    /** Callback function called when user clicks sign in */
+    onSignIn: () => Promise<void>;
+    /** Callback function called when user clicks sign out */
+    onSignOut: () => Promise<void>;
+}
+
+/**
  * AuthButton - Authentication button component with user menu.
  * 
- * This component handles user authentication and displays either a sign-in button
- * or a user menu with avatar and sign-out option. It integrates with Firebase Auth
- * and supports both popup and redirect authentication flows.
+ * This component displays either a sign-in button or a user menu with avatar and sign-out option.
+ * It does not directly interact with Firebase - all auth logic should be handled by parent components
+ * using the useAuth hook or similar.
  * 
  * Features:
- * - Google Sign-In integration
- * - Automatic redirect result handling
  * - User avatar display (photo or initial)
  * - Dropdown menu with user info and sign-out
  * - Error handling with alert modals
- * - Automatic navigation after sign-out
- * 
- * The component automatically detects authentication state changes and updates
- * the UI accordingly. It handles both popup and redirect authentication methods,
- * falling back to redirect if popup is blocked.
  * 
  * @example
  * ```tsx
- * <AuthButton />
+ * const { user, loading, signIn, signOut } = useAuth();
+ * 
+ * <AuthButton
+ *   user={user}
+ *   loading={loading}
+ *   onSignIn={signIn}
+ *   onSignOut={signOut}
+ * />
  * ```
  * 
+ * @param props - Component props
  * @returns JSX element containing either sign-in button or user menu
  */
-export function AuthButton() {
-    const navigate = useNavigate();
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonProps) {
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
     const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('error');
-
-    useEffect(() => {
-        let isMounted = true;
-
-        // Check for redirect result first, BEFORE setting up auth state listener
-        const initializeAuth = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result && isMounted) {
-                    console.log('User signed in via redirect:', result.user.email);
-                    // The auth state will be updated by onAuthStateChanged below
-                } else {
-                    console.log('No redirect result found');
-                }
-            } catch (error: unknown) {
-                const firebaseError = error as { code?: string; message?: string };
-                if (firebaseError?.code !== 'auth/no-auth-event' && isMounted) {
-                    console.error('Error getting redirect result:', error);
-                }
-            }
-
-            // Test user is enabled - no need to add to admin list anymore
-            // Anonymous users can now create/delete test events directly
-
-            // Check current auth state
-            const currentUser = auth.currentUser;
-            console.log('Current auth user:', currentUser ? (currentUser.isAnonymous ? 'anonymous (test user)' : currentUser.email) : 'none');
-
-            // Now set up the auth state listener
-            // This will fire immediately with the current user (including after redirect)
-            const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                if (isMounted) {
-                    // Regular Firebase auth user
-                    console.log('Auth state changed:', user ? `${user.email || 'user'} (${user.uid})` : 'signed out');
-                    setUser(user);
-                    setLoading(false);
-                }
-            });
-
-            return unsubscribe;
-        };
-
-        let unsubscribe: (() => void) | undefined;
-        initializeAuth().then((unsub) => {
-            unsubscribe = unsub;
-        });
-
-        return () => {
-            isMounted = false;
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        };
-    }, []);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -111,35 +66,7 @@ export function AuthButton() {
 
     const handleSignIn = async () => {
         try {
-            const provider = new GoogleAuthProvider();
-            // Request additional scopes for profile information
-            provider.addScope('profile');
-            provider.addScope('email');
-            
-            console.log('Starting Google sign-in...');
-            
-            // Try popup first (more reliable in most browsers)
-            try {
-                console.log('Attempting popup sign-in...');
-                const userCredential = await signInWithPopup(auth, provider);
-                console.log('✅ Google sign-in successful');
-                console.log('📋 Your User UID:', userCredential.user.uid);
-                console.log('📧 Your Email:', userCredential.user.email);
-                console.log('💡 Tip: Enable test user mode to use a separate test database');
-                console.log('🔧 To create events, add your UID to: Firebase Console → Firestore → system/admins → userIds array');
-            } catch (popupError: unknown) {
-                const firebaseError = popupError as { code?: string; message?: string };
-                // If popup is blocked or fails, fall back to redirect
-                if (firebaseError?.code === 'auth/popup-blocked' || 
-                    firebaseError?.code === 'auth/popup-closed-by-user' ||
-                    firebaseError?.code === 'auth/cancelled-popup-request') {
-                    console.log('Popup blocked/failed, using redirect flow');
-                    await signInWithRedirect(auth, provider);
-                    // signInWithRedirect doesn't return, it redirects the page
-                    return;
-                }
-                throw popupError;
-            }
+            await onSignIn();
         } catch (error: unknown) {
             console.error('Error signing in:', error);
             const firebaseError = error as { code?: string; message?: string };
@@ -153,10 +80,8 @@ export function AuthButton() {
 
     const handleSignOut = async () => {
         try {
-            await signOut(auth);
+            await onSignOut();
             setShowMenu(false);
-            // Redirect to landing page after sign out
-            navigate('/', { replace: true });
         } catch (error) {
             console.error('Error signing out:', error);
         }

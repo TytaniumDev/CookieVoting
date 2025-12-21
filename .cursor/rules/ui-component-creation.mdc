@@ -2,7 +2,8 @@
 description: This rule sets standards for building, testing, and documenting UI components in Storybook.
 alwaysApply: false
 ---
-# Agent Instructions for Storybook Usage and UI Component Development
+
+# Agent Instructions for UI Component Creation and Storybook Usage
 
 ## Modular UI Component Best Practices with Storybook.js
 
@@ -17,7 +18,26 @@ When developing or modifying UI components:
    - **Do NOT include business logic** (e.g., data fetching, external side effects) inside reusable components.
    - Components should accept all necessary state or data via props and should not depend on global state or app-specific logic.
 
-3. **Testability**
+3. **NO Firebase Dependencies in UI Components**
+   - **UI components MUST NEVER directly import or use Firebase services** (auth, db, storage, functions).
+   - **Components should receive all data and callbacks via props** instead of fetching data themselves.
+   - Firebase logic belongs in:
+     - Custom hooks (e.g., `useAuth`, `useImageDetections`) in `src/lib/hooks/`
+     - Utility functions in `src/lib/firestore.ts`, `src/lib/storage.ts`, etc.
+     - Parent components or pages that use the hooks and pass data/callbacks to UI components
+   - **Examples:**
+     - ❌ **BAD**: `import { auth } from '../lib/firebase';` inside a component
+     - ❌ **BAD**: `import { db } from '../lib/firebase';` inside a component
+     - ✅ **GOOD**: Component accepts `user`, `onSignIn`, `onSignOut` as props
+     - ✅ **GOOD**: Component accepts data via props (e.g., `categories`, `onSave`, `onCancel`)
+     - ✅ **GOOD**: Parent component uses `useAuth()` hook and passes results as props
+   - This ensures:
+     - Components are testable without Firebase setup
+     - Components are reusable in different contexts
+     - Components work in Storybook without Firebase configuration
+     - Clear separation between UI and business logic
+
+4. **Testability**
    - **All component states must be demonstrable in Storybook.**
    - If your component has disabled, error, loading, empty, selected, or interactive states, **create a dedicated Story for each one**.
    - Stories should cover:
@@ -26,25 +46,27 @@ When developing or modifying UI components:
      - Edge cases and empty values
      - Variations (e.g., different sizes, themes, disabled, etc.)
    - Avoid requiring custom story args to "trigger" states during review – instead, provide explicit named stories.
+   - Since components don't use Firebase directly, you can pass mock data/callbacks in stories without any Firebase setup.
 
-4. **Reusability**
+5. **Reusability**
    - Components and stories must be designed for maximal reusability.
    - Any UI logic shared by multiple components should be extracted into helpers or lower-level components.
    - Use TypeScript interfaces and composition to enable reuse, not duplication.
 
-5. **Visual and Functional Review**
+6. **Visual and Functional Review**
    - Use the browser with Storybook to verify component accessibility, responsiveness, and intended visual design.
    - Only after all Storybook states pass, integrate and test within the main application.
 
-6. **Storybook Maintenance**
+7. **Storybook Maintenance**
    - When updating a component's API or visuals, also update affected stories.
    - Remove obsolete stories and add new ones for new states or variants.
 
 ## Summary for the Agent
 
 - **NEVER** skip the Storybook stage for UI widgets.
+- **NEVER** add Firebase imports to UI components – use props and hooks instead.
 - Ensure all UX and state permutations are covered in dedicated stories.
 - Prioritize clarity, modularity, and reusability.
 - No business logic inside UI components – keep concerns separated.
 
-**Reminder:** You must verify, using Storybook and the built-in browser, that all UI widgets work as described and are easy for others to test via their stories.
+**Reminder:** You must verify, using Storybook and the built-in browser, that all UI widgets work as described and are easy for others to test via their stories. Since components use props instead of Firebase, stories can work without any Firebase configuration.

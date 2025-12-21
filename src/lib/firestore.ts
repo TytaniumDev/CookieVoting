@@ -638,6 +638,80 @@ export async function getAllImageDetections(): Promise<Array<{
   }
 }
 
+/**
+ * Watch for changes to all image detections in real-time
+ * 
+ * This function sets up a real-time listener that watches the entire image_detections collection
+ * and calls the callback whenever any detection changes. The callback receives all detections
+ * and should filter them as needed.
+ * 
+ * @param callback - Function called whenever detections change, receives all detections
+ * @returns Unsubscribe function to stop watching
+ */
+export function watchAllImageDetections(
+  callback: (detections: Array<{
+    id: string;
+    filePath: string;
+    imageUrl: string;
+    detectedCookies: Array<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      polygon?: Array<[number, number]>;
+      confidence: number;
+    }>;
+    count: number;
+    detectedAt?: unknown;
+    contentType?: string;
+  }>) => void
+): () => void {
+  const detectionsRef = collection(db, 'image_detections');
+  
+  const unsubscribe = onSnapshot(
+    detectionsRef,
+    (snapshot) => {
+      const detections = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const cookies = data.detectedCookies || [];
+        
+        // Convert polygons from Firestore format to tuple format
+        interface FirestoreCookie {
+          x?: unknown;
+          y?: unknown;
+          width?: unknown;
+          height?: unknown;
+          polygon?: unknown;
+          confidence?: unknown;
+          [key: string]: unknown;
+        }
+        const convertedCookies = cookies.map((cookie: FirestoreCookie) => ({
+          ...cookie,
+          polygon: convertPolygonFromFirestore(cookie.polygon),
+        }));
+        
+        return {
+          id: doc.id,
+          filePath: data.filePath || '',
+          imageUrl: data.imageUrl || '',
+          detectedCookies: convertedCookies,
+          count: data.count || convertedCookies.length,
+          detectedAt: data.detectedAt,
+          contentType: data.contentType,
+        };
+      });
+      
+      callback(detections);
+    },
+    (error) => {
+      console.error('[watchAllImageDetections] Error watching detections:', error);
+      callback([]);
+    }
+  );
+
+  return unsubscribe;
+}
+
 export async function updateCategory(eventId: string, categoryId: string, updates: { name?: string }): Promise<void> {
     const ref = doc(db, 'events', eventId, 'categories', categoryId);
     const updateData: { name?: string } = {};

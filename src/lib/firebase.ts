@@ -16,16 +16,73 @@ const firebaseConfig = {
 };
 
 // Validate that required config values are present
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-    console.error('Firebase configuration is missing required values. Please check your environment variables.');
+const hasValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
+
+if (!hasValidConfig) {
+    console.warn('Firebase configuration is missing required values. Firebase services will not be available.');
+    console.warn('This is expected in Storybook builds or when environment variables are not set.');
 }
 
-const app = initializeApp(firebaseConfig);
+// Only initialize Firebase if we have valid config
+// Otherwise, create stub services to prevent errors in Storybook/static builds
+let app: ReturnType<typeof initializeApp>;
+let db: ReturnType<typeof getFirestore>;
+let auth: ReturnType<typeof getAuth>;
+let storage: ReturnType<typeof getStorage>;
+let functions: ReturnType<typeof getFunctions>;
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app, 'us-west1');
+if (hasValidConfig) {
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        storage = getStorage(app);
+        functions = getFunctions(app, 'us-west1');
+    } catch (error) {
+        console.error('Failed to initialize Firebase:', error);
+        // Fall through to stub initialization
+        const stubConfig = {
+            apiKey: 'demo-api-key',
+            authDomain: 'demo.firebaseapp.com',
+            projectId: 'demo-project',
+            storageBucket: 'demo-project.appspot.com',
+            messagingSenderId: '123456789',
+            appId: '1:123456789:web:demo'
+        };
+        app = initializeApp(stubConfig, 'demo-app');
+        db = getFirestore(app);
+        auth = getAuth(app);
+        storage = getStorage(app);
+        functions = getFunctions(app, 'us-west1');
+        console.warn('Using stub Firebase configuration due to initialization error.');
+    }
+} else {
+    // If config is invalid, create stub services to prevent errors
+    // This prevents errors but services won't work (which is fine for Storybook)
+    const stubConfig = {
+        apiKey: 'demo-api-key',
+        authDomain: 'demo.firebaseapp.com',
+        projectId: 'demo-project',
+        storageBucket: 'demo-project.appspot.com',
+        messagingSenderId: '123456789',
+        appId: '1:123456789:web:demo'
+    };
+    
+    try {
+        app = initializeApp(stubConfig, 'demo-app');
+        db = getFirestore(app);
+        auth = getAuth(app);
+        storage = getStorage(app);
+        functions = getFunctions(app, 'us-west1');
+        console.warn('Using stub Firebase configuration. Services will not function properly.');
+    } catch (error) {
+        // If even stub initialization fails, we'll get errors but at least we tried
+        console.error('Failed to initialize stub Firebase:', error);
+        throw error;
+    }
+}
+
+export { db, auth, storage, functions };
 
 // Check if we should use emulators
 // In development mode, automatically connect to emulators unless explicitly disabled

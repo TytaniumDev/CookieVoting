@@ -1,5 +1,6 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthButton } from '../AuthButton';
+import { useAuth } from '../../lib/hooks/useAuth';
 import styles from './Layout.module.css';
 
 /**
@@ -28,7 +29,14 @@ import styles from './Layout.module.css';
  */
 export function Layout() {
     const location = useLocation();
+    const navigate = useNavigate();
     const isLandingPage = location.pathname === '/';
+    const { user, loading, signIn, signOut } = useAuth();
+
+    const handleSignOut = async () => {
+        await signOut();
+        navigate('/', { replace: true });
+    };
 
     return (
         <div className={styles.container}>
@@ -38,7 +46,12 @@ export function Layout() {
                         <Link to="/" className={styles.logo}>
                             🍪 Cookie Voting
                         </Link>
-                        <AuthButton />
+                        <AuthButton 
+                            user={user}
+                            loading={loading}
+                            onSignIn={signIn}
+                            onSignOut={handleSignOut}
+                        />
                     </div>
                 </header>
             )}
