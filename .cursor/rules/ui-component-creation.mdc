@@ -37,7 +37,7 @@ When developing or modifying UI components:
      - Components work in Storybook without Firebase configuration
      - Clear separation between UI and business logic
 
-4. **Testability**
+4. **Testability and Testing**
    - **All component states must be demonstrable in Storybook.**
    - If your component has disabled, error, loading, empty, selected, or interactive states, **create a dedicated Story for each one**.
    - Stories should cover:
@@ -47,6 +47,29 @@ When developing or modifying UI components:
      - Variations (e.g., different sizes, themes, disabled, etc.)
    - Avoid requiring custom story args to "trigger" states during review – instead, provide explicit named stories.
    - Since components don't use Firebase directly, you can pass mock data/callbacks in stories without any Firebase setup.
+   
+   - **Storybook Testing Framework:**
+     - **ALWAYS add interaction tests** using `play` functions for interactive components.
+     - Use `play` functions to test user interactions like clicks, form submissions, and state changes.
+     - Import testing utilities from `storybook/test`: `import { fn, expect } from 'storybook/test'`
+     - Use `fn()` to create mock functions that can be spied on: `onClick: fn()`
+     - Use `expect` from `storybook/test` for assertions in play functions.
+     - Test user interactions with `canvas` and `userEvent` from the play function context.
+     - Example:
+       ```tsx
+       export const Interactive: Story = {
+         args: {
+           onClick: fn(),
+         },
+         play: async ({ canvas, args }) => {
+           const button = canvas.getByRole('button');
+           await button.click();
+           await expect(args.onClick).toHaveBeenCalled();
+         },
+       };
+       ```
+     - Run tests with `npm run test-storybook` or view them in Storybook's testing widget.
+     - Tests automatically run in CI/CD as part of the deployment workflow.
 
 5. **Reusability**
    - Components and stories must be designed for maximal reusability.
@@ -66,7 +89,8 @@ When developing or modifying UI components:
 - **NEVER** skip the Storybook stage for UI widgets.
 - **NEVER** add Firebase imports to UI components – use props and hooks instead.
 - Ensure all UX and state permutations are covered in dedicated stories.
+- **ALWAYS add interaction tests** using `play` functions for components with user interactions.
 - Prioritize clarity, modularity, and reusability.
 - No business logic inside UI components – keep concerns separated.
 
-**Reminder:** You must verify, using Storybook and the built-in browser, that all UI widgets work as described and are easy for others to test via their stories. Since components use props instead of Firebase, stories can work without any Firebase configuration.
+**Reminder:** You must verify, using Storybook and the built-in browser, that all UI widgets work as described and are easy for others to test via their stories. Since components use props instead of Firebase, stories can work without any Firebase configuration. Add `play` functions to test interactive behaviors and ensure components work correctly.

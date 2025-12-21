@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AlertModal } from './AlertModal';
-import { fn } from 'storybook/test';
+import { fn, expect } from 'storybook/test';
 
 /**
  * AlertModal Component Stories
@@ -63,6 +63,16 @@ export const Success: Story = {
     type: 'success',
     onClose: fn(),
   },
+  play: async ({ canvas, args }) => {
+    // Verify modal content is visible
+    await expect(canvas.getByText('Operation completed successfully!')).toBeInTheDocument();
+    await expect(canvas.getByText('Success')).toBeInTheDocument();
+    
+    // Click OK button and verify onClose is called
+    const okButton = canvas.getByRole('button', { name: /ok/i });
+    await okButton.click();
+    await expect(args.onClose).toHaveBeenCalled();
+  },
 };
 
 /**
@@ -73,6 +83,16 @@ export const Error: Story = {
     message: 'An error occurred while processing your request. Please try again.',
     type: 'error',
     onClose: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    // Verify error modal content
+    await expect(canvas.getByText('An error occurred while processing your request. Please try again.')).toBeInTheDocument();
+    await expect(canvas.getByText('Error')).toBeInTheDocument();
+    
+    // Click OK button
+    const okButton = canvas.getByRole('button', { name: /ok/i });
+    await okButton.click();
+    await expect(args.onClose).toHaveBeenCalled();
   },
 };
 
@@ -97,6 +117,16 @@ export const CustomTitle: Story = {
     title: 'Saved!',
     onClose: fn(),
   },
+  play: async ({ canvas, args }) => {
+    // Verify custom title is displayed
+    await expect(canvas.getByText('Saved!')).toBeInTheDocument();
+    await expect(canvas.getByText('Your changes have been saved.')).toBeInTheDocument();
+    
+    // Click OK button
+    const okButton = canvas.getByRole('button', { name: /ok/i });
+    await okButton.click();
+    await expect(args.onClose).toHaveBeenCalled();
+  },
 };
 
 /**
@@ -107,5 +137,14 @@ export const LongMessage: Story = {
     message: 'This is a longer message that demonstrates how the modal handles text that spans multiple lines. The modal will automatically wrap the text and adjust its height accordingly.',
     type: 'info',
     onClose: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    // Verify long message is displayed
+    await expect(canvas.getByText(/This is a longer message/)).toBeInTheDocument();
+    
+    // Test clicking OK button to close
+    const okButton = canvas.getByRole('button', { name: /ok/i });
+    await okButton.click();
+    await expect(args.onClose).toHaveBeenCalled();
   },
 };

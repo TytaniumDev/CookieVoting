@@ -106,11 +106,6 @@ Users can upload images for categories using drag-and-drop or the file picker.
  */
 export const WithFirebaseEmulator: Story = {
   decorators: [
-    (Story) => (
-      <BrowserRouter>
-        <Story />
-      </BrowserRouter>
-    ),
     withFirebaseEmulator,
   ],
   args: {
@@ -170,11 +165,6 @@ move to the next category or step.
  */
 export const EditingExistingEvent: Story = {
   decorators: [
-    (Story) => (
-      <BrowserRouter>
-        <Story />
-      </BrowserRouter>
-    ),
     withFirebaseEmulator,
   ],
   args: {

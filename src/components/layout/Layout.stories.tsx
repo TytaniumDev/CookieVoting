@@ -48,21 +48,19 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   render: () => (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+      <Route element={<Layout />}>
         <Route
-          path="/*"
+          path="*"
           element={
-            <Layout>
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <h1>Sample Page Content</h1>
-                <p>This is sample content inside the Layout component.</p>
-              </div>
-            </Layout>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h1>Sample Page Content</h1>
+              <p>This is sample content inside the Layout component.</p>
+            </div>
           }
         />
-      </Routes>
-    </BrowserRouter>
+      </Route>
+    </Routes>
   ),
 };
 
@@ -71,20 +69,18 @@ export const Default: Story = {
  */
 export const LandingPage: Story = {
   render: () => (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+      <Route element={<Layout />}>
         <Route
-          path="/*"
+          path="/"
           element={
-            <Layout>
-              <div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh' }}>
-                <h1>Landing Page</h1>
-                <p>Header and footer are hidden on the landing page.</p>
-              </div>
-            </Layout>
+            <div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh' }}>
+              <h1>Landing Page</h1>
+              <p>Header and footer are hidden on the landing page.</p>
+            </div>
           }
         />
-      </Routes>
-    </BrowserRouter>
+      </Route>
+    </Routes>
   ),
 };

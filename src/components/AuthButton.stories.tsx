@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AuthButton } from './AuthButton';
 import { BrowserRouter } from 'react-router-dom';
-import { useAuth } from '../../lib/hooks/useAuth';
+import { useAuth } from '../lib/hooks/useAuth';
 import React from 'react';
 
 /**

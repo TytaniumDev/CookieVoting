@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import React from 'react';
+import { INITIAL_VIEWPORTS, MINIMAL_VIEWPORTS } from 'storybook/viewport';
 import '../src/styles/global.css';
 import '../src/styles/variables.css';
 
@@ -39,6 +40,18 @@ const preview: Preview = {
         },
       ],
     },
+    viewport: {
+      // Include INITIAL_VIEWPORTS for iPhone 13 and other devices
+      // Include desktop from MINIMAL_VIEWPORTS as secondary option
+      options: {
+        ...INITIAL_VIEWPORTS,
+        ...MINIMAL_VIEWPORTS,
+      },
+    },
+  },
+  initialGlobals: {
+    // Set iPhone 13 as the default viewport
+    viewport: { value: 'iphone13', isRotated: false },
   },
   // Global decorators for all stories
   decorators: [

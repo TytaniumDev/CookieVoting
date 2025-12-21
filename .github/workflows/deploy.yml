@@ -20,6 +20,10 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    container:
+      # Use Playwright image for faster Storybook test execution
+      # https://playwright.dev/docs/docker#pull-the-image
+      image: mcr.microsoft.com/playwright:v1.52.0-noble
     
     steps:
       - name: Checkout code
@@ -40,6 +44,9 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
         continue-on-error: true
+
+      - name: Run Storybook tests
+        run: npm run test-storybook
 
   build:
     name: Build Project

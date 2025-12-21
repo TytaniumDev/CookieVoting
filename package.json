@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:all": "npm run test:integration && npm run test:e2e",
     "test:e2e:ui": "playwright test --ui",
+    "test-storybook": "vitest --project=storybook",
     "playwright:install": "playwright install",
     "firebase:setup": "node scripts/setup-firebase.js",
     "firebase:login": "firebase login",
