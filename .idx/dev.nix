@@ -1,0 +1,21 @@
+{pkgs}: {
+  channel = "stable-24.05";
+  packages = [
+    pkgs.nodejs_20
+  ];
+  idx.previews = {
+    previews = {
+      web = {
+        command = [
+          "npm"
+          "run"
+          "dev"
+          "--"
+          "--port"
+          "$PORT"
+        ];
+        manager = "web";
+      };
+    };
+  };
+}

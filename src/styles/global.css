@@ -1,0 +1,42 @@
+@import './variables.css';
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+    /* Improve touch targets */
+    button, a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Prevent text size adjustment on iOS */
+    input, textarea, select {
+        font-size: 16px;
+    }
+    
+    /* Improve scrolling */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+}

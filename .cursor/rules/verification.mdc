@@ -1,0 +1,160 @@
+---
+description: This rule applies when using any code that interacts with Firebase
+alwaysApply: false
+---
+# Agent Instructions for Firebase Deployments
+
+## Overview
+This document provides instructions for the AI agent (Auto) to automatically handle Firebase deployments when changes are made to Firebase configuration files.
+
+## When to Deploy
+
+The agent should automatically deploy Firebase resources when:
+
+1. **Firestore Rules Changes** (`firestore.rules`)
+   - After any modification to `firestore.rules`
+   - Command: `npm run firebase:deploy:firestore` or `npx firebase-tools deploy --only firestore:rules`
+
+2. **Storage Rules Changes** (`storage.rules`)
+   - After any modification to `storage.rules`
+   - Command: `npm run firebase:deploy:storage` or `npx firebase-tools deploy --only storage`
+
+3. **Both Rules Changed**
+   - When both `firestore.rules` and `storage.rules` are modified
+   - Command: `npm run firebase:deploy:rules` or `npx firebase-tools deploy --only firestore:rules,storage`
+
+## Deployment Process
+
+1. **Before Deploying:**
+   - Verify syntax errors in rules files
+   - Check that rules compile successfully
+   - Ensure changes are intentional and correct
+
+2. **Deployment Command:**
+   - Use `npx firebase-tools` if `firebase` CLI is not in PATH
+   - Use `npm run` scripts if available (preferred)
+   - Always use `--only` flag to deploy specific resources
+
+3. **After Deploying:**
+   - Verify deployment success in output
+   - Note any warnings (like unused functions)
+   - Inform user of deployment completion
+
+## Available npm Scripts
+
+From `package.json`:
+- `npm run firebase:deploy:rules` - Deploy both Firestore and Storage rules
+- `npm run firebase:deploy:firestore` - Deploy only Firestore rules
+- `npm run firebase:deploy:storage` - Deploy only Storage rules
+- `npm run emulators:start` - Start Firebase emulators (auth, firestore, storage)
+- `npm run emulators:start:seed` - Start emulators and import seed data (including auth)
+- `npm run emulators:import:manual` - Import emulator data (including auth export) while emulators are running
+- `npm run emulators:seed` - Seed emulator data (creates test users and admin documents)
+
+## Important Notes
+
+- **Firestore Rules Syntax**: Firestore rules do NOT support:
+  - `if` statements (use ternary operators instead)
+  - `const` or `let` declarations (use direct expressions)
+  - Multi-line conditionals (use `&&` and `||` operators)
+
+- **Always verify compilation** before deploying
+- **Test rules locally** if possible before deployment
+- **Inform user** when deployment is complete and any issues encountered
+
+## Testing Requirements
+
+**CRITICAL: After every code change, the agent MUST test the feature using the built-in browser and test user.**
+
+### Emulator Setup for Verification
+
+**BEFORE testing any code changes, the agent MUST:**
+
+1. **Start Firebase Emulators** (if not already running):
+   - Run: `npm run emulators:start:seed` (starts emulators and imports seed data including auth)
+   - OR if emulators are already running, import auth data: `npm run emulators:import:manual`
+   - Wait for emulators to be ready (check for "All emulators ready!" message)
+
+2. **Verify Auth Emulator is Running:**
+   - Auth emulator should be running on port 9099
+   - Check that auth export data exists in `./emulator-data/auth_export/accounts.json`
+   - If auth export doesn't exist, run: `npm run emulators:seed` to create test users
+
+3. **Import Auth Export (if needed):**
+   - If testing requires specific users, ensure auth export is imported
+   - Use: `npm run emulators:import:manual` to import from `./emulator-data/`
+   - This ensures test users (including admin users) are available for testing
+
+**Note:** The auth emulator must be running and have the test user imported before any authentication-related testing can succeed.
+
+### Testing Workflow
+
+1. **After Code Changes:**
+   - **First, ensure emulators are running with auth data imported** (see Emulator Setup above)
+   - Navigate to `http://localhost:5173/` using the built-in browser
+   - Click "Sign in with Test User" button
+   - Verify redirect to `/admin` happens after one click
+   - Test the specific feature that was changed
+   - Verify no console errors or permission issues
+
+2. **If Testing Fails:**
+   - Check browser console messages for errors
+   - Identify the root cause (syntax error, permission issue, logic error, etc.)
+   - Fix the issue automatically
+   - Re-test until the feature works correctly
+   - Do NOT report success until testing passes
+
+3. **Test User Sign-In Process:**
+   - Use `mcp_cursor-ide-browser_browser_navigate` to go to home page
+   - Use `mcp_cursor-ide-browser_browser_click` to click "Sign in with Test User"
+   - Wait for redirect to `/admin` page
+   - Verify test user is authenticated (check console for "Using local test user (anonymous)")
+   - Test the feature that was modified
+
+4. **Common Test Scenarios:**
+   - **Firestore Rules Changes:** Test creating an event, reading events, updating admin document
+   - **Authentication Changes:** Test sign-in flow, redirect behavior, user state persistence
+   - **UI Changes:** Test button clicks, form submissions, navigation
+   - **Data Operations:** Test CRUD operations with test database (`test_*` collections)
+
+5. **Debugging Process:**
+   - Read console messages using `mcp_cursor-ide-browser_browser_console_messages`
+   - Check for permission errors, syntax errors, or logic errors
+   - Fix issues in code
+   - Re-test until working
+   - Document any issues found and fixes applied
+
+## Example Workflow
+
+When user modifies `firestore.rules`:
+
+1. Read and understand the changes
+2. Fix any syntax errors (if present)
+3. **Ensure emulators are running with auth data:**
+   - Run: `npm run emulators:start:seed` (if not already running)
+   - OR: `npm run emulators:import:manual` (if emulators already running)
+4. Run: `npm run firebase:deploy:firestore` or `npx firebase-tools deploy --only firestore:rules`
+5. **Test using built-in browser:**
+   - Navigate to home page
+   - Sign in as test user (verify auth emulator has test user imported)
+   - Test creating an event
+   - Verify no permission errors
+6. If testing fails, debug and fix automatically
+7. Report success/failure to user only after testing passes
+
+## Error Handling
+
+If deployment fails:
+1. Read the error message carefully
+2. Fix syntax/compilation errors
+3. Retry deployment
+4. If persistent issues, inform user with specific error details
+
+## User Preferences
+
+1. **Automatic Deployments:** The agent should automatically run Firebase deployment commands when relevant files are changed, without waiting for explicit user instruction.
+
+2. **Mandatory Testing:** After every code change, the agent MUST test the feature using the built-in browser and test user. Testing is not optional - it is a required step before reporting completion.
+
+3. **Automatic Debugging:** If testing fails, the agent should automatically debug the issue and fix it, then re-test until it works. Do not report failures to the user without attempting to fix them first.
+

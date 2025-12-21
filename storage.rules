@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Shared images folder - images can be reused across multiple events
+    match /shared/cookies/{fileName} {
+      // Allow anyone to read images (needed for voting)
+      allow read: if true;
+      
+      // Allow authenticated users (including anonymous for test mode) to upload/delete
+      // In production, anonymous auth will be disabled, so only real admins can write
+      // This allows test users (anonymous) to upload during development/testing
+      allow write: if request.auth != null;
+    }
+    
+    // Events folder - authenticated write (including anonymous for test mode), public read
+    // Kept for backward compatibility with existing events
+    match /events/{eventId}/cookies/{fileName} {
+      // Allow anyone to read images (needed for voting)
+      allow read: if true;
+      
+      // Allow authenticated users (including anonymous for test mode) to upload/delete
+      // In production, anonymous auth will be disabled, so only real admins can write
+      // This allows test users (anonymous) to upload during development/testing
+      allow write: if request.auth != null;
+    }
+    
+    // Test events folder - allow authenticated users (including anonymous) for testing
+    match /test_events/{eventId}/cookies/{fileName} {
+      // Allow anyone to read test images
+      allow read: if true;
+      
+      // Allow any authenticated user (including anonymous) to write in test mode
+      allow write: if request.auth != null;
+    }
+  }
+}
+

@@ -1,0 +1,90 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--color-text-primary, #f8fafc);
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.controls input[type="file"] {
+  padding: 0.5rem;
+  background: var(--color-bg-primary, #3a3a3a);
+  color: var(--color-text-primary, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.controls button {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-accent, #4a9eff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.visualization {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+}
+
+.imageContainer {
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+}
+
+.imageContainer img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.info {
+  background: var(--color-bg-secondary, #2a2a2a);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.info pre {
+  background: #1a1a1a;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.cookieInfo {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+

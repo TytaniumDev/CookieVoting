@@ -1,0 +1,97 @@
+---
+description: This rule provides instructions for automatically deploying Firebase Cloud   Functions after changes to function code or configuration.
+alwaysApply: false
+---
+# Agent Instructions for Firebase Functions Deployment
+
+## Overview
+
+This document provides instructions for the AI agent (Auto) to automatically
+handle Firebase Functions deployments when changes are made to function code.
+
+## When to Deploy
+
+The agent should automatically deploy Firebase Functions when:
+
+1. **Function Source Code Changes** (`functions/src/`)
+
+   - After any modification to `.ts` files in `functions/src/`
+   - Command: `npm run firebase:deploy:functions`
+
+2. **Function Dependencies Changes** (`functions/package.json`)
+
+   - After any modification to `functions/package.json` (dependencies
+     added/updated)
+   - Command: `npm run firebase:deploy:functions`
+
+3. **TypeScript Config Changes** (`functions/tsconfig.json`)
+   - After any modification to `functions/tsconfig.json`
+   - Command: `npm run firebase:deploy:functions`
+
+## Deployment Process
+
+1. **Before Deploying:**
+
+   - Verify the functions compile successfully (TypeScript compilation)
+   - Check for any syntax errors
+   - Ensure changes are intentional and correct
+
+2. **Deployment Command:**
+
+   - Use: `npm run firebase:deploy:functions`
+   - This command automatically builds and deploys the functions
+   - The script runs:
+     `npm run build --prefix functions && firebase deploy --only functions`
+
+3. **After Deploying:**
+   - Verify deployment success in output
+   - Note any warnings or errors
+   - Inform user of deployment completion
+
+## Available npm Scripts
+
+From `package.json`:
+
+- `npm run firebase:deploy:functions` - Build and deploy Firebase Functions
+- `npm run build --prefix functions` - Build functions only (TypeScript
+  compilation)
+
+## Important Notes
+
+- **Always build before deploying**: The deploy script handles this
+  automatically
+- **Use `--only functions` flag**: This deploys only functions (faster than full
+  deploy)
+- **If deployment fails**: Read error messages carefully, fix issues, and retry
+- **Version Management**: The functions use `DETECTION_FUNCTION_VERSION`
+  constant to track detection logic versions
+
+## What NOT to Deploy
+
+- ❌ **DON'T deploy** when:
+  - Only documentation files are changed (`.md` files)
+  - Only frontend code is changed (`src/` outside of functions)
+  - Only test files are changed (unless they affect function logic)
+  - Only configuration files unrelated to functions are changed
+
+## Error Handling
+
+If deployment fails:
+
+1. Read the error message carefully
+2. Check TypeScript compilation errors
+3. Fix syntax/compilation errors
+4. Retry deployment
+5. If persistent issues, inform user with specific error details
+
+## User Preferences
+
+1. **Automatic Deployments:** The agent should automatically run Firebase
+   Functions deployment commands when function code is changed, without waiting
+   for explicit user instruction.
+
+2. **Build Verification:** Always verify functions compile successfully before
+   deploying.
+
+3. **Deployment Status:** Always inform user of deployment completion and any
+   issues encountered.

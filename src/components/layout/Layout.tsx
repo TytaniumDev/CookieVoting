@@ -1,0 +1,55 @@
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { AuthButton } from '../AuthButton';
+import styles from './Layout.module.css';
+
+/**
+ * Layout - Main layout component for the application.
+ * 
+ * This component provides the overall page structure including header, main content area,
+ * and footer. It conditionally shows/hides the header and footer based on the current
+ * route (hidden on the landing page).
+ * 
+ * The layout includes:
+ * - Header with logo and authentication button
+ * - Main content area (renders child routes via Outlet)
+ * - Footer with copyright information
+ * 
+ * @example
+ * ```tsx
+ * <Layout>
+ *   <Routes>
+ *     <Route path="/" element={<Home />} />
+ *     <Route path="/admin" element={<AdminDashboard />} />
+ *   </Routes>
+ * </Layout>
+ * ```
+ * 
+ * @returns JSX element containing the application layout
+ */
+export function Layout() {
+    const location = useLocation();
+    const isLandingPage = location.pathname === '/';
+
+    return (
+        <div className={styles.container}>
+            {!isLandingPage && (
+                <header className={styles.header}>
+                    <div className={styles.headerContent}>
+                        <Link to="/" className={styles.logo}>
+                            🍪 Cookie Voting
+                        </Link>
+                        <AuthButton />
+                    </div>
+                </header>
+            )}
+            <main className={styles.main}>
+                <Outlet />
+            </main>
+            {!isLandingPage && (
+                <footer className={styles.footer}>
+                    <p>&copy; {new Date().getFullYear()} Cookie Voting</p>
+                </footer>
+            )}
+        </div>
+    );
+}
