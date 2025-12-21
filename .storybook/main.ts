@@ -13,6 +13,7 @@ const config: StorybookConfig = {
     "@storybook/addon-onboarding"
   ],
   "framework": "@storybook/react-vite",
+  "staticDirs": ["../public"],
   "docs": {
     "autodocs": "tag",
   },

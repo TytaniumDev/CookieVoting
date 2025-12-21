@@ -36,10 +36,37 @@ You need to generate a Firebase CI token for GitHub Actions to authenticate:
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
-4. Add the following secret:
+4. Add the following secrets:
+
+   **Firebase Deployment Token:**
    - **Name**: `FIREBASE_TOKEN`
    - **Value**: Paste the token from Step 1
-5. Click **Add secret**
+   - **Purpose**: Authenticates GitHub Actions with Firebase
+
+   **Firebase Configuration (Required for Build):**
+   These values are needed at build time to configure the Firebase client. Get them from Firebase Console → Project Settings → General → Your apps → Web app config.
+   
+   - **Name**: `VITE_API_KEY`
+   - **Value**: Your Firebase API key (from Firebase config)
+   
+   - **Name**: `VITE_AUTH_DOMAIN`
+   - **Value**: Your Firebase auth domain (e.g., `your-project.firebaseapp.com`)
+   
+   - **Name**: `VITE_PROJECT_ID`
+   - **Value**: Your Firebase project ID (e.g., `cookie-voting`)
+   
+   - **Name**: `VITE_STORAGE_BUCKET`
+   - **Value**: Your Firebase storage bucket (e.g., `your-project.appspot.com`)
+   
+   - **Name**: `VITE_MESSAGING_SENDER_ID`
+   - **Value**: Your Firebase messaging sender ID
+   
+   - **Name**: `VITE_APP_ID`
+   - **Value**: Your Firebase app ID
+
+5. Click **Add secret** for each one
+
+**Note:** These secrets are used during the build process to inject Firebase configuration into your app. Without them, the deployed app will fail to initialize Firebase.
 
 ## Step 3: Verify Configuration
 
@@ -109,6 +136,9 @@ If deployment fails with authentication errors:
 - Check that all dependencies are in `package.json`
 - Verify `npm ci` works locally
 - Check GitHub Actions logs for specific errors
+- **Firebase configuration errors**: Ensure all `VITE_*` secrets are set in GitHub Secrets
+  - Error: "Firebase configuration is missing required values" → Missing Firebase config secrets
+  - Error: "auth/invalid-api-key" → `VITE_API_KEY` secret is missing or incorrect
 
 ### Deployment Failures
 - Verify Firebase project ID matches in `.firebaserc`
