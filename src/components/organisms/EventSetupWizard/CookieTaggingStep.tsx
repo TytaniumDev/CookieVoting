@@ -1,7 +1,11 @@
-import React, { useRef, useEffect } from 'react';
-import { type Category, type CookieCoordinate } from '../../../lib/types';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
+import type { Category } from '../../../lib/types';
 import { CookieViewer, type DetectedCookie } from '../CookieViewer/CookieViewer';
-import { calculateSmartLabelPositions, calculateBoundsFromCookie } from '../../../lib/labelPositioning';
+import { useImageStore } from '../../../lib/stores/useImageStore';
+import { useCookieStore } from '../../../lib/stores/useCookieStore';
+import { watchImageDetectionResults } from '../../../lib/firestore';
+import { functions } from '../../../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
 import styles from './EventSetupWizard.module.css';
 
 interface Baker {
@@ -10,44 +14,144 @@ interface Baker {
 }
 
 interface Props {
+  eventId: string;
   currentCategory: Category;
   categories: Category[];
   currentCategoryIndex: number;
   onCategoryChange: (index: number) => void;
+  // Passing bakers as props since we need to select them, 
+  // and EventSetupWizard already fetches them. 
+  // Alternatively, we could fetch from store here too.
   bakers: Baker[];
-  currentBaker: Baker | null;
-  taggedCookies: Record<string, Record<string, CookieCoordinate[]>>;
-  detectedCookies: DetectedCookie[];
-  loadingDetection: boolean;
-  onCookieTag: (cookie: DetectedCookie, bakerId: string) => void;
-  onCookieRemove: (cookie: CookieCoordinate) => void;
-  onAutoDetect: () => Promise<void>;
   onComplete: () => void;
-  categoryCompletion: Record<string, boolean>;
-  error?: string | null;
-  detecting?: boolean;
 }
 
 export function CookieTaggingStep({
+  eventId,
   currentCategory,
   categories,
   currentCategoryIndex,
   onCategoryChange,
   bakers,
-  taggedCookies,
-  detectedCookies,
-  loadingDetection,
-  onCookieTag,
-  onCookieRemove,
-  onAutoDetect,
   onComplete,
-  categoryCompletion,
-  detecting
 }: Props) {
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Store Access
+  const { images, getDetectionData, watchImage } = useImageStore();
+  const { cookies, createCookie, deleteCookie } = useCookieStore();
+
+  // Local UI State
   const [showBakerSelect, setShowBakerSelect] = React.useState(false);
   const [selectedDetectedCookie, setSelectedDetectedCookie] = React.useState<DetectedCookie | null>(null);
   const [bakerSelectPosition, setBakerSelectPosition] = React.useState<{ x: number, y: number } | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [liveDetections, setLiveDetections] = useState<DetectedCookie[] | null>(null);
+
+  // Derived Data
+  // Find the image entity matching the current category URL
+  const imageEntity = useMemo(() => 
+      Object.values(images).find(img => img.url === currentCategory.imageUrl), 
+  [images, currentCategory.imageUrl]);
+
+  // If image entity exists, get detections from store. 
+  // If not, we'll try to fetch them manually (legacy support).
+  const [manualDetections, setManualDetections] = React.useState<DetectedCookie[]>([]);
+  
+  const detectedCookies = useMemo(() => {
+    // 1. Prefer live detections (from image_detections collection) if available
+    if (liveDetections) {
+      return liveDetections;
+    }
+    // 2. Fallback to ImageEntity from 'images' collection
+    if (imageEntity) {
+        return getDetectionData(imageEntity.id) || [];
+    }
+    // 3. Fallback to manually fetched legacy detections
+    return manualDetections;
+  }, [liveDetections, imageEntity, getDetectionData, manualDetections]);
+  
+  // Watch for live detection updates (from image_detections collection)
+  // This listens to the separate detection collection which the cloud function writes to
+  useEffect(() => {
+    if (currentCategory.imageUrl) {
+      const unsub = watchImageDetectionResults(currentCategory.imageUrl, (results) => {
+        if (results) {
+          setLiveDetections(results as DetectedCookie[]);
+        } else {
+          setLiveDetections(null);
+        }
+      });
+      return unsub;
+    }
+  }, [currentCategory.imageUrl]);
+
+  // Setup listener for detections if image exists (e.g. they arrive late)
+  useEffect(() => {
+      if (imageEntity) {
+          return watchImage(imageEntity.id);
+      } else if (currentCategory.imageUrl) {
+          // Legacy Fallback: Try to fetch detections directly by URL
+          // This handles cases where the ImageEntity doesn't exist in the 'images' collection
+          import('../../../lib/firestore').then(({ getImageDetectionResults }) => {
+              getImageDetectionResults(currentCategory.imageUrl).then(results => {
+                  if (results) {
+                      setManualDetections(results as DetectedCookie[]);
+                  }
+              });
+          });
+      }
+  }, [imageEntity?.id, currentCategory.imageUrl]); // Only re-sub if ID changes
+
+  // Filter cookies for this category
+  const taggedCookies = useMemo(() => 
+      cookies.filter(c => c.categoryId === currentCategory.id), 
+  [cookies, currentCategory.id]);
+
+  // Calculate completion
+  const isComplete = taggedCookies.length > 0;
+
+  // Merged detections state - moved out of render and memoized for stability
+  const mergedDetections = useMemo(() => {
+    // 1. Map detected cookies (assign numbers if tagged)
+    const mappedDetections = detectedCookies.map(d => {
+      // Find matching tag based on proximity
+      const tagged = taggedCookies.find(t => {
+         const dist = Math.sqrt(Math.pow(t.x - d.x, 2) + Math.pow(t.y - d.y, 2));
+         return dist < 2; // Tolerance
+      });
+      // Attach the full tag object to the detection wrapper for easy access
+      return { ...d, _tagged: tagged };
+    });
+    
+    // 2. Add manual tags that don't match any AI detection
+    const manualTags = taggedCookies.filter(t => {
+       return !detectedCookies.some(d => {
+          const dist = Math.sqrt(Math.pow(t.x - d.x, 2) + Math.pow(t.y - d.y, 2));
+          return dist < 2;
+       });
+    }).map(t => ({
+        x: t.x,
+        y: t.y,
+        width: 10, // Default size for manual tags
+        height: 10,
+        confidence: 1.0,
+        _tagged: t // Ensure manual tags also have the _tagged property
+    } as any)); 
+
+    return [...mappedDetections, ...manualTags];
+  }, [detectedCookies, taggedCookies]);
+
+  // Determine selected index for the Viewer prop
+  const selectedViewerIndex = useMemo(() => {
+      if (!selectedDetectedCookie) return undefined;
+      return mergedDetections.indexOf(selectedDetectedCookie);
+  }, [selectedDetectedCookie, mergedDetections]);
+
+  // Derived baker ID for the currently selected cookie (if any)
+  const currentBakerId = (selectedDetectedCookie as any)?._tagged?.bakerId;
+
+  // --- Handlers ---
 
   // Close baker selection when clicking outside
   useEffect(() => {
@@ -73,32 +177,50 @@ export function CookieTaggingStep({
     setShowBakerSelect(true);
   };
 
-  const handleBakerSelect = (bakerId: string) => {
-    if (selectedDetectedCookie) {
-      onCookieTag(selectedDetectedCookie, bakerId);
+  const handleRegenerateDetections = async () => {
+    if (!currentCategory.imageUrl || isRegenerating) return;
+    
+    setIsRegenerating(true);
+    try {
+      const detectCookiesWithGemini = httpsCallable(functions, 'detectCookiesWithGemini');
+      await detectCookiesWithGemini({ imageUrl: currentCategory.imageUrl });
+      // The listener on image_detections will pick up the changes automatically
+    } catch (error) {
+      console.error('Error regenerating detections:', error);
+      alert('Failed to regenerate detections. Please try again.');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+    // We need an image ID. If we have an entity, use it.
+    // If NOT (legacy/test event), use a placeholder based on category ID to allow testing to proceed.
+    const effectiveImageId = imageEntity?.id || `legacy-image-${currentCategory.id}`;
+
+    if (selectedDetectedCookie && (imageEntity || effectiveImageId)) {
+      // Create a "Detection ID" hash if one doesn't exist to strongly link them
+      const pseudoId = `${selectedDetectedCookie.x.toFixed(2)}_${selectedDetectedCookie.y.toFixed(2)}`;
+      
+      await createCookie(
+          eventId,
+          currentCategory.id,
+          effectiveImageId,
+          bakerId,
+          pseudoId, // Use pseudo-ID as detectionId
+          selectedDetectedCookie.x,
+          selectedDetectedCookie.y,
+          undefined
+      );
+    } else {
+        console.warn('Cannot assign baker: missing selectedCookie');
     }
     setShowBakerSelect(false);
     setSelectedDetectedCookie(null);
     setBakerSelectPosition(null);
   };
 
-  // Helper to extract file identifier from URL
-  const generateDetectedCookieId = (imageUrl: string, cookie: { x: number; y: number }): string => {
-    const extractFileName = (url: string): string => {
-      try {
-        const uuidMatch = url.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
-        if (uuidMatch) return uuidMatch[1];
-        const urlObj = new URL(url.split('?')[0]);
-        const pathParts = urlObj.pathname.split('/');
-        return pathParts[pathParts.length - 1].split('.')[0];
-      } catch {
-        return url;
-      }
-    };
-    const fileId = extractFileName(imageUrl);
-    const x = Math.round(cookie.x * 10) / 10;
-    const y = Math.round(cookie.y * 10) / 10;
-    return `detected_${fileId}_${x}_${y}`;
+  const handleRemoveCookie = async (cookieId: string) => {
+      await deleteCookie(eventId, cookieId);
   };
 
   return (
@@ -115,15 +237,16 @@ export function CookieTaggingStep({
           <h3>{currentCategory.name}</h3>
           <div className={styles.progressBar}>
             {categories.map((cat, idx) => {
-              const isComplete = categoryCompletion[cat.id] === true;
+               // Check if OTHER categories are complete by filtering store
+               const catCookies = allCookiesForKeyCheck(cookies, cat.id);
+               const isCatComplete = catCookies.length > 0;
               return (
                 <button
                   type="button"
                   key={cat.id}
-                  className={`${styles.progressDot} ${idx === currentCategoryIndex ? styles.active : ''} ${isComplete ? styles.tagged : ''}`}
+                  className={`${styles.progressDot} ${idx === currentCategoryIndex ? styles.active : ''} ${isCatComplete ? styles.tagged : ''}`}
                   title={cat.name}
                   onClick={() => onCategoryChange(idx)}
-                  aria-label={`Go to category: ${cat.name}`}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                 />
               );
@@ -141,146 +264,100 @@ export function CookieTaggingStep({
 
       <div className={styles.taggingWorkspace}>
         <div className={styles.imageContainer} ref={imageContainerRef}>
-          {loadingDetection && (
+          {(!imageEntity && !currentCategory.imageUrl) && (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', zIndex: 20 }}>
-              Loading detection...
+               Loading image data...
             </div>
           )}
           
           <CookieViewer
             imageUrl={currentCategory.imageUrl}
-            detectedCookies={detectedCookies}
-            onCookieClick={(cookie, _, e) => {
-              const allTaggedForCategory = Object.values(taggedCookies[currentCategory.id] || {}).flat();
-              const cookieId = cookie.id || generateDetectedCookieId(currentCategory.imageUrl, cookie);
-              const isTagged = allTaggedForCategory.some(tagged => {
-                if (tagged.detectedCookieId === cookieId) return true;
-                if (tagged.detectedCookieId) return false;
-                const distance = Math.sqrt(Math.pow(tagged.x - cookie.x, 2) + Math.pow(tagged.y - cookie.y, 2));
-                return distance < 6;
-              });
 
-              if (isTagged) {
-                setSelectedDetectedCookie(cookie);
-                setBakerSelectPosition({ x: e.clientX, y: e.clientY });
-                setShowBakerSelect(true);
-              } else {
-                handlePolygonClick(e, cookie);
-              }
+
+
+            detectedCookies={mergedDetections}
+            selectedIndex={selectedViewerIndex} // Highlight the selected cookie
+            
+            // Handle clicks
+            onCookieClick={(cookie: any, _, e) => {
+               // 'cookie' is the object from mergedDetections
+               setSelectedDetectedCookie(cookie);
+               setBakerSelectPosition({ x: e.clientX, y: e.clientY });
+               setShowBakerSelect(true);
             }}
-            className={styles.taggingImage}
+
+            // Render Baker Name under cookie with click handler to re-open menu
+            renderBottom={({ detected }: any) => {
+                if (detected._tagged) {
+                   const baker = bakers.find(b => b.id === detected._tagged.bakerId);
+                   return (
+                       <div 
+                            className={styles.bakerLabel}
+                            style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDetectedCookie(detected);
+                                setBakerSelectPosition({ x: e.clientX, y: e.clientY });
+                                setShowBakerSelect(true);
+                            }}
+                       >
+                           {baker ? baker.name : detected._tagged.makerName || 'Unknown'}
+                       </div>
+                   );
+                }
+                return null;
+            }}
+
+            imageClassName={styles.taggingImage}
             borderColor="transparent"
+            disableZoom={true} // User disabled zoom specifically for tagging
           />
-
-          {/* Render markers for tagged cookies with smart label positions */}
-          {(() => {
-            const categoryCookies: Array<{ cookie: CookieCoordinate; baker: Baker | undefined }> = [];
-            Object.entries(taggedCookies[currentCategory.id] || {}).forEach(([bakerId, cookies]) => {
-              const baker = bakers.find(b => b.id === bakerId);
-              cookies.forEach(cookie => categoryCookies.push({ cookie, baker }));
-            });
-
-            // Sort top-to-bottom, left-to-right
-            const sortedCookies = categoryCookies.sort((a, b) => {
-              const yDiff = a.cookie.y - b.cookie.y;
-              if (Math.abs(yDiff) < 15) return a.cookie.x - b.cookie.x;
-              return yDiff;
-            });
-
-            const cookiesWithBounds = sortedCookies.map(({ cookie, baker }) => {
-              const matchingDetected = detectedCookies.find(d => {
-                const distance = Math.sqrt(Math.pow(d.x - cookie.x, 2) + Math.pow(d.y - cookie.y, 2));
-                return distance < 5;
-              });
-              const bounds = calculateBoundsFromCookie(cookie, matchingDetected || null);
-              return { cookie, baker, bounds };
-            });
-
-            const labelPositions = calculateSmartLabelPositions(cookiesWithBounds);
-
-            return cookiesWithBounds.map(({ cookie, baker }, index) => {
-              const labelPos = labelPositions[index];
-              return (
-                <div
-                  key={cookie.id}
-                  className={styles.cookieMarker}
-                  style={{
-                    left: `${cookie.x}%`,
-                    top: `${cookie.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                    border: '2px solid white'
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const matchingDetected = detectedCookies.find(d => {
-                      const distance = Math.sqrt(Math.pow(d.x - cookie.x, 2) + Math.pow(d.y - cookie.y, 2));
-                      return distance < 6;
-                    });
-                    if (matchingDetected) handlePolygonClick(e, matchingDetected);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.stopPropagation();
-                      const matchingDetected = detectedCookies.find(d => {
-                        const distance = Math.sqrt(Math.pow(d.x - cookie.x, 2) + Math.pow(d.y - cookie.y, 2));
-                        return distance < 6;
-                      });
-                      if (matchingDetected) handlePolygonClick(e as any, matchingDetected);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span className={styles.cookieNumber}>{index + 1}</span>
-                  <div 
-                    className={`${styles.cookieLabel} ${styles[labelPos]}`}
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    {baker?.name || 'Unknown Baker'}
-                  </div>
-                </div>
-              );
-            });
-          })()}
 
           {showBakerSelect && bakerSelectPosition && (
             <div
-              className={styles.bakerSelect}
+              className={styles.bakerDropdown}
               style={{
                 position: 'fixed',
-                left: bakerSelectPosition.x,
+                left: bakerSelectPosition.x + 20, // Offset to not block click
                 top: bakerSelectPosition.y,
-                zIndex: 1000
+                zIndex: 1000,
+                // Ensure it doesn't go off screen
+                maxWidth: '300px'
               }}
             >
-              <div className={styles.bakerSelectHeader}>
-                Assign Baker
-                <button onClick={() => setShowBakerSelect(false)}>×</button>
+              <div className={styles.bakerDropdownHeader}>
+                <span>Assign Baker</span>
+                <button onClick={() => setShowBakerSelect(false)} aria-label="Close">×</button>
               </div>
-              <div className={styles.bakerSelectOptions}>
-                {bakers.map(b => (
-                  <button
-                    key={b.id}
-                    className={styles.bakerOption}
-                    onClick={() => handleBakerSelect(b.id)}
-                  >
-                    {b.name}
-                  </button>
-                ))}
-                <button
-                  className={styles.removeOption}
-                  onClick={() => {
-                    const allTagged = Object.values(taggedCookies[currentCategory.id] || {}).flat();
-                    const cookieId = selectedDetectedCookie?.id;
-                    const tagged = allTagged.find(t => t.detectedCookieId === cookieId);
-                    if (tagged) onCookieRemove(tagged);
-                    setShowBakerSelect(false);
-                  }}
-                >
-                  Remove Tag
-                </button>
+              <div className={styles.bakerDropdownOptions}>
+                {bakers.map(b => {
+                   const isSelected = currentBakerId === b.id;
+                   return (
+                    <button
+                        key={b.id}
+                        className={`${styles.bakerOption} ${isSelected ? styles.selected : ''}`}
+                        onClick={() => handleBakerSelect(b.id)}
+                    >
+                        {b.name}
+                        {isSelected && <span style={{ marginLeft: 'auto' }}>✓</span>}
+                    </button>
+                   );
+                })}
               </div>
+              
+              {/* If this cookie is already tagged, show option to remove tag */}
+              {selectedDetectedCookie && (selectedDetectedCookie as any)._tagged && (
+                   <button
+                   className={styles.removeOption}
+                   onClick={() => {
+                        const tagged = (selectedDetectedCookie as any)._tagged;
+                        if (tagged) handleRemoveCookie(tagged.id);
+                        setShowBakerSelect(false);
+                   }}
+                 >
+                   Remove Assignment
+                 </button> 
+              )}
             </div>
           )}
         </div>
@@ -290,12 +367,12 @@ export function CookieTaggingStep({
         <button onClick={() => onCategoryChange(Math.max(0, currentCategoryIndex - 1))} className={styles.buttonSecondary}>
           ← Back
         </button>
-        <button
-          onClick={onAutoDetect}
-          className={styles.buttonSecondary}
-          disabled={detecting}
+        <button 
+           onClick={handleRegenerateDetections} 
+           className={styles.buttonSecondary}
+           disabled={isRegenerating || !currentCategory.imageUrl}
         >
-          {detecting ? 'Detecting...' : '✨ Auto-Detect All'}
+          {isRegenerating ? 'Scanning...' : 'Regenerate detections'}
         </button>
         <button onClick={onComplete} className={styles.buttonPrimary}>
           Finish & Save
@@ -303,4 +380,9 @@ export function CookieTaggingStep({
       </div>
     </div>
   );
+}
+
+// Helper to avoid circular diff in render
+function allCookiesForKeyCheck(cookies: any[], catId: string) {
+    return cookies.filter(c => c.categoryId === catId);
 }

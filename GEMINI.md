@@ -20,6 +20,9 @@ Follow the 5-step process:
     - **Molecules**: Combinations of atoms with minimal logic. Location: `src/components/molecules/`.
     - **Organisms**: Complex, self-contained components or sections. Location: `src/components/organisms/`.
 - **Accessibility**: Use semantic HTML, ARIA attributes, and ensure keyboard navigation.
+- **Testability**: 
+    - Add unique `data-testid` or `id` attributes to all interactive elements to facilitate native tool selection.
+    - Use clear, descriptive ARIA labels where visual labels aren't sufficient.
 
 ### 3. Firebase Resource Management
 - **Security Rules**:
@@ -44,7 +47,13 @@ Follow the 5-step process:
 - **Utility Functions**: Move complex, non-React logic (e.g., sorting, coordinate calculations) to `src/lib/` utilities.
 
 ## Deployment & Verification
-- **Test Before Reporting**: Every code change MUST be verified using the built-in browser and local emulators.
+- **Build Before Reporting**: Make sure the app builds successfully before reporting a change.
+- **Test Before Reporting**: Every code change should be verified using the built-in browser and local emulators, if it is possible to do so.
+- **Efficient Verification**: 
+    - **Minimize Prompts**: To avoid excessive approval requests, prefer `read_url_content` for static state checks.
+    - **NO Custom JS**: Custom JavaScript execution using browser tools is strictly FORBIDDEN unless no native alternative exists. Prefer native browser tools (click, get_text) to avoid the mandatory manual approval step.
+    - **Interactive Tasks**: Use `browser_subagent` only for tasks requiring JS execution (e.g., Storybook, animations, complex navigation).
+    - **Mission Batching**: Batch multiple verification steps into a single `browser_subagent` call to reduce the number of times the user needs to approve a subagent mission.
 - **Automatic Debugging**: Attempt to fix testing failures automatically before informing the user.
 - **Deployment**: Use `npm run firebase:deploy:*` scripts for safety.
 

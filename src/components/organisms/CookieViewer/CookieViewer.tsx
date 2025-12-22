@@ -1,4 +1,5 @@
 import React from 'react';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import type { DetectedCookie } from '../../../lib/cookieDetectionGemini';
 import styles from './CookieViewer.module.css';
 
@@ -28,6 +29,8 @@ interface Props {
   onCookieClick?: (cookie: DetectedCookie, index: number, event: React.MouseEvent) => void;
   /** Optional CSS class name for the container */
   className?: string;
+  /** Optional CSS class name for the image element */
+  imageClassName?: string;
   /** Border/stroke color for cookie overlays (default: transparent) */
   borderColor?: string;
   /** Custom component renderer for top-left overlay position */
@@ -40,8 +43,10 @@ interface Props {
   cookieNumbers?: (number | undefined)[];
   /** Currently selected cookie number (for highlighting) */
   selectedCookieNumber?: number;
-  /** Callback when a numbered cookie marker is clicked */
-  onSelectCookie?: (cookieNumber: number) => void;
+  /** Index of the currently selected cookie (for styling specific detections without numbers) */
+  selectedIndex?: number;
+  /** Optional flag to disable zoom and pan functionality */
+  disableZoom?: boolean;
 }
 
 /**
@@ -186,13 +191,16 @@ export function CookieViewer({
   detectedCookies,
   onCookieClick,
   className,
+  imageClassName,
   borderColor = 'transparent',
   renderTopLeft,
   renderBottom,
   renderCenter,
   cookieNumbers,
   selectedCookieNumber,
-  onSelectCookie
+  selectedIndex,
+  onSelectCookie,
+  disableZoom = false
 }: Props) {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
@@ -234,177 +242,233 @@ export function CookieViewer({
     return false;
   };
 
+  // State for zoom level to handle "full screen" behavior
+  const [isZoomed, setIsZoomed] = React.useState(false);
+
   return (
-    <div className={`${styles.container} ${className || ''}`}>
-      <div className={styles.imageWrapper}>
-        <img
-          src={imageUrl}
-          alt="Cookie detection"
-          className={styles.image}
-          style={{ pointerEvents: 'none' }}
-        />
-        {detectedCookies.map((detected, index) => {
-          const bounds = calculateCookieBounds(detected);
-          const polygon = detected.polygon;
-          const hasPolygon = polygon && polygon.length >= 3;
-          const selected = isSelected(index);
-          const cookieNumber = cookieNumbers?.[index];
-          const hasNumber = cookieNumber !== undefined;
+    <div
+      className={`${styles.container} ${className || ''} ${isZoomed ? styles.zoomedContainer : ''}`}
+      style={isZoomed ? { zIndex: 100 } : undefined} // Ensure z-index boost when zoomed
+    >
+      <TransformWrapper
+        initialScale={1}
+        minScale={1}
+        maxScale={3}
+        wheel={{ step: 0.1 }}
+        doubleClick={{ mode: 'reset' }}
+        smooth={true}
+        disabled={disableZoom}
+        onZoom={(ref) => {
+          setIsZoomed(ref.state.scale > 1.01);
+        }}
+        onTransformed={(ref) => {
+          setIsZoomed(ref.state.scale > 1.01);
+        }}
+      >
+        <TransformComponent
+          wrapperStyle={{ width: "100%", height: "100%" }}
+          contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <div className={styles.imageWrapper}
+            style={{
+              // Ensure the wrapper fits within the transform component but maintains aspect ratio
+              maxWidth: '100%',
+              maxHeight: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt="Cookie detection"
+              className={`${styles.image} ${imageClassName || ''}`}
+              style={{ pointerEvents: 'none', maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
+            />
+            {detectedCookies.map((detected, index) => {
+              const bounds = calculateCookieBounds(detected);
+              const polygon = detected.polygon;
+              const hasPolygon = polygon && polygon.length >= 3;
+              const selected = isSelected(index);
+              const cookieNumber = cookieNumbers?.[index];
+              const hasNumber = cookieNumber !== undefined;
 
-          // Create a stable key based on cookie position
-          const cookieKey = `cookie-${Math.round(detected.x * 100)}-${Math.round(detected.y * 100)}-${index}`;
+              // Create a stable key based on cookie position
+              const cookieKey = `cookie-${Math.round(detected.x * 100)}-${Math.round(detected.y * 100)}-${index}`;
 
-          return (
-            <React.Fragment key={cookieKey}>
-              {hasPolygon && polygon ? (
-                <svg
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    pointerEvents: 'none',
-                    zIndex: 15,
-                  }}
-                >
-                  <path
-                    d={smoothPolygon(polygon, 5)}
-                    fill={hoveredIndex === index ? "rgba(33, 150, 243, 0.3)" : "rgba(33, 150, 243, 0)"}
-                    stroke={borderColor}
-                    strokeWidth="0.5"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                    style={{
-                      cursor: (hasNumber && onSelectCookie) || (!hasNumber && onCookieClick) ? 'pointer' : 'default',
-                      pointerEvents: 'all',
-                      transition: 'fill 0.2s ease',
-                    }}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    onClick={(e) => handleCookieClick(detected, index, e)}
-                    onKeyDown={(e) => handleCookieKeyDown(detected, index, e)}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={hasNumber ? `Cookie ${cookieNumber}` : `Cookie ${index + 1}`}
-                  />
-                  <title>
-                    {hasNumber
-                      ? `Cookie ${cookieNumber}`
-                      : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`}
-                  </title>
-                </svg>
-              ) : (
-                <div
-                  className={styles.boundingBox}
-                  style={{
-                    left: `${detected.x - detected.width / 2}%`,
-                    top: `${detected.y - detected.height / 2}%`,
-                    width: `${detected.width}%`,
-                    height: `${detected.height}%`,
-                    backgroundColor: hoveredIndex === index ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0)',
-                    borderColor: borderColor,
-                    cursor: (hasNumber && onSelectCookie) || (!hasNumber && onCookieClick) ? 'pointer' : 'default',
-                    transition: 'background-color 0.2s ease',
-                    pointerEvents: 'all',
-                    zIndex: 15,
-                  }}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  onClick={(e) => handleCookieClick(detected, index, e)}
-                  onKeyDown={(e) => handleCookieKeyDown(detected, index, e)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={
-                    hasNumber
-                      ? `Cookie ${cookieNumber}`
-                      : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`
-                  }
-                  title={
-                    hasNumber
-                      ? `Cookie ${cookieNumber}`
-                      : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`
-                  }
-                />
-              )}
+              const isHovered = hoveredIndex === index;
+              const isSelectedByIndex = selectedIndex === index;
 
-              {/* Numbered marker */}
-              {hasNumber && (
-                <button
-                  className={`${styles.marker} ${selected ? styles.selected : ''}`}
-                  style={{
-                    left: `${detected.x}%`,
-                    top: `${detected.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSelectCookie) {
-                      onSelectCookie(cookieNumber);
-                    }
-                  }}
-                >
-                  <span className={styles.markerNumber}>{cookieNumber}</span>
-                </button>
-              )}
+              // Determine stroke color and width based on selection
+              const effectiveBorderColor = isSelectedByIndex ? 'rgba(255, 255, 255, 0.8)' : borderColor;
+              const effectiveStrokeWidth = isSelectedByIndex ? "2" : "0.5";
+              const effectiveFill = (isHovered || isSelectedByIndex) ? "rgba(33, 150, 243, 0.3)" : "rgba(33, 150, 243, 0)";
 
-              {/* Custom overlays */}
-              {(() => {
-                const overlayProps: OverlayRenderProps = { detected, index, bounds };
-                return (
-                  <>
-                    {renderTopLeft && (
-                      <div
+              return (
+                <React.Fragment key={cookieKey}>
+                  {/* SVG Overlay for Polygon */}
+                  {hasPolygon && polygon ? (
+                    <svg
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        zIndex: 15,
+                      }}
+                    >
+                      <path
+                        d={smoothPolygon(polygon, 5)}
+                        fill={effectiveFill}
+                        stroke={effectiveBorderColor}
+                        strokeWidth={effectiveStrokeWidth}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
                         style={{
-                          position: 'absolute',
-                          left: `${Math.max(0, bounds.topLeftX)}%`,
-                          top: `${Math.max(0, bounds.topLeftY)}%`,
-                          zIndex: 20,
-                          pointerEvents: 'none',
+                          cursor: (hasNumber && onSelectCookie) || (!hasNumber && onCookieClick) ? 'pointer' : 'default',
+                          pointerEvents: 'all',
+                          transition: 'fill 0.2s ease',
                         }}
-                      >
-                        {renderTopLeft(overlayProps)}
-                      </div>
-                    )}
-
-                    {renderCenter && (
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        // Use onTouchEnd to simulate click on touch devices during zoom if needed, 
+                        // but onClick usually passes through TransformWrapper.
+                        onClick={(e) => handleCookieClick(detected, index, e)}
+                        // Prevent zoom on double tap on a cookie if we want that (optional)
+                        onDoubleClick={(e) => e.stopPropagation()} 
+                        onKeyDown={(e) => handleCookieKeyDown(detected, index, e)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={hasNumber ? `Cookie ${cookieNumber}` : `Cookie ${index + 1}`}
+                      />
+                      <title>
+                        {hasNumber
+                          ? `Cookie ${cookieNumber}`
+                          : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`}
+                      </title>
+                    </svg>
+                  ) : (
+                      /* Fallback Rect */
                       <div
+                        className={styles.boundingBox}
                         style={{
-                          position: 'absolute',
-                          left: `${bounds.centerX}%`,
-                          top: `${bounds.centerY}%`,
-                          zIndex: 19,
-                          pointerEvents: 'none',
-                          transform: 'translate(-50%, -50%)',
+                          left: `${detected.x - detected.width / 2}%`,
+                          top: `${detected.y - detected.height / 2}%`,
+                          width: `${detected.width}%`,
+                          height: `${detected.height}%`,
+                          backgroundColor: effectiveFill,
+                          borderColor: effectiveBorderColor,
+                          borderWidth: isSelectedByIndex ? '2px' : '0.5px',
+                          cursor: (hasNumber && onSelectCookie) || (!hasNumber && onCookieClick) ? 'pointer' : 'default',
+                          transition: 'background-color 0.2s ease',
+                          pointerEvents: 'all',
+                          zIndex: 15,
                         }}
-                      >
-                        {renderCenter(overlayProps)}
-                      </div>
-                    )}
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={(e) => handleCookieClick(detected, index, e)}
+                        onDoubleClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => handleCookieKeyDown(detected, index, e)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={
+                        hasNumber
+                          ? `Cookie ${cookieNumber}`
+                          : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`
+                      }
+                      title={
+                        hasNumber
+                          ? `Cookie ${cookieNumber}`
+                          : `Cookie ${index + 1}: ${(detected.confidence * 100).toFixed(1)}% confidence`
+                      }
+                    />
+                  )}
 
-                    {renderBottom && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          left: `${bounds.centerX}%`,
-                          top: `${Math.min(100, bounds.bottomY + 1)}%`,
-                          zIndex: 20,
-                          pointerEvents: 'none',
-                          transform: 'translate(-50%, 0)',
-                        }}
-                      >
-                        {renderBottom(overlayProps)}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </React.Fragment>
-          );
-        })}
-      </div>
+                  {/* Marker Button */}
+                  {hasNumber && (
+                    <button
+                      className={`${styles.marker} ${selected ? styles.selected : ''}`}
+                      style={{
+                        left: `${detected.x}%`,
+                        top: `${detected.y}%`,
+                        // Scale marker inverse to zoom so it stays roughly same size visually?
+                        // Or let it zoom. Let it zoom is usually better for "locating".
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onSelectCookie) {
+                          onSelectCookie(cookieNumber);
+                        }
+                      }}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                    >
+                      <span className={styles.markerNumber}>{cookieNumber}</span>
+                    </button>
+                  )}
+
+                  {/* Custom Overlays */}
+                  {(() => {
+                    const overlayProps: OverlayRenderProps = { detected, index, bounds };
+                    return (
+                      <>
+                        {renderTopLeft && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `${Math.max(0, bounds.topLeftX)}%`,
+                              top: `${Math.max(0, bounds.topLeftY)}%`,
+                              zIndex: 20,
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            {renderTopLeft(overlayProps)}
+                          </div>
+                        )}
+
+                        {renderCenter && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `${bounds.centerX}%`,
+                              top: `${bounds.centerY}%`,
+                              zIndex: 19,
+                              pointerEvents: 'none',
+                              transform: 'translate(-50%, -50%)',
+                            }}
+                          >
+                            {renderCenter(overlayProps)}
+                          </div>
+                        )}
+
+                        {renderBottom && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `${bounds.centerX}%`,
+                              top: `${Math.min(100, bounds.bottomY + 1)}%`,
+                              zIndex: 20,
+                              pointerEvents: 'none',
+                              transform: 'translate(-50%, 0)',
+                            }}
+                          >
+                            {renderBottom(overlayProps)}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </TransformComponent>
+        {/* Controls could go here if we wanted manual zoom buttons */}
+      </TransformWrapper>
     </div>
   );
 }

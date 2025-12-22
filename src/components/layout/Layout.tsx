@@ -31,6 +31,8 @@ export function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const isLandingPage = location.pathname === '/';
+    // Hide header/footer on voting pages for immersive experience
+    const isVotingPage = location.pathname.startsWith('/vote/');
     const { user, loading, signIn, signOut } = useAuth();
 
     const handleSignOut = async () => {
@@ -40,7 +42,7 @@ export function Layout() {
 
     return (
         <div className={styles.container}>
-            {!isLandingPage && (
+            {!isLandingPage && !isVotingPage && (
                 <header className={styles.header}>
                     <div className={styles.headerContent}>
                         <Link to="/" className={styles.logo}>
@@ -55,10 +57,10 @@ export function Layout() {
                     </div>
                 </header>
             )}
-            <main className={styles.main}>
+            <main className={isVotingPage ? styles.votingMain : styles.main}>
                 <Outlet />
             </main>
-            {!isLandingPage && (
+            {!isLandingPage && !isVotingPage && (
                 <footer className={styles.footer}>
                     <p>&copy; {new Date().getFullYear()} Cookie Voting</p>
                 </footer>

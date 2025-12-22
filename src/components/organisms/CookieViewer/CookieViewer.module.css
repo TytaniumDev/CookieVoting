@@ -2,21 +2,34 @@
 .container {
   position: relative;
   width: 100%;
-  cursor: default;
-  pointer-events: auto;
+  height: 100%;
+    overflow: hidden;
+  }
+  
+  .zoomedContainer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background-color: #000000;
+    z-index: 9999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Image wrapper */
 .imageWrapper {
   position: relative;
-  width: 100%;
+  width: fit-content;
+    max-width: 100%;
   display: block;
   pointer-events: auto;
 }
 
 .image {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
   max-width: 100%;
   position: relative;
@@ -74,6 +87,21 @@
   text-shadow: 0 1px 2px black;
 }
 
+/* Remove default focus outline and add custom focus style */
+.marker:focus {
+  outline: none;
+}
+
+.marker:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* SVG Path styles (note: these are inline styles in the component but we can target them if we add a class) */
+/* Ideally we apply this globally or specific to the container's paths */
+svg:focus,
+path:focus {
+  outline: none;
+}
 
 /* Mobile improvements */
 @media (max-width: 768px) {

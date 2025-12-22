@@ -41,7 +41,6 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
   async (request) => {
     console.log('[FirebaseFunction] detectCookiesWithGemini called');
     console.log('[FirebaseFunction] Request auth:', request.auth ? `User: ${request.auth.uid}` : 'No auth');
-    console.log('[FirebaseFunction] Request data:', JSON.stringify(request.data));
     
     // Verify authentication
     if (!request.auth) {
@@ -63,14 +62,8 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       );
     }
 
-    // Get API key from secret (with fallback to env var for local emulator)
-    // In production, the secret is available via process.env.GEMINI_API_KEY
-    // In emulator, we use GEMINI_API_KEY_LOCAL from .env file to avoid conflicts
-    // The secret name is GEMINI_API_KEY, but for local dev we use a different env var
+    // Get API key from secret
     const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
-    console.log('[FirebaseFunction] API key available:', apiKey ? 'Yes (length: ' + apiKey.length + ')' : 'No');
-    console.log('[FirebaseFunction] GEMINI_API_KEY env var:', process.env.GEMINI_API_KEY ? 'Set' : 'Not set');
-    console.log('[FirebaseFunction] GEMINI_API_KEY_LOCAL env var:', process.env.GEMINI_API_KEY_LOCAL ? 'Set' : 'Not set');
 
     if (!apiKey) {
       console.error('[FirebaseFunction] Gemini API key not configured');
@@ -80,11 +73,80 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       );
     }
 
+    const db = admin.firestore();
+    const filePath = extractFilePathFromUrl(imageUrl);
+    let detectionRef: admin.firestore.DocumentReference | null = null;
+
+    // Initialize progress if possible
+    if (filePath) {
+      const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
+      detectionRef = db.collection('image_detections').doc(detectionDocId);
+      try {
+        await detectionRef.set({
+          filePath,
+          imageUrl,
+          status: 'processing',
+          progress: 'Initializing...',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Failed to set initial progress:', e);
+      }
+    }
+
     try {
       console.log('[FirebaseFunction] Calling detectCookiesInImage with imageUrl:', imageUrl);
+
+      // Update progress: Downloading
+      if (detectionRef) {
+        await detectionRef.set({ progress: 'Downloading image...' }, { merge: true }).catch(console.warn);
+      }
+
       // Use the shared detection function
+      // Note: We can't easily inject progress updates *inside* detectCookiesInImage without refactoring it to accept a callback
+      // For now, we update before/after major steps
       const detectedCookies = await detectCookiesInImage(imageUrl, apiKey);
+
+      // Update progress: Saving
+      if (detectionRef) {
+        await detectionRef.set({ progress: 'Finalizing results...' }, { merge: true }).catch(console.warn);
+      }
+
       console.log('[FirebaseFunction] Detection completed. Found', detectedCookies.length, 'cookies');
+
+      // Save to Firestore 'image_detections' collection
+      try {
+        if (detectionRef) {
+          console.log('[FirebaseFunction] Saving detections to Firestore');
+
+          // Configure detected cookies for Firestore (convert nested arrays if needed)
+          const firestoreCookies = detectedCookies.map(cookie => ({
+            x: cookie.x,
+            y: cookie.y,
+            width: cookie.width,
+            height: cookie.height,
+            confidence: cookie.confidence,
+            polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
+          }));
+
+          await detectionRef.set({
+            filePath,
+            imageUrl,
+            detectedCookies: firestoreCookies,
+            count: detectedCookies.length,
+            detectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            processedBy: 'detectCookiesWithGemini-onCall',
+            detectionVersion: DETECTION_FUNCTION_VERSION,
+            status: 'completed',
+            progress: 'Completed',
+          }, { merge: true });
+          console.log('[FirebaseFunction] Successfully saved detections');
+        } else {
+          console.warn('[FirebaseFunction] Could not extract file path from URL, skipping Firestore save');
+        }
+      } catch (saveError) {
+        console.error('[FirebaseFunction] Error saving to Firestore:', saveError);
+      }
 
       return {
         cookies: detectedCookies,
@@ -92,11 +154,16 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       };
     } catch (error) {
       console.error('[FirebaseFunction] Error detecting cookies with Gemini:', error);
-      if (error instanceof Error) {
-        console.error('[FirebaseFunction] Error name:', error.name);
-        console.error('[FirebaseFunction] Error message:', error.message);
-        console.error('[FirebaseFunction] Error stack:', error.stack);
+
+      // Update status to error
+      if (detectionRef) {
+        await detectionRef.set({
+          status: 'error',
+          progress: 'Failed',
+          error: error instanceof Error ? error.message : String(error)
+        }, { merge: true }).catch(console.warn);
       }
+
       throw new functionsV2.https.HttpsError(
         'internal',
         'Failed to detect cookies',
@@ -105,6 +172,39 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
     }
   }
 );
+
+/**
+ * Extract file path from Firebase Storage download URL
+ */
+function extractFilePathFromUrl(imageUrl: string): string | null {
+  try {
+    // Try firebasestorage.googleapis.com format first (most specific)
+    if (imageUrl.includes('firebasestorage.googleapis.com')) {
+      const urlParts = imageUrl.split('/');
+      const oIndex = urlParts.findIndex(part => part === 'o');
+      if (oIndex !== -1 && oIndex < urlParts.length - 1) {
+        // Get the path after 'o' and before '?'
+        const encodedPath = urlParts[oIndex + 1].split('?')[0];
+        const filePath = decodeURIComponent(encodedPath);
+        return filePath;
+      }
+    }
+
+    // Try storage.googleapis.com format
+    if (imageUrl.includes('storage.googleapis.com')) {
+      const urlParts = imageUrl.split('storage.googleapis.com/');
+      if (urlParts.length > 1) {
+        const pathPart = urlParts[1].split('?')[0];
+        return pathPart;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error extracting file path from URL:', error);
+    return null;
+  }
+}
 
 /**
  * Helper function to detect cookies in an image using Gemini
@@ -757,7 +857,7 @@ export const processDetectionJob = onDocumentCreated(
     document: 'detection_jobs/{jobId}',
     region: 'us-west1',
     secrets: ['GEMINI_API_KEY'],
-    timeoutSeconds: 3600, // 1 hour max for processing all images
+    timeoutSeconds: 540, // Max supported timeout for Firestore triggers
   },
   async (event) => {
     const jobId = event.params.jobId;
@@ -1022,23 +1122,15 @@ export const removeAdminRole = functionsV2.https.onCall(
   }
 );
 
-/**
- * Automatically grant admin rights to all users in the emulator environment.
- * This is triggered BEFORE a new user is created in Firebase Auth.
- */
-export const autoGrantAdmin = beforeUserCreated(async (event) => {
-  // Check if running in emulator
-  const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true' ||
-    process.env.FIREBASE_AUTH_EMULATOR_HOST ||
-    process.env.FIREBASE_EMULATORS === 'true';
-
-  if (isEmulator) {
+// Only export this function in the emulator environment
+// This prevents deployment errors in production (requires GCIP) while keeping it for local dev
+export const autoGrantAdmin = process.env.FUNCTIONS_EMULATOR === 'true'
+  ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
     console.log(`[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`);
     return {
       customClaims: {
         admin: true
       }
     };
-  }
-  return {};
-});
+  })
+  : undefined;

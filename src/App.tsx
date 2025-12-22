@@ -1,4 +1,5 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
+import { useAuthStore } from './lib/stores/useAuthStore'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 
@@ -28,7 +29,16 @@ const PageLoader = () => (
   </div>
 )
 
+
+
 function App() {
+  const initializeAuth = useAuthStore(state => state.initialize);
+
+  useEffect(() => {
+    const unsubscribe = initializeAuth();
+    return () => unsubscribe();
+  }, [initializeAuth]);
+
   return (
     <BrowserRouter>
       <Routes>

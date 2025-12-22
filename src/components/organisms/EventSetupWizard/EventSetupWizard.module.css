@@ -401,11 +401,12 @@
 }
 
 .taggingImage {
-    width: 100%;
+    width: auto;
     height: auto;
     display: block;
     cursor: default;
     max-height: 70vh;
+    max-width: 100%;
     object-fit: contain;
 }
 
@@ -895,3 +896,116 @@
     }
 }
 
+/* Baker selection dropdown styles */
+.bakerDropdown {
+    background-color: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    min-width: 220px;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.bakerDropdownHeader {
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-text-primary, #f8fafc);
+}
+
+.bakerDropdownHeader button {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary, #cbd5e1);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: all 0.2s;
+}
+
+.bakerDropdownHeader button:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bakerDropdownOptions {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* Scrollbar styles for the dropdown */
+.bakerDropdownOptions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bakerDropdownOptions::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.bakerDropdownOptions::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.bakerDropdownOptions::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.bakerOption {
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: none;
+    text-align: left;
+    color: var(--color-text-secondary, #cbd5e1);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+}
+
+.bakerOption:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.removeOption:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+.bakerLabel {
+    background: rgba(15, 23, 42, 0.85);
+    /* Slightly darker/more opaque backdrop */
+    backdrop-filter: blur(4px);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    /* Larger font */
+    font-weight: 600;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    margin-top: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}

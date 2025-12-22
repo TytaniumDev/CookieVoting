@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc, collection, query, getDocs, updateDoc, writeBatch, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
+import { ref, deleteObject, listAll, getDownloadURL } from 'firebase/storage';
 import { db, storage, auth } from './firebase';
 import { type VoteEvent, type Category, type CookieCoordinate, type UserVote, type CookieMaker } from './types';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,13 +28,43 @@ export async function submitVote(eventId: string, userId: string | null, votes: 
     // Use provided userId, or get one (authenticated user or session ID)
     const finalUserId = userId || getUserIdForVoting();
     const voteId = `${eventId}_${finalUserId}`; // One vote per user per event
+
+  // Check if user has already viewed results (lock check)
+  const existingVote = await getUserVote(eventId, finalUserId);
+  if (existingVote?.viewedResults) {
+    throw new Error("You have already viewed the results and cannot change your vote.");
+  }
+
     const voteData: UserVote = {
         userId: finalUserId,
         votes,
-        timestamp: Date.now()
+      timestamp: Date.now(),
+      viewedResults: existingVote?.viewedResults || false // Preserve existing flag or default false
     };
     
     await setDoc(doc(db, 'events', eventId, 'votes', voteId), voteData);
+}
+
+export async function markResultsViewed(eventId: string, userId: string | null): Promise<void> {
+  const finalUserId = userId || getUserIdForVoting();
+  const voteId = `${eventId}_${finalUserId}`;
+
+  // We need to make sure a vote document exists, even if empty, to store the flag
+  const voteRef = doc(db, 'events', eventId, 'votes', voteId);
+  const docSnap = await getDoc(voteRef);
+
+  if (docSnap.exists()) {
+    await updateDoc(voteRef, { viewedResults: true });
+  } else {
+    // Create a new vote document if it doesn't exist (e.g. user viewed results without voting)
+    const voteData: UserVote = {
+      userId: finalUserId,
+      votes: {},
+      timestamp: Date.now(),
+      viewedResults: true
+    };
+    await setDoc(voteRef, voteData);
+  }
 }
 
 export async function getUserVote(eventId: string, userId: string | null): Promise<UserVote | null> {
@@ -231,6 +261,13 @@ export async function updateEventStatus(eventId: string, status: 'voting' | 'com
     await updateDoc(ref, { status });
 }
 
+export async function updateEventResultsTime(eventId: string, resultsAvailableTime: number | null): Promise<void> {
+  const ref = doc(db, 'events', eventId);
+  // If null, we can use deleteField() or just set to null/undefined depending on usage
+  // Here assuming number or null is fine.
+  await updateDoc(ref, { resultsAvailableTime: resultsAvailableTime || null });
+}
+
 export async function deleteCategory(eventId: string, categoryId: string, imageUrl: string): Promise<void> {
     // Delete category document
     await deleteDoc(doc(db, 'events', eventId, 'categories', categoryId));
@@ -287,23 +324,25 @@ function convertPolygonFromFirestore(
  */
 function extractFilePathFromUrl(imageUrl: string): string | null {
   try {
-    // Try storage.googleapis.com format first
+    // Try firebasestorage.googleapis.com format first (most specific)
+    if (imageUrl.includes('firebasestorage.googleapis.com')) {
+      const urlParts = imageUrl.split('/');
+      const oIndex = urlParts.findIndex(part => part === 'o');
+      if (oIndex !== -1 && oIndex < urlParts.length - 1) {
+        // Get the path after 'o' and before '?'
+        const encodedPath = urlParts[oIndex + 1].split('?')[0];
+        const filePath = decodeURIComponent(encodedPath);
+        return filePath;
+      }
+    }
+
+    // Try storage.googleapis.com format
     if (imageUrl.includes('storage.googleapis.com')) {
       const urlParts = imageUrl.split('storage.googleapis.com/');
       if (urlParts.length > 1) {
         const pathPart = urlParts[1].split('?')[0];
         return pathPart;
       }
-    }
-    
-    // Try firebasestorage.googleapis.com format
-    const urlParts = imageUrl.split('/');
-    const oIndex = urlParts.findIndex(part => part === 'o');
-    if (oIndex !== -1 && oIndex < urlParts.length - 1) {
-      // Get the path after 'o' and before '?'
-      const encodedPath = urlParts[oIndex + 1].split('?')[0];
-      const filePath = decodeURIComponent(encodedPath);
-      return filePath;
     }
 
     return null;
@@ -481,6 +520,10 @@ export async function getAllImageDetections(): Promise<Array<{
   count: number;
   detectedAt?: unknown;
   contentType?: string;
+  detectedAt?: unknown;
+  contentType?: string;
+  status?: string;
+  progress?: string;
 }>> {
   try {
     const detectionsRef = collection(db, 'image_detections');
@@ -513,6 +556,8 @@ export async function getAllImageDetections(): Promise<Array<{
         count: data.count || convertedCookies.length,
         detectedAt: data.detectedAt,
         contentType: data.contentType,
+        status: data.status,
+        progress: data.progress,
       };
     });
   } catch (error) {
@@ -547,6 +592,8 @@ export function watchAllImageDetections(
     count: number;
     detectedAt?: unknown;
     contentType?: string;
+    status?: string;
+    progress?: string;
   }>) => void
 ): () => void {
   const detectionsRef = collection(db, 'image_detections');
@@ -581,6 +628,8 @@ export function watchAllImageDetections(
           count: data.count || convertedCookies.length,
           detectedAt: data.detectedAt,
           contentType: data.contentType,
+          status: data.status,
+          progress: data.progress,
         };
       });
       
@@ -636,4 +685,107 @@ export async function deleteEvent(eventId: string): Promise<void> {
     // Note: Images are now stored in shared/cookies and can be reused across events
     // We don't delete shared images when deleting an event since they might be used by other events
     // If you need to clean up unused images, you'll need to check which events reference each image
+}
+
+/**
+ * Get all images from 'shared/cookies/' storage path
+ */
+export async function getAllStoredImages(): Promise<Array<{
+  path: string;
+  url: string;
+  name: string;
+}>> {
+  try {
+    const listRef = ref(storage, 'shared/cookies');
+    const res = await listAll(listRef);
+
+    const promises = res.items.map(async (itemRef) => {
+      const url = await getDownloadURL(itemRef);
+      return {
+        path: itemRef.fullPath,
+        name: itemRef.name,
+        url
+      };
+    });
+
+    return Promise.all(promises);
+  } catch (error) {
+    console.error('Error fetching stored images:', error);
+    return [];
+  }
+}
+
+/**
+ * Get merged image detections - combining Firestore results with all available Storage images
+ * This ensures we see images that haven't been detected yet
+ */
+export async function getMergedImageAuditData(): Promise<Array<{
+  id: string;
+  filePath: string;
+  imageUrl: string;
+  detectedCookies: Array<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    polygon?: Array<[number, number]>;
+    confidence: number;
+  }>;
+  count: number;
+  detectedAt?: unknown;
+  status: 'detected' | 'pending' | 'unknown';
+}>> {
+  const [storedImages, detections] = await Promise.all([
+    getAllStoredImages(),
+    getAllImageDetections()
+  ]);
+
+  // Create a map of existing detections for quick lookup
+  const detectionMap = new Map(detections.map(d => [d.filePath, d]));
+  // Also map by filename in case path is slightly different (e.g. missing 'shared/cookies/' prefix in one but not other)
+  const detectionFileMap = new Map(detections.map(d => {
+    const filename = d.filePath.split('/').pop() || d.filePath;
+    return [filename, d];
+  }));
+
+  // Map stored images to result format
+  const results = storedImages.map(img => {
+    // Try to find matching detection
+    let detection = detectionMap.get(img.path);
+
+    // If not found by full path, try by name
+    if (!detection) {
+      detection = detectionFileMap.get(img.name);
+    }
+
+    if (detection) {
+      return {
+        ...detection,
+        status: 'detected' as const
+      };
+    }
+
+    // Return pending object for images without detection
+    return {
+      id: img.path.replace(/\//g, '_').replace(/\./g, '_'), // Generate ID same way backend does
+      filePath: img.path,
+      imageUrl: img.url,
+      detectedCookies: [],
+      count: 0,
+      status: 'pending' as const
+    };
+  });
+
+  // Also include any detections that might not have matched (orphaned detections?)
+  detections.forEach(det => {
+    const found = results.find(r => r.filePath === det.filePath || r.id === det.id);
+    if (!found) {
+      results.push({
+        ...det,
+        status: 'detected' as const
+      });
+    }
+  });
+
+  return results;
 }

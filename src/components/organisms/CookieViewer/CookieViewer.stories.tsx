@@ -259,3 +259,15 @@ export const ManyNumberedMarkers: Story = {
     onSelectCookie: fn(),
   },
 };
+
+/**
+ * Story with disabled zoom functionality
+ */
+export const ZoomDisabled: Story = {
+  args: {
+    imageUrl: 'test-cookies.jpg',
+    detectedCookies: sampleCookiesWithPolygons,
+    disableZoom: true,
+    onCookieClick: fn(),
+  },
+};

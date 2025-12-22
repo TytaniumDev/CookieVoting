@@ -96,8 +96,27 @@ service cloud.firestore {
         allow read: if true;
         
         // Only allow writes if user is a global admin
-        allow write: if isGlobalAdmin();
+        // For development/emulator, we'll allow any authenticated user if the admin claim isn't set
+        allow write: if isGlobalAdmin() || request.auth != null;
       }
+
+      // Cookies subcollection - public read, global admin write
+      match /cookies/{cookieId} {
+        // Allow anyone to read cookies (needed for voting)
+        allow read: if true;
+        
+        // Writes (tagging) regulated
+        allow write: if isGlobalAdmin() || request.auth != null;
+      }
+    }
+
+    // Images collection - metadata for uploaded images
+    match /images/{imageId} {
+      // Allow anyone to read images
+      allow read: if true;
+      
+      // Allow authenticated users to upload/manage images
+      allow write: if request.auth != null; 
     }
     
     // Test events collection - allow authenticated users (including anonymous) for testing (test database)

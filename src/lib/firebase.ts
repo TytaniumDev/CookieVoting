@@ -88,6 +88,7 @@ export { db, auth, storage, functions };
 // In development mode, automatically connect to emulators unless explicitly disabled
 // This allows testing production database from localhost when emulators aren't running
 const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+// Track if emulators are actually connected
 // Auto-connect in dev mode unless explicitly disabled
 const useEmulator = isDevelopment && import.meta.env.VITE_USE_EMULATOR !== 'false';
 

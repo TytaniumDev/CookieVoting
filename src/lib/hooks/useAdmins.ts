@@ -2,12 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { isGlobalAdmin } from '../firestore';
 import { useAuth } from './useAuth';
 export function useAdmins() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const checkAdminStatus = useCallback(async () => {
+    // Wait for auth to initialize
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     if (!user) {
       setIsAdmin(false);
       setLoading(false);
@@ -15,8 +21,10 @@ export function useAdmins() {
     }
 
     try {
+      setLoading(true);
       const status = await isGlobalAdmin(user.uid);
       setIsAdmin(status);
+      setError(null);
     } catch (err) {
       console.error('Error checking admin status:', err);
       setError('Failed to verify admin permissions');
@@ -24,7 +32,7 @@ export function useAdmins() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
     checkAdminStatus();
