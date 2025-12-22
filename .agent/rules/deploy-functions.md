@@ -10,6 +10,7 @@ This rule provides instructions for automatically deploying Firebase Cloud Funct
 ## Trigger Conditions
 
 The agent should automatically deploy Firebase Functions when:
+
 1. **Function Source Code Changes** (functions/src/)
 2. **Function Dependencies Changes** (functions/package.json)
 3. **TypeScript Config Changes** (functions/tsconfig.json)
@@ -24,4 +25,5 @@ The agent should automatically deploy Firebase Functions when:
 3. **Verification**: Verify deployment success in output and notify the user.
 
 ## Error Handling
+
 If deployment fails, fix syntax/compilation errors and retry automatically.

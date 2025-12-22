@@ -1,6 +1,6 @@
 /**
  * Cookie Detection Debug Page
- * 
+ *
  * Interactive debugging tool to visualize what the detection algorithm sees.
  * Helps tune parameters and understand why detection fails.
  */
@@ -12,14 +12,16 @@ import styles from './CookieDetectionDebug.module.css';
 export default function CookieDetectionDebug() {
   const [detecting, setDetecting] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-  const [detectedCookies, setDetectedCookies] = useState<Array<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    confidence: number;
-    polygon?: Array<[number, number]>;
-  }>>([]);
+  const [detectedCookies, setDetectedCookies] = useState<
+    Array<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      confidence: number;
+      polygon?: Array<[number, number]>;
+    }>
+  >([]);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +53,9 @@ export default function CookieDetectionDebug() {
       const duration = endTime - startTime;
 
       setDetectedCookies(detected);
-      setDebugInfo(`Detection completed in ${duration.toFixed(2)}ms\nDetected ${detected.length} potential cookies\n\n`);
+      setDebugInfo(
+        `Detection completed in ${duration.toFixed(2)}ms\nDetected ${detected.length} potential cookies\n\n`,
+      );
 
       // Draw visualization on canvas
       const canvas = canvasRef.current;
@@ -62,29 +66,29 @@ export default function CookieDetectionDebug() {
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
-          
+
           // Draw detected cookies
           detected.forEach((cookie, i) => {
             const x = (cookie.x / 100) * canvas.width;
             const y = (cookie.y / 100) * canvas.height;
             const w = (cookie.width / 100) * canvas.width;
             const h = (cookie.height / 100) * canvas.height;
-            
+
             // Draw bounding box
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 3;
-            ctx.strokeRect(x - w/2, y - h/2, w, h);
-            
+            ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+
             // Draw center point
             ctx.fillStyle = '#ff0000';
             ctx.beginPath();
             ctx.arc(x, y, 5, 0, Math.PI * 2);
             ctx.fill();
-            
+
             // Draw number
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 20px Arial';
-            ctx.fillText(`${i + 1}`, x + w/2 - 10, y - h/2 + 20);
+            ctx.fillText(`${i + 1}`, x + w / 2 - 10, y - h / 2 + 20);
           });
         };
         img.src = currentImageUrl;
@@ -102,12 +106,7 @@ export default function CookieDetectionDebug() {
       <p>Upload an image to see what the detection algorithm finds</p>
 
       <div className={styles.controls}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} />
         <button onClick={visualizeDetection} disabled={!currentImageUrl || detecting}>
           {detecting ? 'Detecting...' : 'Run Detection'}
         </button>
@@ -126,9 +125,12 @@ export default function CookieDetectionDebug() {
               <div>
                 <h4>Detected Cookies ({detectedCookies.length})</h4>
                 {detectedCookies.map((cookie, i) => (
-                  <div key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.confidence.toFixed(2)}`} className={styles.cookieInfo}>
-                    Cookie {i + 1}: x={cookie.x.toFixed(1)}%, y={cookie.y.toFixed(1)}%, 
-                    confidence={cookie.confidence.toFixed(2)}
+                  <div
+                    key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.confidence.toFixed(2)}`}
+                    className={styles.cookieInfo}
+                  >
+                    Cookie {i + 1}: x={cookie.x.toFixed(1)}%, y={cookie.y.toFixed(1)}%, confidence=
+                    {cookie.confidence.toFixed(2)}
                   </div>
                 ))}
               </div>
@@ -139,4 +141,3 @@ export default function CookieDetectionDebug() {
     </div>
   );
 }
-

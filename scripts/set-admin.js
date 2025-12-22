@@ -20,7 +20,7 @@ if (!admin.apps.length) {
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.project_id
+      projectId: serviceAccount.project_id,
     });
     console.log('Initialized with service-account.json');
   } catch {
@@ -58,8 +58,9 @@ async function setAdminRole(userInput) {
     const updatedUser = await admin.auth().getUser(user.uid);
     console.log(`Successfully set admin claim.`);
     console.log(`Current claims:`, updatedUser.customClaims);
-    console.log(`\nNOTE: The user may need to sign out and sign back in (or refresh the page) for this to take effect.`);
-
+    console.log(
+      `\nNOTE: The user may need to sign out and sign back in (or refresh the page) for this to take effect.`,
+    );
   } catch (error) {
     console.error('Error setting admin role:', error);
     process.exit(1);

@@ -11,7 +11,7 @@
   margin-bottom: 2rem;
 }
 
-.controls input[type="file"] {
+.controls input[type='file'] {
   padding: 0.5rem;
   background: var(--color-bg-primary, #3a3a3a);
   color: var(--color-text-primary, #fff);
@@ -87,4 +87,3 @@
   margin: 0.5rem 0;
   font-size: 0.875rem;
 }
-

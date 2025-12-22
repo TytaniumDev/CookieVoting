@@ -14,7 +14,7 @@ const AuthButtonWithAuth = () => {
 
 /**
  * AuthButton Component Stories
- * 
+ *
  * A comprehensive authentication button component that handles Google sign-in/sign-out.
  */
 const meta = {

@@ -4,7 +4,7 @@ import { fn, expect } from 'storybook/test';
 
 /**
  * AlertModal Component Stories
- * 
+ *
  * A reusable modal component for displaying alert messages to users.
  * Supports different alert types (success, error, info) with appropriate styling.
  */
@@ -86,7 +86,9 @@ export const Error: Story = {
   },
   play: async ({ canvas, args }) => {
     // Verify error modal content
-    await expect(canvas.getByText('An error occurred while processing your request. Please try again.')).toBeInTheDocument();
+    await expect(
+      canvas.getByText('An error occurred while processing your request. Please try again.'),
+    ).toBeInTheDocument();
     await expect(canvas.getByText('Error')).toBeInTheDocument();
 
     // Click OK button
@@ -134,7 +136,8 @@ export const CustomTitle: Story = {
  */
 export const LongMessage: Story = {
   args: {
-    message: 'This is a longer message that demonstrates how the modal handles text that spans multiple lines. The modal will automatically wrap the text and adjust its height accordingly.',
+    message:
+      'This is a longer message that demonstrates how the modal handles text that spans multiple lines. The modal will automatically wrap the text and adjust its height accordingly.',
     type: 'info',
     onClose: fn(),
   },

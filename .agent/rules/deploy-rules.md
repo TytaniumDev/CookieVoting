@@ -10,6 +10,7 @@ This rule provides instructions for automatically deploying Firebase Firestore a
 ## Trigger Conditions
 
 The agent should automatically deploy Firebase rules when:
+
 1. **Firestore Rules Modified** (firestore.rules)
 2. **Storage Rules Modified** (storage.rules)
 
@@ -24,4 +25,5 @@ The agent should automatically deploy Firebase rules when:
 3. **Verification**: Confirm deployment success in output and notify the user.
 
 ## Error Handling
+
 If deployment fails, fix syntax errors and retry automatically.

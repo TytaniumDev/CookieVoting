@@ -6,7 +6,7 @@ The test user now uses **GitHub OAuth authentication** for a secure, maintainabl
 
 ## Step 1: Create GitHub OAuth App
 
-1. **Go to GitHub Developer Settings**: 
+1. **Go to GitHub Developer Settings**:
    - Visit: https://github.com/settings/developers
    - Or: GitHub → Your Profile (top right) → Settings → Developer settings → OAuth Apps
 
@@ -17,7 +17,7 @@ The test user now uses **GitHub OAuth authentication** for a secure, maintainabl
    - **Application name**: `Cookie Voting (Local Dev)` (or any name you prefer)
    - **Homepage URL**: `http://localhost:5173` (your local development URL)
    - **Authorization callback URL**: `https://cookie-voting.firebaseapp.com/__/auth/handler`
-     - ⚠️ **Important**: This must match exactly! 
+     - ⚠️ **Important**: This must match exactly!
      - Format: `https://<your-firebase-auth-domain>/__/auth/handler`
      - Your auth domain is: `cookie-voting.firebaseapp.com`
      - You can verify this in Firebase Console → Authentication → Settings → Authorized domains
@@ -27,7 +27,7 @@ The test user now uses **GitHub OAuth authentication** for a secure, maintainabl
    - After registering, you'll see your **Client ID** immediately (it's visible on the page)
    - **Copy the Client ID** - you'll need this for Firebase
    - For the **Client Secret**:
-     - Look for a section that says "Client secrets" 
+     - Look for a section that says "Client secrets"
      - Click **"Generate a new client secret"** button
      - ⚠️ **CRITICAL**: Copy the secret immediately - GitHub only shows it ONCE!
      - If you lose it, you'll need to generate a new one
@@ -35,7 +35,7 @@ The test user now uses **GitHub OAuth authentication** for a secure, maintainabl
 
 ## Step 2: Enable GitHub Authentication in Firebase
 
-1. **Go to Firebase Console**: 
+1. **Go to Firebase Console**:
    - Visit: https://console.firebase.google.com/
    - Select your project: `cookie-voting`
 

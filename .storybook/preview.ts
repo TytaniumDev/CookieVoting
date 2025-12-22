@@ -22,7 +22,7 @@ const preview: Preview = {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
-      test: 'todo'
+      test: 'todo',
     },
     docs: {
       toc: true, // Enable table of contents in docs
@@ -60,7 +60,7 @@ const preview: Preview = {
       return React.createElement(
         'div',
         { style: { padding: '1rem', minHeight: '100vh' } },
-        React.createElement(Story)
+        React.createElement(Story),
       );
     },
     // Firebase emulator decorator - only applies when explicitly used in stories

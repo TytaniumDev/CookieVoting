@@ -7,11 +7,11 @@ const meta = {
   parameters: {
     layout: 'centered',
     backgrounds: {
-        default: 'dark',
-        values: [
-            { name: 'dark', value: '#1e293b' },
-            { name: 'light', value: '#f8fafc' },
-        ],
+      default: 'dark',
+      values: [
+        { name: 'dark', value: '#1e293b' },
+        { name: 'light', value: '#f8fafc' },
+      ],
     },
   },
   tags: ['autodocs'],

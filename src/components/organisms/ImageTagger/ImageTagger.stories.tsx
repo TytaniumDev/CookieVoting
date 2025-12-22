@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ImageTagger } from './ImageTagger';
-import { fn } from 'storybook/test';
+import { fn, within, userEvent, expect, waitFor } from 'storybook/test';
 import type { CookieCoordinate } from '../lib/types';
 
 /**
  * ImageTagger Component Stories
- * 
+ *
  * A comprehensive image tagging interface for marking cookie positions in images.
  * Supports both manual tagging and automatic detection via AI.
  */
@@ -103,5 +103,43 @@ export const DifferentImage: Story = {
       fn()(cookies);
     },
     onCancel: fn(),
+  },
+};
+
+/**
+ * Interaction test: Manually add a tag
+ */
+export const ManualTaggingInteraction: Story = {
+  args: {
+    imageUrl: 'test-cookies.jpg',
+    initialCookies: [],
+    onSave: fn(),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    // 1. Click on the image to place a tag
+    await step('Click image to add tag', async () => {
+      const image = canvas.getByAltText('Cookie detection');
+      await userEvent.click(image, { pointerEventsCheck: 0 }); // Skip check as overlay might be on top
+    });
+
+    // 2. Verify cookie added
+    await step('Verify cookie added', async () => {
+      await waitFor(() => expect(canvas.getByText('Cookies (1)')).toBeInTheDocument());
+    });
+
+    // 3. Delete the cookie
+    await step('Delete cookie', async () => {
+      const deleteBtns = canvas.getAllByText('×');
+      if (deleteBtns.length > 0) {
+        await userEvent.click(deleteBtns[0]);
+      }
+    });
+
+    // 4. Verify cookie removed
+    await step('Verify removal', async () => {
+      await waitFor(() => expect(canvas.getByText('Cookies (0)')).toBeInTheDocument());
+    });
   },
 };

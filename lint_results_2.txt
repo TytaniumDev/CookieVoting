@@ -1,0 +1,20 @@
+
+> cookievoting@0.0.0 lint
+> eslint .
+
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\atoms\AlertModal\AlertModal.tsx
+  68:13  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                 jsx-a11y/click-events-have-key-events
+  68:13  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners                                                                              jsx-a11y/no-noninteractive-element-interactions
+  74:17  warning  Unused eslint-disable directive (no problems were reported from 'jsx-a11y/no-noninteractive-element-interactions' or 'jsx-a11y/click-events-have-key-events')
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\organisms\EventSetupWizard\CookieTaggingStep.tsx
+  108:6  warning  React Hook useEffect has a missing dependency: 'imageEntity'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\pages\AdminHome.tsx
+  626:21  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners                                                                              jsx-a11y/no-noninteractive-element-interactions
+  628:25  warning  Unused eslint-disable directive (no problems were reported from 'jsx-a11y/no-noninteractive-element-interactions' or 'jsx-a11y/click-events-have-key-events')
+
+✖ 6 problems (0 errors, 6 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+

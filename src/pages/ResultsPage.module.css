@@ -84,7 +84,8 @@
 }
 
 @keyframes medalPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -153,7 +154,8 @@
 }
 
 @keyframes sparkle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.8;
     transform: translate(-50%, -50%) scale(1);
   }
@@ -213,7 +215,10 @@
   border-radius: var(--radius-full);
   font-weight: 600;
   font-size: var(--font-size-base);
-  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 

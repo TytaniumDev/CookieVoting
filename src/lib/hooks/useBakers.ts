@@ -29,7 +29,7 @@ export function useBakers(eventId: string) {
   const add = async (name: string) => {
     try {
       const newBaker = await addBaker(eventId, name);
-      setBakers(prev => [...prev, newBaker]);
+      setBakers((prev) => [...prev, newBaker]);
       return newBaker;
     } catch (err) {
       console.error('Error adding baker:', err);
@@ -40,7 +40,7 @@ export function useBakers(eventId: string) {
   const remove = async (bakerId: string) => {
     try {
       await removeBaker(eventId, bakerId);
-      setBakers(prev => prev.filter(b => b.id !== bakerId));
+      setBakers((prev) => prev.filter((b) => b.id !== bakerId));
     } catch (err) {
       console.error('Error removing baker:', err);
       throw err;

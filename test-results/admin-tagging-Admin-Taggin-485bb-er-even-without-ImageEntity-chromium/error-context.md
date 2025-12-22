@@ -2,66 +2,66 @@
 
 ```yaml
 - main [ref=e4]:
-  - generic [ref=e5]:
-    - generic:
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-      - generic: ❄
-    - generic [ref=e6]:
-      - heading "🍪 Cookie Voting" [level=1] [ref=e7]:
-        - generic [ref=e8]: 🍪
-        - text: Cookie Voting
-      - paragraph [ref=e9]: Cast your vote for the best cookies!
-      - generic [ref=e10]:
-        - paragraph [ref=e11]: "Administrators, sign in to manage events:"
-        - button "Sign in with Google" [ref=e13] [cursor=pointer]:
-          - img [ref=e14]
-          - text: Sign in with Google
+    - generic [ref=e5]:
+        - generic:
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+            - generic: ❄
+        - generic [ref=e6]:
+            - heading "🍪 Cookie Voting" [level=1] [ref=e7]:
+                - generic [ref=e8]: 🍪
+                - text: Cookie Voting
+            - paragraph [ref=e9]: Cast your vote for the best cookies!
+            - generic [ref=e10]:
+                - paragraph [ref=e11]: 'Administrators, sign in to manage events:'
+                - button "Sign in with Google" [ref=e13] [cursor=pointer]:
+                    - img [ref=e14]
+                    - text: Sign in with Google
 ```

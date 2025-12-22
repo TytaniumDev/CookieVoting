@@ -16,12 +16,14 @@ Storybook is set up to help document and test UI components in isolation. Compon
 Many components integrate with Firebase services. To test these components in Storybook with the Firebase emulator:
 
 1. **Start Firebase Emulators:**
+
    ```bash
    npm run emulators:start
    ```
 
 2. **Set Environment Variable:**
    Create a `.env` file in the project root with:
+
    ```
    VITE_USE_EMULATOR=true
    ```

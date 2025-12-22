@@ -13,22 +13,25 @@ This guide will help you set up automatic deployments to Firebase Hosting using 
 You need to generate a Firebase CI token for GitHub Actions to authenticate:
 
 1. **Install Firebase CLI globally** (if not already installed):
+
    ```bash
    npm install -g firebase-tools
    ```
 
 2. **Login to Firebase**:
+
    ```bash
    firebase login
    ```
 
 3. **Generate CI token**:
+
    ```bash
    firebase login:ci
    ```
-   
+
    This will output a token that looks like: `1//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-   
+
    **Copy this token** - you'll need it in the next step.
 
 ## Step 2: Add GitHub Secrets
@@ -45,22 +48,16 @@ You need to generate a Firebase CI token for GitHub Actions to authenticate:
 
    **Firebase Configuration (Required for Build):**
    These values are needed at build time to configure the Firebase client. Get them from Firebase Console → Project Settings → General → Your apps → Web app config.
-   
    - **Name**: `VITE_API_KEY`
    - **Value**: Your Firebase API key (from Firebase config)
-   
    - **Name**: `VITE_AUTH_DOMAIN`
    - **Value**: Your Firebase auth domain (e.g., `your-project.firebaseapp.com`)
-   
    - **Name**: `VITE_PROJECT_ID`
    - **Value**: Your Firebase project ID (e.g., `cookie-voting`)
-   
    - **Name**: `VITE_STORAGE_BUCKET`
    - **Value**: Your Firebase storage bucket (e.g., `your-project.appspot.com`)
-   
    - **Name**: `VITE_MESSAGING_SENDER_ID`
    - **Value**: Your Firebase messaging sender ID
-   
    - **Name**: `VITE_APP_ID`
    - **Value**: Your Firebase app ID
 
@@ -121,6 +118,7 @@ npm run deploy
 ## GitHub Actions Workflow
 
 The workflow (`.github/workflows/deploy.yml`) runs on:
+
 - ✅ Push to `main` or `master` branch
 - ✅ Pull requests to `main` or `master` (runs tests only)
 - ✅ Manual trigger via GitHub Actions UI
@@ -128,11 +126,14 @@ The workflow (`.github/workflows/deploy.yml`) runs on:
 ## Troubleshooting
 
 ### Authentication Issues
+
 If deployment fails with authentication errors:
+
 1. Regenerate the Firebase token: `firebase login:ci`
 2. Update the `FIREBASE_TOKEN` secret in GitHub
 
 ### Build Failures
+
 - Check that all dependencies are in `package.json`
 - Verify `npm ci` works locally
 - Check GitHub Actions logs for specific errors
@@ -141,6 +142,7 @@ If deployment fails with authentication errors:
   - Error: "auth/invalid-api-key" → `VITE_API_KEY` secret is missing or incorrect
 
 ### Deployment Failures
+
 - Verify Firebase project ID matches in `.firebaserc`
 - Check that Firebase project has Hosting enabled
 - Ensure you have proper permissions in Firebase Console
@@ -148,6 +150,7 @@ If deployment fails with authentication errors:
 ## Firebase Hosting Features
 
 The hosting configuration includes:
+
 - ✅ SPA routing support (all routes redirect to `index.html`)
 - ✅ Static asset caching (1 year for JS/CSS/images)
 - ✅ Automatic HTTPS
@@ -162,4 +165,3 @@ The hosting configuration includes:
   - Custom domain support
 
 Both services are free for typical usage!
-

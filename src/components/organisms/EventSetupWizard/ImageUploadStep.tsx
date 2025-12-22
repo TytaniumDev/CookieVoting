@@ -32,7 +32,7 @@ export function ImageUploadStep({
   onCancel,
   onNext,
   hasExistingCategories,
-  error
+  error,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +49,7 @@ export function ImageUploadStep({
           file,
           preview: URL.createObjectURL(file),
           uploaded: false,
-          name: file.name
+          name: file.name,
         });
       }
     }
@@ -90,9 +90,7 @@ export function ImageUploadStep({
                 >
                   ×
                 </button>
-                {img.uploaded && (
-                  <div className={styles.uploadedBadge}>✓ Uploaded</div>
-                )}
+                {img.uploaded && <div className={styles.uploadedBadge}>✓ Uploaded</div>}
               </div>
             );
           })}
@@ -106,11 +104,7 @@ export function ImageUploadStep({
           Cancel
         </button>
         {hasExistingCategories && (
-          <button
-            onClick={onNext}
-            className={styles.buttonSecondary}
-            disabled={uploading}
-          >
+          <button onClick={onNext} className={styles.buttonSecondary} disabled={uploading}>
             Next: Name Categories →
           </button>
         )}
@@ -119,7 +113,11 @@ export function ImageUploadStep({
           disabled={uploading || images.length === 0}
           className={styles.buttonPrimary}
         >
-          {uploading ? 'Uploading...' : hasExistingCategories ? 'Add More Images' : `Upload ${images.length} Image${images.length !== 1 ? 's' : ''}`}
+          {uploading
+            ? 'Uploading...'
+            : hasExistingCategories
+              ? 'Add More Images'
+              : `Upload ${images.length} Image${images.length !== 1 ? 's' : ''}`}
         </button>
       </div>
     </div>

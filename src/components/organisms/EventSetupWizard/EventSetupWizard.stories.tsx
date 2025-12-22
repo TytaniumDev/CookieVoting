@@ -5,7 +5,7 @@ import { fn } from 'storybook/test';
 
 /**
  * EventSetupWizard Component Stories
- * 
+ *
  * A comprehensive multi-step wizard for setting up cookie voting events.
  * This wizard guides users through uploading images, naming categories, adding bakers, and tagging cookies.
  */
@@ -146,3 +146,21 @@ from Firestore and allow editing them.
   },
 };
 
+import { within, expect } from 'storybook/test';
+
+export const NavigationFlowTest: Story = {
+  args: { ...Default.args },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    // 1. Upload Step
+    await step('Upload Step Verification', async () => {
+      await expect(canvas.getByText('Upload Cookie Images')).toBeInTheDocument();
+      const nextBtn = canvas.queryByText('Next: Name Categories');
+      // In initial state without files, next button might be disabled or handled
+      if (nextBtn) {
+        await expect(nextBtn).toBeDisabled();
+      }
+    });
+  },
+};

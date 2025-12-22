@@ -32,8 +32,18 @@ export const CategoryNaming: StoryObj<typeof CategoryNamingStep> = {
   render: () => (
     <CategoryNamingStep
       images={[
-        { file: {} as File, preview: 'https://via.placeholder.com/150', uploaded: true, categoryName: 'Sugar Cookie' },
-        { file: {} as File, preview: 'https://via.placeholder.com/150', uploaded: true, categoryName: '' }
+        {
+          file: {} as File,
+          preview: 'https://via.placeholder.com/150',
+          uploaded: true,
+          categoryName: 'Sugar Cookie',
+        },
+        {
+          file: {} as File,
+          preview: 'https://via.placeholder.com/150',
+          uploaded: true,
+          categoryName: '',
+        },
       ]}
       uploading={false}
       onNameChange={() => {}}
@@ -50,7 +60,7 @@ export const BakerSetup: StoryObj<typeof BakerSetupStep> = {
     <BakerSetupStep
       bakers={[
         { id: '1', name: 'Alice' },
-        { id: '2', name: 'Bob' }
+        { id: '2', name: 'Bob' },
       ]}
       onAddBaker={async () => {}}
       onRemoveBaker={async () => {}}

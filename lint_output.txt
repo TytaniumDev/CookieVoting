@@ -1,0 +1,38 @@
+
+> cookievoting@0.0.0 lint
+> eslint .
+
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\atoms\AlertModal\AlertModal.tsx
+  68:13  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener  jsx-a11y/click-events-have-key-events
+  68:13  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners               jsx-a11y/no-noninteractive-element-interactions
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\organisms\EventSetupWizard\CookieTaggingStep.tsx
+  104:6   warning  React Hook useEffect has missing dependencies: 'imageEntity' and 'watchImage'. Either include them or remove the dependency array                                                                  react-hooks/exhaustive-deps
+  139:10  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  151:53  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  278:37  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  286:42  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  290:24  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  290:24  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+  345:69  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  349:67  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+  382:41  warning  Unexpected any. Specify a different type                                                                                                                                                           @typescript-eslint/no-explicit-any
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\organisms\EventSetupWizard\EventSetupWizard.stories.tsx
+  149:18  error  'userEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  149:37  error  'waitFor' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\components\organisms\voting\VotingResultsView.stories.tsx
+  28:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:99  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\lib\hooks\useVotingFlow.ts
+  69:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\tywho\OneDrive\Documents\Development\GitHub\CookieVoting\src\pages\AdminHome.tsx
+  626:21  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners  jsx-a11y/no-noninteractive-element-interactions
+
+✖ 19 problems (2 errors, 17 warnings)
+

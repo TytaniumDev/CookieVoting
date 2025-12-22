@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { CookieViewer, type DetectedCookie } from '../components/organisms/CookieViewer/CookieViewer';
+import {
+  CookieViewer,
+  type DetectedCookie,
+} from '../components/organisms/CookieViewer/CookieViewer';
 import styles from './CookieDetectionVisualizer.module.css';
 
 export default function CookieDetectionVisualizer() {
@@ -30,21 +33,24 @@ export default function CookieDetectionVisualizer() {
   const parseAndRender = () => {
     try {
       setError(null);
-      
+
       // Try to extract JSON from the input (handle cases where it might be wrapped in markdown or text)
       let jsonText = jsonInput.trim();
-      
+
       // Remove markdown code blocks if present
-      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      
+      jsonText = jsonText
+        .replace(/```json\s*/g, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
       // Try to find JSON array in the text
       const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         jsonText = jsonMatch[0];
       }
-      
+
       const parsed = JSON.parse(jsonText);
-      
+
       if (!Array.isArray(parsed)) {
         throw new Error('JSON must be an array of cookie objects');
       }
@@ -76,17 +82,18 @@ export default function CookieDetectionVisualizer() {
           y: cookie.y,
           width: cookie.width,
           height: cookie.height,
-          polygon: cookie.polygon && Array.isArray(cookie.polygon) 
-            ? (cookie.polygon as unknown[]).map((point: unknown) => {
-                if (Array.isArray(point) && point.length === 2) {
-                  return [point[0], point[1]] as [number, number];
-                }
-                if (point && typeof point.x === 'number' && typeof point.y === 'number') {
-                  return [point.x, point.y] as [number, number];
-                }
-                throw new Error(`Invalid polygon point format in cookie ${index}`);
-              })
-            : undefined,
+          polygon:
+            cookie.polygon && Array.isArray(cookie.polygon)
+              ? (cookie.polygon as unknown[]).map((point: unknown) => {
+                  if (Array.isArray(point) && point.length === 2) {
+                    return [point[0], point[1]] as [number, number];
+                  }
+                  if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+                    return [point.x, point.y] as [number, number];
+                  }
+                  throw new Error(`Invalid polygon point format in cookie ${index}`);
+                })
+              : undefined,
           confidence: cookie.confidence,
         };
       });
@@ -114,7 +121,8 @@ export default function CookieDetectionVisualizer() {
       <div className={styles.header}>
         <h1>Cookie Detection Visualizer</h1>
         <p className={styles.subtitle}>
-          Test Gemini detection results without using Firebase quota. Paste your Gemini JSON response to visualize the detected cookies.
+          Test Gemini detection results without using Firebase quota. Paste your Gemini JSON
+          response to visualize the detected cookies.
         </p>
       </div>
 
@@ -157,7 +165,11 @@ export default function CookieDetectionVisualizer() {
               rows={15}
             />
             <div className={styles.buttonGroup}>
-              <button onClick={parseAndRender} className={styles.renderButton} disabled={!imageUrl || !jsonInput}>
+              <button
+                onClick={parseAndRender}
+                className={styles.renderButton}
+                disabled={!imageUrl || !jsonInput}
+              >
                 Render Detection
               </button>
               <button onClick={handleClear} className={styles.clearButton}>
@@ -175,9 +187,13 @@ export default function CookieDetectionVisualizer() {
           {detectedCookies.length > 0 && (
             <div className={styles.stats}>
               <p>
-                <strong>{detectedCookies.length}</strong> cookie{detectedCookies.length !== 1 ? 's' : ''} detected
+                <strong>{detectedCookies.length}</strong> cookie
+                {detectedCookies.length !== 1 ? 's' : ''} detected
                 {' • '}
-                <strong>{detectedCookies.filter(c => c.polygon && c.polygon.length >= 3).length}</strong> with polygons
+                <strong>
+                  {detectedCookies.filter((c) => c.polygon && c.polygon.length >= 3).length}
+                </strong>{' '}
+                with polygons
               </p>
             </div>
           )}
@@ -200,28 +216,41 @@ export default function CookieDetectionVisualizer() {
                 <h3>Cookie Details:</h3>
                 <div className={styles.cookieList}>
                   {detectedCookies.map((cookie, index) => (
-                    <div key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.width.toFixed(2)}-${cookie.height.toFixed(2)}-${cookie.confidence.toFixed(2)}`} className={styles.cookieItem}>
+                    <div
+                      key={`cookie-${cookie.x.toFixed(2)}-${cookie.y.toFixed(2)}-${cookie.width.toFixed(2)}-${cookie.height.toFixed(2)}-${cookie.confidence.toFixed(2)}`}
+                      className={styles.cookieItem}
+                    >
                       <strong>Cookie {index + 1}:</strong>
                       <ul>
-                        <li>Center: ({cookie.x.toFixed(1)}%, {cookie.y.toFixed(1)}%)</li>
-                        <li>Bounding box: {cookie.width.toFixed(1)}% × {cookie.height.toFixed(1)}%</li>
-                        <li>Bounding box position: 
-                          Left: {(cookie.x - cookie.width / 2).toFixed(1)}%, 
-                          Top: {(cookie.y - cookie.height / 2).toFixed(1)}%, 
-                          Right: {(cookie.x + cookie.width / 2).toFixed(1)}%, 
-                          Bottom: {(cookie.y + cookie.height / 2).toFixed(1)}%
+                        <li>
+                          Center: ({cookie.x.toFixed(1)}%, {cookie.y.toFixed(1)}%)
+                        </li>
+                        <li>
+                          Bounding box: {cookie.width.toFixed(1)}% × {cookie.height.toFixed(1)}%
+                        </li>
+                        <li>
+                          Bounding box position: Left: {(cookie.x - cookie.width / 2).toFixed(1)}%,
+                          Top: {(cookie.y - cookie.height / 2).toFixed(1)}%, Right:{' '}
+                          {(cookie.x + cookie.width / 2).toFixed(1)}%, Bottom:{' '}
+                          {(cookie.y + cookie.height / 2).toFixed(1)}%
                         </li>
                         <li>Confidence: {(cookie.confidence * 100).toFixed(1)}%</li>
                         <li>Polygon points: {cookie.polygon ? cookie.polygon.length : 'None'}</li>
                         {cookie.polygon && cookie.polygon.length > 0 && (
                           <>
                             <li className={styles.polygonPoints}>
-                              First 3 points: {cookie.polygon.slice(0, 3).map(p => `[${p[0].toFixed(1)}, ${p[1].toFixed(1)}]`).join(', ')}
+                              First 3 points:{' '}
+                              {cookie.polygon
+                                .slice(0, 3)
+                                .map((p) => `[${p[0].toFixed(1)}, ${p[1].toFixed(1)}]`)
+                                .join(', ')}
                             </li>
                             <li className={styles.polygonPoints}>
-                              Polygon bounds: 
-                              X: {Math.min(...cookie.polygon.map(p => p[0])).toFixed(1)} - {Math.max(...cookie.polygon.map(p => p[0])).toFixed(1)}, 
-                              Y: {Math.min(...cookie.polygon.map(p => p[1])).toFixed(1)} - {Math.max(...cookie.polygon.map(p => p[1])).toFixed(1)}
+                              Polygon bounds: X:{' '}
+                              {Math.min(...cookie.polygon.map((p) => p[0])).toFixed(1)} -{' '}
+                              {Math.max(...cookie.polygon.map((p) => p[0])).toFixed(1)}, Y:{' '}
+                              {Math.min(...cookie.polygon.map((p) => p[1])).toFixed(1)} -{' '}
+                              {Math.max(...cookie.polygon.map((p) => p[1])).toFixed(1)}
                             </li>
                           </>
                         )}
@@ -233,7 +262,10 @@ export default function CookieDetectionVisualizer() {
             </div>
           ) : imageUrl ? (
             <div className={styles.placeholder}>
-              <p>Enter Gemini JSON response and click &quot;Render Detection&quot; to see the visualization.</p>
+              <p>
+                Enter Gemini JSON response and click &quot;Render Detection&quot; to see the
+                visualization.
+              </p>
             </div>
           ) : (
             <div className={styles.placeholder}>
@@ -245,4 +277,3 @@ export default function CookieDetectionVisualizer() {
     </div>
   );
 }
-

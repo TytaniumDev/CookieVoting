@@ -76,10 +76,7 @@
     },
     {
       "label": "Start All (Emulator)",
-      "dependsOn": [
-        "Start Emulators",
-        "Vite: Dev (Emulator)"
-      ],
+      "dependsOn": ["Start Emulators", "Vite: Dev (Emulator)"],
       "dependsOrder": "parallel"
     }
   ]

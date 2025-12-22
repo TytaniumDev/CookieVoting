@@ -31,7 +31,10 @@
   border-radius: var(--radius-full);
   font-weight: 600;
   font-size: var(--font-size-sm);
-  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
@@ -43,7 +46,7 @@
 
 .progress {
   height: 6px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
   margin-top: var(--spacing-4);
   overflow: hidden;
@@ -75,7 +78,9 @@
   overflow: hidden;
   aspect-ratio: 1; /* Square cards */
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   border: 2px solid transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -116,7 +121,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
   padding: var(--spacing-4);
   padding-top: var(--spacing-6);
   color: white;
@@ -146,7 +151,7 @@
   right: 0;
   padding: var(--spacing-4);
   background: rgba(10, 22, 40, 0.95); /* var(--color-bg-primary) with opacity */
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
   backdrop-filter: blur(10px);
@@ -163,7 +168,10 @@
   font-size: var(--font-size-lg);
   border-radius: var(--radius-full);
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
-  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .submitButton:hover {
@@ -235,49 +243,49 @@
 /* Mobile improvements */
 @media (max-width: 768px) {
   .container {
-      padding-bottom: 100px;
-      /* More space for the fixed footer */
-    }
-  
-    .grid {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      /* Slightly smaller min-width for 2-column on small phones, but still easy to tap */
-      gap: var(--spacing-3);
-    }
+    padding-bottom: 100px;
+    /* More space for the fixed footer */
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    /* Slightly smaller min-width for 2-column on small phones, but still easy to tap */
+    gap: var(--spacing-3);
+  }
   .viewerContainer {
     height: 100vh;
     z-index: 2000;
-      /* Ensure it covers everything */
+    /* Ensure it covers everything */
   }
-  
+
   .viewerToolbar {
     padding: var(--spacing-3);
-      min-height: 60px;
-      /* Larger touch area */
+    min-height: 60px;
+    /* Larger touch area */
   }
-  
+
   .backButton {
     padding: 10px 20px;
-      /* Larger touch target */
+    /* Larger touch target */
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.15);
-      /* More visible */
+    /* More visible */
   }
-  
+
   .viewerInstruction {
     font-size: 1rem;
-      padding: var(--spacing-3);
-      padding-bottom: max(var(--spacing-3), env(safe-area-inset-bottom));
-      /* Handle iPhone home bar */
-    }
-    
-    .submitButton {
-      padding: var(--spacing-4);
-      /* Larger touch area */
-      font-size: 1.1rem;
-    }
-    
-    .footer {
-      padding-bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
+    padding: var(--spacing-3);
+    padding-bottom: max(var(--spacing-3), env(safe-area-inset-bottom));
+    /* Handle iPhone home bar */
+  }
+
+  .submitButton {
+    padding: var(--spacing-4);
+    /* Larger touch area */
+    font-size: 1.1rem;
+  }
+
+  .footer {
+    padding-bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
   }
 }

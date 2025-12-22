@@ -1,22 +1,23 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
+import storybook from 'eslint-plugin-storybook';
 
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
-import react from 'eslint-plugin-react'
-import jsxA11y from 'eslint-plugin-jsx-a11y'
+import react from 'eslint-plugin-react';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default defineConfig([
   globalIgnores([
-    'dist', 
+    'dist',
     'storybook-static',
     'functions/lib/**', // Compiled Firebase functions
     'node_modules/**',
+    'coverage/**', // Coverage reports
   ]),
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -32,10 +33,13 @@ export default defineConfig([
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off', // Allow require() in Node.js files
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }], // Allow unused vars prefixed with _
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ], // Allow unused vars prefixed with _
       'no-undef': 'off', // Node.js globals are available
     },
   },
@@ -64,10 +68,13 @@ export default defineConfig([
     },
     rules: {
       // TypeScript rules
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
       'prefer-const': 'error', // Base ESLint rule
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
@@ -136,4 +143,4 @@ export default defineConfig([
       ...storybook.configs.recommended.rules,
     },
   },
-])
+]);

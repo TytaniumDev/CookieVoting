@@ -5,28 +5,33 @@ This document explains how to use seed data with Firebase emulators for developm
 ## Quick Start
 
 1. **Start emulators with seed data (recommended)**:
+
    ```bash
    npm run emulators:start:seed
    ```
+
    This starts emulators and automatically imports existing seed data if available.
 
 2. **Start emulators fresh and seed manually**:
+
    ```bash
    # Terminal 1: Start emulators
    npm run emulators:start
-   
+
    # Terminal 2: Seed data (wait a few seconds for emulators to start)
    npm run emulators:seed
    ```
 
 3. **Save emulator data (manual export - recommended for Windows)**:
+
    ```bash
    # Terminal 1: Start emulators
    npm run emulators:start
-   
+
    # Terminal 2: Export data (while emulators are running)
    npm run emulators:export:manual
    ```
+
    This exports current emulator data to `./emulator-data/` directory.
 
 4. **Start emulators with auto-export** (may hang on Windows):
@@ -73,7 +78,9 @@ The seed script creates:
 The built-in Firebase export command may hang on Windows. Use the manual export/import scripts instead:
 
 **To Export:**
+
 1. **Start emulators**:
+
    ```bash
    npm run emulators:start
    ```
@@ -84,7 +91,9 @@ The built-in Firebase export command may hang on Windows. Use the manual export/
    ```
 
 **To Import:**
+
 1. **Start emulators** (if not already running):
+
    ```bash
    npm run emulators:start
    ```
@@ -137,11 +146,12 @@ Edit `scripts/seed-emulator-data.js` to customize:
 
 1. **First Time Setup**: Run `npm run emulators:seed` after starting emulators to create initial data.
 
-2. **Persist Your Work**: 
+2. **Persist Your Work**:
    - **Windows users**: Use `npm run emulators:export:manual` while emulators are running
    - **Other platforms**: Use `npm run emulators:start:fresh` to automatically save when you stop emulators
 
-3. **Reset to Seed Data**: 
+3. **Reset to Seed Data**:
+
    ```bash
    npm run emulators:clear
    npm run emulators:start:seed
@@ -152,18 +162,21 @@ Edit `scripts/seed-emulator-data.js` to customize:
 ## Troubleshooting
 
 **"Emulators did not start in time"**
+
 - Make sure emulators are running: `npm run emulators:start`
 - Wait a few seconds after starting emulators before running seed script
 
 **"User already exists"**
+
 - This is normal - the script is idempotent and won't create duplicates
 
 **"Permission denied"**
+
 - Make sure you're using the emulator (not production Firebase)
 - Check that emulators are connected correctly
 
 **"Export request failed" or export hangs**
+
 - This is a known issue on Windows with Firebase emulator export
 - Use the manual export instead: `npm run emulators:export:manual` (while emulators are running)
 - The manual export script uses the Admin SDK and works reliably on all platforms
-

@@ -26,6 +26,7 @@ firebase functions:secrets:set GEMINI_API_KEY
 ```
 
 **Note:** You need to have the Secret Manager API enabled in your Google Cloud project. If you get an error, enable it with:
+
 ```bash
 gcloud services enable secretmanager.googleapis.com
 ```
@@ -66,6 +67,7 @@ npm run emulators:start:seed
 ```
 
 The Functions emulator will run on port 5001. Make sure you have:
+
 1. Created a `.env` file in the `functions` directory with your `GEMINI_API_KEY`
 2. Built the functions: `npm run build --prefix functions`
 
@@ -95,6 +97,7 @@ firebase deploy --only functions
 ## Security
 
 The Gemini API key is stored securely in Firebase Secret Manager, which:
+
 - Encrypts secrets at rest
 - Provides access control and audit logging
 - Automatically rotates secrets if configured
@@ -113,6 +116,7 @@ The function automatically has access to the secret when deployed, as long as th
 ### "Gemini API key not configured" Error
 
 Make sure you've set the API key using one of the methods above. Check:
+
 - **For local emulator**: Environment variable `GEMINI_API_KEY_LOCAL` is set in `functions/.env` file
 - **For production**: Secret `GEMINI_API_KEY` is set in Firebase Secret Manager using `firebase functions:secrets:set GEMINI_API_KEY`
 
@@ -121,6 +125,7 @@ Make sure you've set the API key using one of the methods above. Check:
 ### "Cookie detection service is not available" Error
 
 This means the Firebase Function hasn't been deployed. Deploy it with:
+
 ```bash
 firebase deploy --only functions
 ```
@@ -128,6 +133,7 @@ firebase deploy --only functions
 ### Functions Not Working in Emulator
 
 Make sure:
+
 1. Functions emulator is running (check port 5001) - it's included in `npm run emulators:start`
 2. You've installed dependencies: `cd functions && npm install`
 3. Functions are built: `npm run build --prefix functions`
@@ -146,4 +152,3 @@ If you prefer using the "Multimodal Tasks with the Gemini API" extension you ins
    - Read results from Firestore
 
 The current implementation (Firebase Functions) is more flexible and fits the existing workflow better.
-

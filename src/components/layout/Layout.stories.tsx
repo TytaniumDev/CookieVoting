@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 /**
  * Layout Component Stories
- * 
+ *
  * Main layout wrapper component that provides consistent page structure.
  */
 const meta = {

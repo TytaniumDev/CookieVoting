@@ -5,32 +5,38 @@ This document explains the new Firebase Authentication Emulator setup for integr
 ## What Was Implemented
 
 ### 1. Firebase Emulator Configuration
+
 - ✅ Added emulator configuration to `firebase.json`
 - ✅ Configured Auth (port 9099), Firestore (port 8080), and Storage (port 9199) emulators
 - ✅ Enabled emulator UI (port 4000)
 
 ### 2. Mock ID Token Generator
+
 - ✅ Created `tests/integration/mock-auth.ts`
 - ✅ Uses Firebase Admin SDK to create users programmatically
 - ✅ Generates custom tokens for authentication
 - ✅ Supports custom claims for role-based testing
 
 ### 3. Test Infrastructure Updates
+
 - ✅ Updated `tests/integration/firebase-test-init.ts` to connect to emulators
 - ✅ Updated `tests/integration/setup.ts` to use mock ID tokens instead of anonymous auth
 - ✅ Added automatic emulator connection with fallback handling
 
 ### 4. Package Dependencies
+
 - ✅ Added `firebase-admin` to `devDependencies`
 - ✅ Added npm scripts for emulator management
 
 ### 5. Documentation
+
 - ✅ Updated `tests/README.md` with emulator instructions
 - ✅ Added CI/CD examples for GitHub Actions
 
 ## Next Steps
 
 ### Step 1: Install Dependencies
+
 ```bash
 npm install
 ```
@@ -40,17 +46,20 @@ This will install `firebase-admin` which is required for generating mock ID toke
 ### Step 2: Test the Setup Locally
 
 1. **Start the emulators**:
+
    ```bash
    npm run emulators:start
    ```
 
    You should see output like:
+
    ```
    ✔  All emulators ready! It is now safe to connect.
    i  View Emulator UI at http://localhost:4000
    ```
 
 2. **In another terminal, run the integration tests**:
+
    ```bash
    npm run test:integration
    ```
@@ -77,6 +86,7 @@ If you have a GitHub Actions workflow or other CI/CD setup, update it to:
 3. Wait for emulators to be ready before running tests
 
 Example GitHub Actions step:
+
 ```yaml
 - name: Start Firebase Emulators
   run: npm run emulators:start &
@@ -95,12 +105,14 @@ Example GitHub Actions step:
 ## How It Works
 
 ### Before (Anonymous Auth)
+
 1. Tests used real Firebase project
 2. Required anonymous authentication to be enabled
 3. Created anonymous users with random UIDs
 4. Required manual admin setup
 
 ### After (Emulator + Mock ID Tokens)
+
 1. Tests use local Firebase emulators
 2. No real Firebase project needed
 3. Creates users programmatically with specific UIDs
@@ -136,19 +148,25 @@ const userCredential = await signInWithCustomToken(auth, customToken);
 ## Troubleshooting
 
 ### Error: "Cannot find module 'firebase-admin'"
+
 **Solution**: Run `npm install` to install dependencies
 
 ### Error: "Failed to connect to Firebase Authentication Emulator"
-**Solution**: 
+
+**Solution**:
+
 1. Make sure emulators are running: `npm run emulators:start`
 2. Check that ports 9099, 8080, and 9199 are not in use
 3. Verify `firebase.json` has emulator configuration
 
 ### Error: "Emulator connection already initialized"
+
 **Solution**: This is normal - the code handles this gracefully. It means emulators are already connected.
 
 ### Tests fail with permission errors
-**Solution**: 
+
+**Solution**:
+
 1. Check that Firestore emulator is running
 2. Verify `ensureTestUserIsAdmin()` is being called in `setupTestUser()`
 3. Check emulator UI to see if test user was created
@@ -173,7 +191,7 @@ These claims will be available in Firestore security rules via `request.auth.tok
 ## Questions?
 
 Refer to:
+
 - `tests/README.md` - Full test documentation
 - `tests/integration/mock-auth.ts` - Mock auth implementation
 - Firebase Emulator docs: https://firebase.google.com/docs/emulator-suite
-

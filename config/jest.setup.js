@@ -82,15 +82,15 @@ global.document = {
                 // Return image data for the requested region
                 const regionSize = sw * sh * 4;
                 const regionData = new Uint8ClampedArray(regionSize);
-                
+
                 // Fill with some test data (gray pixels)
                 for (let i = 0; i < regionSize; i += 4) {
-                  regionData[i] = 128;     // R
+                  regionData[i] = 128; // R
                   regionData[i + 1] = 128; // G
                   regionData[i + 2] = 128; // B
                   regionData[i + 3] = 255; // A
                 }
-                
+
                 return {
                   data: regionData,
                   width: sw,

@@ -23,7 +23,7 @@ export function BakerSetupStep({
   onBack,
   onNext,
   hasExistingCategories,
-  error: parentError
+  error: parentError,
 }: Props) {
   const [newBakerName, setNewBakerName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +75,10 @@ export function BakerSetupStep({
 
       {bakers.length > 0 && (
         <div className={styles.bakerList}>
-          {bakers.map(baker => (
+          {bakers.map((baker) => (
             <div key={baker.id} className={styles.bakerCard}>
               <span>{baker.name}</span>
-              <button
-                onClick={() => onRemoveBaker(baker.id)}
-                className={styles.removeButton}
-              >
+              <button onClick={() => onRemoveBaker(baker.id)} className={styles.removeButton}>
                 ×
               </button>
             </div>
@@ -94,18 +91,11 @@ export function BakerSetupStep({
           ← Back
         </button>
         {hasExistingCategories && bakers.length > 0 && (
-          <button
-            onClick={onNext}
-            className={styles.buttonSecondary}
-          >
+          <button onClick={onNext} className={styles.buttonSecondary}>
             Next: Tag Cookies →
           </button>
         )}
-        <button
-          onClick={onNext}
-          disabled={bakers.length === 0}
-          className={styles.buttonPrimary}
-        >
+        <button onClick={onNext} disabled={bakers.length === 0} className={styles.buttonPrimary}>
           {bakers.length > 0 ? 'Continue' : 'Add at least one baker'}
         </button>
       </div>

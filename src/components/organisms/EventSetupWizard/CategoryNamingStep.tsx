@@ -21,7 +21,7 @@ export function CategoryNamingStep({
   onBack,
   onNext,
   hasExistingCategories,
-  error
+  error,
 }: Props) {
   const categoryInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -32,7 +32,9 @@ export function CategoryNamingStep({
   return (
     <div className={styles.stepContent}>
       <h2>Name Each Category</h2>
-      <p className={styles.instruction}>Give each image a category name (e.g., &quot;Sugar Cookie&quot;, &quot;Chocolate Chip&quot;)</p>
+      <p className={styles.instruction}>
+        Give each image a category name (e.g., &quot;Sugar Cookie&quot;, &quot;Chocolate Chip&quot;)
+      </p>
 
       <div className={styles.categoryNameGrid}>
         {images.map((img, index) => {
@@ -42,7 +44,9 @@ export function CategoryNamingStep({
             <div key={uniqueKey} className={styles.categoryNameCard}>
               <img src={img.preview} alt={`Category ${index + 1}`} />
               <input
-                ref={(el) => { categoryInputRefs.current[index] = el; }}
+                ref={(el) => {
+                  categoryInputRefs.current[index] = el;
+                }}
                 type="text"
                 placeholder={`Category ${index + 1} name`}
                 value={img.categoryName || ''}
@@ -71,20 +75,20 @@ export function CategoryNamingStep({
           ← Back
         </button>
         {hasExistingCategories && (
-          <button
-            onClick={onNext}
-            className={styles.buttonSecondary}
-            disabled={uploading}
-          >
+          <button onClick={onNext} className={styles.buttonSecondary} disabled={uploading}>
             Next: Add Bakers →
           </button>
         )}
         <button
           onClick={onCreateCategories}
-          disabled={uploading || images.some(img => !img.categoryName?.trim())}
+          disabled={uploading || images.some((img) => !img.categoryName?.trim())}
           className={styles.buttonPrimary}
         >
-          {uploading ? 'Creating...' : hasExistingCategories ? 'Add More Categories' : 'Create Categories'}
+          {uploading
+            ? 'Creating...'
+            : hasExistingCategories
+              ? 'Add More Categories'
+              : 'Create Categories'}
         </button>
       </div>
     </div>

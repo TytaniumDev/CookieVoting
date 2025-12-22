@@ -19,11 +19,13 @@ const WithFirebaseEmulator: React.FC<WithFirebaseEmulatorProps> = ({ Story }) =>
     const checkEmulators = async () => {
       try {
         // Give Firebase a moment to initialize
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         const connected = areEmulatorsConnected();
         setEmulatorReady(connected);
         if (!connected) {
-          setError('Firebase emulators not connected. Please start emulators with: npm run emulators:start');
+          setError(
+            'Firebase emulators not connected. Please start emulators with: npm run emulators:start',
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to check emulator status');
@@ -59,4 +61,3 @@ const WithFirebaseEmulator: React.FC<WithFirebaseEmulatorProps> = ({ Story }) =>
 export const withFirebaseEmulator = (Story: React.ComponentType) => {
   return <WithFirebaseEmulator Story={Story} />;
 };
-

@@ -30,7 +30,7 @@ export function useEvent(eventId: string) {
     if (!eventId) return;
     try {
       await updateEventStatus(eventId, status);
-      setEvent(prev => prev ? { ...prev, status } : null);
+      setEvent((prev) => (prev ? { ...prev, status } : null));
     } catch (err) {
       console.error('Error updating event status:', err);
       throw err;

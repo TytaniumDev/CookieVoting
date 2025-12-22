@@ -20,6 +20,6 @@ export function sortAndNumberCookies(cookies: CookieCoordinate[]): CookieCoordin
   // Assign numbers based on sorted position
   return sorted.map((cookie, index) => ({
     ...cookie,
-    number: index + 1
+    number: index + 1,
   }));
 }

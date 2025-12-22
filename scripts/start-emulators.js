@@ -56,7 +56,7 @@ firebaseProcess.stdout.on('data', (data) => {
   const lines = stdoutBuffer.split('\n');
   // Keep the last incomplete line in buffer
   stdoutBuffer = lines.pop() || '';
-  
+
   for (const line of lines) {
     // Skip lines containing the Java deprecation warnings
     if (
@@ -66,7 +66,7 @@ firebaseProcess.stdout.on('data', (data) => {
     ) {
       continue;
     }
-    
+
     // Print all other lines immediately
     process.stdout.write(line + '\n');
   }
@@ -78,7 +78,7 @@ firebaseProcess.stderr.on('data', (data) => {
   const lines = stderrBuffer.split('\n');
   // Keep the last incomplete line in buffer
   stderrBuffer = lines.pop() || '';
-  
+
   for (const line of lines) {
     // Skip lines containing the Java deprecation warnings
     if (
@@ -88,7 +88,7 @@ firebaseProcess.stderr.on('data', (data) => {
     ) {
       continue;
     }
-    
+
     // Print all other lines to stderr immediately
     process.stderr.write(line + '\n');
   }
@@ -97,22 +97,25 @@ firebaseProcess.stderr.on('data', (data) => {
 // Flush any remaining buffered output on exit
 firebaseProcess.on('exit', (code) => {
   if (stdoutBuffer.trim()) {
-    if (!stdoutBuffer.includes('WARNING: A terminally deprecated method') &&
-        !stdoutBuffer.includes('WARNING: sun.misc.Unsafe') &&
-        !stdoutBuffer.includes('WARNING: Please consider reporting this to the maintainers')) {
+    if (
+      !stdoutBuffer.includes('WARNING: A terminally deprecated method') &&
+      !stdoutBuffer.includes('WARNING: sun.misc.Unsafe') &&
+      !stdoutBuffer.includes('WARNING: Please consider reporting this to the maintainers')
+    ) {
       process.stdout.write(stdoutBuffer);
     }
   }
   if (stderrBuffer.trim()) {
-    if (!stderrBuffer.includes('WARNING: A terminally deprecated method') &&
-        !stderrBuffer.includes('WARNING: sun.misc.Unsafe') &&
-        !stderrBuffer.includes('WARNING: Please consider reporting this to the maintainers')) {
+    if (
+      !stderrBuffer.includes('WARNING: A terminally deprecated method') &&
+      !stderrBuffer.includes('WARNING: sun.misc.Unsafe') &&
+      !stderrBuffer.includes('WARNING: Please consider reporting this to the maintainers')
+    ) {
       process.stderr.write(stderrBuffer);
     }
   }
   process.exit(code || 0);
 });
-
 
 // Handle errors
 firebaseProcess.on('error', (error) => {
@@ -128,4 +131,3 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   firebaseProcess.kill('SIGTERM');
 });
-

@@ -45,7 +45,8 @@ export const Error: Story = {
 
 export const LongMessage: Story = {
   args: {
-    message: 'This is a very long message to test how the toast handles multiple lines of text or just long strings that might need truncation or wrapping.',
+    message:
+      'This is a very long message to test how the toast handles multiple lines of text or just long strings that might need truncation or wrapping.',
     type: 'info',
     duration: 5000,
   },

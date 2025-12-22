@@ -40,14 +40,17 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
   },
   async (request) => {
     console.log('[FirebaseFunction] detectCookiesWithGemini called');
-    console.log('[FirebaseFunction] Request auth:', request.auth ? `User: ${request.auth.uid}` : 'No auth');
-    
+    console.log(
+      '[FirebaseFunction] Request auth:',
+      request.auth ? `User: ${request.auth.uid}` : 'No auth',
+    );
+
     // Verify authentication
     if (!request.auth) {
       console.error('[FirebaseFunction] Authentication failed - no auth object');
       throw new functionsV2.https.HttpsError(
         'unauthenticated',
-        'User must be authenticated to detect cookies'
+        'User must be authenticated to detect cookies',
       );
     }
 
@@ -58,7 +61,7 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       console.error('[FirebaseFunction] Invalid imageUrl:', imageUrl, typeof imageUrl);
       throw new functionsV2.https.HttpsError(
         'invalid-argument',
-        'imageUrl is required and must be a string'
+        'imageUrl is required and must be a string',
       );
     }
 
@@ -69,7 +72,7 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       console.error('[FirebaseFunction] Gemini API key not configured');
       throw new functionsV2.https.HttpsError(
         'failed-precondition',
-        'Gemini API key not configured. Please set the GEMINI_API_KEY secret in Firebase Secret Manager.'
+        'Gemini API key not configured. Please set the GEMINI_API_KEY secret in Firebase Secret Manager.',
       );
     }
 
@@ -82,13 +85,16 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
       const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
       detectionRef = db.collection('image_detections').doc(detectionDocId);
       try {
-        await detectionRef.set({
-          filePath,
-          imageUrl,
-          status: 'processing',
-          progress: 'Initializing...',
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        await detectionRef.set(
+          {
+            filePath,
+            imageUrl,
+            status: 'processing',
+            progress: 'Initializing...',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
       } catch (e) {
         console.warn('Failed to set initial progress:', e);
       }
@@ -99,7 +105,9 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
 
       // Update progress: Downloading
       if (detectionRef) {
-        await detectionRef.set({ progress: 'Downloading image...' }, { merge: true }).catch(console.warn);
+        await detectionRef
+          .set({ progress: 'Downloading image...' }, { merge: true })
+          .catch(console.warn);
       }
 
       // Use the shared detection function
@@ -109,10 +117,16 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
 
       // Update progress: Saving
       if (detectionRef) {
-        await detectionRef.set({ progress: 'Finalizing results...' }, { merge: true }).catch(console.warn);
+        await detectionRef
+          .set({ progress: 'Finalizing results...' }, { merge: true })
+          .catch(console.warn);
       }
 
-      console.log('[FirebaseFunction] Detection completed. Found', detectedCookies.length, 'cookies');
+      console.log(
+        '[FirebaseFunction] Detection completed. Found',
+        detectedCookies.length,
+        'cookies',
+      );
 
       // Save to Firestore 'image_detections' collection
       try {
@@ -120,7 +134,7 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
           console.log('[FirebaseFunction] Saving detections to Firestore');
 
           // Configure detected cookies for Firestore (convert nested arrays if needed)
-          const firestoreCookies = detectedCookies.map(cookie => ({
+          const firestoreCookies = detectedCookies.map((cookie) => ({
             x: cookie.x,
             y: cookie.y,
             width: cookie.width,
@@ -129,20 +143,25 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
             polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
           }));
 
-          await detectionRef.set({
-            filePath,
-            imageUrl,
-            detectedCookies: firestoreCookies,
-            count: detectedCookies.length,
-            detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-            processedBy: 'detectCookiesWithGemini-onCall',
-            detectionVersion: DETECTION_FUNCTION_VERSION,
-            status: 'completed',
-            progress: 'Completed',
-          }, { merge: true });
+          await detectionRef.set(
+            {
+              filePath,
+              imageUrl,
+              detectedCookies: firestoreCookies,
+              count: detectedCookies.length,
+              detectedAt: admin.firestore.FieldValue.serverTimestamp(),
+              processedBy: 'detectCookiesWithGemini-onCall',
+              detectionVersion: DETECTION_FUNCTION_VERSION,
+              status: 'completed',
+              progress: 'Completed',
+            },
+            { merge: true },
+          );
           console.log('[FirebaseFunction] Successfully saved detections');
         } else {
-          console.warn('[FirebaseFunction] Could not extract file path from URL, skipping Firestore save');
+          console.warn(
+            '[FirebaseFunction] Could not extract file path from URL, skipping Firestore save',
+          );
         }
       } catch (saveError) {
         console.error('[FirebaseFunction] Error saving to Firestore:', saveError);
@@ -157,20 +176,25 @@ export const detectCookiesWithGemini = functionsV2.https.onCall(
 
       // Update status to error
       if (detectionRef) {
-        await detectionRef.set({
-          status: 'error',
-          progress: 'Failed',
-          error: error instanceof Error ? error.message : String(error)
-        }, { merge: true }).catch(console.warn);
+        await detectionRef
+          .set(
+            {
+              status: 'error',
+              progress: 'Failed',
+              error: error instanceof Error ? error.message : String(error),
+            },
+            { merge: true },
+          )
+          .catch(console.warn);
       }
 
       throw new functionsV2.https.HttpsError(
         'internal',
         'Failed to detect cookies',
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
-  }
+  },
 );
 
 /**
@@ -181,7 +205,7 @@ function extractFilePathFromUrl(imageUrl: string): string | null {
     // Try firebasestorage.googleapis.com format first (most specific)
     if (imageUrl.includes('firebasestorage.googleapis.com')) {
       const urlParts = imageUrl.split('/');
-      const oIndex = urlParts.findIndex(part => part === 'o');
+      const oIndex = urlParts.findIndex((part) => part === 'o');
       if (oIndex !== -1 && oIndex < urlParts.length - 1) {
         // Get the path after 'o' and before '?'
         const encodedPath = urlParts[oIndex + 1].split('?')[0];
@@ -210,12 +234,9 @@ function extractFilePathFromUrl(imageUrl: string): string | null {
  * Helper function to detect cookies in an image using Gemini
  * Extracted for reuse by both callable function and storage trigger
  */
-async function detectCookiesInImage(
-  imageUrl: string,
-  apiKey: string
-): Promise<DetectedCookie[]> {
+async function detectCookiesInImage(imageUrl: string, apiKey: string): Promise<DetectedCookie[]> {
   console.log('[DetectCookies] Starting detection for image:', imageUrl);
-  
+
   // Initialize Gemini AI with the API key
   console.log('[DetectCookies] Initializing GoogleGenerativeAI');
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -226,17 +247,26 @@ async function detectCookiesInImage(
   try {
     response = await fetch(imageUrl);
     console.log('[DetectCookies] Fetch response status:', response.status, response.statusText);
-    console.log('[DetectCookies] Fetch response headers:', Object.fromEntries(response.headers.entries()));
+    console.log(
+      '[DetectCookies] Fetch response headers:',
+      Object.fromEntries(response.headers.entries()),
+    );
   } catch (fetchError) {
     console.error('[DetectCookies] Failed to fetch image:', fetchError);
     if (fetchError instanceof Error) {
       console.error('[DetectCookies] Fetch error details:', fetchError.message, fetchError.stack);
     }
-    throw new Error(`Failed to fetch image: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+    throw new Error(
+      `Failed to fetch image: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
+    );
   }
-  
+
   if (!response.ok) {
-    console.error('[DetectCookies] Image fetch failed with status:', response.status, response.statusText);
+    console.error(
+      '[DetectCookies] Image fetch failed with status:',
+      response.status,
+      response.statusText,
+    );
     throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
   }
 
@@ -251,7 +281,7 @@ async function detectCookiesInImage(
   // Use Gemini to detect cookies with polygon shapes
   // Use gemini-3-flash-preview for best accuracy
   console.log('[DetectCookies] Getting Gemini model: gemini-3-flash-preview');
-  const model = genAI.getGenerativeModel({ 
+  const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
   });
   console.log('[DetectCookies] Successfully initialized gemini-3-flash-preview');
@@ -359,23 +389,29 @@ DETECTION PRIORITY:
   console.log('[DetectCookies] Response obtained');
   const responseText = geminiResponse.text() || '[]';
   console.log('[DetectCookies] Response text length:', responseText.length);
-  console.log('[DetectCookies] Response text preview (first 500 chars):', responseText.substring(0, 500));
-  
+  console.log(
+    '[DetectCookies] Response text preview (first 500 chars):',
+    responseText.substring(0, 500),
+  );
+
   // Parse the JSON response
-  let detectedCookies: any[] = [];
+  let detectedCookies: unknown[] = [];
   try {
     console.log('[DetectCookies] Parsing JSON response');
-    
+
     // Clean and extract JSON from response
     let jsonString = responseText.trim();
-    
+
     // Remove markdown code blocks if present
-    jsonString = jsonString.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    
+    jsonString = jsonString
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
     // Try to find JSON array in the text
     // First try: Look for array wrapped in markdown
     let jsonMatch = jsonString.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-    
+
     // Second try: Look for array that starts with [ and ends with ]
     if (!jsonMatch) {
       const arrayStart = jsonString.indexOf('[');
@@ -387,18 +423,18 @@ DETECTION PRIORITY:
     } else {
       jsonString = jsonMatch[1];
     }
-    
+
     // If still no match, try parsing the whole cleaned string
     if (!jsonMatch) {
       jsonString = responseText.trim();
     }
-    
+
     console.log('[DetectCookies] Extracted JSON string length:', jsonString.length);
     console.log('[DetectCookies] Extracted JSON preview:', jsonString.substring(0, 500));
-    
+
     // Parse JSON
     detectedCookies = JSON.parse(jsonString);
-    
+
     // Validate it's an array
     if (!Array.isArray(detectedCookies)) {
       console.error('[DetectCookies] Parsed result is not an array:', typeof detectedCookies);
@@ -415,7 +451,7 @@ DETECTION PRIORITY:
     }
     console.error('[DetectCookies] Full response text:', responseText);
     console.error('[DetectCookies] Response text length:', responseText.length);
-    
+
     // Try one more time with a more aggressive cleanup
     try {
       // Remove any text before first [ and after last ]
@@ -428,7 +464,11 @@ DETECTION PRIORITY:
         if (!Array.isArray(detectedCookies)) {
           detectedCookies = [];
         } else {
-          console.log('[DetectCookies] Fallback parse succeeded:', detectedCookies.length, 'cookies');
+          console.log(
+            '[DetectCookies] Fallback parse succeeded:',
+            detectedCookies.length,
+            'cookies',
+          );
         }
       } else {
         detectedCookies = [];
@@ -440,13 +480,13 @@ DETECTION PRIORITY:
   }
 
   console.log('[DetectCookies] Validating and normalizing', detectedCookies.length, 'cookies');
-  
+
   // Validate that we have an array
   if (!Array.isArray(detectedCookies)) {
     console.error('[DetectCookies] Parsed result is not an array, got:', typeof detectedCookies);
     detectedCookies = [];
   }
-  
+
   // Type for raw cookie data from API before validation
   interface RawCookieData {
     x?: unknown;
@@ -466,19 +506,24 @@ DETECTION PRIORITY:
         console.warn('[DetectCookies] Cookie at index', index, 'is not an object:', cookie);
         return false;
       }
-      
-      const isValid = (
+
+      const isValid =
         typeof cookie.x === 'number' &&
         typeof cookie.y === 'number' &&
         typeof cookie.width === 'number' &&
         typeof cookie.height === 'number' &&
-        !isNaN(cookie.x) && !isNaN(cookie.y) &&
-        !isNaN(cookie.width) && !isNaN(cookie.height) &&
-        cookie.x >= 0 && cookie.x <= 100 &&
-        cookie.y >= 0 && cookie.y <= 100 &&
-        cookie.width > 0 && cookie.width <= 100 &&
-        cookie.height > 0 && cookie.height <= 100
-      );
+        !isNaN(cookie.x) &&
+        !isNaN(cookie.y) &&
+        !isNaN(cookie.width) &&
+        !isNaN(cookie.height) &&
+        cookie.x >= 0 &&
+        cookie.x <= 100 &&
+        cookie.y >= 0 &&
+        cookie.y <= 100 &&
+        cookie.width > 0 &&
+        cookie.width <= 100 &&
+        cookie.height > 0 &&
+        cookie.height <= 100;
       if (!isValid) {
         console.warn('[DetectCookies] Invalid cookie at index', index, ':', JSON.stringify(cookie));
       }
@@ -489,35 +534,50 @@ DETECTION PRIORITY:
       let polygon: Array<[number, number]> | undefined = undefined;
       if (cookie.polygon) {
         if (!Array.isArray(cookie.polygon)) {
-          console.warn(`[DetectCookies] Cookie ${index} has invalid polygon (not an array):`, typeof cookie.polygon);
+          console.warn(
+            `[DetectCookies] Cookie ${index} has invalid polygon (not an array):`,
+            typeof cookie.polygon,
+          );
         } else {
           try {
             const filteredPolygon = (cookie.polygon as unknown[])
               .filter((point: unknown, pointIndex: number) => {
-                const isValid = Array.isArray(point) && 
+                const isValid =
+                  Array.isArray(point) &&
                   point.length === 2 &&
                   typeof point[0] === 'number' &&
                   typeof point[1] === 'number' &&
                   !isNaN(point[0]) &&
                   !isNaN(point[1]);
                 if (!isValid) {
-                  console.warn(`[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`, point);
+                  console.warn(
+                    `[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`,
+                    point,
+                  );
                 }
                 return isValid;
               })
-              .map((point: any) => [
-                Math.max(0, Math.min(100, point[0])),
-                Math.max(0, Math.min(100, point[1]))
-              ] as [number, number]);
-            
+              .map(
+                (point: [number, number]) =>
+                  [Math.max(0, Math.min(100, point[0])), Math.max(0, Math.min(100, point[1]))] as [
+                    number,
+                    number,
+                  ],
+              );
+
             // Ensure polygon has at least 3 points
             if (filteredPolygon.length >= 3) {
               polygon = filteredPolygon;
             } else {
-              console.warn(`[DetectCookies] Cookie ${index} polygon has insufficient points (${filteredPolygon.length}, need at least 3)`);
+              console.warn(
+                `[DetectCookies] Cookie ${index} polygon has insufficient points (${filteredPolygon.length}, need at least 3)`,
+              );
             }
           } catch (polygonError) {
-            console.error(`[DetectCookies] Error processing polygon for cookie ${index}:`, polygonError);
+            console.error(
+              `[DetectCookies] Error processing polygon for cookie ${index}:`,
+              polygonError,
+            );
           }
         }
       }
@@ -528,13 +588,16 @@ DETECTION PRIORITY:
         width: Math.max(0.1, Math.min(100, cookie.width as number)),
         height: Math.max(0.1, Math.min(100, cookie.height as number)),
         polygon,
-        confidence: typeof cookie.confidence === 'number' 
-          ? Math.max(0, Math.min(1, cookie.confidence)) 
-          : 0.8, // Default confidence if not provided
+        confidence:
+          typeof cookie.confidence === 'number' ? Math.max(0, Math.min(1, cookie.confidence)) : 0.8, // Default confidence if not provided
       };
     });
 
-  console.log('[DetectCookies] Validation complete. Returning', validatedCookies.length, 'validated cookies');
+  console.log(
+    '[DetectCookies] Validation complete. Returning',
+    validatedCookies.length,
+    'validated cookies',
+  );
   return validatedCookies;
 }
 
@@ -549,32 +612,34 @@ DETECTION PRIORITY:
 async function processImagesInBackground(jobId: string, apiKey: string) {
   const db = admin.firestore();
   const jobRef = db.collection('detection_jobs').doc(jobId);
-  
+
   try {
     // Update job status to processing
     await jobRef.update({
       status: 'processing',
       startedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    
+
     const bucket = admin.storage().bucket();
-    
+
     // List all files in shared/cookies/
     console.log('[DetectAllImages] Listing files in shared/cookies/');
     const [files] = await bucket.getFiles({ prefix: 'shared/cookies/' });
-    
+
     // Filter for image files
-    const imageFiles = files.filter(file => {
+    const imageFiles = files.filter((file) => {
       const name = file.name.toLowerCase();
-      return name.endsWith('.jpg') || 
-             name.endsWith('.jpeg') || 
-             name.endsWith('.png') || 
-             name.endsWith('.webp') || 
-             name.endsWith('.gif');
+      return (
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png') ||
+        name.endsWith('.webp') ||
+        name.endsWith('.gif')
+      );
     });
-    
+
     console.log(`[DetectAllImages] Found ${imageFiles.length} image file(s) to process`);
-    
+
     // Update job with total count
     await jobRef.update({
       total: imageFiles.length,
@@ -582,7 +647,7 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
       skipped: 0,
       errors: 0,
     });
-    
+
     // Process each image (no limit - process all)
     for (let i = 0; i < imageFiles.length; i++) {
       // Check if job was cancelled
@@ -595,53 +660,58 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
         });
         return;
       }
-      
+
       const file = imageFiles[i];
       const filePath = file.name;
       console.log(`[DetectAllImages] Processing ${i + 1}/${imageFiles.length}: ${filePath}`);
-      
+
       // Update progress
       await jobRef.update({
         currentFile: filePath,
         currentIndex: i + 1,
       });
-      
+
       try {
         // Check if detection already exists
         const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
         const detectionRef = db.collection('image_detections').doc(detectionDocId);
         const existingDoc = await detectionRef.get();
-        
+
         if (existingDoc.exists) {
           const existingData = existingDoc.data();
           const existingVersion = existingData?.detectionVersion;
-          const hasCookies = existingData?.detectedCookies && existingData.detectedCookies.length > 0;
-          
+          const hasCookies =
+            existingData?.detectedCookies && existingData.detectedCookies.length > 0;
+
           // Skip if already processed with current version
           if (hasCookies && existingVersion === DETECTION_FUNCTION_VERSION) {
-            console.log(`[DetectAllImages] Skipping ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION}, has ${existingData.detectedCookies.length} cookies)`);
+            console.log(
+              `[DetectAllImages] Skipping ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION}, has ${existingData.detectedCookies.length} cookies)`,
+            );
             await jobRef.update({
               skipped: admin.firestore.FieldValue.increment(1),
             });
             continue;
           } else if (hasCookies && existingVersion !== DETECTION_FUNCTION_VERSION) {
-            console.log(`[DetectAllImages] Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`);
+            console.log(
+              `[DetectAllImages] Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`,
+            );
           }
         }
-        
+
         // Make file publicly accessible
         await file.makePublic();
-        
+
         // Get download URL
         const imageUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
-        
+
         // Detect cookies
         console.log(`[DetectAllImages] Detecting cookies in ${filePath}`);
         const detectedCookies = await detectCookiesInImage(imageUrl, apiKey);
-        
+
         // Store results in Firestore (convert polygons to Firestore-compatible format)
         // Firestore doesn't support nested arrays, so convert [[x,y], [x,y]] to [{x, y}, {x, y}]
-        const firestoreCookies = detectedCookies.map(cookie => ({
+        const firestoreCookies = detectedCookies.map((cookie) => ({
           x: cookie.x,
           y: cookie.y,
           width: cookie.width,
@@ -649,26 +719,28 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
           confidence: cookie.confidence,
           polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
         }));
-        
-        await detectionRef.set({
-          filePath,
-          imageUrl,
-          detectedCookies: firestoreCookies,
-          count: detectedCookies.length,
-          detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-          contentType: file.metadata.contentType || 'image/jpeg',
-          processedBy: 'detectAllImages-function',
-          detectionVersion: DETECTION_FUNCTION_VERSION,
-        }, { merge: true });
-        
+
+        await detectionRef.set(
+          {
+            filePath,
+            imageUrl,
+            detectedCookies: firestoreCookies,
+            count: detectedCookies.length,
+            detectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            contentType: file.metadata.contentType || 'image/jpeg',
+            processedBy: 'detectAllImages-function',
+            detectionVersion: DETECTION_FUNCTION_VERSION,
+          },
+          { merge: true },
+        );
+
         console.log(`[DetectAllImages] Processed ${filePath}: ${detectedCookies.length} cookies`);
         await jobRef.update({
           processed: admin.firestore.FieldValue.increment(1),
         });
-        
+
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`[DetectAllImages] Error processing ${filePath}:`, error);
         await jobRef.update({
@@ -676,7 +748,7 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
         });
       }
     }
-    
+
     // Check if job was cancelled before marking as completed
     const jobDoc = await jobRef.get();
     const finalJobData = jobDoc.data();
@@ -684,7 +756,7 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
       console.log('[DetectAllImages] Job was cancelled, not marking as completed');
       return;
     }
-    
+
     // Mark job as completed
     await jobRef.update({
       status: 'completed',
@@ -693,9 +765,10 @@ async function processImagesInBackground(jobId: string, apiKey: string) {
       skipped: finalJobData?.skipped || 0,
       errors: finalJobData?.errors || 0,
     });
-    
-    console.log(`[DetectAllImages] Completed: ${finalJobData?.processed || 0} processed, ${finalJobData?.skipped || 0} skipped, ${finalJobData?.errors || 0} errors`);
-    
+
+    console.log(
+      `[DetectAllImages] Completed: ${finalJobData?.processed || 0} processed, ${finalJobData?.skipped || 0} skipped, ${finalJobData?.errors || 0} errors`,
+    );
   } catch (error) {
     console.error('[DetectAllImages] Fatal error in background processing:', error);
     await jobRef.update({
@@ -718,14 +791,17 @@ export const detectAllImages = functionsV2.https.onCall(
   },
   async (request) => {
     console.log('[FirebaseFunction] detectAllImages called');
-    console.log('[FirebaseFunction] Request auth:', request.auth ? `User: ${request.auth.uid}` : 'No auth');
-    
+    console.log(
+      '[FirebaseFunction] Request auth:',
+      request.auth ? `User: ${request.auth.uid}` : 'No auth',
+    );
+
     // Verify authentication
     if (!request.auth) {
       console.error('[FirebaseFunction] Authentication failed - no auth object');
       throw new functionsV2.https.HttpsError(
         'unauthenticated',
-        'User must be authenticated to detect cookies'
+        'User must be authenticated to detect cookies',
       );
     }
 
@@ -735,18 +811,19 @@ export const detectAllImages = functionsV2.https.onCall(
       console.error('[FirebaseFunction] Gemini API key not configured');
       throw new functionsV2.https.HttpsError(
         'failed-precondition',
-        'Gemini API key not configured'
+        'Gemini API key not configured',
       );
     }
 
     const db = admin.firestore();
-    
+
     // Check if there's already a running job
-    const runningJobs = await db.collection('detection_jobs')
+    const runningJobs = await db
+      .collection('detection_jobs')
       .where('status', '==', 'processing')
       .limit(1)
       .get();
-    
+
     if (!runningJobs.empty) {
       const existingJob = runningJobs.docs[0];
       return {
@@ -759,7 +836,7 @@ export const detectAllImages = functionsV2.https.onCall(
     // Create a new job document
     const jobRef = db.collection('detection_jobs').doc();
     const jobId = jobRef.id;
-    
+
     await jobRef.set({
       status: 'queued',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -776,9 +853,10 @@ export const detectAllImages = functionsV2.https.onCall(
     return {
       jobId,
       status: 'queued',
-      message: 'Detection job queued. Processing will start shortly. Check job status for progress.',
+      message:
+        'Detection job queued. Processing will start shortly. Check job status for progress.',
     };
-  }
+  },
 );
 
 /**
@@ -790,61 +868,55 @@ export const cancelDetectionJob = functionsV2.https.onCall(
   },
   async (request) => {
     console.log('[FirebaseFunction] cancelDetectionJob called');
-    
+
     // Verify authentication
     if (!request.auth) {
       console.error('[FirebaseFunction] Authentication failed - no auth object');
       throw new functionsV2.https.HttpsError(
         'unauthenticated',
-        'User must be authenticated to cancel jobs'
+        'User must be authenticated to cancel jobs',
       );
     }
 
     const { jobId } = request.data as { jobId: string };
-    
+
     if (!jobId || typeof jobId !== 'string') {
-      throw new functionsV2.https.HttpsError(
-        'invalid-argument',
-        'jobId is required'
-      );
+      throw new functionsV2.https.HttpsError('invalid-argument', 'jobId is required');
     }
 
     const db = admin.firestore();
     const jobRef = db.collection('detection_jobs').doc(jobId);
     const jobDoc = await jobRef.get();
-    
+
     if (!jobDoc.exists) {
-      throw new functionsV2.https.HttpsError(
-        'not-found',
-        'Job not found'
-      );
+      throw new functionsV2.https.HttpsError('not-found', 'Job not found');
     }
-    
+
     const jobData = jobDoc.data();
     const status = jobData?.status;
-    
+
     // Only allow cancellation of queued or processing jobs
     if (status !== 'queued' && status !== 'processing') {
       throw new functionsV2.https.HttpsError(
         'failed-precondition',
-        `Cannot cancel job with status: ${status}`
+        `Cannot cancel job with status: ${status}`,
       );
     }
-    
+
     // Mark job as cancelled
     await jobRef.update({
       status: 'cancelled',
       cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
       cancelledBy: request.auth.uid,
     });
-    
+
     console.log(`[FirebaseFunction] Job ${jobId} cancelled by ${request.auth.uid}`);
-    
+
     return {
       success: true,
       message: 'Job cancelled successfully',
     };
-  }
+  },
 );
 
 /**
@@ -861,31 +933,32 @@ export const processDetectionJob = onDocumentCreated(
   },
   async (event) => {
     const jobId = event.params.jobId;
-    
+
     if (!event.data) {
       console.error(`[ProcessDetectionJob] No data for job: ${jobId}`);
       return;
     }
-    
+
     const jobData = event.data.data();
     const jobRef = event.data.ref;
-    
+
     console.log(`[ProcessDetectionJob] Triggered for job: ${jobId}`);
     console.log(`[ProcessDetectionJob] Job data:`, JSON.stringify(jobData));
-    
+
     // Only process jobs with status 'queued'
     if (jobData?.status !== 'queued') {
       console.log(`[ProcessDetectionJob] Job ${jobId} status is '${jobData?.status}', skipping`);
       return;
     }
-    
+
     // Check if there's already a processing job
     const db = admin.firestore();
-    const runningJobs = await db.collection('detection_jobs')
+    const runningJobs = await db
+      .collection('detection_jobs')
       .where('status', '==', 'processing')
       .limit(1)
       .get();
-    
+
     if (!runningJobs.empty && runningJobs.docs[0].id !== jobId) {
       console.log(`[ProcessDetectionJob] Another job is already processing, skipping job ${jobId}`);
       // Update this job to indicate it's waiting
@@ -895,7 +968,7 @@ export const processDetectionJob = onDocumentCreated(
       });
       return;
     }
-    
+
     // Get API key from secret
     const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
     if (!apiKey) {
@@ -907,13 +980,13 @@ export const processDetectionJob = onDocumentCreated(
       });
       return;
     }
-    
+
     // Process the job - this runs in its own function instance
     // The function won't terminate until this completes
     await processImagesInBackground(jobId, apiKey);
-    
+
     console.log(`[ProcessDetectionJob] Completed processing job: ${jobId}`);
-  }
+  },
 );
 
 export const autoDetectCookiesOnUpload = onObjectFinalized(
@@ -963,24 +1036,28 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
       const db = admin.firestore();
       const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
       const detectionRef = db.collection('image_detections').doc(detectionDocId);
-      
+
       // Check if detection already exists with current version
       const existingDoc = await detectionRef.get();
       if (existingDoc.exists) {
         const existingData = existingDoc.data();
         const existingVersion = existingData?.detectionVersion;
         const hasCookies = existingData?.detectedCookies && existingData.detectedCookies.length > 0;
-        
+
         if (hasCookies && existingVersion === DETECTION_FUNCTION_VERSION) {
-          console.log(`Skipping detection for ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION})`);
+          console.log(
+            `Skipping detection for ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION})`,
+          );
           return;
         } else if (hasCookies && existingVersion !== DETECTION_FUNCTION_VERSION) {
-          console.log(`Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`);
+          console.log(
+            `Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`,
+          );
         }
       }
 
       // Convert polygons to Firestore-compatible format (nested arrays not supported)
-      const firestoreCookies = detectedCookies.map(cookie => ({
+      const firestoreCookies = detectedCookies.map((cookie) => ({
         x: cookie.x,
         y: cookie.y,
         width: cookie.width,
@@ -988,24 +1065,27 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
         confidence: cookie.confidence,
         polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
       }));
-      
-      await detectionRef.set({
-        filePath,
-        imageUrl,
-        detectedCookies: firestoreCookies,
-        count: detectedCookies.length,
-        detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-        contentType,
-        processedBy: 'autoDetectCookiesOnUpload',
-        detectionVersion: DETECTION_FUNCTION_VERSION,
-      }, { merge: true });
+
+      await detectionRef.set(
+        {
+          filePath,
+          imageUrl,
+          detectedCookies: firestoreCookies,
+          count: detectedCookies.length,
+          detectedAt: admin.firestore.FieldValue.serverTimestamp(),
+          contentType,
+          processedBy: 'autoDetectCookiesOnUpload',
+          detectionVersion: DETECTION_FUNCTION_VERSION,
+        },
+        { merge: true },
+      );
 
       console.log(`Stored detection results for ${filePath}`);
     } catch (error) {
       console.error(`Error auto-detecting cookies for ${filePath}:`, error);
       // Don't throw - we don't want to fail the upload if detection fails
     }
-  }
+  },
 );
 
 /**
@@ -1021,7 +1101,7 @@ export const addAdminRole = functionsV2.https.onCall(
     if (!request.auth) {
       throw new functionsV2.https.HttpsError(
         'unauthenticated',
-        'User must be authenticated to add admins.'
+        'User must be authenticated to add admins.',
       );
     }
 
@@ -1029,33 +1109,30 @@ export const addAdminRole = functionsV2.https.onCall(
     if (request.auth.token.admin !== true) {
       throw new functionsV2.https.HttpsError(
         'permission-denied',
-        'Only admins can add other admins.'
+        'Only admins can add other admins.',
       );
     }
 
     const { email } = request.data;
 
     if (!email || typeof email !== 'string') {
-      throw new functionsV2.https.HttpsError(
-        'invalid-argument',
-        'Email is required.'
-      );
+      throw new functionsV2.https.HttpsError('invalid-argument', 'Email is required.');
     }
 
     try {
       const user = await admin.auth().getUserByEmail(email);
       await admin.auth().setCustomUserClaims(user.uid, { admin: true });
       return {
-        result: `Success! ${email} has been made an admin.`
+        result: `Success! ${email} has been made an admin.`,
       };
     } catch (error) {
       console.error('Error adding admin:', error);
       throw new functionsV2.https.HttpsError(
         'internal',
-        error instanceof Error ? error.message : 'Error adding admin role'
+        error instanceof Error ? error.message : 'Error adding admin role',
       );
     }
-  }
+  },
 );
 
 /**
@@ -1071,7 +1148,7 @@ export const removeAdminRole = functionsV2.https.onCall(
     if (!request.auth) {
       throw new functionsV2.https.HttpsError(
         'unauthenticated',
-        'User must be authenticated to remove admins.'
+        'User must be authenticated to remove admins.',
       );
     }
 
@@ -1079,17 +1156,14 @@ export const removeAdminRole = functionsV2.https.onCall(
     if (request.auth.token.admin !== true) {
       throw new functionsV2.https.HttpsError(
         'permission-denied',
-        'Only admins can remove other admins.'
+        'Only admins can remove other admins.',
       );
     }
 
     const { email, uid } = request.data;
 
-    if ((!email && !uid)) {
-      throw new functionsV2.https.HttpsError(
-        'invalid-argument',
-        'Email or UID is required.'
-      );
+    if (!email && !uid) {
+      throw new functionsV2.https.HttpsError('invalid-argument', 'Email or UID is required.');
     }
 
     try {
@@ -1104,33 +1178,36 @@ export const removeAdminRole = functionsV2.https.onCall(
       if (user.uid === request.auth.uid) {
         throw new functionsV2.https.HttpsError(
           'invalid-argument',
-          'You cannot remove your own admin status.'
+          'You cannot remove your own admin status.',
         );
       }
 
       await admin.auth().setCustomUserClaims(user.uid, { admin: false });
       return {
-        result: `Success! Admin role removed.`
+        result: `Success! Admin role removed.`,
       };
     } catch (error) {
       console.error('Error removing admin:', error);
       throw new functionsV2.https.HttpsError(
         'internal',
-        error instanceof Error ? error.message : 'Error removing admin role'
+        error instanceof Error ? error.message : 'Error removing admin role',
       );
     }
-  }
+  },
 );
 
 // Only export this function in the emulator environment
 // This prevents deployment errors in production (requires GCIP) while keeping it for local dev
-export const autoGrantAdmin = process.env.FUNCTIONS_EMULATOR === 'true'
-  ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
-    console.log(`[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`);
-    return {
-      customClaims: {
-        admin: true
-      }
-    };
-  })
-  : undefined;
+export const autoGrantAdmin =
+  process.env.FUNCTIONS_EMULATOR === 'true'
+    ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
+        console.log(
+          `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
+        );
+        return {
+          customClaims: {
+            admin: true,
+          },
+        };
+      })
+    : undefined;

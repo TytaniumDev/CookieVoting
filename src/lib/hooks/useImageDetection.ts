@@ -29,7 +29,9 @@ export function useImageDetection(imageUrl: string | null) {
  * Hook to fetch all detections at once (useful for audit or global lists)
  */
 export function useAllDetections() {
-  const [detections, setDetections] = useState<any[]>([]);
+  const [detections, setDetections] = useState<Awaited<ReturnType<typeof getAllImageDetections>>>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

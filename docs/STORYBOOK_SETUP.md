@@ -21,15 +21,18 @@ This automatically configured Storybook for React + TypeScript + Vite.
 Components are organized using **Atomic Design** principles:
 
 ### Molecules
+
 - **AlertModal**: Modal component for displaying alert messages
 - **AuthButton**: Authentication button with Google OAuth
 
 ### Organisms
+
 - **ImageWithDetections**: Image viewer with cookie detection overlays (primary focus)
 - **ImageTagger**: Comprehensive image tagging interface
 - **CookieViewer**: Interactive image viewer with zoom and pan
 
 ### Templates
+
 - **Layout**: Main application layout wrapper
 
 ## Firebase Emulator Integration
@@ -37,12 +40,14 @@ Components are organized using **Atomic Design** principles:
 Many components integrate with Firebase services. To use Firebase emulators in Storybook:
 
 1. **Start Firebase Emulators:**
+
    ```bash
    npm run emulators:start
    ```
 
 2. **Set Environment Variable:**
    Create a `.env` file with:
+
    ```
    VITE_USE_EMULATOR=true
    ```
@@ -57,6 +62,7 @@ Stories that use Firebase emulators are marked with the `WithFirebaseEmulator` d
 ## Available Stories
 
 ### ImageWithDetections (Primary Component)
+
 - **Default**: Multiple detected cookies with polygons
 - **NoDetections**: Empty state
 - **BoundingBoxesOnly**: Fallback to bounding boxes
@@ -67,18 +73,21 @@ Stories that use Firebase emulators are marked with the `WithFirebaseEmulator` d
 - **DifferentImage**: Different test image
 
 ### ImageTagger
+
 - **Default**: Empty tagging interface
 - **WithExistingCookies**: Editing existing tags
 - **WithFirebaseEmulator**: Full Firebase integration
 - **DifferentImage**: Different test image
 
 ### CookieViewer
+
 - **Default**: Sample cookies
 - **WithSelection**: Selected cookie highlighted
 - **ManyCookies**: Many cookies displayed
 - **NoCookies**: Empty state
 
 ### AlertModal
+
 - **Success**: Success message
 - **Error**: Error message
 - **Info**: Info message
@@ -86,16 +95,19 @@ Stories that use Firebase emulators are marked with the `WithFirebaseEmulator` d
 - **LongMessage**: Long message handling
 
 ### AuthButton
+
 - **Default**: Sign-in button
 - **WithFirebaseEmulator**: Firebase Auth emulator integration
 
 ### Layout
+
 - **Default**: Standard layout
 - **LandingPage**: Landing page (no header/footer)
 
 ## Component Documentation
 
 All components now have comprehensive JSDoc comments that:
+
 - Explain the component's purpose
 - Document all props with types and descriptions
 - Provide usage examples
@@ -170,16 +182,19 @@ src/components/
 ## Troubleshooting
 
 ### Firebase Emulators Not Connecting
+
 - Ensure emulators are running: `npm run emulators:start`
 - Check that `VITE_USE_EMULATOR=true` is set in `.env`
 - Verify emulator ports match Firebase configuration
 
 ### Storybook Build Fails
+
 - Check for TypeScript errors: `npm run build`
 - Ensure all dependencies are installed: `npm ci`
 - Check Storybook logs for specific errors
 
 ### Components Not Rendering
+
 - Verify component imports are correct
 - Check that CSS modules are properly configured
 - Ensure React Router is set up for components that use it
@@ -189,4 +204,3 @@ src/components/
 - [Storybook Documentation](https://storybook.js.org/)
 - [Atomic Design Principles](https://bradfrost.com/blog/post/atomic-web-design/)
 - [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite)
-

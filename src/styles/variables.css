@@ -8,7 +8,7 @@
   --color-accent-hover: #b91c1c; /* Darker red */
   --color-danger: #ef4444;
   --color-success: #16a34a; /* Festive green */
-  
+
   /* Typography */
   --font-family-base: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   --font-size-sm: 0.875rem;
@@ -32,7 +32,7 @@
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-full: 9999px;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);

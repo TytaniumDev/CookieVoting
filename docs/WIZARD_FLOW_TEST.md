@@ -23,15 +23,18 @@ The test is located at: `tests/integration/wizard-flow.test.ts`
 The test follows this exact sequence:
 
 ### Step 1: Create Event
+
 - Creates a test event named "Test Wizard Event"
 - Verifies event is created with correct status
 
 ### Step 2: Upload 3 Images
+
 - Creates 3 mock PNG image files (1x1 pixel transparent images)
 - Uploads them to Firebase Storage emulator
 - Verifies all images are uploaded successfully
 
 ### Step 3: Create Categories
+
 - Creates 3 categories with names:
   - "Sugar Cookies"
   - "Chocolate Chip"
@@ -40,6 +43,7 @@ The test follows this exact sequence:
 - Verifies categories are saved in Firestore
 
 ### Step 4: Add 4 Bakers
+
 - Adds 4 bakers/chefs:
   - "Alice"
   - "Bob"
@@ -48,12 +52,14 @@ The test follows this exact sequence:
 - Verifies bakers are saved in Firestore
 
 ### Step 5: Tag Cookies
+
 - Tags 2 cookies per baker per category (24 total cookies: 3 categories × 4 bakers × 2 cookies)
 - Cookies are positioned with different coordinates
 - Cookies are sorted and numbered correctly (top to bottom, left to right)
 - Verifies all cookies are saved with correct data
 
 ### Step 6-8: Data Verification
+
 - **AdminHome**: Verifies event appears in event list with images
 - **AdminDashboard**: Verifies event details, categories, bakers, and cookies
 - **VotingPage**: Verifies categories and cookies are ready for voting
@@ -63,15 +69,17 @@ The test follows this exact sequence:
 ### Prerequisites
 
 1. **Install dependencies** (if not already done):
+
    ```bash
    npm install
    ```
 
 2. **Start Firebase Emulators** (in a separate terminal):
+
    ```bash
    npm run emulators:start
    ```
-   
+
    Wait for output: `✔  All emulators ready! It is now safe to connect.`
 
 ### Run the Test
@@ -87,6 +95,7 @@ npm run test:integration
 ### Expected Output
 
 The test should output:
+
 ```
 ✅ Event created: <event-id>
 ✅ Uploaded 3 images
@@ -104,14 +113,17 @@ The test should output:
 ## Test Data Structure
 
 ### Categories
+
 - 3 categories total
 - Each has a unique name and image URL
 
 ### Bakers
+
 - 4 bakers total
 - Each baker has a unique name and ID
 
 ### Cookies
+
 - 8 cookies per category (2 per baker × 4 bakers)
 - 24 cookies total (8 × 3 categories)
 - Each cookie has:
@@ -123,6 +135,7 @@ The test should output:
 ## What the Test Validates
 
 ### Data Integrity
+
 - ✅ All data is saved correctly in Firestore
 - ✅ Categories have correct names and image URLs
 - ✅ Bakers are saved with correct names
@@ -130,18 +143,21 @@ The test should output:
 - ✅ Cookie numbers are sequential and correct
 
 ### Data Retrieval
+
 - ✅ `getAllEvents()` returns the test event
 - ✅ `getEvent()` returns correct event details
 - ✅ `getCategories()` returns all 3 categories with cookies
 - ✅ `getBakers()` returns all 4 bakers
 
 ### Data Structure
+
 - ✅ Event document structure is correct
 - ✅ Category subcollection structure is correct
 - ✅ Baker subcollection structure is correct
 - ✅ Cookie data structure (numbers, coordinates, maker names) is correct
 
 ### Page-Specific Verification
+
 - ✅ **AdminHome**: Event appears with images in carousel
 - ✅ **AdminDashboard**: All event data is accessible
 - ✅ **VotingPage**: Categories and cookies are ready for voting
@@ -149,25 +165,33 @@ The test should output:
 ## Troubleshooting
 
 ### Error: "Failed to connect to Firebase Authentication Emulator"
+
 **Solution**: Make sure emulators are running:
+
 ```bash
 npm run emulators:start
 ```
 
 ### Error: "Cannot find module 'firebase-admin'"
+
 **Solution**: Install dependencies:
+
 ```bash
 npm install
 ```
 
 ### Error: "Permission denied"
+
 **Solution**: The test user should be automatically set up as admin. If this fails:
+
 1. Check that `setupTestUser()` is called in `beforeAll`
 2. Verify emulators are running
 3. Check console output for admin setup messages
 
 ### Test times out
-**Solution**: 
+
+**Solution**:
+
 1. Make sure emulators are running and ready
 2. Check that ports 9099, 8080, and 9199 are available
 3. Increase Jest timeout if needed (default is 5000ms)
@@ -213,4 +237,3 @@ This test is designed to work in CI/CD pipelines:
 ```
 
 The test uses Firebase Emulators, so no real Firebase credentials are needed!
-

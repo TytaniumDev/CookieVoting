@@ -26,29 +26,34 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/TytaniumDev/CookieVoting.git
    cd CookieVoting
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
-   
+
    Create a `.env` file in the root directory:
+
    ```env
    VITE_USE_EMULATOR=true  # Set to false for production Firebase
    ```
 
 4. **Start the development server**
+
    ```bash
    npm run dev
    ```
 
    Or use the convenience script:
+
    ```bash
    cookies          # Production Firebase mode
    cookies -test    # Emulator mode for local testing
@@ -74,20 +79,24 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 ## 📦 Available Scripts
 
 ### Development
+
 - `npm run dev` - Start development server
 - `npm run storybook` - Start Storybook development server
 - `npm run emulators:start` - Start Firebase emulators
 
 ### Testing
+
 - `npm test` - Run unit tests
 - `npm run test:integration` - Run integration tests
 - `npm run test:e2e` - Run end-to-end tests with Playwright
 
 ### Building
+
 - `npm run build` - Build for production
 - `npm run build-storybook` - Build Storybook static site
 
 ### Deployment
+
 - `npm run deploy` - Build and deploy to Firebase Hosting
 - `npm run firebase:deploy:all` - Deploy everything (hosting, functions, rules)
 

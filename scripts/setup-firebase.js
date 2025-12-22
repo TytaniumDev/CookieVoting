@@ -2,7 +2,7 @@
 
 /**
  * Firebase Setup Script
- * 
+ *
  * This script helps set up Firebase CLI for non-interactive use.
  * It reads the project ID from your .env file and configures Firebase.
  */
@@ -40,7 +40,7 @@ function createFirebaserc(projectId) {
   }
 }
 `;
-  
+
   try {
     writeFileSync(firebasercPath, content, 'utf-8');
     console.log(`✅ Created .firebaserc with project ID: ${projectId}`);
@@ -76,4 +76,3 @@ if (createFirebaserc(projectId)) {
 } else {
   process.exit(1);
 }
-

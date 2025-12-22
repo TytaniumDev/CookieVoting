@@ -24,5 +24,6 @@ Rules for creating or modifying UI components following standard practices.
 - **Automated Interaction Tests**: **REQUIRED**. Every complex component must have a Storybook story with a `play` function that verifies the critical user journey (e.g., clicking next after voting). This is strictly PREFERRED over manual verification or generic browser tests for UI logic.
 
 ## Verification
+
 - Run: npm run storybook
 - Run interaction tests: npm run test-storybook.

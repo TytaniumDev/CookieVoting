@@ -14,75 +14,75 @@ const mockedDeleteEvent = deleteEvent as jest.Mock;
 const mockedCreateEvent = createEvent as jest.Mock;
 
 describe('Home Page', () => {
-    const mockEvents = [
-        { id: '1', name: 'Event 1' },
-        { id: '2', name: 'Event 2' },
-    ];
+  const mockEvents = [
+    { id: '1', name: 'Event 1' },
+    { id: '2', name: 'Event 2' },
+  ];
 
-    beforeEach(() => {
-        mockedUseAuth.mockReturnValue({ signIn: jest.fn().mockResolvedValue(null) });
-        mockedGetAllEvents.mockResolvedValue(mockEvents);
-        mockedDeleteEvent.mockResolvedValue(null);
-        mockedCreateEvent.mockResolvedValue({ id: '3', name: 'New Event' });
-        window.confirm = jest.fn(() => true);
+  beforeEach(() => {
+    mockedUseAuth.mockReturnValue({ signIn: jest.fn().mockResolvedValue(null) });
+    mockedGetAllEvents.mockResolvedValue(mockEvents);
+    mockedDeleteEvent.mockResolvedValue(null);
+    mockedCreateEvent.mockResolvedValue({ id: '3', name: 'New Event' });
+    window.confirm = jest.fn(() => true);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('renders existing events', async () => {
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Event 1')).toBeInTheDocument();
+      expect(screen.getByText('Event 2')).toBeInTheDocument();
+    });
+  });
+
+  test('deletes an event when delete button is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Event 1')).toBeInTheDocument();
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    const deleteButtons = screen.getAllByText('Delete');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(mockedDeleteEvent).toHaveBeenCalledWith('1');
+      expect(screen.queryByText('Event 1')).not.toBeInTheDocument();
+    });
+  });
+
+  test('shows deleting state on button when deleting', async () => {
+    mockedDeleteEvent.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Event 1')).toBeInTheDocument();
     });
 
-    test('renders existing events', async () => {
-        render(
-            <MemoryRouter>
-                <Home />
-            </MemoryRouter>
-        );
-        await waitFor(() => {
-            expect(screen.getByText('Event 1')).toBeInTheDocument();
-            expect(screen.getByText('Event 2')).toBeInTheDocument();
-        });
+    const deleteButtons = screen.getAllByText('Delete');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Deleting...')).toBeInTheDocument();
     });
 
-    test('deletes an event when delete button is clicked', async () => {
-        render(
-            <MemoryRouter>
-                <Home />
-            </MemoryRouter>
-        );
-        await waitFor(() => {
-            expect(screen.getByText('Event 1')).toBeInTheDocument();
-        });
-
-        const deleteButtons = screen.getAllByText('Delete');
-        fireEvent.click(deleteButtons[0]);
-
-        await waitFor(() => {
-            expect(mockedDeleteEvent).toHaveBeenCalledWith('1');
-            expect(screen.queryByText('Event 1')).not.toBeInTheDocument();
-        });
+    await waitFor(() => {
+      expect(screen.queryByText('Deleting...')).not.toBeInTheDocument();
     });
-
-    test('shows deleting state on button when deleting', async () => {
-        mockedDeleteEvent.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
-        render(
-            <MemoryRouter>
-                <Home />
-            </MemoryRouter>
-        );
-
-        await waitFor(() => {
-            expect(screen.getByText('Event 1')).toBeInTheDocument();
-        });
-
-        const deleteButtons = screen.getAllByText('Delete');
-        fireEvent.click(deleteButtons[0]);
-
-        await waitFor(() => {
-            expect(screen.getByText('Deleting...')).toBeInTheDocument();
-        });
-
-        await waitFor(() => {
-            expect(screen.queryByText('Deleting...')).not.toBeInTheDocument();
-        });
-    });
+  });
 });

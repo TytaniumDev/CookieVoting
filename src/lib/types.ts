@@ -36,23 +36,21 @@ export interface CookieEntity {
   id: string; // Unique ID (Vote target)
   eventId: string;
   categoryId: string; // The "Plate" it belongs to
-  bakerId: string;    // Who made it
-  imageId: string;    // Visual source
+  bakerId: string; // Who made it
+  imageId: string; // Visual source
   detectionId?: string; // Link to raw detection (for polygon/bbox). Optional because manual tags might not have detections.
-  label: number;      // "Cookie #1"
-  x: number;          // Normalized X (0-100)
-  y: number;          // Normalized Y (0-100)
+  label: number; // "Cookie #1"
+  x: number; // Normalized X (0-100)
+  y: number; // Normalized Y (0-100)
 }
 
-
-
 export interface CookieCoordinate {
-    id: string; // Unique ID for this specific cookie marker
-    number: number; // The visible number (1, 2, 3...)
-    makerName: string; // "Ryan", "Kelly", etc.
-    x: number; // Percent x (for display/backward compatibility)
-    y: number; // Percent y (for display/backward compatibility)
-    detectedCookieId?: string; // ID of the detected cookie this tag is associated with (new ID-based approach)
+  id: string; // Unique ID for this specific cookie marker
+  number: number; // The visible number (1, 2, 3...)
+  makerName: string; // "Ryan", "Kelly", etc.
+  x: number; // Percent x (for display/backward compatibility)
+  y: number; // Percent y (for display/backward compatibility)
+  detectedCookieId?: string; // ID of the detected cookie this tag is associated with (new ID-based approach)
   detection?: DetectedCookie; // The full detection object for rendering
 }
 

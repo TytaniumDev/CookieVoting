@@ -4,7 +4,7 @@ import { fn } from 'storybook/test';
 
 /**
  * CookieViewer Component Stories
- * 
+ *
  * Component for displaying cookie images with detection overlays.
  * Supports polygon-based detection shapes and bounding boxes as fallback.
  */
@@ -101,7 +101,7 @@ const sampleCookiesBoundingBox: DetectedCookie[] = [
     y: 50,
     width: 10,
     height: 10,
-    confidence: 0.90,
+    confidence: 0.9,
   },
 ];
 
