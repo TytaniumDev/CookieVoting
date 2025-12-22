@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
+import { CookieViewer, type DetectedCookie } from '../components/organisms/CookieViewer/CookieViewer';
 import styles from './CookieDetectionVisualizer.module.css';
 
 export default function CookieDetectionVisualizer() {

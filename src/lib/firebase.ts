@@ -100,7 +100,7 @@ if (useEmulator) {
         // Check if emulators are already connected (avoid duplicate connections)
         const authDelegate = (auth as { _delegate?: { _config?: { emulator?: unknown } } })._delegate;
         if (!authDelegate?._config?.emulator) {
-            connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+            connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
             console.log('✅ Connected to Firebase Auth Emulator');
             emulatorsConnected = true;
         } else {
@@ -121,7 +121,7 @@ if (useEmulator) {
     try {
         const dbDelegate = (db as { _delegate?: { _settings?: { host?: string } } })._delegate;
         if (!dbDelegate?._settings?.host?.includes('localhost')) {
-            connectFirestoreEmulator(db, 'localhost', 8080);
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
             console.log('✅ Connected to Firestore Emulator');
         }
     } catch (error: unknown) {
@@ -135,7 +135,7 @@ if (useEmulator) {
     try {
         const storageDelegate = (storage as { _delegate?: { _host?: string } })._delegate;
         if (!storageDelegate?._host?.includes('localhost')) {
-            connectStorageEmulator(storage, 'localhost', 9199);
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
             console.log('✅ Connected to Storage Emulator');
         }
     } catch (error: unknown) {
@@ -149,7 +149,7 @@ if (useEmulator) {
     try {
         const functionsDelegate = (functions as { _delegate?: { _url?: string } })._delegate;
         if (!functionsDelegate?._url?.includes('localhost')) {
-            connectFunctionsEmulator(functions, 'localhost', 5001);
+            connectFunctionsEmulator(functions, '127.0.0.1', 5001);
             console.log('✅ Connected to Functions Emulator');
         }
     } catch (error: unknown) {

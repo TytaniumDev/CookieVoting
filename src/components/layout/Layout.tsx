@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { AuthButton } from '../AuthButton';
+import { AuthButton } from '../atoms/AuthButton/AuthButton';
 import { useAuth } from '../../lib/hooks/useAuth';
 import styles from './Layout.module.css';
 

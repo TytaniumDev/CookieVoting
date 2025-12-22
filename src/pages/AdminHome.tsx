@@ -9,7 +9,7 @@ import { db } from '../lib/firebase';
 import { createEvent, getAllEvents, deleteEvent, getCategories, isGlobalAdmin } from '../lib/firestore';
 import { validateEventName, sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
-import { AlertModal } from '../components/AlertModal';
+import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
 import styles from './AdminHome.module.css';
 import { type VoteEvent } from '../lib/types';
 
@@ -201,7 +201,7 @@ export default function AdminHome() {
                 const currentUser = auth.currentUser;
                 
                 if (currentUser) {
-                    errorMessage = `Permission denied: Your account (${currentUser.email || currentUser.uid}) is not a global admin. Check the browser console for your UID and add it to Firebase Console → Firestore → system/admins → userIds array.`;
+                    errorMessage = `Permission denied: Your account (${currentUser.email || currentUser.uid}) is not a global admin. Use the local script to bootstrap your admin access: node scripts/set-admin.js ${currentUser.email}`;
                 } else {
                     errorMessage = 'Permission denied: You must be signed in as a global admin to create events.';
                 }

@@ -3,7 +3,6 @@ import { ref, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from './firebase';
 import { type VoteEvent, type Category, type CookieCoordinate, type UserVote, type CookieMaker } from './types';
 import { v4 as uuidv4 } from 'uuid';
-import { isLocalTestUserEnabled } from './testAuth';
 
 // Helper function to get or create a session ID for unauthenticated users
 // This provides a persistent identifier per browser/device
@@ -58,130 +57,21 @@ export async function updateCategoryCookies(eventId: string, categoryId: string,
     await updateDoc(ref, { cookies });
 }
 
-// Global admins document path
-// System collections should not be prefixed - use direct path
-function getGlobalAdminsDoc(): string {
-    return 'system/admins';
-}
-
 /**
- * Get the list of global admin user IDs
- */
-async function getGlobalAdmins(): Promise<string[]> {
-    const adminsDocPath = getGlobalAdminsDoc();
-    const docRef = doc(db, adminsDocPath);
-    
-    try {
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const userIds = data.userIds || [];
-            return userIds;
-        }
-        
-        // Document doesn't exist yet - return empty array
-        // It will be created when the first event is created
-        return [];
-    } catch (error) {
-        // If we can't read the document (e.g., permission denied for test users), return empty array
-        console.warn('Could not read global admins document:', error);
-        return [];
-    }
-}
-
-/**
- * Check if a user is a global admin
+ * Check if a user is a global admin using Custom Claims
  */
 export async function isGlobalAdmin(userId: string): Promise<boolean> {
-    const admins = await getGlobalAdmins();
-    return admins.includes(userId);
+  if (!auth.currentUser || auth.currentUser.uid !== userId) return false;
+    try {
+      // Force refresh to ensure we have the latest claims
+      const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+      return !!idTokenResult.claims.admin;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
 }
 
-
-/**
- * Add a user as a global admin
- * Only existing admins can add new admins
- */
-export async function addGlobalAdmin(userId: string): Promise<void> {
-    const admins = await getGlobalAdmins();
-    if (admins.includes(userId)) {
-        return; // Already an admin
-    }
-    
-    const adminsDocPath = getGlobalAdminsDoc();
-    const ref = doc(db, adminsDocPath);
-    await setDoc(ref, { userIds: [...admins, userId] }, { merge: true });
-}
-
-/**
- * Remove a user as a global admin
- * Only existing admins can remove admins
- */
-export async function removeGlobalAdmin(userId: string): Promise<void> {
-    const admins = await getGlobalAdmins();
-    if (!admins.includes(userId)) {
-        return; // Not an admin
-    }
-    
-    // Prevent removing the last admin
-    if (admins.length <= 1) {
-        throw new Error('Cannot remove the last admin');
-    }
-    
-    const adminsDocPath = getGlobalAdminsDoc();
-    const ref = doc(db, adminsDocPath);
-    await setDoc(ref, { userIds: admins.filter(id => id !== userId) }, { merge: true });
-}
-
-/**
- * Get all global admin user IDs
- */
-export async function getAllGlobalAdmins(): Promise<string[]> {
-    return await getGlobalAdmins();
-}
-
-/**
- * Ensure the current test user is added to the global admins list
- * Only works for test users (when isLocalTestUserEnabled() returns true)
- * This is used in test environments to automatically grant admin privileges
- */
-export async function ensureTestUserIsAdmin(): Promise<void> {
-    // Only proceed if test user is enabled
-    if (!isLocalTestUserEnabled()) {
-        return;
-    }
-    
-    // Get current user
-    if (!auth.currentUser) {
-        return;
-    }
-    
-    const userId = auth.currentUser.uid;
-    const adminsDocPath = getGlobalAdminsDoc();
-    const adminsDocRef = doc(db, adminsDocPath);
-    
-    // Check if admins document exists
-    const adminsDocSnap = await getDoc(adminsDocRef);
-    
-    if (!adminsDocSnap.exists()) {
-        // Document doesn't exist - create it with the test user as admin
-        await setDoc(adminsDocRef, { userIds: [userId] });
-        return;
-    }
-    
-    // Document exists - check if user is already an admin
-    const data = adminsDocSnap.data();
-    const userIds = data.userIds || [];
-    
-    if (userIds.includes(userId)) {
-        // User is already an admin - nothing to do
-        return;
-    }
-    
-    // User is not an admin - add them
-    await setDoc(adminsDocRef, { userIds: [...userIds, userId] }, { merge: true });
-}
 
 export async function createEvent(name: string): Promise<VoteEvent> {
     // For Firestore operations, we need the authenticated user's UID
@@ -201,14 +91,8 @@ export async function createEvent(name: string): Promise<VoteEvent> {
             console.log('📧 Your Email:', auth.currentUser.email);
         }
         console.log('🔧 To fix this:');
-        console.log('   1. Go to Firebase Console → Firestore Database');
-        console.log('   2. Navigate to: system/admins');
-        console.log('   3. Add this UID to the userIds array:', currentUserId);
-        console.log('   4. If the document doesn\'t exist, create it with:');
-        console.log('      Collection: system');
-        console.log('      Document ID: admins');
-        console.log('      Field: userIds (type: array)');
-        console.log('      Value: ["' + currentUserId + '"]');
+      console.log('   Run this script locally to bootstrap the first admin:');
+      console.log('   node scripts/set-admin.js ' + (auth.currentUser.email || currentUserId));
         throw new Error('Permission denied: You must be a global admin to create events');
     }
     
@@ -268,9 +152,8 @@ export async function addCategory(eventId: string, name: string, imageUrl: strin
             console.log('📧 Your Email:', auth.currentUser.email);
         }
         console.log('🔧 To fix this:');
-        console.log('   1. Go to Firebase Console → Firestore Database');
-        console.log('   2. Navigate to: system/admins');
-        console.log('   3. Add this UID to the userIds array:', currentUserId);
+      console.log('   Run this script locally to bootstrap the first admin:');
+      console.log('   node scripts/set-admin.js ' + (auth.currentUser.email || currentUserId));
         throw new Error('Permission denied: You must be a global admin to add categories');
     }
     

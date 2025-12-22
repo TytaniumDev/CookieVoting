@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { getEvent, isGlobalAdmin } from '../lib/firestore';
-import { EventSetupWizard } from '../components/EventSetupWizard';
+import { EventSetupWizard } from '../components/organisms/EventSetupWizard/EventSetupWizard';
 import { type VoteEvent } from '../lib/types';
 import styles from './WizardPage.module.css';
 
@@ -87,7 +87,6 @@ export default function WizardPage() {
                 eventId={eventId}
                 eventName={event.name}
                 initialCategoryId={categoryId || undefined}
-                autoAdvance={!categoryId} // Only auto-advance if no categoryId (came from "Open Wizard" button)
                 onComplete={async () => {
                     // Navigate back to event dashboard after completion
                     navigate(`/admin/${eventId}`);

@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInAsTestUser, isUsingEmulator } from '../lib/emulatorAuth';
-import { addGlobalAdmin } from '../lib/firestore';
-import { AuthButton } from '../components/AuthButton';
+
+import { AuthButton } from '../components/atoms/AuthButton/AuthButton';
 import { useAuth } from '../lib/hooks/useAuth';
 import styles from './Home.module.css';
 
 export default function Home() {
     const navigate = useNavigate();
-    const [isEnablingTestUser, setIsEnablingTestUser] = useState(false);
     const { user, loading, signIn, signOut } = useAuth();
 
     useEffect(() => {
@@ -27,37 +25,6 @@ export default function Home() {
         }
     }, [user, loading, navigate]);
 
-    const handleTestUserSignIn = async () => {
-        setIsEnablingTestUser(true);
-        try {
-            if (!isUsingEmulator()) {
-                alert('Emulator auth is only available when using Firebase emulators.\n\nMake sure emulators are running:\nnpm run emulators:start');
-                return;
-            }
-            
-            const user = await signInAsTestUser();
-            
-            // Ensure user is admin in emulator
-            try {
-                await addGlobalAdmin(user.uid);
-                console.log('✅ Test user added as admin');
-            } catch (error: unknown) {
-                const firebaseError = error as { message?: string };
-                // If already admin or permission error, that's okay
-                if (!firebaseError.message?.includes('already') && !firebaseError.message?.includes('Permission')) {
-                    console.warn('Could not auto-add test user as admin:', error);
-                }
-            }
-            
-            // Redirect will happen via auth state listener
-        } catch (error: unknown) {
-            const firebaseError = error as { message?: string };
-            console.error('Error signing in as test user:', error);
-            alert(`Failed to sign in: ${firebaseError.message || 'Unknown error'}`);
-        } finally {
-            setIsEnablingTestUser(false);
-        }
-    };
 
     return (
         <div className={styles.landingContainer}>
@@ -85,30 +52,6 @@ export default function Home() {
                         onSignIn={signIn}
                         onSignOut={signOut}
                     />
-                    {isUsingEmulator() && (
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-                            <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem', opacity: 0.8 }}>
-                                Development: Using Firebase Emulators
-                            </p>
-                            <button
-                                onClick={handleTestUserSignIn}
-                                disabled={isEnablingTestUser}
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    fontSize: '0.875rem',
-                                    backgroundColor: isEnablingTestUser ? '#666' : '#4a5568',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: isEnablingTestUser ? 'not-allowed' : 'pointer',
-                                    fontWeight: '500',
-                                    transition: 'background-color 0.2s'
-                                }}
-                            >
-                                {isEnablingTestUser ? 'Signing in...' : 'Sign in with Test User'}
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

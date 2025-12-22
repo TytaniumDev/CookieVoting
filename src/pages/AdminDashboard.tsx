@@ -1,131 +1,60 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent, addCategory, getCategories, updateCategoryCookies, updateEventStatus, getVotes, updateCategoryOrder, deleteCategory, updateCategory, isGlobalAdmin, addGlobalAdmin, removeGlobalAdmin, getAllGlobalAdmins, addBaker, removeBaker, getBakers } from '../lib/firestore';
 import { uploadImage } from '../lib/storage';
-import { type VoteEvent, type Category, type CookieCoordinate } from '../lib/types';
-import { AlertModal } from '../components/AlertModal';
+import { type Category, type CookieCoordinate } from '../lib/types';
+import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
 import { validateImage, validateCategoryName, validateMakerName, sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
 import { exportToCSV, exportToJSON, downloadFile } from '../lib/export';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { getVotes, updateCategoryCookies, updateCategoryOrder } from '../lib/firestore';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useEvent } from '../lib/hooks/useEvent';
+import { useCategories } from '../lib/hooks/useCategories';
+import { useBakers } from '../lib/hooks/useBakers';
+import { useAdmins } from '../lib/hooks/useAdmins';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
-    const { eventId } = useParams();
+    const { eventId = '' } = useParams();
     const navigate = useNavigate();
-    const [event, setEvent] = useState<VoteEvent | null>(null);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [checkingAccess, setCheckingAccess] = useState(true);
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    // Admin Management State
+    // Custom Hooks
+    const { user } = useAuth();
+    const { event, loading: eventLoading, setStatus: setEventStatus } = useEvent(eventId);
+    const { categories, add: addCategory, remove: deleteCategory, update: updateCategory, loading: categoriesLoading } = useCategories(eventId);
+    const { bakers: savedBakersList, add: addBaker, remove: removeBaker } = useBakers(eventId);
+    const { isAdmin, admins: globalAdmins, add: addGlobalAdmin, remove: removeGlobalAdmin, loading: adminLoading } = useAdmins();
+
+    // Local UI State
     const [showAdminManagement, setShowAdminManagement] = useState(false);
     const [newAdminUserId, setNewAdminUserId] = useState('');
     const [addingAdmin, setAddingAdmin] = useState(false);
-    const [globalAdmins, setGlobalAdmins] = useState<string[]>([]);
-    
-    // Overflow menu state
-    const [showOverflowMenu, setShowOverflowMenu] = useState(false);
 
-    // New Category State
+    const [showOverflowMenu, setShowOverflowMenu] = useState(false);
     const [newCatName, setNewCatName] = useState('');
     const [newCatFile, setNewCatFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [exporting, setExporting] = useState(false);
-    
-    // Baker management state
     const [newBakerName, setNewBakerName] = useState('');
-    const [savedBakers, setSavedBakers] = useState<string[]>([]);
 
-    // Tagging State
-    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    // Category editing state
     const [editingCategoryName, setEditingCategoryName] = useState<Category | null>(null);
     const [editCategoryName, setEditCategoryName] = useState('');
-    
-    // Alert modal state
+
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
     const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
 
-    // Check admin access
+    // Navigation and Access Check
     useEffect(() => {
-        if (!eventId) return;
+        if (!adminLoading && !isAdmin && user) {
+            setError('You do not have admin access. Please contact a site administrator.');
+        } else if (!adminLoading && !user) {
+            navigate('/', { replace: true });
+        }
+    }, [isAdmin, adminLoading, user, navigate]);
 
-        const checkAccess = async () => {
-            setCheckingAccess(true);
-            try {
-                // Get current user
-                const user = auth.currentUser;
-                
-                if (!user || !user.email) {
-                    // Not signed in, redirect to landing page
-                    navigate('/', { replace: true });
-                    setIsAdmin(false);
-                    setCheckingAccess(false);
-                    return;
-                }
-
-                setCurrentUserId(user.uid);
-                
-                // Check if user is an admin
-                const admin = await isGlobalAdmin(user.uid);
-                setIsAdmin(admin);
-
-                if (!admin) {
-                    setError('You do not have admin access. Please contact a site administrator.');
-                    setLoading(false);
-                    setCheckingAccess(false);
-                    return;
-                }
-
-                // Load admins list
-                const admins = await getAllGlobalAdmins();
-                setGlobalAdmins(admins);
-
-                // Load event data
-                const eventData = await getEvent(eventId);
-                setEvent(eventData);
-                
-                const catsData = await getCategories(eventId);
-                setCategories(catsData);
-            } catch (err) {
-                console.error("Failed to check admin access", err);
-                setError(CONSTANTS.ERROR_MESSAGES.FAILED_TO_LOAD);
-            } finally {
-                setLoading(false);
-                setCheckingAccess(false);
-            }
-        };
-
-        // Listen for auth state changes
-        const unsubscribe = onAuthStateChanged(auth, async () => {
-            await checkAccess();
-        });
-
-        // Also check for local test user changes
-        checkAccess();
-
-        return () => unsubscribe();
-    }, [eventId, navigate]);
-
-    // Load bakers from Firestore
-    useEffect(() => {
-        const loadBakers = async () => {
-            if (!eventId) return;
-            try {
-                const bakers = await getBakers(eventId);
-                setSavedBakers(bakers.map(b => b.name));
-            } catch (err) {
-                console.error('Failed to load bakers:', err);
-            }
-        };
-        loadBakers();
-    }, [eventId, categories]); // Reload when categories change (in case bakers are added via cookies)
+    const loading = eventLoading || categoriesLoading || adminLoading;
 
     const handleDeleteCategory = async (category: Category) => {
         if (!eventId) return;
@@ -135,8 +64,7 @@ export default function AdminDashboard() {
         }
 
         try {
-            await deleteCategory(eventId, category.id, category.imageUrl);
-            setCategories(categories.filter(c => c.id !== category.id));
+            await deleteCategory(category.id, category.imageUrl);
             setAlertMessage("Category deleted successfully");
             setAlertType('success');
         } catch (err) {
@@ -162,10 +90,7 @@ export default function AdminDashboard() {
 
         try {
             const sanitizedName = sanitizeInput(editCategoryName);
-            await updateCategory(eventId, editingCategoryName.id, { name: sanitizedName });
-            setCategories(categories.map(c => 
-                c.id === editingCategoryName.id ? { ...c, name: sanitizedName } : c
-            ));
+            await updateCategory(editingCategoryName.id, { name: sanitizedName });
             setEditingCategoryName(null);
             setEditCategoryName('');
             setAlertMessage("Category name updated successfully");
@@ -223,8 +148,7 @@ export default function AdminDashboard() {
             // Store images in shared location so they can be reused across multiple events
             const storagePath = `shared/cookies`;
             const imageUrl = await uploadImage(newCatFile, storagePath);
-            const newCategory = await addCategory(eventId, sanitizedName, imageUrl);
-            setCategories([...categories, newCategory]);
+            await addCategory(sanitizedName, imageUrl);
             setNewCatName('');
             setNewCatFile(null);
             setPreviewUrl(null);
@@ -326,9 +250,6 @@ export default function AdminDashboard() {
         try {
             const userId = newAdminUserId.trim();
             await addGlobalAdmin(userId);
-            // Refresh global admins list
-            const admins = await getAllGlobalAdmins();
-            setGlobalAdmins(admins);
             setNewAdminUserId('');
             setAlertMessage('Admin added successfully');
             setAlertType('success');
@@ -342,12 +263,9 @@ export default function AdminDashboard() {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleAddAdminByUserId = async (_userId: string) => {
+    const handleAddAdminByUserId = async (userId: string) => {
         try {
             await addGlobalAdmin(userId);
-            // Refresh global admins list
-            const admins = await getAllGlobalAdmins();
-            setGlobalAdmins(admins);
             setAlertMessage('Admin added successfully');
             setAlertType('success');
         } catch (err) {
@@ -358,7 +276,7 @@ export default function AdminDashboard() {
     };
 
     const handleRemoveAdmin = async (userId: string) => {
-        if (userId === currentUserId) {
+        if (userId === user?.uid) {
             setAlertMessage('You cannot remove yourself as an admin');
             setAlertType('error');
             return;
@@ -370,9 +288,6 @@ export default function AdminDashboard() {
 
         try {
             await removeGlobalAdmin(userId);
-            // Refresh global admins list
-            const admins = await getAllGlobalAdmins();
-            setGlobalAdmins(admins);
             setAlertMessage('Admin removed successfully');
             setAlertType('success');
         } catch (err) {
@@ -413,7 +328,7 @@ export default function AdminDashboard() {
     const getBakersFromCategories = (): string[] => {
         const bakerSet = new Set<string>();
         // Add saved bakers
-        savedBakers.forEach(name => bakerSet.add(name));
+        savedBakersList.forEach(b => bakerSet.add(b.name));
         // Also extract from cookies (for backward compatibility)
         categories.forEach(cat => {
             cat.cookies.forEach(cookie => {
@@ -435,8 +350,11 @@ export default function AdminDashboard() {
         }
 
         try {
-            // Remove baker from Firestore
-            await removeBaker(eventId, bakerName);
+            // Find baker ID
+            const baker = savedBakersList.find(b => b.name === bakerName);
+            if (baker) {
+                await removeBaker(baker.id);
+            }
             
             // Remove all cookies with this baker's name from all categories
             const updatedCategories = categories.map(cat => {
@@ -451,9 +369,7 @@ export default function AdminDashboard() {
                 )
             );
 
-            // Update local state
-            setCategories(updatedCategories);
-            setSavedBakers(savedBakers.filter(name => name !== bakerName));
+            // Local state is updated by hooks
             setAlertMessage(`Baker "${bakerName}" and all their cookies removed successfully`);
             setAlertType('success');
         } catch (err) {
@@ -463,7 +379,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleAddBaker = async () => {
+    const handleAddBakerAction = async () => {
         if (!eventId || !newBakerName.trim()) return;
         
         const validation = validateMakerName(newBakerName);
@@ -479,9 +395,7 @@ export default function AdminDashboard() {
         }
 
         try {
-            // Save baker to Firestore immediately
-            await addBaker(eventId, sanitizedName);
-            setSavedBakers([...savedBakers, sanitizedName]);
+            await addBaker(sanitizedName);
             setNewBakerName('');
             setError(null);
         } catch (err) {
@@ -563,8 +477,7 @@ export default function AdminDashboard() {
                                             if (!eventId) return;
                                             const newStatus = event.status === 'voting' ? 'completed' : 'voting';
                                             try {
-                                                await updateEventStatus(eventId, newStatus);
-                                                setEvent({ ...event, status: newStatus });
+                                                await setEventStatus(newStatus);
                                             } catch (err) {
                                                 console.error("Failed to update status", err);
                                                 setAlertMessage("Failed to update event status");
@@ -656,8 +569,8 @@ export default function AdminDashboard() {
                                     {globalAdmins.map((userId) => (
                                         <li key={userId} style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <code style={{ flex: 1, fontSize: '0.85rem', color: 'var(--color-text-secondary, #cbd5e1)' }}>{userId}</code>
-                                            {userId === currentUserId && <span style={{ color: 'var(--color-text-secondary, #cbd5e1)' }}>(You)</span>}
-                                            {userId !== currentUserId && (
+                                            {userId === user?.uid && <span style={{ color: 'var(--color-text-secondary, #cbd5e1)' }}>(You)</span>}
+                                            {userId !== user?.uid && (
                                                 <button
                                                     onClick={() => handleRemoveAdmin(userId)}
                                                     className={styles.buttonSecondary}
@@ -701,12 +614,12 @@ export default function AdminDashboard() {
                                     style={{ flex: 1 }}
                                     onKeyPress={(e) => {
                                         if (e.key === 'Enter') {
-                                            handleAddBaker();
+                                            handleAddBakerAction();
                                         }
                                     }}
                                 />
                                 <button
-                                    onClick={handleAddBaker}
+                                    onClick={handleAddBakerAction}
                                     onMouseDown={(e) => {
                                         // Prevent keyboard from dismissing on mobile
                                         e.preventDefault();

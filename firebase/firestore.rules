@@ -2,12 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper function to check if user is a global admin (for production collections)
+    // Helper function to check if user is a global admin (for production collections)
     function isGlobalAdmin() {
-      // Check if document exists and user is authenticated
-      return request.auth != null 
-        && exists(/databases/$(database)/documents/system/admins)
-        && get(/databases/$(database)/documents/system/admins).data.userIds != null
-        && request.auth.uid in get(/databases/$(database)/documents/system/admins).data.userIds;
+      return request.auth != null && request.auth.token.admin == true;
     }
     
     // Helper function to check if user is a test admin (for test collections)
@@ -43,19 +40,7 @@ service cloud.firestore {
       return collectionName.matches('test_.*');
     }
     
-    // System collection - admins management (production)
-    match /system/admins {
-      // Allow authenticated users to create (for initial setup only)
-      allow create: if isAuthenticated() && 
-        !exists(/databases/$(database)/documents/system/admins);
-      
-      // Only allow read/update if user is already a global admin
-      // Admins must be added manually via Firebase Console
-      allow read, update: if isGlobalAdmin();
-      
-      // Only admins can delete
-      allow delete: if isGlobalAdmin();
-    }
+
     
     // Test system collection - admins management (test database)
     match /test_system/admins {

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getEvent, getCategories, getVotes, getAllImageDetections } from '../lib/firestore';
 import { type VoteEvent, type Category, type CookieCoordinate } from '../lib/types';
 import { CONSTANTS } from '../lib/constants';
-import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
+import { CookieViewer, type DetectedCookie } from '../components/organisms/CookieViewer/CookieViewer';
 import styles from './ResultsPage.module.css';
 
 interface CookieScore {

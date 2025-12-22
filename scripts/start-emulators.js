@@ -16,14 +16,31 @@ const projectRoot = join(__dirname, '..');
 // Get command line arguments (everything after the script name)
 const args = process.argv.slice(2);
 
-// Build the firebase command
-const firebaseArgs = ['emulators:start', ...args];
+// Determine if we should use 'start' or 'exec'
+// We use 'exec' if:
+// 1. There is a '--' separator followed by a command
+// 2. OR if there's an argument that clearly isn't a flag or a flag value (this is tricky)
+// 3. OR if the user explicitly wants to exec something.
+// For now, let's look for positional arguments that aren't preceded by a flag.
+const doubleDashIndex = args.indexOf('--');
+let command = 'emulators:start';
+let firebaseArgs = [...args];
+
+if (doubleDashIndex !== -1) {
+  command = 'emulators:exec';
+  // If we have a double dash, everything after it is the command for exec
+  // Firebase expect: firebase emulators:exec "cmd" --firebase-flags
+  const cmd = args.slice(doubleDashIndex + 1).join(' ');
+  const flags = args.slice(0, doubleDashIndex);
+  firebaseArgs = [cmd, ...flags];
+}
+const finalArgs = [command, ...firebaseArgs];
 
 console.log('🔥 Starting Firebase emulators...');
 console.log('   (Filtering Java deprecation warnings)\n');
 
 // Spawn the firebase process
-const firebaseProcess = spawn('firebase', firebaseArgs, {
+const firebaseProcess = spawn('firebase', finalArgs, {
   cwd: projectRoot,
   stdio: ['inherit', 'pipe', 'pipe'],
   shell: true,

@@ -31,6 +31,7 @@ yarn-error.log*
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+firebase-export-*
 
 # Emulator data (optional - you may want to commit this for team consistency)
 /emulator-data
@@ -40,3 +41,6 @@ ui-debug.log
 /functions/node_modules
 *storybook.log
 storybook-static
+
+# Service Account Key (DO NOT COMMIT)
+service-account.json

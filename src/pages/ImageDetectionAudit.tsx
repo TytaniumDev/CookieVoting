@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { getAllImageDetections, isGlobalAdmin } from '../lib/firestore';
-import { CookieViewer, type DetectedCookie } from '../components/CookieViewer';
+import { CookieViewer, type DetectedCookie } from '../components/organisms/CookieViewer/CookieViewer';
 import styles from './ImageDetectionAudit.module.css';
 
 interface ImageDetection {

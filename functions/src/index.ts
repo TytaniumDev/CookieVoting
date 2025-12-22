@@ -906,3 +906,117 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
     }
   }
 );
+
+/**
+ * Add admin role to a user
+ * Only callable by existing admins
+ */
+export const addAdminRole = functionsV2.https.onCall(
+  {
+    region: 'us-west1',
+  },
+  async (request) => {
+    // Check if user is authenticated
+    if (!request.auth) {
+      throw new functionsV2.https.HttpsError(
+        'unauthenticated',
+        'User must be authenticated to add admins.'
+      );
+    }
+
+    // Check if user is an admin
+    if (request.auth.token.admin !== true) {
+      throw new functionsV2.https.HttpsError(
+        'permission-denied',
+        'Only admins can add other admins.'
+      );
+    }
+
+    const { email } = request.data;
+
+    if (!email || typeof email !== 'string') {
+      throw new functionsV2.https.HttpsError(
+        'invalid-argument',
+        'Email is required.'
+      );
+    }
+
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      await admin.auth().setCustomUserClaims(user.uid, { admin: true });
+      return {
+        result: `Success! ${email} has been made an admin.`
+      };
+    } catch (error) {
+      console.error('Error adding admin:', error);
+      throw new functionsV2.https.HttpsError(
+        'internal',
+        error instanceof Error ? error.message : 'Error adding admin role'
+      );
+    }
+  }
+);
+
+/**
+ * Remove admin role from a user
+ * Only callable by existing admins
+ */
+export const removeAdminRole = functionsV2.https.onCall(
+  {
+    region: 'us-west1',
+  },
+  async (request) => {
+    // Check if user is authenticated
+    if (!request.auth) {
+      throw new functionsV2.https.HttpsError(
+        'unauthenticated',
+        'User must be authenticated to remove admins.'
+      );
+    }
+
+    // Check if user is an admin
+    if (request.auth.token.admin !== true) {
+      throw new functionsV2.https.HttpsError(
+        'permission-denied',
+        'Only admins can remove other admins.'
+      );
+    }
+
+    const { email, uid } = request.data;
+
+    if ((!email && !uid)) {
+      throw new functionsV2.https.HttpsError(
+        'invalid-argument',
+        'Email or UID is required.'
+      );
+    }
+
+    try {
+      let user;
+      if (uid) {
+        user = await admin.auth().getUser(uid);
+      } else {
+        user = await admin.auth().getUserByEmail(email);
+      }
+
+      // Prevent removing self (basic check)
+      if (user.uid === request.auth.uid) {
+        throw new functionsV2.https.HttpsError(
+          'invalid-argument',
+          'You cannot remove your own admin status.'
+        );
+      }
+
+      await admin.auth().setCustomUserClaims(user.uid, { admin: false });
+      return {
+        result: `Success! Admin role removed.`
+      };
+    } catch (error) {
+      console.error('Error removing admin:', error);
+      throw new functionsV2.https.HttpsError(
+        'internal',
+        error instanceof Error ? error.message : 'Error removing admin role'
+      );
+    }
+  }
+);
