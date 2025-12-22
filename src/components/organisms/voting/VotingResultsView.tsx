@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CategoryResult, CookieScore } from '../../../lib/hooks/useResultsData';
+import type { CategoryResult } from '../../../lib/hooks/useResultsData';
 import { CookieViewer } from '../../organisms/CookieViewer/CookieViewer';
 import type { DetectedCookie } from '../../../lib/types';
 import styles from './VotingResultsView.module.css';
@@ -122,7 +122,7 @@ const ResultSlide = ({
     );
 };
 
-export const VotingResultsView = ({ eventName, results }: VotingResultsViewProps) => {
+export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [animatingState, setAnimatingState] = useState<{
         from: number;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { uploadImage } from '../lib/storage';
-import { type Category, type CookieCoordinate } from '../lib/types';
+import { type Category } from '../lib/types';
 import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
 import { Toast } from '../components/atoms/Toast/Toast';
 import { validateImage, validateCategoryName, validateMakerName, sanitizeInput } from '../lib/validation';
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
     } = useBakerStore();
 
     const { fetchImagesForEvent } = useImageStore();
-    const { fetchCookies, getCookiesForCategory } = useCookieStore();
+    const { fetchCookies } = useCookieStore();
 
     // Auth & Permission
     const { user } = useAuthStore();
@@ -411,7 +411,7 @@ export default function AdminDashboard() {
                                         await updateResultsAvailableTime(eventId, date.getTime());
                                         setAlertMessage('Results time updated');
                                         setAlertType('success');
-                                    } catch (err) {
+                                    } catch {
                                         setAlertMessage('Failed to update results time');
                                         setAlertType('error');
                                     }

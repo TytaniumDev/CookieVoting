@@ -1,4 +1,4 @@
-import type { Category, CookieCoordinatePublic } from '../../lib/types';
+import type { Category } from '../../lib/types';
 import type { DetectedCookie } from '../../lib/cookieDetectionGemini';
 
 // Helper to create a placeholder detection

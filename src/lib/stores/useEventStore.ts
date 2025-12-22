@@ -9,8 +9,7 @@ import {
     updateDoc,
     deleteDoc,
     query,
-    orderBy,
-    writeBatch
+    orderBy
 } from 'firebase/firestore';
 import type { VoteEvent, Category } from '../types';
 

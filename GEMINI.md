@@ -48,7 +48,8 @@ Follow the 5-step process:
 
 ## Deployment & Verification
 - **Build Before Reporting**: Make sure the app builds successfully before reporting a change.
-- **Test Before Reporting**: Every code change should be verified using the built-in browser and local emulators, if it is possible to do so.
+- **Verify Before Reporting**: **REQUIRED**. Run `npm run verify` before reporting ANY code changes. This script mirrors the GitHub CI pipeline (Lint, Test, Build) and catches errors that would break the build.
+- **Test Before Reporting**: In addition to the automated verify script, verify UI changes using the built-in browser and local emulators, if it is possible to do so.
 - **Efficient Verification**: 
     - **Minimize Prompts**: To avoid excessive approval requests, prefer `read_url_content` for static state checks.
     - **NO Custom JS**: Custom JavaScript execution using browser tools is strictly FORBIDDEN unless no native alternative exists. Prefer native browser tools (click, get_text) to avoid the mandatory manual approval step.

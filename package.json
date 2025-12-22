@@ -41,7 +41,8 @@
     "test:integration:emulator": "FIREBASE_EMULATOR=true npm run test:integration",
     "detect:all-images": "node scripts/detect-all-images.js",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "verify": "node scripts/verify.js"
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.3",

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useEventStore } from '../../../lib/stores/useEventStore';
 import { useBakerStore } from '../../../lib/stores/useBakerStore';
 import { useImageStore } from '../../../lib/stores/useImageStore';
-import { useCookieStore } from '../../../lib/stores/useCookieStore';
+
 import { useEventSetupState, type SetupStep } from '../../../lib/hooks/useEventSetupState';
 import { ImageUploadStep, type UploadedImage } from './ImageUploadStep';
 import { CategoryNamingStep } from './CategoryNamingStep';
@@ -20,10 +20,9 @@ interface Props {
 
 export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, initialCategoryId }: Props) {
     // Stores
-    const { categories, fetchCategories, addCategory, loading: categoriesLoading } = useEventStore();
-    const { bakers, fetchBakers, addBaker, removeBaker, loading: bakersLoading } = useBakerStore();
-    const { uploadImage, fetchImagesForEvent } = useImageStore();
-    const { fetchCookies } = useCookieStore();
+    const { categories, addCategory, loading: categoriesLoading } = useEventStore();
+    const { bakers, addBaker, removeBaker, loading: bakersLoading } = useBakerStore();
+    const { uploadImage } = useImageStore();
 
     // Local State
     const [images, setImages] = useState<UploadedImage[]>([]);

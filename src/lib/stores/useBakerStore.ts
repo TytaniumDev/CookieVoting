@@ -5,9 +5,7 @@ import {
     getDocs,
     addDoc,
     deleteDoc,
-    doc,
-    query,
-    where
+    doc
 } from 'firebase/firestore';
 import type { Baker } from '../types';
 

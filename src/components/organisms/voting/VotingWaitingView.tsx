@@ -7,11 +7,7 @@ interface VotingWaitingViewProps {
     onViewResults: () => void;
 }
 
-interface Snowflake {
-    id: number;
-    style: React.CSSProperties;
-    char: string;
-}
+
 
 export const VotingWaitingView = ({ resultsAvailableTime, onViewResults }: VotingWaitingViewProps) => {
     const [timeLeft, setTimeLeft] = useState<string>('');

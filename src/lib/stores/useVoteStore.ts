@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import { db } from '../firebase';
 import { 
-  collection, 
-  getDocs, 
+    collection, 
   setDoc, 
   doc, 
-  onSnapshot,
-  query,
+    onSnapshot,
   getDoc
 } from 'firebase/firestore';
 

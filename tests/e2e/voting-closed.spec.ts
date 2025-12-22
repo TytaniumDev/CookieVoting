@@ -1,6 +1,6 @@
 
 import { test, expect } from '@playwright/test';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin SDK to interact with Firestore Emulator

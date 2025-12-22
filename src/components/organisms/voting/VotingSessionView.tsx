@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import type { Category, CookieCoordinatePublic } from '../../../lib/types';
+import { useState } from 'react';
+import type { Category } from '../../../lib/types';
 import styles from './VotingSessionView.module.css';
 
 interface VotingSessionViewProps {
@@ -70,7 +70,7 @@ const CategorySlide = ({
                     onSelectCookie={(num) => onVote(category.id, num)}
                     className={styles.cookieViewer}
                     // Custom render for the number/sparkle to match previous design
-                    renderCenter={({ index, bounds }) => {
+                    renderCenter={({ index }) => {
                         const cookie = category.cookies[index];
                         const isSelected = currentVote === cookie.number;
 

@@ -108,8 +108,7 @@ export function CookieTaggingStep({
       cookies.filter(c => c.categoryId === currentCategory.id), 
   [cookies, currentCategory.id]);
 
-  // Calculate completion
-  const isComplete = taggedCookies.length > 0;
+
 
   // Merged detections state - moved out of render and memoized for stability
   const mergedDetections = useMemo(() => {
@@ -171,11 +170,7 @@ export function CookieTaggingStep({
     }
   }, [showBakerSelect]);
 
-  const handlePolygonClick = (e: React.MouseEvent, cookie: DetectedCookie) => {
-    setSelectedDetectedCookie(cookie);
-    setBakerSelectPosition({ x: e.clientX, y: e.clientY });
-    setShowBakerSelect(true);
-  };
+
 
   const handleRegenerateDetections = async () => {
     if (!currentCategory.imageUrl || isRegenerating) return;
@@ -193,6 +188,7 @@ export function CookieTaggingStep({
     }
   };
 
+  const handleBakerSelect = async (bakerId: string) => {
     // We need an image ID. If we have an entity, use it.
     // If NOT (legacy/test event), use a placeholder based on category ID to allow testing to proceed.
     const effectiveImageId = imageEntity?.id || `legacy-image-${currentCategory.id}`;
