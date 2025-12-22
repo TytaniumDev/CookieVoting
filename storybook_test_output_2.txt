@@ -1,0 +1,99 @@
+
+> cookievoting@0.0.0 test-storybook
+> vitest --project=storybook --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting[39m
+
+Port 63315 is in use, trying another one...
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39mNo pre-detected cookies found, user can run detection manually
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mNo redirect result found
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mCurrent auth user: none
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mAuth state changed: signed out
+[90mstdout[2m | src/components/atoms/AuthButton/AuthButton.stories.tsx[2m > [22m[2mDefault
+[22m[39mNo redirect result found
+[90mstdout[2m | src/components/atoms/AuthButton/AuthButton.stories.tsx[2m > [22m[2mDefault
+[22m[39mCurrent auth user: none
+[90mstdout[2m | src/components/atoms/AuthButton/AuthButton.stories.tsx[2m > [22m[2mDefault
+[22m[39mAuth state changed: signed out
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39mNo pre-detected cookies found, user can run detection manually
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Header.stories.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 305[2mms[22m[39m
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mNo redirect result found
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mCurrent auth user: none
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mAuth state changed: signed out
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/layout/Layout.stories.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 241[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Button.stories.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 344[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Page.stories.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 345[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/EventSetupWizard/EventSetupWizard.stories.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 269[2mms[22m[39m
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-images/6-cookies/test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-images/6-cookies/test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39mNo pre-detected cookies found, user can run detection manually
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/ImageTagger/ImageTagger.stories.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 304[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/atoms/AuthButton/AuthButton.stories.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 303[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/atoms/AlertModal/AlertModal.stories.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 384[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/CookieViewer/CookieViewer.stories.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 516[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m storybook (chromium) [49m[39m src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx[2m [ src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx ][22m
+[31m[1mError[22m: Failed to import test file C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx[39m
+[31m[1mCaused by: SyntaxError[22m: The requested module '/node_modules/.cache/storybook/c364ca27240cae47fc23316f91f0621f352c8dc7cddbee000acd3d519be36709/sb-vitest/deps/@storybook_react.js?v=95126d1d' does not provide an export named 'Meta'[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m33 passed[39m[22m[90m (33)[39m
+[2m   Start at [22m 16:45:04
+[2m   Duration [22m 3.88s[2m (transform 0ms, setup 6.09s, import 2.97s, tests 3.01s, environment 0ms)[22m
+

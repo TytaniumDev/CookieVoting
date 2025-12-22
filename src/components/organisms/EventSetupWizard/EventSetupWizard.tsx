@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { type Category, type CookieCoordinate } from '../../../lib/types';
+import { type CookieCoordinate } from '../../../lib/types';
 import { uploadImage } from '../../../lib/storage';
-import { sanitizeInput } from '../../../lib/validation';
-import { CONSTANTS } from '../../../lib/constants';
 import { detectCookiesGemini } from '../../../lib/cookieDetectionGemini';
 import { useEvent } from '../../../lib/hooks/useEvent';
 import { useCategories } from '../../../lib/hooks/useCategories';
@@ -27,7 +25,7 @@ interface Props {
 }
 
 export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, initialCategoryId }: Props) {
-    const { event, loading: eventLoading } = useEvent(eventId);
+    const { loading: eventLoading } = useEvent(eventId);
     const { categories, add: addCategory, update: updateCategoryCookies, loading: categoriesLoading } = useCategories(eventId);
     const { bakers, add: addBaker, remove: removeBaker, loading: bakersLoading } = useBakers(eventId);
 
@@ -36,12 +34,12 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
     const [error, setError] = useState<string | null>(null);
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
     const [taggedCookies, setTaggedCookies] = useState<Record<string, Record<string, CookieCoordinate[]>>>({});
-    const [categoryCompletion, setCategoryCompletion] = useState<Record<string, boolean>>({});
+    const [categoryCompletion] = useState<Record<string, boolean>>({});
     const [detecting, setDetecting] = useState(false);
 
     const initialStep: SetupStep = initialCategoryId ? 'tagging' : (categories.length > 0 ? (bakers.length > 0 ? 'tagging' : 'bakers') : 'upload');
 
-    const { step, setStep, categoryId, setCategoryId, nextStep, prevStep } = useEventSetupState(
+    const { step, setStep } = useEventSetupState(
         initialStep,
         initialCategoryId || null
     );
@@ -114,7 +112,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
             }
             setImages(uploaded);
             setStep('categories');
-        } catch (err) {
+        } catch {
             setError('Failed to upload images');
         } finally {
             setUploading(false);
@@ -133,10 +131,12 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
         try {
             const imagesToCreate = images.filter(img => img.uploaded && img.categoryName?.trim() && !categories.some(c => c.imageUrl === img.imageUrl));
             for (const img of imagesToCreate) {
-                await addCategory(img.categoryName!, img.imageUrl!);
+                if (img.categoryName && img.imageUrl) {
+                    await addCategory(img.categoryName, img.imageUrl);
+                }
             }
             setStep('bakers');
-        } catch (err) {
+        } catch {
             setError('Failed to create categories');
         } finally {
             setUploading(false);
@@ -216,7 +216,7 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
             const sorted = sortAndNumberCookies(allCookies);
             await updateCategoryCookies(currentCategory.id, { cookies: sorted });
             setTaggedCookies(updatedTagged);
-        } catch (err) {
+        } catch {
             setError('Auto-detection failed');
         } finally {
             setDetecting(false);
@@ -233,14 +233,14 @@ export function EventSetupWizard({ eventId, eventName, onComplete, onCancel, ini
                 <h1>Edit Event: {eventName}</h1>
                 <div className={styles.steps}>
                     {(['upload', 'categories', 'bakers', 'tagging'] as SetupStep[]).map((s, idx) => (
-                        <div
+                        <button
                             key={s}
                             className={`${styles.step} ${step === s ? styles.active : ''}`}
                             onClick={() => categories.length > 0 && setStep(s)}
                         >
                             <span className={styles.stepNumber}>{idx + 1}</span>
                             <span className={styles.stepLabel}>{s.charAt(0).toUpperCase() + s.slice(1)}</span>
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>

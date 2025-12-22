@@ -5,7 +5,7 @@ import { type DetectedCookie } from '../../components/organisms/CookieViewer/Coo
 export function useImageDetection(imageUrl: string | null) {
   const [detectedCookies, setDetectedCookies] = useState<DetectedCookie[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     if (!imageUrl) {

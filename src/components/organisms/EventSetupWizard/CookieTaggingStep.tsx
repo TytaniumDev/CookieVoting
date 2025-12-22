@@ -34,7 +34,6 @@ export function CookieTaggingStep({
   currentCategoryIndex,
   onCategoryChange,
   bakers,
-  currentBaker,
   taggedCookies,
   detectedCookies,
   loadingDetection,
@@ -43,7 +42,6 @@ export function CookieTaggingStep({
   onAutoDetect,
   onComplete,
   categoryCompletion,
-  error,
   detecting
 }: Props) {
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -200,7 +198,7 @@ export function CookieTaggingStep({
 
             const labelPositions = calculateSmartLabelPositions(cookiesWithBounds);
 
-            return cookiesWithBounds.map(({ cookie, baker, bounds }, index) => {
+            return cookiesWithBounds.map(({ cookie, baker }, index) => {
               const labelPos = labelPositions[index];
               return (
                 <div
@@ -221,6 +219,18 @@ export function CookieTaggingStep({
                     });
                     if (matchingDetected) handlePolygonClick(e, matchingDetected);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.stopPropagation();
+                      const matchingDetected = detectedCookies.find(d => {
+                        const distance = Math.sqrt(Math.pow(d.x - cookie.x, 2) + Math.pow(d.y - cookie.y, 2));
+                        return distance < 6;
+                      });
+                      if (matchingDetected) handlePolygonClick(e as any, matchingDetected);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <span className={styles.cookieNumber}>{index + 1}</span>
                   <div 

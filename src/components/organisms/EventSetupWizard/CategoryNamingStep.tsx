@@ -32,7 +32,7 @@ export function CategoryNamingStep({
   return (
     <div className={styles.stepContent}>
       <h2>Name Each Category</h2>
-      <p className={styles.instruction}>Give each image a category name (e.g., "Sugar Cookie", "Chocolate Chip")</p>
+      <p className={styles.instruction}>Give each image a category name (e.g., &quot;Sugar Cookie&quot;, &quot;Chocolate Chip&quot;)</p>
 
       <div className={styles.categoryNameGrid}>
         {images.map((img, index) => {

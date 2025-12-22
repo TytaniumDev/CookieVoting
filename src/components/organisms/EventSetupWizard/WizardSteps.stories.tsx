@@ -1,9 +1,8 @@
 import React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react';
 import { ImageUploadStep } from './ImageUploadStep';
 import { CategoryNamingStep } from './CategoryNamingStep';
 import { BakerSetupStep } from './BakerSetupStep';
-import { CookieTaggingStep } from './CookieTaggingStep';
 
 const meta: Meta = {
   title: 'Organisms/EventSetupWizard/Steps',

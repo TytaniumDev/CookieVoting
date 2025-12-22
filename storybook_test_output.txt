@@ -1,0 +1,109 @@
+
+> cookievoting@0.0.0 test-storybook
+> vitest --project=storybook --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting[39m
+
+Port 63315 is in use, trying another one...
+[2m4:44:25 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../lib/hooks/useAuth" from "src/components/atoms/AuthButton/AuthButton.stories.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/src/components/atoms/AuthButton/AuthButton.stories.tsx[39m:4:24
+[33m  4  |  import { AuthButton } from "./AuthButton";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import { useAuth } from "../lib/hooks/useAuth";
+     |                           ^
+  7  |  import React from "react";
+  8  |  const AuthButtonWithAuth = () => {[39m
+      at TransformPluginContext._formatLog (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:28998:43)
+      at TransformPluginContext.error (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:28995:14)
+      at normalizeUrl (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:27118:18)
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:27176:32
+      at async Promise.all (index 5)
+      at TransformPluginContext.transform (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:27144:4)
+      at EnvironmentPluginContainer.transform (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:28796:14)
+      at loadAndTransform (file:///C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/node_modules/vite/dist/node/chunks/config.js:22669:26)
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firebase Auth Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Firestore Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Storage Emulator
+[90mstdout[2m | unknown test
+[22m[39m✅ Connected to Functions Emulator
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDefault
+[22m[39mNo pre-detected cookies found, user can run detection manually
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mNo redirect result found
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mCurrent auth user: none
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mDefault
+[22m[39mAuth state changed: signed out
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mWith Existing Cookies
+[22m[39mNo pre-detected cookies found, user can run detection manually
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Header.stories.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 358[2mms[22m[39m
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mNo redirect result found
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mCurrent auth user: none
+[90mstdout[2m | src/components/layout/Layout.stories.tsx[2m > [22m[2mLanding Page
+[22m[39mAuth state changed: signed out
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Page.stories.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 402[2mms[22m[39m
+   [33m[2m✓[22m[39m Logged Out [33m 322[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/stories/Button.stories.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 430[2mms[22m[39m
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39m[getImageDetectionResults] Attempting to get results for imageUrl: test-images/6-cookies/test-cookies.jpg
+[90mstderr[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39m[getImageDetectionResults] Could not extract file path from URL: test-images/6-cookies/test-cookies.jpg
+[90mstdout[2m | src/components/organisms/ImageTagger/ImageTagger.stories.tsx[2m > [22m[2mDifferent Image
+[22m[39mNo pre-detected cookies found, user can run detection manually
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/layout/Layout.stories.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 330[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/ImageTagger/ImageTagger.stories.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 392[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/EventSetupWizard/EventSetupWizard.stories.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 368[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/atoms/AlertModal/AlertModal.stories.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 533[2mms[22m[39m
+   [33m[2m✓[22m[39m Success [33m 322[2mms[22m[39m
+ [32m✓[39m [30m[45m storybook (chromium) [49m[39m src/components/organisms/CookieViewer/CookieViewer.stories.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 697[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m storybook (chromium) [49m[39m src/components/atoms/AuthButton/AuthButton.stories.tsx[2m [ src/components/atoms/AuthButton/AuthButton.stories.tsx ][22m
+[31m[1mError[22m: Failed to import test file C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/src/components/atoms/AuthButton/AuthButton.stories.tsx[39m
+[31m[1mCaused by: TypeError[22m: Failed to fetch dynamically imported module: http://localhost:63316/@fs/C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/src/components/atoms/AuthButton/AuthButton.stories.tsx?import&browserv=1766364265866[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m storybook (chromium) [49m[39m src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx[2m [ src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx ][22m
+[31m[1mError[22m: Failed to import test file C:/Users/tywho/OneDrive/Documents/Development/GitHub/CookieVoting/src/components/organisms/EventSetupWizard/WizardSteps.stories.tsx[39m
+[31m[1mCaused by: SyntaxError[22m: The requested module '/node_modules/.cache/storybook/c364ca27240cae47fc23316f91f0621f352c8dc7cddbee000acd3d519be36709/sb-vitest/deps/@storybook_react.js?v=95126d1d' does not provide an export named 'Meta'[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m30 passed[39m[22m[90m (30)[39m
+[2m   Start at [22m 16:44:22
+[2m   Duration [22m 4.13s[2m (transform 0ms, setup 6.62s, import 2.73s, tests 3.51s, environment 0ms)[22m
+

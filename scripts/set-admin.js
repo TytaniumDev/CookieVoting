@@ -23,7 +23,7 @@ if (!admin.apps.length) {
       projectId: serviceAccount.project_id
     });
     console.log('Initialized with service-account.json');
-  } catch (e) {
+  } catch {
     console.warn('Could not load ../service-account.json, trying default credentials...');
     try {
       admin.initializeApp();

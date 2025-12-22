@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { validateImage } from '../../../lib/validation';
-import { CONSTANTS } from '../../../lib/constants';
 import styles from './EventSetupWizard.module.css';
 
 export interface UploadedImage {
