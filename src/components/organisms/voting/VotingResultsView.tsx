@@ -9,6 +9,36 @@ interface VotingResultsViewProps {
   results: CategoryResult[];
 }
 
+// Intro tile component
+const IntroTile = ({ eventName, className }: { eventName: string; className?: string }) => {
+  return (
+    <div className={`${styles.slide} ${styles.introTile} ${className || ''}`}>
+      <div className={styles.introContent}>
+        <h1 className={styles.introTitle}>🏆 Results Are In! 🏆</h1>
+        <p className={styles.introSubtitle}>{eventName}</p>
+        <p className={styles.introDescription}>
+          Swipe through to see the winners in each category
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Outro tile component
+const OutroTile = ({ className }: { className?: string }) => {
+  return (
+    <div className={`${styles.slide} ${styles.outroTile} ${className || ''}`}>
+      <div className={styles.outroContent}>
+        <h1 className={styles.outroTitle}>🎉 Congratulations! 🎉</h1>
+        <p className={styles.outroSubtitle}>Thank you for participating!</p>
+        <p className={styles.outroDescription}>
+          We hope you enjoyed the competition!
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Internal component for a single result slide
 const ResultSlide = ({
   result,
@@ -70,23 +100,6 @@ const ResultSlide = ({
           imageUrl={category.imageUrl}
           detectedCookies={cookiesToDisplay}
           className={styles.viewer}
-          renderTopLeft={({ index: cookieIndex }) => {
-            // Find the score for this cookie index
-            // We need to match the cookie in the score to the detected cookie at this index
-            const detected = cookiesToDisplay[cookieIndex];
-            const score = rankedScores.find((s) => {
-              const distance = Math.sqrt(
-                Math.pow(detected.x - s.cookie.x, 2) + Math.pow(detected.y - s.cookie.y, 2),
-              );
-              return distance < 5;
-            });
-
-            if (!score) return null;
-            const medal = getMedal(score.rank);
-            if (!medal) return null;
-
-            return <div className={styles.medal}>{medal}</div>;
-          }}
           renderCenter={({ index: cookieIndex }) => {
             const detected = cookiesToDisplay[cookieIndex];
             const score = rankedScores.find((s) => {
@@ -112,10 +125,15 @@ const ResultSlide = ({
 
             if (!score) return null;
 
+            const medal = getMedal(score.rank);
+
             return (
               <div className={styles.bakerInfo}>
-                <div className={styles.bakerLabel}>{score.maker}</div>
-                <div className={styles.voteCount}>{score.votes} votes</div>
+                {medal && <div className={styles.medalInline}>{medal}</div>}
+                <div className={styles.bakerDetails}>
+                  <div className={styles.bakerLabel}>{score.maker}</div>
+                  <div className={styles.voteCount}>{score.votes} votes</div>
+                </div>
               </div>
             );
           }}
@@ -125,7 +143,9 @@ const ResultSlide = ({
   );
 };
 
-export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
+export const VotingResultsView = ({ eventName, results }: VotingResultsViewProps) => {
+  // Total slides: 1 intro + results.length + 1 outro
+  const totalSlides = results.length + 2;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animatingState, setAnimatingState] = useState<{
     from: number;
@@ -134,7 +154,7 @@ export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
   } | null>(null);
 
   const handleNext = () => {
-    if (currentIndex < results.length - 1) {
+    if (currentIndex < totalSlides - 1) {
       setAnimatingState({
         from: currentIndex,
         to: currentIndex + 1,
@@ -143,7 +163,7 @@ export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setAnimatingState(null);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -157,18 +177,28 @@ export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
       setTimeout(() => {
         setCurrentIndex((prev) => prev - 1);
         setAnimatingState(null);
-      }, 800);
+      }, 600);
     }
   };
 
   const renderSlide = (index: number, animationClass?: string) => {
-    const result = results[index];
+    // First slide is intro
+    if (index === 0) {
+      return <IntroTile key="intro" eventName={eventName} className={animationClass} />;
+    }
+    // Last slide is outro
+    if (index === totalSlides - 1) {
+      return <OutroTile key="outro" className={animationClass} />;
+    }
+    // Middle slides are results
+    const resultIndex = index - 1;
+    const result = results[resultIndex];
     if (!result) return null;
     return (
       <ResultSlide
         key={result.category.id}
         result={result}
-        index={index}
+        index={resultIndex}
         total={results.length}
         className={animationClass}
       />
@@ -177,18 +207,6 @@ export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
 
   return (
     <div className={styles.container}>
-      {/* Back to previous category arrow */}
-      {(currentIndex > 0 || (animatingState && animatingState.to > 0)) && (
-        <button
-          onClick={!animatingState ? handlePrev : undefined}
-          className={styles.backArrow}
-          aria-label="Previous category"
-          disabled={!!animatingState}
-        >
-          ↑
-        </button>
-      )}
-
       {!animatingState ? (
         renderSlide(currentIndex)
       ) : (
@@ -205,15 +223,39 @@ export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
       )}
 
       <div className={styles.footer}>
-        <button
-          onClick={
-            currentIndex < results.length - 1 ? handleNext : () => (window.location.href = '/')
-          }
-          className={styles.nextButton}
-          disabled={!!animatingState}
-        >
-          {currentIndex < results.length - 1 ? 'Next Category' : 'Back to Home'}
-        </button>
+        <div className={styles.navigationControls}>
+          <button
+            onClick={handlePrev}
+            className={styles.navArrow}
+            aria-label="Previous"
+            disabled={!!animatingState || currentIndex === 0}
+          >
+            ←
+          </button>
+
+          <div className={styles.progress}>
+            {currentIndex + 1} / {totalSlides}
+          </div>
+
+          {currentIndex < totalSlides - 1 ? (
+            <button
+              onClick={handleNext}
+              className={styles.navArrow}
+              aria-label="Next"
+              disabled={!!animatingState}
+            >
+              →
+            </button>
+          ) : (
+            <button
+              onClick={() => (window.location.href = '/')}
+              className={styles.homeButton}
+              aria-label="Back to Home"
+            >
+              Home
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

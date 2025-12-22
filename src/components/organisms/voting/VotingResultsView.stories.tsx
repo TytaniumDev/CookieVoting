@@ -59,18 +59,42 @@ export const ResultsNavigationTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Initial Category Display', async () => {
-      await expect(canvas.getByText('Best Taste Results')).toBeInTheDocument();
-      // Assuming first category is displayed
+    await step('Initial Intro Tile Display', async () => {
+      await expect(canvas.getByText('🏆 Results Are In! 🏆')).toBeInTheDocument();
+      await expect(canvas.getByText('Cookie Off Results')).toBeInTheDocument();
+      await expect(canvas.getByText('1 / 6')).toBeInTheDocument();
     });
 
-    await step('Navigate to Next Category', async () => {
-      const nextBtn = canvas.getByText('Next Category');
+    await step('Navigate to First Category', async () => {
+      const nextBtn = canvas.getByLabelText('Next');
       await userEvent.click(nextBtn);
 
-      // Wait for next category Title (assuming navigation updates title)
+      // Wait for first category to appear
+      await waitFor(() => {
+        expect(canvas.getByText('Best Taste Results')).toBeInTheDocument();
+        expect(canvas.getByText('2 / 6')).toBeInTheDocument();
+      });
+    });
+
+    await step('Navigate to Second Category', async () => {
+      const nextBtn = canvas.getByLabelText('Next');
+      await userEvent.click(nextBtn);
+
+      // Wait for next category Title
       await waitFor(() => {
         expect(canvas.getByText('Best Look Results')).toBeInTheDocument();
+        expect(canvas.getByText('3 / 6')).toBeInTheDocument();
+      });
+    });
+
+    await step('Navigate Back to First Category', async () => {
+      const prevBtn = canvas.getByLabelText('Previous');
+      await userEvent.click(prevBtn);
+
+      // Wait to go back to first category
+      await waitFor(() => {
+        expect(canvas.getByText('Best Taste Results')).toBeInTheDocument();
+        expect(canvas.getByText('2 / 6')).toBeInTheDocument();
       });
     });
   },

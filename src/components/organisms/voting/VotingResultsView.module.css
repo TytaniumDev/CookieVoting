@@ -5,29 +5,48 @@
   z-index: 10;
 }
 
-.backArrow {
-  position: absolute;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 100;
-  backdrop-filter: blur(4px);
-  transition:
-    background 0.2s,
-    transform 0.2s;
+/* Intro and Outro Tiles */
+
+.introTile,
+.outroTile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
-.backArrow:hover {
-  background: rgba(255, 255, 255, 0.4);
-  transform: translateX(-50%) scale(1.1);
+.introContent,
+.outroContent {
+  text-align: center;
+  padding: 2rem;
+  max-width: 600px;
+}
+
+.introTitle,
+.outroTitle {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0 0 1rem 0;
+  background: linear-gradient(to right, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.introSubtitle,
+.outroSubtitle {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 1.5rem 0;
+}
+
+.introDescription,
+.outroDescription {
+  font-size: 1.2rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
 }
 
 .slide {
@@ -41,84 +60,72 @@
   will-change: transform, opacity;
 }
 
-/* -------- Animations -------- */
+/* -------- Animations (Horizontal) -------- */
 
 .exitNext {
-  animation: zoomOutUp 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  animation: slideOutLeft 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
   z-index: 1;
 }
 
 .enterNext {
-  animation: slideInUpExpand 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  animation: slideInRight 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
   z-index: 2;
 }
 
-@keyframes zoomOutUp {
+@keyframes slideOutLeft {
   0% {
-    transform: scale(1) translateY(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
-    filter: brightness(1);
-  }
-
-  40% {
-    transform: scale(0.9) translateY(5%);
-    opacity: 0.8;
-    filter: brightness(0.8);
   }
 
   100% {
-    transform: scale(0.9) translateY(-100%);
+    transform: translateX(-100%) scale(0.95);
     opacity: 0;
-    filter: brightness(0.5);
   }
 }
 
-@keyframes slideInUpExpand {
+@keyframes slideInRight {
   0% {
-    transform: translateY(100%) scale(0.85);
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
 
-  40% {
-    opacity: 1;
-  }
-
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 .exitPrev {
-  animation: zoomOutDown 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  animation: slideOutRight 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
   z-index: 1;
 }
 
 .enterPrev {
-  animation: slideInDownExpand 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  animation: slideInLeft 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
   z-index: 2;
 }
 
-@keyframes zoomOutDown {
+@keyframes slideOutRight {
   0% {
-    transform: scale(1) translateY(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 
   100% {
-    transform: scale(0.9) translateY(100%);
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
 }
 
-@keyframes slideInDownExpand {
+@keyframes slideInLeft {
   0% {
-    transform: translateY(-100%) scale(0.85);
+    transform: translateX(-100%) scale(0.95);
     opacity: 0;
   }
 
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
@@ -143,9 +150,11 @@
 }
 
 .progress {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: #94a3b8;
-  margin-top: 0.25rem;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: center;
 }
 
 .imageContainer {
@@ -176,26 +185,69 @@
   left: 0;
   width: 100%;
   padding: 1.5rem;
-  background: #000000;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0));
   display: flex;
   justify-content: center;
   z-index: 20;
 }
 
-.nextButton {
+.navigationControls {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navArrow {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    all 0.3s ease,
+    transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navArrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.navArrow:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.navArrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.homeButton {
   background: #3b82f6;
   color: white;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
-  padding: 1rem 3rem;
+  padding: 1rem 2rem;
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
   cursor: pointer;
   transition: transform 0.2s;
 }
 
-.nextButton:active {
+.homeButton:hover {
+  transform: scale(1.05);
+}
+
+.homeButton:active {
   transform: scale(0.95);
 }
 
@@ -215,15 +267,6 @@
   transition: all 0.3s ease;
 }
 
-.medal {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: translate(-120%, -20%);
-  font-size: 2.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-  z-index: 5;
-}
 
 .bakerInfo {
   position: absolute;
@@ -231,15 +274,28 @@
   left: 50%;
   transform: translate(-50%, 110%);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  padding: 4px 12px;
-  border-radius: 8px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 100px;
+  min-width: 120px;
   white-space: nowrap;
+}
+
+.medalInline {
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.bakerDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .bakerLabel {
