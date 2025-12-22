@@ -157,6 +157,10 @@
     background: #000000;
     overflow: hidden;
     z-index: 0;
+    /* Prevent header and footer from covering the image */
+        padding-top: 120px;
+        padding-bottom: 120px;
+        box-sizing: border-box;
 }
 
 .viewer {

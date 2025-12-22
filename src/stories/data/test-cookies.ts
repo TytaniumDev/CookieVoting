@@ -17,10 +17,10 @@ const createPlaceholderDetection = (x: number, y: number): DetectedCookie => ({
 });
 
 export const testCookieImages = {
-    cookies3: '/test-images/3-cookies/PXL_20251215_000325176-EDIT.jpg',
-    cookies4: '/test-images/4-cookies/PXL_20251215_001528843-EDIT.jpg',
-    cookies5: '/test-images/5-cookies/PXL_20251215_000827596-EDIT.jpg',
-    cookies8: '/test-images/8-cookies/PXL_20251215_000711294-EDIT.jpg',
+    cookies3: 'test-images/3-cookies/PXL_20251215_000325176-EDIT.jpg',
+    cookies4: 'test-images/4-cookies/PXL_20251215_001528843-EDIT.jpg',
+    cookies5: 'test-images/5-cookies/PXL_20251215_000827596-EDIT.jpg',
+    cookies8: 'test-images/8-cookies/PXL_20251215_000711294-EDIT.jpg',
 };
 
 export const testCategories: Category[] = [

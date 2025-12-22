@@ -30,3 +30,92 @@ const InteractiveStory = () => {
 export const Default: Story = {
     render: () => <InteractiveStory />
 };
+
+import { within, userEvent, expect, waitFor } from 'storybook/test';
+
+export const ValidUserJourney: Story = {
+    render: () => <InteractiveStory />,
+    play: async ({ canvasElement, step }) => {
+        const canvas = within(canvasElement);
+
+        // 1. Initial State: Category 1
+        await step('Start at Category 1', async () => {
+            await expect(canvas.getByText('Best Taste')).toBeInTheDocument();
+            await expect(canvas.getByText('Category 1 of 4')).toBeInTheDocument();
+        });
+
+        // 2. Select a Cookie
+        await step('Vote for Cookie 1', async () => {
+            const cookie1 = canvas.getByLabelText('Cookie 1');
+            await userEvent.click(cookie1);
+
+            const nextBtn = canvas.getByText('Next Category');
+            await waitFor(() => expect(nextBtn).toBeVisible());
+        });
+
+        // 3. Go Next
+        await step('Navigate to Category 2', async () => {
+            const nextBtn = canvas.getByText('Next Category');
+            await userEvent.click(nextBtn);
+
+            // Wait until old slide is gone
+            await waitFor(() => {
+                expect(canvas.queryByText('Best Taste')).not.toBeInTheDocument();
+            }, { timeout: 3000 });
+
+            await expect(canvas.getByText('Category 2 of 4')).toBeInTheDocument();
+            await expect(canvas.getByText('Best Look')).toBeInTheDocument();
+        });
+
+        // 4. Go Back
+        await step('Go back to Category 1', async () => {
+            const backBtn = canvas.getByLabelText('Go back');
+            await userEvent.click(backBtn);
+
+            await waitFor(() => {
+                expect(canvas.queryByText('Best Look')).not.toBeInTheDocument();
+            }, { timeout: 3000 });
+
+            await expect(canvas.getByText('Best Taste')).toBeInTheDocument();
+        });
+
+        // 5. Go Next Again
+        await step('Return to Category 2', async () => {
+            const nextBtn = canvas.getByText('Next Category');
+            await waitFor(() => expect(nextBtn).toBeVisible());
+            await userEvent.click(nextBtn);
+
+            await waitFor(() => {
+                expect(canvas.queryByText('Best Taste')).not.toBeInTheDocument();
+            }, { timeout: 3000 });
+        });
+
+        // 6. Complete remaining
+        await step('Vote through remaining categories', async () => {
+            // Cat 2 (Best Look)
+            await userEvent.click(canvas.getByLabelText('Cookie 1'));
+
+            const nextBtn = canvas.getByText('Next Category');
+            await waitFor(() => expect(nextBtn).toBeVisible());
+            await userEvent.click(nextBtn);
+            await waitFor(() => expect(canvas.queryByText('Best Look')).not.toBeInTheDocument(), { timeout: 3000 });
+
+            // Cat 3 (Most Creative)
+            await userEvent.click(canvas.getByLabelText('Cookie 1'));
+
+            const nextBtn2 = canvas.getByText('Next Category');
+            await waitFor(() => expect(nextBtn2).toBeVisible());
+            await userEvent.click(nextBtn2);
+            await waitFor(() => expect(canvas.queryByText('Most Creative')).not.toBeInTheDocument(), { timeout: 3000 });
+
+            // Cat 4 (Holiday Spirit) - Last One
+            await userEvent.click(canvas.getByLabelText('Cookie 1'));
+
+            // Button should change text
+            const finishBtn = canvas.getByText('Finish Voting');
+            await waitFor(() => expect(finishBtn).toBeVisible());
+            await userEvent.click(finishBtn);
+        });
+
+    }
+};

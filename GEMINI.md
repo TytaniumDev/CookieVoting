@@ -15,6 +15,7 @@ Follow the 5-step process:
 ### 2. UI Development
 - **No Firebase in UI**: Components must NEVER directly import Firebase services (`firestore`, `auth`, `storage`). All interactions must happen through custom hooks in `src/lib/hooks/`.
 - **Storybook First**: Build all UI in Storybook before integration.
+- **Automated Interaction Tests**: **REQUIRED**. Every complex component must have a Storybook story with a `play` function that verifies the critical user journey (e.g., clicking next after voting). This is strictly PREFERRED over manual verification or generic browser tests for UI logic.
 - **Atomic Design**: 
     - **Atoms**: Reusable UI primitives (Buttons, Inputs, Modals). Location: `src/components/atoms/`.
     - **Molecules**: Combinations of atoms with minimal logic. Location: `src/components/molecules/`.
@@ -49,7 +50,6 @@ Follow the 5-step process:
 ## Deployment & Verification
 - **Build Before Reporting**: Make sure the app builds successfully before reporting a change.
 - **Verify Before Reporting**: **REQUIRED**. Run `npm run verify` before reporting ANY code changes. This script mirrors the GitHub CI pipeline (Lint, Test, Build) and catches errors that would break the build.
-- **Test Before Reporting**: In addition to the automated verify script, verify UI changes using the built-in browser and local emulators, if it is possible to do so.
 - **Efficient Verification**: 
     - **Minimize Prompts**: To avoid excessive approval requests, prefer `read_url_content` for static state checks.
     - **NO Custom JS**: Custom JavaScript execution using browser tools is strictly FORBIDDEN unless no native alternative exists. Prefer native browser tools (click, get_text) to avoid the mandatory manual approval step.

@@ -143,7 +143,7 @@ export const BoundingBoxesOnly: Story = {
  */
 export const WithBorders: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     borderColor: '#2196F3',
     onCookieClick: fn(),
@@ -155,7 +155,7 @@ export const WithBorders: Story = {
  */
 export const WithNumberedMarkers: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     cookieNumbers: [1, 2, 3],
     onSelectCookie: fn(),
@@ -167,7 +167,7 @@ export const WithNumberedMarkers: Story = {
  */
 export const WithNumberedMarkersAndSelection: Story = {
   args: {
-    imageUrl: '/test-cookies.jpg',
+    imageUrl: 'test-cookies.jpg',
     detectedCookies: sampleCookiesWithPolygons,
     cookieNumbers: [1, 2, 3],
     selectedCookieNumber: 2,

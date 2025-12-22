@@ -35,7 +35,7 @@ export default function CookieDetectionTest() {
   ];
 
   const testSingleImage = async (folder: string, imageName: string, expected: number): Promise<TestResult> => {
-    const imageUrl = `/test-images/${folder}/${imageName}`;
+    const imageUrl = `test-images/${folder}/${imageName}`;
     setCurrentTest(`${folder}/${imageName}`);
     
     // Wait for image to load
