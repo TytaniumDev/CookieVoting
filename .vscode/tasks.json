@@ -14,7 +14,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "Starting Firebase emulators",
-          "endsPattern": "Emulator UI dashboard"
+          "endsPattern": "All emulators ready! It is now safe to connect your app."
         }
       },
       "presentation": {
