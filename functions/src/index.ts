@@ -1,4 +1,5 @@
 import * as functionsV2 from 'firebase-functions/v2';
+import { beforeUserCreated } from 'firebase-functions/v2/identity';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
@@ -261,7 +262,7 @@ DETECTION PRIORITY:
   console.log('[DetectCookies] Response text preview (first 500 chars):', responseText.substring(0, 500));
   
   // Parse the JSON response
-  let detectedCookies: DetectedCookie[] = [];
+  let detectedCookies: any[] = [];
   try {
     console.log('[DetectCookies] Parsing JSON response');
     
@@ -404,7 +405,7 @@ DETECTION PRIORITY:
                 }
                 return isValid;
               })
-              .map((point: [number, number]) => [
+              .map((point: any) => [
                 Math.max(0, Math.min(100, point[0])),
                 Math.max(0, Math.min(100, point[1]))
               ] as [number, number]);
@@ -422,10 +423,10 @@ DETECTION PRIORITY:
       }
 
       return {
-        x: Math.max(0, Math.min(100, cookie.x)),
-        y: Math.max(0, Math.min(100, cookie.y)),
-        width: Math.max(0.1, Math.min(100, cookie.width)),
-        height: Math.max(0.1, Math.min(100, cookie.height)),
+        x: Math.max(0, Math.min(100, cookie.x as number)),
+        y: Math.max(0, Math.min(100, cookie.y as number)),
+        width: Math.max(0.1, Math.min(100, cookie.width as number)),
+        height: Math.max(0.1, Math.min(100, cookie.height as number)),
         polygon,
         confidence: typeof cookie.confidence === 'number' 
           ? Math.max(0, Math.min(1, cookie.confidence)) 
@@ -1020,3 +1021,24 @@ export const removeAdminRole = functionsV2.https.onCall(
     }
   }
 );
+
+/**
+ * Automatically grant admin rights to all users in the emulator environment.
+ * This is triggered BEFORE a new user is created in Firebase Auth.
+ */
+export const autoGrantAdmin = beforeUserCreated(async (event) => {
+  // Check if running in emulator
+  const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true' ||
+    process.env.FIREBASE_AUTH_EMULATOR_HOST ||
+    process.env.FIREBASE_EMULATORS === 'true';
+
+  if (isEmulator) {
+    console.log(`[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`);
+    return {
+      customClaims: {
+        admin: true
+      }
+    };
+  }
+  return {};
+});

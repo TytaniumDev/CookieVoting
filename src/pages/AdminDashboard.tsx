@@ -23,13 +23,9 @@ export default function AdminDashboard() {
     const { event, loading: eventLoading, setStatus: setEventStatus } = useEvent(eventId);
     const { categories, add: addCategory, remove: deleteCategory, update: updateCategory, loading: categoriesLoading } = useCategories(eventId);
     const { bakers: savedBakersList, add: addBaker, remove: removeBaker } = useBakers(eventId);
-    const { isAdmin, admins: globalAdmins, add: addGlobalAdmin, remove: removeGlobalAdmin, loading: adminLoading } = useAdmins();
+    const { isAdmin, loading: adminLoading } = useAdmins();
 
     // Local UI State
-    const [showAdminManagement, setShowAdminManagement] = useState(false);
-    const [newAdminUserId, setNewAdminUserId] = useState('');
-    const [addingAdmin, setAddingAdmin] = useState(false);
-
     const [showOverflowMenu, setShowOverflowMenu] = useState(false);
     const [newCatName, setNewCatName] = useState('');
     const [newCatFile, setNewCatFile] = useState<File | null>(null);
@@ -243,61 +239,9 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleAddAdmin = async () => {
-        if (!newAdminUserId.trim()) return;
 
-        setAddingAdmin(true);
-        try {
-            const userId = newAdminUserId.trim();
-            await addGlobalAdmin(userId);
-            setNewAdminUserId('');
-            setAlertMessage('Admin added successfully');
-            setAlertType('success');
-        } catch (err) {
-            console.error("Failed to add admin", err);
-            setAlertMessage(err instanceof Error ? err.message : "Failed to add admin. Please try again.");
-            setAlertType('error');
-        } finally {
-            setAddingAdmin(false);
-        }
-    };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleAddAdminByUserId = async (userId: string) => {
-        try {
-            await addGlobalAdmin(userId);
-            setAlertMessage('Admin added successfully');
-            setAlertType('success');
-        } catch (err) {
-            console.error("Failed to add admin", err);
-            setAlertMessage(err instanceof Error ? err.message : "Failed to add admin. Please try again.");
-            setAlertType('error');
-        }
-    };
-
-    const handleRemoveAdmin = async (userId: string) => {
-        if (userId === user?.uid) {
-            setAlertMessage('You cannot remove yourself as an admin');
-            setAlertType('error');
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to remove this admin?')) {
-            return;
-        }
-
-        try {
-            await removeGlobalAdmin(userId);
-            setAlertMessage('Admin removed successfully');
-            setAlertType('success');
-        } catch (err) {
-            console.error("Failed to remove admin", err);
-            setAlertMessage(err instanceof Error ? err.message : "Failed to remove admin. Please try again.");
-            setAlertType('error');
-        }
-    };
-
-    if (checkingAccess || loading) {
+    if (loading) {
         return <div className={styles.loading}>Loading...</div>;
     }
 
@@ -509,15 +453,7 @@ export default function AdminDashboard() {
                                     >
                                         {exporting ? 'Exporting...' : 'Export JSON'}
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setShowAdminManagement(!showAdminManagement);
-                                            setShowOverflowMenu(false);
-                                        }}
-                                        className={styles.menuItem}
-                                    >
-                                        {showAdminManagement ? 'Hide Admins' : 'Manage Admins'}
-                                    </button>
+
                                 </div>
                             </>
                         )}
@@ -532,62 +468,7 @@ export default function AdminDashboard() {
                         🪄 Open Wizard
                     </button>
                 </div>
-                {showAdminManagement && (
-                    <div className={styles.sectionCard} style={{ marginTop: '1rem' }}>
-                        <h3 style={{ color: 'var(--color-text-primary, #f8fafc)', marginTop: 0 }}>Global Administrators</h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary, #cbd5e1)', marginBottom: '1rem' }}>
-                            Global admins have access to manage all events on the site. To add an admin, you need their Firebase User ID.
-                            They can find this by signing in and checking the browser console or their profile.
-                        </p>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label htmlFor="admin-user-id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--color-text-primary, #f8fafc)' }}>
-                                Add Admin by User ID:
-                            </label>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    id="admin-user-id"
-                                    type="text"
-                                    value={newAdminUserId}
-                                    onChange={(e) => setNewAdminUserId(e.target.value)}
-                                    placeholder="Enter Firebase User ID"
-                                    className={styles.input}
-                                    style={{ flex: 1 }}
-                                />
-                                <button
-                                    onClick={handleAddAdmin}
-                                    disabled={addingAdmin || !newAdminUserId.trim()}
-                                    className={styles.buttonPrimary}
-                                >
-                                    Add
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <strong style={{ color: 'var(--color-text-primary, #f8fafc)' }}>Current Global Admins:</strong>
-                            {globalAdmins && globalAdmins.length > 0 ? (
-                                <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-                                    {globalAdmins.map((userId) => (
-                                        <li key={userId} style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <code style={{ flex: 1, fontSize: '0.85rem', color: 'var(--color-text-secondary, #cbd5e1)' }}>{userId}</code>
-                                            {userId === user?.uid && <span style={{ color: 'var(--color-text-secondary, #cbd5e1)' }}>(You)</span>}
-                                            {userId !== user?.uid && (
-                                                <button
-                                                    onClick={() => handleRemoveAdmin(userId)}
-                                                    className={styles.buttonSecondary}
-                                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
-                                                >
-                                                    Remove
-                                                </button>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p style={{ marginTop: '0.5rem', color: 'var(--color-text-secondary, #cbd5e1)' }}>No admins found.</p>
-                            )}
-                        </div>
-                    </div>
-                )}
+
             </div>
 
             {/* Quick Views */}
