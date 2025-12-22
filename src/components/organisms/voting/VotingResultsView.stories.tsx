@@ -3,6 +3,7 @@ import { within, userEvent, expect, waitFor } from 'storybook/test';
 import { VotingResultsView } from './VotingResultsView';
 import { testCategories } from '../../../stories/data/test-cookies';
 import type { CategoryResult } from '../../../lib/hooks/useResultsData';
+import type { DetectedCookie } from '../../organisms/CookieViewer/CookieViewer';
 
 const meta: Meta<typeof VotingResultsView> = {
   title: 'Organisms/Voting/VotingResultsView',
@@ -59,18 +60,25 @@ export const ResultsNavigationTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Initial Category Display', async () => {
-      await expect(canvas.getByText('Best Taste Results')).toBeInTheDocument();
-      // Assuming first category is displayed
+    await step('Initial Welcome Tile Display', async () => {
+      await expect(canvas.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument();
+    });
+
+    await step('Navigate to First Category', async () => {
+      const nextBtn = canvas.getByLabelText('Next');
+      await userEvent.click(nextBtn);
+
+      await waitFor(() => {
+        expect(canvas.getByRole('heading', { name: 'Best Taste Results' })).toBeInTheDocument();
+      });
     });
 
     await step('Navigate to Next Category', async () => {
-      const nextBtn = canvas.getByText('Next Category');
+      const nextBtn = canvas.getByLabelText('Next');
       await userEvent.click(nextBtn);
 
-      // Wait for next category Title (assuming navigation updates title)
       await waitFor(() => {
-        expect(canvas.getByText('Best Look Results')).toBeInTheDocument();
+        expect(canvas.getByRole('heading', { name: 'Best Look Results' })).toBeInTheDocument();
       });
     });
   },

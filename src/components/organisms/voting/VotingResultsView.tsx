@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CategoryResult } from '../../../lib/hooks/useResultsData';
 import { CookieViewer } from '../../organisms/CookieViewer/CookieViewer';
 import type { DetectedCookie } from '../../../lib/types';
@@ -9,17 +9,68 @@ interface VotingResultsViewProps {
   results: CategoryResult[];
 }
 
-// Internal component for a single result slide
-const ResultSlide = ({
+type Tile =
+  | { type: 'welcome' }
+  | { type: 'category'; result: CategoryResult; categoryIndex: number; categoriesTotal: number }
+  | { type: 'finished' };
+
+const WelcomeTile = ({ eventName, categoriesTotal }: { eventName: string; categoriesTotal: number }) => {
+  return (
+    <div className={styles.tile}>
+      <header className={styles.header}>
+        <h2 className={styles.title}>Welcome</h2>
+        <div className={styles.progress}>{eventName}</div>
+      </header>
+
+      <div className={styles.textTileBody}>
+        <div className={styles.textTileCard}>
+          <div className={styles.textTileHeading}>Voting results</div>
+          <div className={styles.textTileText}>
+            Use the arrows below to step through each category. Medals show 1st / 2nd / 3rd place.
+          </div>
+          <div className={styles.textTileMeta}>{categoriesTotal} categories</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FinishedTile = ({ eventName }: { eventName: string }) => {
+  return (
+    <div className={styles.tile}>
+      <header className={styles.header}>
+        <h2 className={styles.title}>Finished</h2>
+        <div className={styles.progress}>{eventName}</div>
+      </header>
+
+      <div className={styles.textTileBody}>
+        <div className={styles.textTileCard}>
+          <div className={styles.textTileHeading}>That’s everything</div>
+          <div className={styles.textTileText}>Thanks for voting — see you at the next Cookie Off.</div>
+          <div className={styles.textTileActions}>
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={() => (window.location.href = '/')}
+            >
+              Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Internal component for a single result tile
+const ResultTile = ({
   result,
   index,
   total,
-  className,
 }: {
   result: CategoryResult;
   index: number;
   total: number;
-  className?: string;
 }) => {
   const { category, scores, detectedCookies } = result;
 
@@ -57,7 +108,7 @@ const ResultSlide = ({
   const maxVotes = Math.max(...scores.map((s) => s.votes));
 
   return (
-    <div className={`${styles.slide} ${className || ''}`}>
+    <div className={styles.tile}>
       <header className={styles.header}>
         <h2 className={styles.title}>{category.name} Results</h2>
         <div className={styles.progress}>
@@ -70,23 +121,6 @@ const ResultSlide = ({
           imageUrl={category.imageUrl}
           detectedCookies={cookiesToDisplay}
           className={styles.viewer}
-          renderTopLeft={({ index: cookieIndex }) => {
-            // Find the score for this cookie index
-            // We need to match the cookie in the score to the detected cookie at this index
-            const detected = cookiesToDisplay[cookieIndex];
-            const score = rankedScores.find((s) => {
-              const distance = Math.sqrt(
-                Math.pow(detected.x - s.cookie.x, 2) + Math.pow(detected.y - s.cookie.y, 2),
-              );
-              return distance < 5;
-            });
-
-            if (!score) return null;
-            const medal = getMedal(score.rank);
-            if (!medal) return null;
-
-            return <div className={styles.medal}>{medal}</div>;
-          }}
           renderCenter={({ index: cookieIndex }) => {
             const detected = cookiesToDisplay[cookieIndex];
             const score = rankedScores.find((s) => {
@@ -112,9 +146,17 @@ const ResultSlide = ({
 
             if (!score) return null;
 
+            const medal = getMedal(score.rank);
             return (
               <div className={styles.bakerInfo}>
-                <div className={styles.bakerLabel}>{score.maker}</div>
+                <div className={styles.bakerHeaderRow}>
+                  {medal && (
+                    <span className={styles.bakerMedal} aria-hidden="true">
+                      {medal}
+                    </span>
+                  )}
+                  <div className={styles.bakerLabel}>{score.maker}</div>
+                </div>
                 <div className={styles.voteCount}>{score.votes} votes</div>
               </div>
             );
@@ -125,94 +167,103 @@ const ResultSlide = ({
   );
 };
 
-export const VotingResultsView = ({ results }: VotingResultsViewProps) => {
+export const VotingResultsView = ({ eventName, results }: VotingResultsViewProps) => {
+  const tiles: Tile[] = useMemo(() => {
+    const categoryTiles: Tile[] = results.map((result, idx) => ({
+      type: 'category',
+      result,
+      categoryIndex: idx,
+      categoriesTotal: results.length,
+    }));
+    return [{ type: 'welcome' }, ...categoryTiles, { type: 'finished' }];
+  }, [results]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [animatingState, setAnimatingState] = useState<{
-    from: number;
-    to: number;
-    direction: 'next' | 'prev';
-  } | null>(null);
 
-  const handleNext = () => {
-    if (currentIndex < results.length - 1) {
-      setAnimatingState({
-        from: currentIndex,
-        to: currentIndex + 1,
-        direction: 'next',
-      });
-      setTimeout(() => {
-        setCurrentIndex((prev) => prev + 1);
-        setAnimatingState(null);
-      }, 800);
-    }
-  };
+  const tileCount = tiles.length;
+  const handleNext = () => setCurrentIndex((prev) => Math.min(prev + 1, tileCount - 1));
+  const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setAnimatingState({
-        from: currentIndex,
-        to: currentIndex - 1,
-        direction: 'prev',
-      });
-      setTimeout(() => {
-        setCurrentIndex((prev) => prev - 1);
-        setAnimatingState(null);
-      }, 800);
-    }
-  };
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setCurrentIndex((prev) => Math.min(prev + 1, tileCount - 1));
+      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => Math.max(prev - 1, 0));
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [tileCount]);
 
-  const renderSlide = (index: number, animationClass?: string) => {
-    const result = results[index];
-    if (!result) return null;
-    return (
-      <ResultSlide
-        key={result.category.id}
-        result={result}
-        index={index}
-        total={results.length}
-        className={animationClass}
-      />
-    );
-  };
+  const currentTileLabel = useMemo(() => {
+    const tile = tiles[currentIndex];
+    if (!tile) return '';
+    if (tile.type === 'welcome') return 'Welcome';
+    if (tile.type === 'finished') return 'Finished';
+    return tile.result.category.name;
+  }, [currentIndex, tiles]);
 
   return (
     <div className={styles.container}>
-      {/* Back to previous category arrow */}
-      {(currentIndex > 0 || (animatingState && animatingState.to > 0)) && (
-        <button
-          onClick={!animatingState ? handlePrev : undefined}
-          className={styles.backArrow}
-          aria-label="Previous category"
-          disabled={!!animatingState}
+      <div className={styles.carouselViewport}>
+        <div
+          className={styles.carouselTrack}
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
-          ↑
+          {tiles.map((tile) => {
+            if (tile.type === 'welcome') {
+              return (
+                <div className={styles.carouselSlide} key="welcome">
+                  <WelcomeTile eventName={eventName} categoriesTotal={results.length} />
+                </div>
+              );
+            }
+
+            if (tile.type === 'finished') {
+              return (
+                <div className={styles.carouselSlide} key="finished">
+                  <FinishedTile eventName={eventName} />
+                </div>
+              );
+            }
+
+            return (
+              <div className={styles.carouselSlide} key={tile.result.category.id}>
+                <ResultTile
+                  result={tile.result}
+                  index={tile.categoryIndex}
+                  total={tile.categoriesTotal}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={styles.footer} aria-label="Results navigation">
+        <button
+          type="button"
+          onClick={handlePrev}
+          className={styles.navArrow}
+          aria-label="Previous"
+          disabled={currentIndex === 0}
+        >
+          ←
         </button>
-      )}
 
-      {!animatingState ? (
-        renderSlide(currentIndex)
-      ) : (
-        <>
-          {renderSlide(
-            animatingState.from,
-            animatingState.direction === 'next' ? styles.exitNext : styles.exitPrev,
-          )}
-          {renderSlide(
-            animatingState.to,
-            animatingState.direction === 'next' ? styles.enterNext : styles.enterPrev,
-          )}
-        </>
-      )}
+        <div className={styles.navMeta}>
+          <div className={styles.navLabel}>{currentTileLabel}</div>
+          <div className={styles.navProgress}>
+            {currentIndex + 1} / {tiles.length}
+          </div>
+        </div>
 
-      <div className={styles.footer}>
         <button
-          onClick={
-            currentIndex < results.length - 1 ? handleNext : () => (window.location.href = '/')
-          }
-          className={styles.nextButton}
-          disabled={!!animatingState}
+          type="button"
+          onClick={handleNext}
+          className={styles.navArrow}
+          aria-label="Next"
+          disabled={currentIndex === tiles.length - 1}
         >
-          {currentIndex < results.length - 1 ? 'Next Category' : 'Back to Home'}
+          →
         </button>
       </div>
     </div>
