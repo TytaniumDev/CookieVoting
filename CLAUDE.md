@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 08:41:40 UTC · Checksum: `0da7c96dc746`
+> **Last synced:** December 23, 2025 at 08:46:06 UTC · Checksum: `d59e2d643631`
 
 ## 🤖 Instructions for AI Agents
 
@@ -31,6 +31,10 @@ description: Code quality standards for TypeScript, error handling, and maintain
 
 # Code Quality Standards
 
+## File Size Limit
+
+**Keep each rule file under 200 lines.** Many AI agents have context limits, and smaller, focused files are easier to maintain and apply.
+
 ## TypeScript Best Practices
 
 ### Type Safety
@@ -46,9 +50,7 @@ function process(data: UserData) { ... }
 
 // ✅ Good - use unknown if truly unknown, then narrow
 function process(data: unknown) {
-  if (isUserData(data)) {
-    // Now TypeScript knows it's UserData
-  }
+  if (isUserData(data)) { /* TypeScript knows it's UserData */ }
 }
 ```
 
@@ -71,7 +73,6 @@ function getName(user: User) {
 **Define interfaces for all data shapes:**
 
 ```typescript
-// Define clear interfaces
 interface Event {
   id: string;
   name: string;
@@ -79,42 +80,18 @@ interface Event {
   status: 'draft' | 'active' | 'completed';
 }
 
-// Use them consistently
 function createEvent(data: Omit<Event, 'id'>): Event { ... }
 function updateEvent(id: string, updates: Partial<Event>): void { ... }
 ```
 
-**Export types that others need:**
-
-```typescript
-// types.ts
-export interface Baker {
-  id: string;
-  name: string;
-  cookies: Cookie[];
-}
-
-export type BakerStatus = 'pending' | 'approved' | 'rejected';
-```
-
-### Enums vs Union Types
-
-**Prefer union types for simple cases:**
+**Prefer union types over enums for simple cases:**
 
 ```typescript
 // ✅ Preferred - simpler, better tree-shaking
 type Status = 'loading' | 'success' | 'error';
-
-// Use enums only when you need reverse mapping or iteration
-enum HttpStatus {
-  OK = 200,
-  NotFound = 404,
-}
 ```
 
 ## Error Handling
-
-### Async/Await Errors
 
 **Always handle promise rejections:**
 
@@ -136,41 +113,14 @@ async function fetchUser(id: string): Promise<User | null> {
 }
 ```
 
-### Error Types
-
-**Create typed errors for better handling:**
-
-```typescript
-class ValidationError extends Error {
-  constructor(public field: string, message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-// Usage
-throw new ValidationError('email', 'Invalid email format');
-```
-
-### React Error Boundaries
-
-For UI errors, use error boundaries to prevent full app crashes. Handle errors gracefully with fallback UI.
-
 ## Code Organization
 
-### Functions
-
-**Keep functions small and focused:**
+### Keep Functions Small
 
 ```typescript
 // ❌ Bad - does too much
 function processOrder(order: Order) {
-  // validate
-  // calculate totals
-  // apply discounts
-  // update inventory
-  // send notifications
-  // ... 200 lines later
+  // validate, calculate, discount, notify... 200 lines
 }
 
 // ✅ Good - single responsibility
@@ -185,24 +135,16 @@ function processOrder(order: Order) {
 
 ### Early Returns
 
-**Reduce nesting with early returns:**
-
 ```typescript
 // ❌ Bad - deeply nested
 function getDisplayName(user: User | null) {
   if (user) {
     if (user.profile) {
-      if (user.profile.displayName) {
-        return user.profile.displayName;
-      } else {
-        return user.email;
-      }
-    } else {
-      return user.email;
+      return user.profile.displayName || user.email;
     }
-  } else {
-    return 'Guest';
+    return user.email;
   }
+  return 'Guest';
 }
 
 // ✅ Good - flat with early returns
@@ -213,338 +155,26 @@ function getDisplayName(user: User | null) {
 }
 ```
 
-### Constants
-
-**Extract magic numbers and strings:**
+### Extract Constants
 
 ```typescript
-// ❌ Bad
+// ❌ Bad - magic numbers
 if (cookies.length > 12) { ... }
-if (status === 'xyz123') { ... }
 
-// ✅ Good
+// ✅ Good - named constants
 const MAX_COOKIES_PER_BAKER = 12;
-const STATUS_APPROVED = 'approved';
-
 if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
-if (status === STATUS_APPROVED) { ... }
-```
-
-## React-Specific Patterns
-
-### Hooks Rules
-
-1. Only call hooks at the top level (not in loops, conditions, or nested functions)
-2. Only call hooks from React functions (components or custom hooks)
-3. Custom hooks must start with `use`
-
-### Dependency Arrays
-
-**Be explicit and complete:**
-
-```typescript
-// ❌ Bad - missing dependency
-useEffect(() => {
-  fetchUser(userId);
-}, []); // userId should be in deps
-
-// ✅ Good - all dependencies listed
-useEffect(() => {
-  fetchUser(userId);
-}, [userId]);
-
-// ✅ Good - use useCallback for stable references
-const handleSubmit = useCallback(() => {
-  submitForm(formData);
-}, [formData]);
-```
-
-### Memoization
-
-**Memoize expensive operations, not everything:**
-
-```typescript
-// ✅ Good use - expensive calculation
-const sortedItems = useMemo(
-  () => items.sort((a, b) => b.score - a.score),
-  [items]
-);
-
-// ❌ Unnecessary - simple value
-const isActive = useMemo(() => status === 'active', [status]);
-// Just use: const isActive = status === 'active';
-```
-
-## Zustand Best Practices
-
-### Store Structure
-
-**Keep stores focused and small:**
-
-```typescript
-// ✅ Good - single responsibility store
-interface AuthStore {
-  user: User | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-}
-
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  isLoading: true,
-  signIn: async (email, password) => {
-    set({ isLoading: true });
-    const user = await authService.signIn(email, password);
-    set({ user, isLoading: false });
-  },
-  signOut: async () => {
-    await authService.signOut();
-    set({ user: null });
-  },
-}));
-```
-
-### Selectors
-
-**Use selectors to prevent unnecessary re-renders:**
-
-```typescript
-// ❌ Bad - component re-renders on ANY store change
-function UserProfile() {
-  const store = useAuthStore();
-  return <div>{store.user?.name}</div>;
-}
-
-// ✅ Good - only re-renders when user changes
-function UserProfile() {
-  const user = useAuthStore((state) => state.user);
-  return <div>{user?.name}</div>;
-}
-
-// ✅ Good - select multiple values
-function AuthStatus() {
-  const { user, isLoading } = useAuthStore(
-    (state) => ({ user: state.user, isLoading: state.isLoading })
-  );
-  // ...
-}
-```
-
-### Async Actions
-
-**Handle loading and error states:**
-
-```typescript
-interface EventStore {
-  events: Event[];
-  isLoading: boolean;
-  error: string | null;
-  fetchEvents: () => Promise<void>;
-}
-
-export const useEventStore = create<EventStore>((set) => ({
-  events: [],
-  isLoading: false,
-  error: null,
-  fetchEvents: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const events = await eventService.getAll();
-      set({ events, isLoading: false });
-    } catch (error) {
-      set({ error: 'Failed to load events', isLoading: false });
-    }
-  },
-}));
-```
-
-### Store Organization
-
-```
-src/lib/stores/
-├── useAuthStore.ts      # Authentication state
-├── useEventStore.ts     # Event data
-├── useBakerStore.ts     # Baker data
-└── useUIStore.ts        # UI state (modals, toasts, etc.)
-```
-
-## Firebase Best Practices
-
-### Firestore Queries
-
-**Always handle loading and error states:**
-
-```typescript
-// ✅ Good - complete state handling in a hook
-function useEvent(eventId: string) {
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, 'events', eventId),
-      (snapshot) => {
-        setEvent(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Event : null);
-        setIsLoading(false);
-      },
-      (err) => {
-        setError(err);
-        setIsLoading(false);
-      }
-    );
-    return unsubscribe;
-  }, [eventId]);
-
-  return { event, isLoading, error };
-}
-```
-
-### Real-time Subscriptions
-
-**Always clean up listeners:**
-
-```typescript
-// ✅ Good - cleanup on unmount
-useEffect(() => {
-  const unsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
-    // handle data
-  });
-  
-  return () => unsubscribe(); // Clean up!
-}, []);
-```
-
-### Batched Writes
-
-**Use batches for multiple operations:**
-
-```typescript
-// ✅ Good - atomic operations
-async function updateEventWithBakers(eventId: string, bakerIds: string[]) {
-  const batch = writeBatch(db);
-  
-  batch.update(doc(db, 'events', eventId), { 
-    updatedAt: serverTimestamp() 
-  });
-  
-  bakerIds.forEach((bakerId) => {
-    batch.update(doc(db, 'bakers', bakerId), { 
-      eventId 
-    });
-  });
-  
-  await batch.commit();
-}
-```
-
-### Security-Conscious Code
-
-**Never trust client-side data:**
-
-```typescript
-// ❌ Bad - trusting client data
-await setDoc(doc(db, 'events', eventId), {
-  ...eventData,
-  createdBy: currentUser.uid, // Client can fake this!
-});
-
-// ✅ Good - let security rules validate
-// In firestore.rules:
-// allow create: if request.auth.uid == request.resource.data.createdBy;
-```
-
-### Timestamps
-
-**Always use server timestamps:**
-
-```typescript
-import { serverTimestamp } from 'firebase/firestore';
-
-// ✅ Good - consistent timestamps
-await addDoc(collection(db, 'events'), {
-  name: 'Cookie Contest',
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
-```
-
-### Firebase in Hooks Only
-
-**Keep Firebase out of components:**
-
-```typescript
-// ❌ Bad - Firebase in component
-function EventList() {
-  const [events, setEvents] = useState([]);
-  useEffect(() => {
-    const q = query(collection(db, 'events'));
-    // ... Firebase logic in component
-  }, []);
-}
-
-// ✅ Good - Firebase in custom hook
-function EventList() {
-  const { events, isLoading } = useEvents();
-  // Component only handles rendering
-}
-
-// src/lib/hooks/useEvents.ts
-export function useEvents() {
-  // All Firebase logic here
-}
-```
-
-### Error Messages
-
-**Provide user-friendly error messages:**
-
-```typescript
-async function createEvent(data: EventData) {
-  try {
-    await addDoc(collection(db, 'events'), data);
-  } catch (error) {
-    if (error.code === 'permission-denied') {
-      throw new Error('You do not have permission to create events');
-    }
-    if (error.code === 'unavailable') {
-      throw new Error('Unable to connect. Please check your internet connection');
-    }
-    throw new Error('Failed to create event. Please try again');
-  }
-}
 ```
 
 ## Code Review Checklist
-
-Before considering code complete:
 
 ### General
 - [ ] TypeScript compiles with no errors
 - [ ] No `any` types (or justified with comment)
 - [ ] Error cases are handled
 - [ ] Functions are small and focused
-- [ ] Complex logic has comments explaining "why"
 - [ ] No console.log statements (except intentional logging)
 - [ ] No commented-out code
-- [ ] Consistent naming conventions
-
-### React
-- [ ] Components receive data via props (no direct Firebase)
-- [ ] Hooks follow rules (top-level, proper dependencies)
-- [ ] Memoization used only where needed
-
-### Zustand
-- [ ] Stores are focused (single responsibility)
-- [ ] Selectors used to prevent unnecessary re-renders
-- [ ] Loading and error states handled in async actions
-
-### Firebase
-- [ ] All listeners cleaned up on unmount
-- [ ] Server timestamps used for dates
-- [ ] Error messages are user-friendly
-- [ ] Batch writes used for multiple operations
 
 ### Testing
 - [ ] Tests added for new functionality
@@ -664,6 +294,149 @@ After successful deployment:
 ---
 
 ---
+trigger: model_decision
+description: Firebase/Firestore coding patterns and best practices.
+---
+
+# Firebase Patterns
+
+## Firestore Queries
+
+**Always handle loading and error states:**
+
+```typescript
+function useEvent(eventId: string) {
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'events', eventId),
+      (snapshot) => {
+        setEvent(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Event : null);
+        setIsLoading(false);
+      },
+      (err) => {
+        setError(err);
+        setIsLoading(false);
+      }
+    );
+    return unsubscribe;
+  }, [eventId]);
+
+  return { event, isLoading, error };
+}
+```
+
+## Real-time Subscriptions
+
+**Always clean up listeners:**
+
+```typescript
+useEffect(() => {
+  const unsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
+    // handle data
+  });
+  
+  return () => unsubscribe(); // Clean up!
+}, []);
+```
+
+## Batched Writes
+
+**Use batches for multiple operations:**
+
+```typescript
+async function updateEventWithBakers(eventId: string, bakerIds: string[]) {
+  const batch = writeBatch(db);
+  
+  batch.update(doc(db, 'events', eventId), { 
+    updatedAt: serverTimestamp() 
+  });
+  
+  bakerIds.forEach((bakerId) => {
+    batch.update(doc(db, 'bakers', bakerId), { eventId });
+  });
+  
+  await batch.commit();
+}
+```
+
+## Timestamps
+
+**Always use server timestamps:**
+
+```typescript
+import { serverTimestamp } from 'firebase/firestore';
+
+await addDoc(collection(db, 'events'), {
+  name: 'Cookie Contest',
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+```
+
+## Firebase in Hooks Only
+
+**Keep Firebase out of components:**
+
+```typescript
+// ❌ Bad - Firebase in component
+function EventList() {
+  useEffect(() => {
+    const q = query(collection(db, 'events'));
+    // Firebase logic in component...
+  }, []);
+}
+
+// ✅ Good - Firebase in custom hook
+function EventList() {
+  const { events, isLoading } = useEvents();
+  // Component only handles rendering
+}
+```
+
+## Error Handling
+
+**Provide user-friendly error messages:**
+
+```typescript
+async function createEvent(data: EventData) {
+  try {
+    await addDoc(collection(db, 'events'), data);
+  } catch (error) {
+    if (error.code === 'permission-denied') {
+      throw new Error('You do not have permission to create events');
+    }
+    if (error.code === 'unavailable') {
+      throw new Error('Unable to connect. Check your internet connection');
+    }
+    throw new Error('Failed to create event. Please try again');
+  }
+}
+```
+
+## Security Considerations
+
+**Never trust client-side data - let security rules validate:**
+
+```typescript
+// In firestore.rules, validate ownership:
+// allow create: if request.auth.uid == request.resource.data.createdBy;
+```
+
+## Firebase Checklist
+
+- [ ] All listeners cleaned up on unmount
+- [ ] Server timestamps used for dates
+- [ ] Error messages are user-friendly
+- [ ] Batch writes used for multiple operations
+- [ ] Firebase logic lives in hooks, not components
+
+---
+
+---
 trigger: always
 description: Core project guidelines and development standards for the CookieVoting project.
 ---
@@ -775,6 +548,130 @@ All UI must be accessible:
 - Add ARIA labels where visual context is insufficient
 - Ensure keyboard navigation works for all interactive elements
 - Add `data-testid` attributes for testing
+
+---
+
+---
+trigger: model_decision
+description: React-specific patterns, hooks rules, and performance optimization.
+---
+
+# React Patterns
+
+## Hooks Rules
+
+1. Only call hooks at the top level (not in loops, conditions, or nested functions)
+2. Only call hooks from React functions (components or custom hooks)
+3. Custom hooks must start with `use`
+
+## Dependency Arrays
+
+**Be explicit and complete:**
+
+```typescript
+// ❌ Bad - missing dependency
+useEffect(() => {
+  fetchUser(userId);
+}, []); // userId should be in deps
+
+// ✅ Good - all dependencies listed
+useEffect(() => {
+  fetchUser(userId);
+}, [userId]);
+
+// ✅ Good - use useCallback for stable references
+const handleSubmit = useCallback(() => {
+  submitForm(formData);
+}, [formData]);
+```
+
+## Memoization
+
+**Memoize expensive operations, not everything:**
+
+```typescript
+// ✅ Good use - expensive calculation
+const sortedItems = useMemo(
+  () => items.sort((a, b) => b.score - a.score),
+  [items]
+);
+
+// ❌ Unnecessary - simple value
+const isActive = useMemo(() => status === 'active', [status]);
+// Just use: const isActive = status === 'active';
+```
+
+## Component Patterns
+
+### Container/Presenter
+
+Separate data fetching from presentation:
+
+```typescript
+// Presenter - pure UI, receives everything via props
+function UserProfileView({ user, onEdit, isLoading }: Props) {
+  if (isLoading) return <Spinner />;
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <button onClick={onEdit}>Edit</button>
+    </div>
+  );
+}
+
+// Container - handles data and logic
+function UserProfile({ userId }: { userId: string }) {
+  const { user, isLoading } = useUser(userId);
+  const handleEdit = () => { /* ... */ };
+  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
+}
+```
+
+### Compound Components
+
+For related components that share context:
+
+```typescript
+const Card = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.card}>{children}</div>
+);
+
+Card.Header = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.header}>{children}</div>
+);
+
+Card.Body = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.body}>{children}</div>
+);
+
+// Usage
+<Card>
+  <Card.Header>Title</Card.Header>
+  <Card.Body>Content</Card.Body>
+</Card>
+```
+
+## State Management
+
+### Local vs Lifted State
+
+- **Local state**: UI-only concerns (open/closed, hover, focus)
+- **Lifted state**: Shared between siblings (form data, selections)
+- **Global state**: App-wide concerns (auth, theme, notifications)
+
+### Avoid Prop Drilling
+
+When passing props through many levels:
+1. First, try lifting state to a closer common ancestor
+2. Consider using context for truly global state
+3. Use Zustand for complex state that many components need
+
+## React Checklist
+
+- [ ] Components receive data via props (no direct Firebase)
+- [ ] Hooks follow rules (top-level, proper dependencies)
+- [ ] Memoization used only where needed
+- [ ] State lives at the appropriate level
 
 ---
 
@@ -1111,6 +1008,122 @@ For every interactive component:
 - [ ] Has appropriate ARIA labels
 - [ ] Color contrast meets WCAG AA (4.5:1 for text)
 - [ ] Tested with screen reader (or a11y addon)
+
+---
+
+---
+trigger: model_decision
+description: Zustand state management patterns and best practices.
+---
+
+# Zustand Patterns
+
+## Store Structure
+
+**Keep stores focused and small:**
+
+```typescript
+interface AuthStore {
+  user: User | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthStore>((set) => ({
+  user: null,
+  isLoading: true,
+  signIn: async (email, password) => {
+    set({ isLoading: true });
+    const user = await authService.signIn(email, password);
+    set({ user, isLoading: false });
+  },
+  signOut: async () => {
+    await authService.signOut();
+    set({ user: null });
+  },
+}));
+```
+
+## Selectors
+
+**Use selectors to prevent unnecessary re-renders:**
+
+```typescript
+// ❌ Bad - component re-renders on ANY store change
+function UserProfile() {
+  const store = useAuthStore();
+  return <div>{store.user?.name}</div>;
+}
+
+// ✅ Good - only re-renders when user changes
+function UserProfile() {
+  const user = useAuthStore((state) => state.user);
+  return <div>{user?.name}</div>;
+}
+
+// ✅ Good - select multiple values
+function AuthStatus() {
+  const { user, isLoading } = useAuthStore(
+    (state) => ({ user: state.user, isLoading: state.isLoading })
+  );
+}
+```
+
+## Async Actions
+
+**Handle loading and error states:**
+
+```typescript
+interface EventStore {
+  events: Event[];
+  isLoading: boolean;
+  error: string | null;
+  fetchEvents: () => Promise<void>;
+}
+
+export const useEventStore = create<EventStore>((set) => ({
+  events: [],
+  isLoading: false,
+  error: null,
+  fetchEvents: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const events = await eventService.getAll();
+      set({ events, isLoading: false });
+    } catch (error) {
+      set({ error: 'Failed to load events', isLoading: false });
+    }
+  },
+}));
+```
+
+## Store Organization
+
+```
+src/lib/stores/
+├── useAuthStore.ts      # Authentication state
+├── useEventStore.ts     # Event data
+├── useBakerStore.ts     # Baker data
+└── useUIStore.ts        # UI state (modals, toasts)
+```
+
+## When to Use Zustand vs Local State
+
+| Use Case | Solution |
+|----------|----------|
+| Form input values | `useState` |
+| Modal open/closed | `useState` |
+| Current user | Zustand |
+| Shared data across routes | Zustand |
+| Server cache | Zustand or React Query |
+
+## Zustand Checklist
+
+- [ ] Stores are focused (single responsibility)
+- [ ] Selectors used to prevent unnecessary re-renders
+- [ ] Loading and error states handled in async actions
+- [ ] Store actions handle their own errors
 
 ---
 
