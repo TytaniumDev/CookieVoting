@@ -7,7 +7,7 @@
 #   - Claude Code (CLAUDE.md)
 #   - Gemini (GEMINI.md)
 #   - Cursor (.cursor/rules/*.mdc)
-#   - Antigravity (.antigravity/rules.md)
+#   - Antigravity (.antigravity/rules.md, .agent/rules/*.md)
 #   - Cline (.clinerules)
 #   - Windsurf (.windsurfrules)
 #   - GitHub Copilot (.github/copilot-instructions.md)
@@ -107,6 +107,7 @@ if [ "$1" = "--clean" ]; then
     rm -f "$PROJECT_ROOT/.clinerules"
     rm -f "$PROJECT_ROOT/.windsurfrules"
     rm -rf "$PROJECT_ROOT/.antigravity"
+    rm -rf "$PROJECT_ROOT/.agent/rules"
     rm -f "$PROJECT_ROOT/.github/copilot-instructions.md"
     rm -f "$CHECKSUM_FILE"
     # Note: We don't clean .cursor/rules as it may have user-specific rules
@@ -244,6 +245,26 @@ mkdir -p "$PROJECT_ROOT/.antigravity"
 log_success "Generated .antigravity/rules.md"
 
 # ============================================
+# 4b. .agent/rules/*.md (Antigravity IDE - individual rules)
+# ============================================
+log_info "Generating .agent/rules/*.md files..."
+mkdir -p "$PROJECT_ROOT/.agent/rules"
+
+# Generate individual .md files for each rule (Antigravity format)
+for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
+    filename=$(basename "$file")
+    dest="$PROJECT_ROOT/.agent/rules/${filename}"
+    
+    # Copy with a header noting it's auto-generated
+    {
+        echo "> ⚠️ **AUTO-GENERATED** — Do not edit. Edit \`ai/rules/${filename}\` instead."
+        echo ""
+        cat "$file"
+    } > "$dest"
+done
+log_success "Generated .agent/rules/*.md files"
+
+# ============================================
 # 5. .clinerules (Cline VS Code extension)
 # ============================================
 log_info "Generating .clinerules..."
@@ -291,6 +312,7 @@ echo "  - CLAUDE.md              (Claude Code)"
 echo "  - GEMINI.md              (Gemini / Google AI)"
 echo "  - .cursor/rules/*.mdc    (Cursor IDE)"
 echo "  - .antigravity/rules.md  (Antigravity IDE)"
+echo "  - .agent/rules/*.md      (Antigravity IDE)"
 echo "  - .clinerules            (Cline)"
 echo "  - .windsurfrules         (Windsurf)"
 echo "  - .github/copilot-instructions.md (GitHub Copilot)"
