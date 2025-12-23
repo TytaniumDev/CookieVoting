@@ -1,55 +1,146 @@
 ---
 trigger: model_decision
-description: Rules for creating or modifying tests following the project's testing strategy.
+description: Testing strategy and requirements for maintaining code quality.
 ---
 
 # Testing Strategy
 
-Rules for creating or modifying tests following standard practices.
+## Testing Pyramid
 
-## Testing Pyramid & Philosophy
+This project follows a testing pyramid adapted for React + Firebase:
 
-Follow the modified testing pyramid adapted for the Firebase + React stack:
+```
+         ▲
+        /E2E\        Playwright - Critical user journeys only
+       /─────\
+      /Integr-\      Jest + Emulators - Backend interactions
+     /──ation──\
+    /Component──\    Storybook - UI components with play functions
+   /─────Tests───\
+  /───Unit Tests──\  Vitest - Utility functions, hooks, business logic
+ /─────────────────\
+/──Static Analysis──\ ESLint + TypeScript - Catches issues before runtime
+```
 
-1. **Static Analysis**: First line of defense.
-2. **Unit Tests (`src/lib`, `functions`)**: Fast, isolated logic tests using Vitest.
-3. **Component Tests (Storybook)**: **REQUIRED** for UI. Use `play` functions for user interactions.
-4. **Integration Tests (Firebase Emulators)**: Verify backend interactions using Jest.
-5. **E2E Tests (Playwright)**: Critical user full-stack journeys.
+**Principle:** More tests at the bottom (fast, cheap), fewer at the top (slow, expensive).
 
-## Rules & Standards
+## Test Types & Tools
 
-### Unit Tests
-- **Scope**: `src/lib/`, `src/hooks/`, `functions/src/`.
-- **Mocking**: Mock Firebase calls. Use Integration tests for real behavior.
-- **Coverage Goal**: Aim for high coverage on utility logic.
+### Static Analysis (Always On)
+- **ESLint**: Code quality and consistency
+- **TypeScript**: Type safety
+- **Run**: Happens automatically, also via `npm run lint`
 
-### Component Interaction Tests (Storybook)
-- **Tool**: Storybook + `@storybook/addon-interactions`.
-- **Requirement**: Every complex interactive component MUST have a `ValidUserJourney` story simulating a successful interaction.
-- **Accessibility**: Use `storybook-addon-a11y`.
+### Unit Tests (Vitest)
+- **Scope**: `src/lib/`, custom hooks, utility functions
+- **Approach**: Test pure functions and hook logic in isolation
+- **Mocking**: Mock Firebase calls; use integration tests for real Firebase behavior
+- **Run**: `npm run test` or `npm run test:coverage`
 
-### Integration Tests
-- **Environment**: Must run against `npm run emulators:start`.
-- **Scope**: Security rules, triggers, complex queries.
+### Component Tests (Storybook)
+- **Scope**: All UI components in `src/components/`
+- **Approach**: Use `play` functions for interaction testing
+- **Required**: Every complex component needs interaction tests
+- **Run**: `npm run test-storybook`
 
-### E2E Tests
-- **Tool**: Playwright.
-- **Focus**: Critical user journeys (e.g., Voting Flow, Admin Event Setup).
+### Integration Tests (Jest + Emulators)
+- **Scope**: Firestore rules, Cloud Functions, complex queries
+- **Environment**: Requires `npm run emulators:start`
+- **Run**: `npm run test:integration`
 
-## Verification Commands
+### E2E Tests (Playwright)
+- **Scope**: Critical user journeys only
+- **Examples**: Voting flow, admin event setup, authentication
+- **Run**: `npm run test:e2e`
 
-- **Unit/Coverage**: `npm run test:coverage`
-- **Storybook**: `npm run test-storybook`
-- **Integration**: `npm run test:integration`
-- **E2E**: `npm run test:e2e`
-- **All**: `npm run verify`
+## What to Test
+
+### Always Test
+- Utility functions with logic
+- Custom hooks that manage state
+- Complex component interactions
+- Security rules (via integration tests)
+- Critical user flows (via E2E)
+
+### Don't Over-Test
+- Simple presentational components (visual review in Storybook is enough)
+- Third-party library behavior
+- Implementation details that might change
+
+## Writing Good Tests
+
+### Unit Test Example
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { calculateScore } from './scoring';
+
+describe('calculateScore', () => {
+  it('returns 0 for empty votes', () => {
+    expect(calculateScore([])).toBe(0);
+  });
+
+  it('sums positive votes correctly', () => {
+    expect(calculateScore([1, 2, 3])).toBe(6);
+  });
+
+  it('handles negative values', () => {
+    expect(calculateScore([1, -1, 2])).toBe(2);
+  });
+});
+```
+
+### Component Test Example (Storybook)
+
+```tsx
+export const SubmitFlow: Story = {
+  args: {
+    onSubmit: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    const input = canvas.getByRole('textbox');
+    const button = canvas.getByRole('button', { name: /submit/i });
+
+    await userEvent.type(input, 'Test value');
+    await button.click();
+
+    await expect(args.onSubmit).toHaveBeenCalledWith('Test value');
+  },
+};
+```
 
 ## Verification Workflow
 
-1. **Start Emulators**: Ensure emulators are running with seed data.
-   - Run: `npm run emulators:start:seed`
-2. **Open Application**: Navigate to `http://localhost:5173/` in the built-in browser.
-3. **Sign In**: Click "Sign in with Test User" and verify redirect to `/admin`.
-4. **Test Feature**: Perform actions relevant to the changes. Verify UI updates, data persistence, and lack of console errors.
-5. **Debug**: Use browser dev tools (console messages) to identify and fix issues before re-testing.
+Before completing any code change:
+
+```bash
+# Run full verification (mirrors CI)
+npm run verify
+```
+
+This runs:
+1. ESLint
+2. TypeScript check
+3. Unit tests
+4. Build verification
+
+**All checks must pass before considering work complete.**
+
+## Test Commands Reference
+
+| Command | Purpose |
+|---------|---------|
+| `npm run verify` | Full verification (lint + type + test + build) |
+| `npm run test` | Run unit tests |
+| `npm run test:coverage` | Unit tests with coverage report |
+| `npm run test-storybook` | Run Storybook interaction tests |
+| `npm run test:integration` | Run integration tests (needs emulators) |
+| `npm run test:e2e` | Run Playwright E2E tests |
+
+## Debugging Test Failures
+
+1. **Read the error message** - Often contains the fix
+2. **Check recent changes** - What did you modify?
+3. **Run in isolation** - Focus on the failing test
+4. **Check test environment** - Emulators running? Correct node version?
+5. **Fix and re-run** - Iterate until green

@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 00:43:19 UTC · Checksum: `ab98c771a066`
+> **Last synced:** December 23, 2025 at 08:34:18 UTC · Checksum: `74c2dddf7b84`
 
 ## 🤖 Instructions for AI Agents
 
@@ -25,70 +25,380 @@
 ---
 
 ---
-trigger: model_decision
-description: Instructions for deploying Firebase Cloud Functions and security rules.
+trigger: always
+description: Code quality standards for TypeScript, error handling, and maintainable code.
 ---
 
-# Firebase Deployment Rules
+# Code Quality Standards
 
-## When to Deploy
+## TypeScript Best Practices
 
-The agent should automatically deploy Firebase resources when:
+### Type Safety
 
-### 1. Function Source Code Changes (`functions/src/`)
-- After any modification to `.ts` files in `functions/src/`
-- Command: `npm run firebase:deploy:functions`
+**Avoid `any`** - It defeats the purpose of TypeScript:
 
-### 2. Function Dependencies Changes (`functions/package.json`)
-- After any modification to `functions/package.json` (dependencies added/updated)
-- Command: `npm run firebase:deploy:functions`
+```typescript
+// ❌ Bad
+function process(data: any) { ... }
 
-### 3. Firestore Rules Changes (`firebase/firestore.rules`)
-- After any modification to `firestore.rules`
-- Command: `npm run firebase:deploy:firestore`
+// ✅ Good - be specific
+function process(data: UserData) { ... }
 
-### 4. Storage Rules Changes (`firebase/storage.rules`)
-- After any modification to `storage.rules`
-- Command: `npm run firebase:deploy:storage`
+// ✅ Good - use unknown if truly unknown, then narrow
+function process(data: unknown) {
+  if (isUserData(data)) {
+    // Now TypeScript knows it's UserData
+  }
+}
+```
 
-## Deployment Process
+**Use strict null checks:**
 
-### Before Deploying:
-- Verify the functions compile successfully (TypeScript compilation)
-- Check for any syntax errors
-- Ensure changes are intentional and correct
+```typescript
+// ❌ Bad - might crash
+function getName(user: User) {
+  return user.profile.name; // What if profile is null?
+}
 
-### Available npm Scripts:
-- `npm run firebase:deploy:functions` - Build and deploy Firebase Functions
-- `npm run firebase:deploy:rules` - Deploy both Firestore and Storage rules
-- `npm run firebase:deploy:firestore` - Deploy only Firestore rules
-- `npm run firebase:deploy:storage` - Deploy only Storage rules
+// ✅ Good - handle null cases
+function getName(user: User) {
+  return user.profile?.name ?? 'Anonymous';
+}
+```
 
-### After Deploying:
-- Verify deployment success in output
-- Note any warnings or errors
-- Inform user of deployment completion
+### Type Definitions
 
-## Important Notes
+**Define interfaces for all data shapes:**
 
-### Firestore Rules Syntax Restrictions:
-- Firestore rules do NOT support `if` statements (use ternary operators instead)
-- No `const` or `let` declarations (use direct expressions)
-- Multi-line conditionals (use `&&` and `||` operators)
+```typescript
+// Define clear interfaces
+interface Event {
+  id: string;
+  name: string;
+  date: Date;
+  status: 'draft' | 'active' | 'completed';
+}
 
-### What NOT to Deploy:
-- ❌ **DON'T deploy** when only documentation files are changed (`.md` files)
-- ❌ **DON'T deploy** when only frontend code is changed (`src/` outside of functions)
-- ❌ **DON'T deploy** when only test files are changed (unless they affect function logic)
+// Use them consistently
+function createEvent(data: Omit<Event, 'id'>): Event { ... }
+function updateEvent(id: string, updates: Partial<Event>): void { ... }
+```
+
+**Export types that others need:**
+
+```typescript
+// types.ts
+export interface Baker {
+  id: string;
+  name: string;
+  cookies: Cookie[];
+}
+
+export type BakerStatus = 'pending' | 'approved' | 'rejected';
+```
+
+### Enums vs Union Types
+
+**Prefer union types for simple cases:**
+
+```typescript
+// ✅ Preferred - simpler, better tree-shaking
+type Status = 'loading' | 'success' | 'error';
+
+// Use enums only when you need reverse mapping or iteration
+enum HttpStatus {
+  OK = 200,
+  NotFound = 404,
+}
+```
 
 ## Error Handling
 
-If deployment fails:
-1. Read the error message carefully
-2. Check TypeScript compilation errors
-3. Fix syntax/compilation errors
-4. Retry deployment
-5. If persistent issues, inform user with specific error details
+### Async/Await Errors
+
+**Always handle promise rejections:**
+
+```typescript
+// ❌ Bad - unhandled rejection
+async function fetchUser(id: string) {
+  const user = await api.getUser(id);
+  return user;
+}
+
+// ✅ Good - explicit error handling
+async function fetchUser(id: string): Promise<User | null> {
+  try {
+    return await api.getUser(id);
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    return null;
+  }
+}
+```
+
+### Error Types
+
+**Create typed errors for better handling:**
+
+```typescript
+class ValidationError extends Error {
+  constructor(public field: string, message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+// Usage
+throw new ValidationError('email', 'Invalid email format');
+```
+
+### React Error Boundaries
+
+For UI errors, use error boundaries to prevent full app crashes. Handle errors gracefully with fallback UI.
+
+## Code Organization
+
+### Functions
+
+**Keep functions small and focused:**
+
+```typescript
+// ❌ Bad - does too much
+function processOrder(order: Order) {
+  // validate
+  // calculate totals
+  // apply discounts
+  // update inventory
+  // send notifications
+  // ... 200 lines later
+}
+
+// ✅ Good - single responsibility
+function processOrder(order: Order) {
+  validateOrder(order);
+  const totals = calculateTotals(order);
+  const finalPrice = applyDiscounts(totals, order.coupons);
+  updateInventory(order.items);
+  notifyCustomer(order, finalPrice);
+}
+```
+
+### Early Returns
+
+**Reduce nesting with early returns:**
+
+```typescript
+// ❌ Bad - deeply nested
+function getDisplayName(user: User | null) {
+  if (user) {
+    if (user.profile) {
+      if (user.profile.displayName) {
+        return user.profile.displayName;
+      } else {
+        return user.email;
+      }
+    } else {
+      return user.email;
+    }
+  } else {
+    return 'Guest';
+  }
+}
+
+// ✅ Good - flat with early returns
+function getDisplayName(user: User | null) {
+  if (!user) return 'Guest';
+  if (!user.profile) return user.email;
+  return user.profile.displayName || user.email;
+}
+```
+
+### Constants
+
+**Extract magic numbers and strings:**
+
+```typescript
+// ❌ Bad
+if (cookies.length > 12) { ... }
+if (status === 'xyz123') { ... }
+
+// ✅ Good
+const MAX_COOKIES_PER_BAKER = 12;
+const STATUS_APPROVED = 'approved';
+
+if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
+if (status === STATUS_APPROVED) { ... }
+```
+
+## React-Specific Patterns
+
+### Hooks Rules
+
+1. Only call hooks at the top level (not in loops, conditions, or nested functions)
+2. Only call hooks from React functions (components or custom hooks)
+3. Custom hooks must start with `use`
+
+### Dependency Arrays
+
+**Be explicit and complete:**
+
+```typescript
+// ❌ Bad - missing dependency
+useEffect(() => {
+  fetchUser(userId);
+}, []); // userId should be in deps
+
+// ✅ Good - all dependencies listed
+useEffect(() => {
+  fetchUser(userId);
+}, [userId]);
+
+// ✅ Good - use useCallback for stable references
+const handleSubmit = useCallback(() => {
+  submitForm(formData);
+}, [formData]);
+```
+
+### Memoization
+
+**Memoize expensive operations, not everything:**
+
+```typescript
+// ✅ Good use - expensive calculation
+const sortedItems = useMemo(
+  () => items.sort((a, b) => b.score - a.score),
+  [items]
+);
+
+// ❌ Unnecessary - simple value
+const isActive = useMemo(() => status === 'active', [status]);
+// Just use: const isActive = status === 'active';
+```
+
+## Code Review Checklist
+
+Before considering code complete:
+
+- [ ] TypeScript compiles with no errors
+- [ ] No `any` types (or justified with comment)
+- [ ] Error cases are handled
+- [ ] Functions are small and focused
+- [ ] Complex logic has comments explaining "why"
+- [ ] No console.log statements (except intentional logging)
+- [ ] No commented-out code
+- [ ] Consistent naming conventions
+- [ ] Tests added for new functionality
+
+---
+
+---
+trigger: model_decision
+description: Guidelines for Firebase deployments - when and how to deploy functions and security rules.
+---
+
+# Firebase Deployment Guidelines
+
+## Deployment Safety
+
+**Never deploy without verification.** Always:
+1. Run `npm run verify` to ensure code quality
+2. Test changes locally with emulators first
+3. Confirm the deployment is intentional
+
+## When to Deploy
+
+### Cloud Functions (`functions/src/`)
+
+Deploy after modifying:
+- TypeScript files in `functions/src/`
+- Function dependencies in `functions/package.json`
+- TypeScript config in `functions/tsconfig.json`
+
+**Command:** `npm run firebase:deploy:functions`
+
+### Security Rules
+
+Deploy after modifying:
+- `firebase/firestore.rules` → `npm run firebase:deploy:firestore`
+- `firebase/storage.rules` → `npm run firebase:deploy:storage`
+- Both → `npm run firebase:deploy:rules`
+
+## When NOT to Deploy
+
+Do not trigger deployment for:
+- Documentation changes (`.md` files)
+- Frontend-only changes (`src/` except functions)
+- Test file changes (unless they reveal function bugs)
+- Storybook or story changes
+
+## Pre-Deployment Checklist
+
+### For Functions:
+- [ ] TypeScript compiles without errors: `npm run build --prefix functions`
+- [ ] Related unit tests pass
+- [ ] Tested against local emulators
+- [ ] Changes reviewed for security implications
+
+### For Security Rules:
+- [ ] Rules syntax is valid (no `if`, `const`, `let`)
+- [ ] Tested read/write scenarios in emulator
+- [ ] No unintended permission changes
+
+## Firestore Rules Syntax
+
+Firestore rules have unique syntax requirements:
+
+```javascript
+// ❌ WRONG - if statements not supported
+if (request.auth != null) {
+  allow read;
+}
+
+// ✅ CORRECT - use ternary or boolean expressions
+allow read: if request.auth != null;
+
+// ❌ WRONG - no variable declarations
+let userId = request.auth.uid;
+
+// ✅ CORRECT - inline expressions
+allow write: if request.auth.uid == resource.data.ownerId;
+
+// ✅ Use && and || for complex conditions
+allow update: if request.auth != null 
+              && request.auth.uid == resource.data.ownerId
+              && request.resource.data.status in ['draft', 'published'];
+```
+
+## Available Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `npm run firebase:deploy:functions` | Build and deploy Cloud Functions |
+| `npm run firebase:deploy:firestore` | Deploy Firestore security rules |
+| `npm run firebase:deploy:storage` | Deploy Storage security rules |
+| `npm run firebase:deploy:rules` | Deploy both Firestore and Storage rules |
+
+## Troubleshooting Deployments
+
+### Function Deployment Fails
+
+1. Check TypeScript compilation: `npm run build --prefix functions`
+2. Look for missing dependencies
+3. Check for runtime vs build-time errors
+4. Verify Firebase project configuration
+
+### Rules Deployment Fails
+
+1. Check for syntax errors (no `if`, `const`, `let`)
+2. Validate rule structure
+3. Test in Firebase console rules playground
+
+## Post-Deployment
+
+After successful deployment:
+1. Verify the deployment in Firebase Console
+2. Test critical functionality in production
+3. Monitor for errors in Firebase Functions logs
 
 ---
 
@@ -99,190 +409,349 @@ description: Core project guidelines and development standards for the CookieVot
 
 # Project Guidelines & Standards
 
-This document outlines the core development practices for the CookieVoting project.
+These are the core development practices for this project. Follow these guidelines for all code changes.
 
-## Core Principles
+## Architecture Principles
 
-### 1. Thinking in React
+### React Best Practices
 
-Follow the 5-step process:
+Follow the "Thinking in React" methodology:
 
-- Break UI into components.
-- Build a static version.
-- Minimize state.
-- Identify state location.
-- Add inverse data flow.
+1. **Break UI into components** - Identify component hierarchy from the design
+2. **Build a static version first** - Render UI without interactivity initially
+3. **Identify minimal state** - Determine the absolute minimum state needed
+4. **Determine state ownership** - Place state in the lowest common ancestor
+5. **Add data flow** - Pass callbacks down for child-to-parent communication
 
-### 2. UI Development
+### Separation of Concerns
 
-- **No Firebase in UI**: Components must NEVER directly import Firebase services (`firestore`, `auth`, `storage`). All interactions must happen through custom hooks in `src/lib/hooks/`.
-- **Storybook First**: Build all UI in Storybook before integration.
-- **Automated Interaction Tests**: **REQUIRED**. Every complex component must have a Storybook story with a `play` function that verifies the critical user journey (e.g., clicking next after voting). This is strictly PREFERRED over manual verification or generic browser tests for UI logic.
-- **Atomic Design**:
-  - **Atoms**: Reusable UI primitives (Buttons, Inputs, Modals). Location: `src/components/atoms/`.
-  - **Molecules**: Combinations of atoms with minimal logic. Location: `src/components/molecules/`.
-  - **Organisms**: Complex, self-contained components or sections. Location: `src/components/organisms/`.
-- **Accessibility**: Use semantic HTML, ARIA attributes, and ensure keyboard navigation.
-- **Testability**:
-  - Add unique `data-testid` or `id` attributes to all interactive elements to facilitate native tool selection.
-  - Use clear, descriptive ARIA labels where visual labels aren't sufficient.
+- **UI components are presentation-only** - They receive data via props, never fetch it
+- **Business logic lives in hooks** - Custom hooks in `src/lib/hooks/` handle data fetching, state management, and side effects
+- **Utilities are pure functions** - Complex logic (sorting, calculations, formatting) goes in `src/lib/` utilities
+- **No Firebase in components** - Components must NEVER import Firebase directly. All Firebase interactions happen through hooks
 
-### 3. Firebase Resource Management
+### Project Structure
 
-- **Security Rules**:
-  - Firestore rules do NOT support `if` statements (use ternary).
-  - No `const` or `let` in rules.
-  - Multi-line conditionals should use `&&` or `||`.
-- **Functions**:
-  - Always build before deploying using `npm run build --prefix functions`.
-  - Use `DETECTION_FUNCTION_VERSION` for tracking logic versions.
+```
+src/
+├── components/
+│   ├── atoms/        # Basic UI primitives (Button, Input, Modal)
+│   ├── molecules/    # Combinations of atoms (SearchBar, FormField)
+│   └── organisms/    # Complex sections (Navigation, Forms)
+├── pages/            # Route-level components
+├── lib/
+│   ├── hooks/        # Custom React hooks (useAuth, useEvent, etc.)
+│   ├── stores/       # Zustand state stores
+│   ├── firebase.ts   # Firebase initialization
+│   ├── firestore.ts  # Firestore utilities
+│   └── storage.ts    # Storage utilities
+└── stories/          # Storybook stories and test data
+```
 
 ## Code Standards
 
 ### Naming Conventions
 
-- **Components**: `PascalCase` (e.g., `CookieViewer.tsx`).
-- **Props/Variables**: `camelCase`.
-- **Hooks**: `use` prefix (e.g., `useAuth`).
-- **Files**: Match component/class name.
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `CookieViewer.tsx` |
+| Hooks | camelCase with `use` prefix | `useAuth.ts` |
+| Utilities | camelCase | `formatDate.ts` |
+| Constants | SCREAMING_SNAKE_CASE | `MAX_COOKIES` |
+| Props/Variables | camelCase | `isLoading`, `onClick` |
 
-- Keep state local whenever possible.
-- Lift state to the lowest common ancestor.
-- **Custom Hooks**: Extract all Firebase interaction and business logic into custom hooks. Hooks should handle loading/error states and provide clean APIs to components.
-- **Utility Functions**: Move complex, non-React logic (e.g., sorting, coordinate calculations) to `src/lib/` utilities.
+### File Organization
 
-## Deployment & Verification
+- **One component per file** - Component name matches filename
+- **Co-locate related files** - Keep `.module.css`, `.stories.tsx`, and `.test.tsx` near their component
+- **Index exports** - Use `index.ts` for clean imports from directories
 
-- **Build Before Reporting**: Make sure the app builds successfully before reporting a change.
-- **Verify Before Reporting**: **REQUIRED**. Run `npm run verify` before reporting ANY code changes. This script mirrors the GitHub CI pipeline (Lint, Test, Build) and catches errors that would break the build. Fix ALL lint warnings and errors before reporting.
-- **Efficient Verification**:
-  - **Minimize Prompts**: To avoid excessive approval requests, prefer `read_url_content` for static state checks.
-  - **NO Custom JS**: Custom JavaScript execution using browser tools is strictly FORBIDDEN unless no native alternative exists. Prefer native browser tools (click, get_text) to avoid the mandatory manual approval step.
-  - **Interactive Tasks**: Use `browser_subagent` only for tasks requiring JS execution (e.g., Storybook, animations, complex navigation).
-  - **Mission Batching**: Batch multiple verification steps into a single `browser_subagent` call to reduce the number of times the user needs to approve a subagent mission.
-- **Automatic Debugging**: Attempt to fix testing failures automatically before informing the user.
-- **Deployment**: Use `npm run firebase:deploy:*` scripts for safety.
+## Development Workflow
 
-## Local Emulator Development
+### Before Making Changes
 
-- **Start Emulators**: Use `npm run emulators:start:seed` to start with a fresh test environment seeded with data.
-- **Unified Auth**: No custom "test user" system exists. Use the standard "Sign in with Google" flow. The emulator will prompt you to select or create a mock account.
-- **Admin Access**: The seeding script automatically adds `test@local.dev` (UID: `test-user-default`) to `system/admins`. Use this account for admin functionality.
-- **Connectivity (Windows)**: Use `127.0.0.1` instead of `localhost` in Firebase configuration to avoid IPv6 connection timeouts.
+1. Understand the existing code patterns in the area you're modifying
+2. Check for similar implementations elsewhere in the codebase
+3. Consider if your change requires new tests
+
+### Before Committing
+
+**Always run `npm run verify`** before considering work complete. This runs:
+- ESLint for code quality
+- TypeScript for type checking  
+- Vitest for unit tests
+- Build verification
+
+Fix ALL warnings and errors before reporting completion.
+
+### Storybook-First Development
+
+For UI components:
+1. Create the component in Storybook first
+2. Add stories for all states (default, loading, error, empty, disabled)
+3. Add interaction tests using `play` functions
+4. Only then integrate into the application
+
+## Firebase Guidelines
+
+### Security Rules Syntax
+
+Firestore rules have specific limitations:
+- ❌ No `if` statements - use ternary operators instead
+- ❌ No `const` or `let` - use inline expressions
+- ✅ Use `&&` and `||` for complex conditions
+
+### Local Development
+
+- **Start emulators**: `npm run emulators:start:seed`
+- **Test user**: `test@local.dev` (UID: `test-user-default`) has admin access
+- **Windows users**: Use `127.0.0.1` instead of `localhost` to avoid IPv6 issues
+
+## Accessibility Requirements
+
+All UI must be accessible:
+- Use semantic HTML elements (`<button>`, `<nav>`, `<main>`)
+- Add ARIA labels where visual context is insufficient
+- Ensure keyboard navigation works for all interactive elements
+- Add `data-testid` attributes for testing
 
 ---
 
 ---
 trigger: model_decision
-description: Rules for creating or modifying tests following the project's testing strategy.
+description: Testing strategy and requirements for maintaining code quality.
 ---
 
 # Testing Strategy
 
-Rules for creating or modifying tests following standard practices.
+## Testing Pyramid
 
-## Testing Pyramid & Philosophy
+This project follows a testing pyramid adapted for React + Firebase:
 
-Follow the modified testing pyramid adapted for the Firebase + React stack:
+```
+         ▲
+        /E2E\        Playwright - Critical user journeys only
+       /─────\
+      /Integr-\      Jest + Emulators - Backend interactions
+     /──ation──\
+    /Component──\    Storybook - UI components with play functions
+   /─────Tests───\
+  /───Unit Tests──\  Vitest - Utility functions, hooks, business logic
+ /─────────────────\
+/──Static Analysis──\ ESLint + TypeScript - Catches issues before runtime
+```
 
-1. **Static Analysis**: First line of defense.
-2. **Unit Tests (`src/lib`, `functions`)**: Fast, isolated logic tests using Vitest.
-3. **Component Tests (Storybook)**: **REQUIRED** for UI. Use `play` functions for user interactions.
-4. **Integration Tests (Firebase Emulators)**: Verify backend interactions using Jest.
-5. **E2E Tests (Playwright)**: Critical user full-stack journeys.
+**Principle:** More tests at the bottom (fast, cheap), fewer at the top (slow, expensive).
 
-## Rules & Standards
+## Test Types & Tools
 
-### Unit Tests
-- **Scope**: `src/lib/`, `src/hooks/`, `functions/src/`.
-- **Mocking**: Mock Firebase calls. Use Integration tests for real behavior.
-- **Coverage Goal**: Aim for high coverage on utility logic.
+### Static Analysis (Always On)
+- **ESLint**: Code quality and consistency
+- **TypeScript**: Type safety
+- **Run**: Happens automatically, also via `npm run lint`
 
-### Component Interaction Tests (Storybook)
-- **Tool**: Storybook + `@storybook/addon-interactions`.
-- **Requirement**: Every complex interactive component MUST have a `ValidUserJourney` story simulating a successful interaction.
-- **Accessibility**: Use `storybook-addon-a11y`.
+### Unit Tests (Vitest)
+- **Scope**: `src/lib/`, custom hooks, utility functions
+- **Approach**: Test pure functions and hook logic in isolation
+- **Mocking**: Mock Firebase calls; use integration tests for real Firebase behavior
+- **Run**: `npm run test` or `npm run test:coverage`
 
-### Integration Tests
-- **Environment**: Must run against `npm run emulators:start`.
-- **Scope**: Security rules, triggers, complex queries.
+### Component Tests (Storybook)
+- **Scope**: All UI components in `src/components/`
+- **Approach**: Use `play` functions for interaction testing
+- **Required**: Every complex component needs interaction tests
+- **Run**: `npm run test-storybook`
 
-### E2E Tests
-- **Tool**: Playwright.
-- **Focus**: Critical user journeys (e.g., Voting Flow, Admin Event Setup).
+### Integration Tests (Jest + Emulators)
+- **Scope**: Firestore rules, Cloud Functions, complex queries
+- **Environment**: Requires `npm run emulators:start`
+- **Run**: `npm run test:integration`
 
-## Verification Commands
+### E2E Tests (Playwright)
+- **Scope**: Critical user journeys only
+- **Examples**: Voting flow, admin event setup, authentication
+- **Run**: `npm run test:e2e`
 
-- **Unit/Coverage**: `npm run test:coverage`
-- **Storybook**: `npm run test-storybook`
-- **Integration**: `npm run test:integration`
-- **E2E**: `npm run test:e2e`
-- **All**: `npm run verify`
+## What to Test
+
+### Always Test
+- Utility functions with logic
+- Custom hooks that manage state
+- Complex component interactions
+- Security rules (via integration tests)
+- Critical user flows (via E2E)
+
+### Don't Over-Test
+- Simple presentational components (visual review in Storybook is enough)
+- Third-party library behavior
+- Implementation details that might change
+
+## Writing Good Tests
+
+### Unit Test Example
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { calculateScore } from './scoring';
+
+describe('calculateScore', () => {
+  it('returns 0 for empty votes', () => {
+    expect(calculateScore([])).toBe(0);
+  });
+
+  it('sums positive votes correctly', () => {
+    expect(calculateScore([1, 2, 3])).toBe(6);
+  });
+
+  it('handles negative values', () => {
+    expect(calculateScore([1, -1, 2])).toBe(2);
+  });
+});
+```
+
+### Component Test Example (Storybook)
+
+```tsx
+export const SubmitFlow: Story = {
+  args: {
+    onSubmit: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    const input = canvas.getByRole('textbox');
+    const button = canvas.getByRole('button', { name: /submit/i });
+
+    await userEvent.type(input, 'Test value');
+    await button.click();
+
+    await expect(args.onSubmit).toHaveBeenCalledWith('Test value');
+  },
+};
+```
 
 ## Verification Workflow
 
-1. **Start Emulators**: Ensure emulators are running with seed data.
-   - Run: `npm run emulators:start:seed`
-2. **Open Application**: Navigate to `http://localhost:5173/` in the built-in browser.
-3. **Sign In**: Click "Sign in with Test User" and verify redirect to `/admin`.
-4. **Test Feature**: Perform actions relevant to the changes. Verify UI updates, data persistence, and lack of console errors.
-5. **Debug**: Use browser dev tools (console messages) to identify and fix issues before re-testing.
+Before completing any code change:
+
+```bash
+# Run full verification (mirrors CI)
+npm run verify
+```
+
+This runs:
+1. ESLint
+2. TypeScript check
+3. Unit tests
+4. Build verification
+
+**All checks must pass before considering work complete.**
+
+## Test Commands Reference
+
+| Command | Purpose |
+|---------|---------|
+| `npm run verify` | Full verification (lint + type + test + build) |
+| `npm run test` | Run unit tests |
+| `npm run test:coverage` | Unit tests with coverage report |
+| `npm run test-storybook` | Run Storybook interaction tests |
+| `npm run test:integration` | Run integration tests (needs emulators) |
+| `npm run test:e2e` | Run Playwright E2E tests |
+
+## Debugging Test Failures
+
+1. **Read the error message** - Often contains the fix
+2. **Check recent changes** - What did you modify?
+3. **Run in isolation** - Focus on the failing test
+4. **Check test environment** - Emulators running? Correct node version?
+5. **Fix and re-run** - Iterate until green
 
 ---
 
 ---
 trigger: model_decision
-description: Standards for building, testing, and documenting UI components in Storybook.
+description: Standards for building UI components with React, TypeScript, and Storybook.
 ---
 
-# UI Component Creation Standards
+# UI Component Standards
 
-## Core Principles of Reusable React Components
+## Component Design Principles
 
-When developing or modifying UI components, follow these three core principles: **modularity**, **maintainability**, and **flexibility**. These ensure components remain adaptable, easy to manage, and reusable across projects.
+### Single Responsibility
+- Each component should do **one thing well**
+- If a component handles multiple concerns, split it
+- Keep components under ~150 lines; refactor if larger
 
-### 1. Single Responsibility Principle
-- Each component should have **one clear purpose** and handle a single responsibility.
-- Break down complex UIs into smaller, manageable sub-components.
-- If a component is doing too much, split it into multiple focused components.
+### Props-Based Design
+- Components receive ALL data via props
+- Never fetch data inside presentational components
+- Use callbacks for user actions (`onClick`, `onSubmit`, etc.)
 
-### 2. Separation of Concerns
-- UI components should be **modular** and **reusable**.
-- **Do NOT include business logic** (e.g., data fetching, external side effects) inside reusable components.
-- Components should accept all necessary state or data via props and should not depend on global state or app-specific logic.
-- Use patterns like **Container/Presenter** or **Custom Hooks** to separate logic from presentation.
+### TypeScript Requirements
 
-### 3. NO Firebase Dependencies in UI Components
-- **UI components MUST NEVER directly import or use Firebase services** (auth, db, storage, functions).
-- **Components should receive all data and callbacks via props** instead of fetching data themselves.
-- Firebase logic belongs in:
-  - Custom hooks (e.g., `useAuth`, `useImageDetections`) in `src/lib/hooks/`
-  - Utility functions in `src/lib/firestore.ts`, `src/lib/storage.ts`, etc.
-  - Parent components or pages that use the hooks and pass data/callbacks to UI components
+**Always define prop interfaces:**
 
-## Storybook Development Workflow
-
-### 1. ALWAYS Build in Storybook First
-- All new UI components and widgets MUST be created and thoroughly tested in Storybook BEFORE integration into the application.
-- Use the built-in browser to interactively verify **all behaviors** and **visuals** in Storybook.
-
-### 2. Testability and Testing
-- **All component states must be demonstrable in Storybook.**
-- If your component has disabled, error, loading, empty, selected, or interactive states, **create a dedicated Story for each one**.
-- Since components don't use Firebase directly, you can pass mock data/callbacks in stories without any Firebase setup.
-
-### 3. Storybook Testing Framework
-- **ALWAYS add interaction tests** using `play` functions for interactive components.
-- Use `play` functions to test user interactions like clicks, form submissions, and state changes.
-- Import testing utilities from `storybook/test`: `import { fn, expect } from 'storybook/test'`
-- Use `fn()` to create mock functions that can be spied on: `onClick: fn()`
-
-Example:
 ```tsx
-export const Interactive: Story = {
+interface ButtonProps {
+  variant: 'primary' | 'secondary' | 'danger';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}
+
+export function Button({ 
+  variant, 
+  size = 'medium', 
+  disabled = false,
+  onClick,
+  children 
+}: ButtonProps) {
+  // ...
+}
+```
+
+**Type rules:**
+- Export interfaces that other components might use
+- Use union types for variants: `'primary' | 'secondary'`
+- Provide sensible defaults for optional props
+- Avoid `any` - use `unknown` if type is truly unknown
+
+## Storybook Development
+
+### Workflow
+
+1. **Create component and story together** - Don't integrate before testing in Storybook
+2. **Cover all states** - Default, loading, error, empty, disabled, hover, focus
+3. **Add interaction tests** - Use `play` functions for user interactions
+4. **Test accessibility** - Use the a11y addon
+
+### Story Structure
+
+```tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { fn, expect } from 'storybook/test';
+import { Button } from './Button';
+
+const meta: Meta<typeof Button> = {
+  component: Button,
   args: {
-    onClick: fn(),
+    children: 'Click me',
+    variant: 'primary',
   },
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+export const Primary: Story = {
+  args: { variant: 'primary' },
+};
+
+export const Disabled: Story = {
+  args: { disabled: true },
+};
+
+export const WithInteraction: Story = {
+  args: { onClick: fn() },
   play: async ({ canvas, args }) => {
     const button = canvas.getByRole('button');
     await button.click();
@@ -291,39 +760,96 @@ export const Interactive: Story = {
 };
 ```
 
-## Component Design Patterns
+### Required Stories
 
-### Atomic Design Methodology
-Organize components into a hierarchical structure:
+Every component should have stories for:
+- ✅ Default/primary state
+- ✅ All variants (if applicable)
+- ✅ Disabled state (if applicable)
+- ✅ Loading state (if applicable)
+- ✅ Error state (if applicable)
+- ✅ Empty/no data state (if applicable)
+- ✅ Interactive behavior (with `play` function)
 
-- **Atoms**: Smallest, indivisible elements (buttons, inputs, labels, icons)
-- **Molecules**: Groups of atoms that work together (search bar = input + button)
-- **Organisms**: Complex UI sections made of molecules (navigation bar, form sections)
+## Component Patterns
 
-**Project Structure:**
+### Container/Presenter Pattern
+
+Separate data fetching from presentation:
+
+```tsx
+// Presenter - pure UI, receives everything via props
+function UserProfileView({ user, onEdit, isLoading }: UserProfileViewProps) {
+  if (isLoading) return <Spinner />;
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <button onClick={onEdit}>Edit</button>
+    </div>
+  );
+}
+
+// Container - handles data and logic
+function UserProfile({ userId }: { userId: string }) {
+  const { user, isLoading } = useUser(userId);
+  const handleEdit = () => { /* ... */ };
+  
+  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
+}
 ```
-components/
-  atoms/
-    Button/
-    Input/
-    Label/
-  molecules/
-    SearchBar/
-    FormField/
-  organisms/
-    Navigation/
-    Card/
+
+### Compound Components
+
+For related components that share state:
+
+```tsx
+const Card = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.card}>{children}</div>
+);
+
+Card.Header = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.header}>{children}</div>
+);
+
+Card.Body = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.body}>{children}</div>
+);
+
+// Usage
+<Card>
+  <Card.Header>Title</Card.Header>
+  <Card.Body>Content</Card.Body>
+</Card>
 ```
 
-## Accessibility (A11y)
+## Styling
 
-**Components MUST be accessible by default:**
+### CSS Modules
 
-- **Semantic HTML**: Use appropriate HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
-- **ARIA Attributes**: Add ARIA labels, roles, and states when semantic HTML isn't sufficient
-- **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
-- **Focus Management**: Properly manage focus states and focus trapping in modals
-- **Color Contrast**: Meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
+- Use `.module.css` files for component styles
+- Use camelCase for class names: `styles.buttonPrimary`
+- Keep styles scoped to the component
+
+### Naming
+
+```css
+/* Button.module.css */
+.button { /* base styles */ }
+.primary { /* variant */ }
+.secondary { /* variant */ }
+.small { /* size */ }
+.disabled { /* state */ }
+```
+
+## Accessibility Checklist
+
+For every interactive component:
+- [ ] Uses semantic HTML (`<button>` not `<div onClick>`)
+- [ ] Has visible focus states
+- [ ] Works with keyboard alone
+- [ ] Has appropriate ARIA labels
+- [ ] Color contrast meets WCAG AA (4.5:1 for text)
+- [ ] Tested with screen reader (or a11y addon)
 
 ---
 

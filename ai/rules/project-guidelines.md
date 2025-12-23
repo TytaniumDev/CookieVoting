@@ -5,73 +5,108 @@ description: Core project guidelines and development standards for the CookieVot
 
 # Project Guidelines & Standards
 
-This document outlines the core development practices for the CookieVoting project.
+These are the core development practices for this project. Follow these guidelines for all code changes.
 
-## Core Principles
+## Architecture Principles
 
-### 1. Thinking in React
+### React Best Practices
 
-Follow the 5-step process:
+Follow the "Thinking in React" methodology:
 
-- Break UI into components.
-- Build a static version.
-- Minimize state.
-- Identify state location.
-- Add inverse data flow.
+1. **Break UI into components** - Identify component hierarchy from the design
+2. **Build a static version first** - Render UI without interactivity initially
+3. **Identify minimal state** - Determine the absolute minimum state needed
+4. **Determine state ownership** - Place state in the lowest common ancestor
+5. **Add data flow** - Pass callbacks down for child-to-parent communication
 
-### 2. UI Development
+### Separation of Concerns
 
-- **No Firebase in UI**: Components must NEVER directly import Firebase services (`firestore`, `auth`, `storage`). All interactions must happen through custom hooks in `src/lib/hooks/`.
-- **Storybook First**: Build all UI in Storybook before integration.
-- **Automated Interaction Tests**: **REQUIRED**. Every complex component must have a Storybook story with a `play` function that verifies the critical user journey (e.g., clicking next after voting). This is strictly PREFERRED over manual verification or generic browser tests for UI logic.
-- **Atomic Design**:
-  - **Atoms**: Reusable UI primitives (Buttons, Inputs, Modals). Location: `src/components/atoms/`.
-  - **Molecules**: Combinations of atoms with minimal logic. Location: `src/components/molecules/`.
-  - **Organisms**: Complex, self-contained components or sections. Location: `src/components/organisms/`.
-- **Accessibility**: Use semantic HTML, ARIA attributes, and ensure keyboard navigation.
-- **Testability**:
-  - Add unique `data-testid` or `id` attributes to all interactive elements to facilitate native tool selection.
-  - Use clear, descriptive ARIA labels where visual labels aren't sufficient.
+- **UI components are presentation-only** - They receive data via props, never fetch it
+- **Business logic lives in hooks** - Custom hooks in `src/lib/hooks/` handle data fetching, state management, and side effects
+- **Utilities are pure functions** - Complex logic (sorting, calculations, formatting) goes in `src/lib/` utilities
+- **No Firebase in components** - Components must NEVER import Firebase directly. All Firebase interactions happen through hooks
 
-### 3. Firebase Resource Management
+### Project Structure
 
-- **Security Rules**:
-  - Firestore rules do NOT support `if` statements (use ternary).
-  - No `const` or `let` in rules.
-  - Multi-line conditionals should use `&&` or `||`.
-- **Functions**:
-  - Always build before deploying using `npm run build --prefix functions`.
-  - Use `DETECTION_FUNCTION_VERSION` for tracking logic versions.
+```
+src/
+├── components/
+│   ├── atoms/        # Basic UI primitives (Button, Input, Modal)
+│   ├── molecules/    # Combinations of atoms (SearchBar, FormField)
+│   └── organisms/    # Complex sections (Navigation, Forms)
+├── pages/            # Route-level components
+├── lib/
+│   ├── hooks/        # Custom React hooks (useAuth, useEvent, etc.)
+│   ├── stores/       # Zustand state stores
+│   ├── firebase.ts   # Firebase initialization
+│   ├── firestore.ts  # Firestore utilities
+│   └── storage.ts    # Storage utilities
+└── stories/          # Storybook stories and test data
+```
 
 ## Code Standards
 
 ### Naming Conventions
 
-- **Components**: `PascalCase` (e.g., `CookieViewer.tsx`).
-- **Props/Variables**: `camelCase`.
-- **Hooks**: `use` prefix (e.g., `useAuth`).
-- **Files**: Match component/class name.
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `CookieViewer.tsx` |
+| Hooks | camelCase with `use` prefix | `useAuth.ts` |
+| Utilities | camelCase | `formatDate.ts` |
+| Constants | SCREAMING_SNAKE_CASE | `MAX_COOKIES` |
+| Props/Variables | camelCase | `isLoading`, `onClick` |
 
-- Keep state local whenever possible.
-- Lift state to the lowest common ancestor.
-- **Custom Hooks**: Extract all Firebase interaction and business logic into custom hooks. Hooks should handle loading/error states and provide clean APIs to components.
-- **Utility Functions**: Move complex, non-React logic (e.g., sorting, coordinate calculations) to `src/lib/` utilities.
+### File Organization
 
-## Deployment & Verification
+- **One component per file** - Component name matches filename
+- **Co-locate related files** - Keep `.module.css`, `.stories.tsx`, and `.test.tsx` near their component
+- **Index exports** - Use `index.ts` for clean imports from directories
 
-- **Build Before Reporting**: Make sure the app builds successfully before reporting a change.
-- **Verify Before Reporting**: **REQUIRED**. Run `npm run verify` before reporting ANY code changes. This script mirrors the GitHub CI pipeline (Lint, Test, Build) and catches errors that would break the build. Fix ALL lint warnings and errors before reporting.
-- **Efficient Verification**:
-  - **Minimize Prompts**: To avoid excessive approval requests, prefer `read_url_content` for static state checks.
-  - **NO Custom JS**: Custom JavaScript execution using browser tools is strictly FORBIDDEN unless no native alternative exists. Prefer native browser tools (click, get_text) to avoid the mandatory manual approval step.
-  - **Interactive Tasks**: Use `browser_subagent` only for tasks requiring JS execution (e.g., Storybook, animations, complex navigation).
-  - **Mission Batching**: Batch multiple verification steps into a single `browser_subagent` call to reduce the number of times the user needs to approve a subagent mission.
-- **Automatic Debugging**: Attempt to fix testing failures automatically before informing the user.
-- **Deployment**: Use `npm run firebase:deploy:*` scripts for safety.
+## Development Workflow
 
-## Local Emulator Development
+### Before Making Changes
 
-- **Start Emulators**: Use `npm run emulators:start:seed` to start with a fresh test environment seeded with data.
-- **Unified Auth**: No custom "test user" system exists. Use the standard "Sign in with Google" flow. The emulator will prompt you to select or create a mock account.
-- **Admin Access**: The seeding script automatically adds `test@local.dev` (UID: `test-user-default`) to `system/admins`. Use this account for admin functionality.
-- **Connectivity (Windows)**: Use `127.0.0.1` instead of `localhost` in Firebase configuration to avoid IPv6 connection timeouts.
+1. Understand the existing code patterns in the area you're modifying
+2. Check for similar implementations elsewhere in the codebase
+3. Consider if your change requires new tests
+
+### Before Committing
+
+**Always run `npm run verify`** before considering work complete. This runs:
+- ESLint for code quality
+- TypeScript for type checking  
+- Vitest for unit tests
+- Build verification
+
+Fix ALL warnings and errors before reporting completion.
+
+### Storybook-First Development
+
+For UI components:
+1. Create the component in Storybook first
+2. Add stories for all states (default, loading, error, empty, disabled)
+3. Add interaction tests using `play` functions
+4. Only then integrate into the application
+
+## Firebase Guidelines
+
+### Security Rules Syntax
+
+Firestore rules have specific limitations:
+- ❌ No `if` statements - use ternary operators instead
+- ❌ No `const` or `let` - use inline expressions
+- ✅ Use `&&` and `||` for complex conditions
+
+### Local Development
+
+- **Start emulators**: `npm run emulators:start:seed`
+- **Test user**: `test@local.dev` (UID: `test-user-default`) has admin access
+- **Windows users**: Use `127.0.0.1` instead of `localhost` to avoid IPv6 issues
+
+## Accessibility Requirements
+
+All UI must be accessible:
+- Use semantic HTML elements (`<button>`, `<nav>`, `<main>`)
+- Add ARIA labels where visual context is insufficient
+- Ensure keyboard navigation works for all interactive elements
+- Add `data-testid` attributes for testing
