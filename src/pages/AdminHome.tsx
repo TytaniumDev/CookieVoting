@@ -1,18 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../lib/firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import {
-  createEvent,
-  getAllEvents,
-  deleteEvent,
-  getCategories,
-  isGlobalAdmin,
-} from '../lib/firestore';
+import { useAdminAuth } from '../lib/hooks/useAdminAuth';
+import { useDetectionJob } from '../lib/hooks/useDetectionJob';
+import { createEvent, getAllEvents, deleteEvent, getCategories } from '../lib/firestore';
 import { validateEventName, sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
 import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
@@ -20,6 +10,47 @@ import styles from './AdminHome.module.css';
 import { type VoteEvent } from '../lib/types';
 
 export default function AdminHome() {
+  const navigate = useNavigate();
+
+  // Use admin auth hook for auth state management
+  const { user, isAdmin, isLoading: authLoading, error: authError } = useAdminAuth({
+    redirectIfNotAuth: '/',
+  });
+
+  // Alert state
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
+
+  // Use detection job hook
+  const {
+    isDetecting: detectingAll,
+    progress: detectionProgress,
+    currentJobId,
+    startDetection,
+    cancelDetection,
+  } = useDetectionJob({
+    enabled: isAdmin,
+    onComplete: (result) => {
+      const message =
+        `Detection complete!\n` +
+        `Total images: ${result.total}\n` +
+        `Processed: ${result.processed}\n` +
+        `Skipped (already detected): ${result.skipped}\n` +
+        `Errors: ${result.errors}`;
+      setAlertMessage(message);
+      setAlertType(result.errors > 0 ? 'error' : 'success');
+    },
+    onError: (errorMsg) => {
+      setAlertMessage(errorMsg);
+      setAlertType('error');
+    },
+    onStatusChange: (msg) => {
+      setAlertMessage(msg);
+      setAlertType('info');
+    },
+  });
+
+  // Event management state
   const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -27,115 +58,11 @@ export default function AdminHome() {
   const [eventImages, setEventImages] = useState<Record<string, string[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [detectingAll, setDetectingAll] = useState(false);
-  const [detectionProgress, setDetectionProgress] = useState<string | null>(null);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
-  const navigate = useNavigate();
-
-  // Check authentication and admin access
-  useEffect(() => {
-    const checkAccess = async () => {
-      setCheckingAccess(true);
-      try {
-        // Get current user
-        const user = auth.currentUser;
-
-        // A user is considered signed in if they have an email or provider data
-        const isSignedIn =
-          user && (user.email || (user.providerData && user.providerData.length > 0));
-
-        if (!isSignedIn) {
-          // Not signed in, redirect to landing page
-          navigate('/', { replace: true });
-          setIsAdmin(false);
-          setCheckingAuth(false);
-          setCheckingAccess(false);
-          return;
-        }
-
-        setCheckingAuth(false);
-
-        // Check if user is an admin
-        const admin = await isGlobalAdmin(user.uid);
-        setIsAdmin(admin);
-
-        if (!admin) {
-          setError('You do not have admin access. Please contact a site administrator.');
-          setLoadingEvents(false);
-          setCheckingAccess(false);
-          return;
-        }
-
-        // User is admin, proceed to load events
-        setCheckingAccess(false);
-      } catch (err) {
-        console.error('Failed to check admin access', err);
-        setError(CONSTANTS.ERROR_MESSAGES.FAILED_TO_LOAD);
-        setCheckingAuth(false);
-        setCheckingAccess(false);
-      }
-    };
-
-    // Listen for auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async () => {
-      await checkAccess();
-    });
-
-    // Also check immediately
-    checkAccess();
-
-    return () => unsubscribe();
-  }, [navigate]);
-
-  // Check for running detection jobs on mount
-  useEffect(() => {
-    if (checkingAuth || checkingAccess || !isAdmin) return;
-
-    const checkRunningJobs = async () => {
-      try {
-        // Query without orderBy to avoid needing an index
-        // We'll check both statuses separately and take the most recent
-        const jobsRef = collection(db, 'detection_jobs');
-
-        // Check for processing jobs first (most likely to be active)
-        const processingQuery = query(jobsRef, where('status', '==', 'processing'), limit(1));
-        const processingSnapshot = await getDocs(processingQuery);
-
-        if (!processingSnapshot.empty) {
-          const jobDoc = processingSnapshot.docs[0];
-          setCurrentJobId(jobDoc.id);
-          setDetectingAll(true);
-          setDetectionProgress('Found running detection job. Watching progress...');
-          return;
-        }
-
-        // If no processing job, check for queued jobs
-        const queuedQuery = query(jobsRef, where('status', '==', 'queued'), limit(1));
-        const queuedSnapshot = await getDocs(queuedQuery);
-
-        if (!queuedSnapshot.empty) {
-          const jobDoc = queuedSnapshot.docs[0];
-          setCurrentJobId(jobDoc.id);
-          setDetectingAll(true);
-          setDetectionProgress('Found queued detection job. Watching progress...');
-        }
-      } catch (error) {
-        console.error('Error checking for running jobs:', error);
-      }
-    };
-
-    checkRunningJobs();
-  }, [checkingAuth, checkingAccess, isAdmin]);
 
   useEffect(() => {
-    // Only fetch events if user is admin and access check is complete
-    if (checkingAuth || checkingAccess || !isAdmin) return;
+    // Only fetch events if user is admin and auth check is complete
+    if (authLoading || !isAdmin) return;
 
     const fetchEvents = async () => {
       try {
@@ -151,22 +78,20 @@ export default function AdminHome() {
             try {
               const categories = await getCategories(event.id);
               imagesMap[event.id] = categories.map((cat) => cat.imageUrl);
-            } catch (err) {
-              console.error(`Failed to load images for event ${event.id}`, err);
+            } catch {
               imagesMap[event.id] = [];
             }
           }),
         );
         setEventImages(imagesMap);
-      } catch (err) {
-        console.error('Failed to load events', err);
+      } catch {
         setError(CONSTANTS.ERROR_MESSAGES.FAILED_TO_LOAD);
       } finally {
         setLoadingEvents(false);
       }
     };
     fetchEvents();
-  }, [checkingAuth, checkingAccess, isAdmin]);
+  }, [authLoading, isAdmin]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,10 +121,8 @@ export default function AdminHome() {
         error instanceof Error &&
         (error.message.includes('permission') || error.message.includes('Permission'))
       ) {
-        const currentUser = auth.currentUser;
-
-        if (currentUser) {
-          errorMessage = `Permission denied: Your account (${currentUser.email || currentUser.uid}) is not a global admin. Use the local script to bootstrap your admin access: node scripts/set-admin.js ${currentUser.email}`;
+        if (user) {
+          errorMessage = `Permission denied: Your account (${user.email || user.uid}) is not a global admin. Use the local script to bootstrap your admin access: node scripts/set-admin.js ${user.email}`;
         } else {
           errorMessage =
             'Permission denied: You must be signed in as a global admin to create events.';
@@ -263,78 +186,6 @@ export default function AdminHome() {
     setConfirmDelete(null);
   };
 
-  // Watch job status when a job is active
-  useEffect(() => {
-    if (!currentJobId) return;
-
-    const jobRef = doc(db, 'detection_jobs', currentJobId);
-    const unsubscribe = onSnapshot(
-      jobRef,
-      (snapshot) => {
-        if (!snapshot.exists()) {
-          setDetectionProgress(null);
-          setDetectingAll(false);
-          return;
-        }
-
-        const jobData = snapshot.data();
-        const status = jobData.status;
-        const total = jobData.total || 0;
-        const processed = jobData.processed || 0;
-        const skipped = jobData.skipped || 0;
-        const errors = jobData.errors || 0;
-        const currentFile = jobData.currentFile || '';
-        const currentIndex = jobData.currentIndex || 0;
-
-        if (status === 'queued') {
-          setDetectionProgress('Job queued, starting soon...');
-        } else if (status === 'processing') {
-          if (total > 0) {
-            const progress = Math.round(((processed + skipped + errors) / total) * 100);
-            setDetectionProgress(
-              `Processing ${currentIndex}/${total}: ${currentFile}\n` +
-                `Progress: ${progress}% (${processed} processed, ${skipped} skipped, ${errors} errors)`,
-            );
-          } else {
-            setDetectionProgress('Scanning for images...');
-          }
-        } else if (status === 'completed') {
-          setDetectingAll(false);
-          setDetectionProgress(null);
-          setCurrentJobId(null);
-          const message =
-            `Detection complete!\n` +
-            `Total images: ${total}\n` +
-            `Processed: ${processed}\n` +
-            `Skipped (already detected): ${skipped}\n` +
-            `Errors: ${errors}`;
-          setAlertMessage(message);
-          setAlertType(errors > 0 ? 'error' : 'success');
-        } else if (status === 'cancelled') {
-          setDetectingAll(false);
-          setDetectionProgress(null);
-          setCurrentJobId(null);
-          setAlertMessage('Detection job cancelled');
-          setAlertType('info');
-        } else if (status === 'error') {
-          setDetectingAll(false);
-          setDetectionProgress(null);
-          setCurrentJobId(null);
-          setAlertMessage(`Detection failed: ${jobData.error || 'Unknown error'}`);
-          setAlertType('error');
-        }
-      },
-      (error) => {
-        console.error('Error watching job status:', error);
-        setDetectingAll(false);
-        setDetectionProgress(null);
-        setCurrentJobId(null);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [currentJobId]);
-
   const handleDetectAllImages = async () => {
     if (
       !window.confirm(
@@ -343,50 +194,8 @@ export default function AdminHome() {
     ) {
       return;
     }
-
-    setDetectingAll(true);
-    setDetectionProgress('Starting detection job...');
     setError(null);
-    setCurrentJobId(null);
-
-    try {
-      const detectAllImages = httpsCallable<
-        Record<string, never>,
-        {
-          jobId: string;
-          status: string;
-          message: string;
-        }
-      >(functions, 'detectAllImages');
-
-      const result = await detectAllImages({});
-      const data = result.data;
-
-      if (data && data.jobId) {
-        if (data.status === 'already_running') {
-          // A job is already running - start watching it
-          setCurrentJobId(data.jobId);
-          setDetectingAll(true);
-          setDetectionProgress('A detection job is already running. Watching progress...');
-        } else {
-          // Start watching the new job
-          setCurrentJobId(data.jobId);
-          setDetectionProgress('Job started, waiting for progress...');
-        }
-      } else {
-        setAlertMessage('Failed to start detection job');
-        setAlertType('error');
-        setDetectingAll(false);
-        setDetectionProgress(null);
-      }
-    } catch (err) {
-      console.error('Failed to start detection job:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start detection job';
-      setAlertMessage(`Failed to start detection: ${errorMessage}`);
-      setAlertType('error');
-      setDetectingAll(false);
-      setDetectionProgress(null);
-    }
+    await startDetection();
   };
 
   const handleCancelDetection = async () => {
@@ -399,30 +208,10 @@ export default function AdminHome() {
     ) {
       return;
     }
-
-    try {
-      const cancelDetectionJob = httpsCallable<
-        { jobId: string },
-        {
-          success: boolean;
-          message: string;
-        }
-      >(functions, 'cancelDetectionJob');
-
-      await cancelDetectionJob({ jobId: currentJobId });
-      setAlertMessage(
-        'Cancellation requested. The job will stop after processing the current image.',
-      );
-      setAlertType('info');
-    } catch (err) {
-      console.error('Failed to cancel detection job:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel detection job';
-      setAlertMessage(`Failed to cancel: ${errorMessage}`);
-      setAlertType('error');
-    }
+    await cancelDetection();
   };
 
-  if (checkingAuth || checkingAccess) {
+  if (authLoading) {
     return <div className={styles.container}>Loading...</div>;
   }
 
@@ -430,7 +219,7 @@ export default function AdminHome() {
     return (
       <div className={styles.container}>
         <div className={styles.error}>
-          {error || 'You do not have admin access. Please contact a site administrator.'}
+          {authError || error || 'You do not have admin access. Please contact a site administrator.'}
         </div>
         <button
           onClick={() => navigate('/')}
@@ -651,18 +440,17 @@ export default function AdminHome() {
           tabIndex={0}
           aria-label="Close delete confirmation"
         >
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             className={styles.modal}
             onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
             onKeyDown={(e) => {
+              e.stopPropagation();
               if (e.key === 'Escape') {
-                e.stopPropagation();
                 handleDeleteCancel();
               }
             }}
+            role="dialog"
+            aria-modal="true"
           >
             <h3>Delete Event</h3>
             <p>

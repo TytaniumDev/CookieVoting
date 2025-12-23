@@ -31,39 +31,20 @@ export function useAuth() {
     // Check for redirect result first, BEFORE setting up auth state listener
     const initializeAuth = async () => {
       try {
-        const result = await getRedirectResult(auth);
-        if (result && isMounted) {
-          console.log('User signed in via redirect:', result.user.email);
-          // The auth state will be updated by onAuthStateChanged below
-        } else {
-          console.log('No redirect result found');
-        }
+        await getRedirectResult(auth);
+        // The auth state will be updated by onAuthStateChanged below
       } catch (error: unknown) {
-        const firebaseError = error as { code?: string; message?: string };
-        if (firebaseError?.code !== 'auth/no-auth-event' && isMounted) {
-          console.error('Error getting redirect result:', error);
+        // Ignore auth/no-auth-event - it's normal when there's no redirect
+        const firebaseError = error as { code?: string };
+        if (firebaseError?.code !== 'auth/no-auth-event') {
+          // Silent fail - auth state listener will handle the current state
         }
       }
-
-      // Check current auth state
-      const currentUser = auth.currentUser;
-      console.log(
-        'Current auth user:',
-        currentUser
-          ? currentUser.isAnonymous
-            ? 'anonymous (test user)'
-            : currentUser.email
-          : 'none',
-      );
 
       // Set up the auth state listener
       // This will fire immediately with the current user (including after redirect)
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (isMounted) {
-          console.log(
-            'Auth state changed:',
-            user ? `${user.email || 'user'} (${user.uid})` : 'signed out',
-          );
           setUser(user);
           setLoading(false);
         }
@@ -91,19 +72,9 @@ export function useAuth() {
     provider.addScope('profile');
     provider.addScope('email');
 
-    console.log('Starting Google sign-in...');
-
     // Try popup first (more reliable in most browsers)
     try {
-      console.log('Attempting popup sign-in...');
-      const userCredential = await signInWithPopup(auth, provider);
-      console.log('✅ Google sign-in successful');
-      console.log('📋 Your User UID:', userCredential.user.uid);
-      console.log('📧 Your Email:', userCredential.user.email);
-      console.log('💡 Tip: Enable test user mode to use a separate test database');
-      console.log(
-        '🔧 To create events, add your UID to: Firebase Console → Firestore → system/admins → userIds array',
-      );
+      await signInWithPopup(auth, provider);
     } catch (popupError: unknown) {
       const firebaseError = popupError as { code?: string; message?: string };
       // If popup is blocked or fails, fall back to redirect
@@ -112,7 +83,6 @@ export function useAuth() {
         firebaseError?.code === 'auth/popup-closed-by-user' ||
         firebaseError?.code === 'auth/cancelled-popup-request'
       ) {
-        console.log('Popup blocked/failed, using redirect flow');
         await signInWithRedirect(auth, provider);
         // signInWithRedirect doesn't return, it redirects the page
         return;

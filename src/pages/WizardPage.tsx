@@ -1,8 +1,7 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { getEvent, isGlobalAdmin } from '../lib/firestore';
+import { useAdminAuth } from '../lib/hooks/useAdminAuth';
+import { getEvent } from '../lib/firestore';
 import { EventSetupWizard } from '../components/organisms/EventSetupWizard/EventSetupWizard';
 import { type VoteEvent } from '../lib/types';
 import styles from './WizardPage.module.css';
@@ -12,10 +11,15 @@ export default function WizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const categoryId = searchParams.get('categoryId');
+
+  // Use admin auth hook
+  const { isAdmin, isLoading: authLoading } = useAdminAuth({
+    redirectIfNotAuth: '/',
+    redirectIfNotAdmin: '/admin',
+  });
+
   const [event, setEvent] = useState<VoteEvent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
     if (!eventId) {
@@ -23,51 +27,23 @@ export default function WizardPage() {
       return;
     }
 
-    const checkAccess = async () => {
-      setCheckingAccess(true);
+    if (authLoading || !isAdmin) return;
+
+    const loadEvent = async () => {
       try {
-        // Get current user
-        const user = auth.currentUser;
-
-        if (!user || !user.email) {
-          navigate('/', { replace: true });
-          setIsAdmin(false);
-          setCheckingAccess(false);
-          return;
-        }
-
-        // Check if user is an admin
-        const admin = await isGlobalAdmin(user.uid);
-        setIsAdmin(admin);
-
-        if (!admin) {
-          navigate('/admin', { replace: true });
-          setCheckingAccess(false);
-          return;
-        }
-
-        // Load event data
         const eventData = await getEvent(eventId);
         setEvent(eventData);
-      } catch (err) {
-        console.error('Failed to check access', err);
+      } catch {
         navigate('/admin', { replace: true });
       } finally {
         setLoading(false);
-        setCheckingAccess(false);
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, async () => {
-      await checkAccess();
-    });
+    loadEvent();
+  }, [eventId, navigate, authLoading, isAdmin]);
 
-    checkAccess();
-
-    return () => unsubscribe();
-  }, [eventId, navigate]);
-
-  if (checkingAccess || loading) {
+  if (authLoading || loading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 

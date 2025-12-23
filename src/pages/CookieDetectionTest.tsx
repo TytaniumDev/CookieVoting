@@ -5,7 +5,7 @@
  * and validates detection accuracy.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { detectCookiesGemini } from '../lib/cookieDetectionGemini';
 import styles from './CookieDetectionTest.module.css';
 
@@ -26,88 +26,75 @@ interface TestResult {
   }>;
 }
 
+// Test images organized by expected cookie count (defined outside component for stability)
+const TEST_IMAGES = [
+  { folder: '3-cookies', expected: 3, images: ['PXL_20251215_000325176-EDIT.jpg'] },
+  { folder: '4-cookies', expected: 4, images: ['PXL_20251215_001528843-EDIT.jpg'] },
+  {
+    folder: '5-cookies',
+    expected: 5,
+    images: ['PXL_20251215_000827596-EDIT.jpg', 'PXL_20251215_001018054-EDIT.jpg'],
+  },
+  {
+    folder: '6-cookies',
+    expected: 6,
+    images: [
+      'PXL_20251215_000558884-EDIT.jpg',
+      'PXL_20251215_001159218-EDIT.jpg',
+      'test-cookies.jpg',
+    ],
+  },
+  { folder: '8-cookies', expected: 8, images: ['PXL_20251215_000711294-EDIT.jpg'] },
+];
+
 export default function CookieDetectionTest() {
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
   const [currentTest, setCurrentTest] = useState<string | null>(null);
   const [_autoTesting, setAutoTesting] = useState(false);
 
-  // Test images organized by expected cookie count
-  const testImages = [
-    { folder: '3-cookies', expected: 3, images: ['PXL_20251215_000325176-EDIT.jpg'] },
-    { folder: '4-cookies', expected: 4, images: ['PXL_20251215_001528843-EDIT.jpg'] },
-    {
-      folder: '5-cookies',
-      expected: 5,
-      images: ['PXL_20251215_000827596-EDIT.jpg', 'PXL_20251215_001018054-EDIT.jpg'],
-    },
-    {
-      folder: '6-cookies',
-      expected: 6,
-      images: [
-        'PXL_20251215_000558884-EDIT.jpg',
-        'PXL_20251215_001159218-EDIT.jpg',
-        'test-cookies.jpg',
-      ],
-    },
-    { folder: '8-cookies', expected: 8, images: ['PXL_20251215_000711294-EDIT.jpg'] },
-  ];
-
-  const testSingleImage = async (
-    folder: string,
-    imageName: string,
-    expected: number,
-  ): Promise<TestResult> => {
-    const imageUrl = `test-images/${folder}/${imageName}`;
-    setCurrentTest(`${folder}/${imageName}`);
-
-    // Wait for image to load
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = resolve;
-      img.onerror = resolve; // Continue even if image fails
-      img.src = imageUrl;
-      setTimeout(resolve, 500); // Max wait
-    });
-
-    const startTime = performance.now();
-    const detected = await detectCookiesGemini(imageUrl);
-    const duration = performance.now() - startTime;
-
-    return {
-      folder,
-      expected,
-      imageName,
-      detected: detected.length,
-      duration,
-      passed: detected.length === expected,
-      imageUrl,
-      detectedCookies: detected,
-    };
-  };
-
-  const runAllTests = async () => {
+  const runAllTests = useCallback(async () => {
     setAutoTesting(true);
     setTesting(true);
     setResults([]);
     const allResults: TestResult[] = [];
 
-    console.log('Starting automated tests...');
-    for (const testGroup of testImages) {
+    for (const testGroup of TEST_IMAGES) {
       for (const imageName of testGroup.images) {
+        const imageUrl = `test-images/${testGroup.folder}/${imageName}`;
+        setCurrentTest(`${testGroup.folder}/${imageName}`);
+
         try {
-          console.log(`Testing ${testGroup.folder}/${imageName} (expected: ${testGroup.expected})`);
-          const result = await testSingleImage(testGroup.folder, imageName, testGroup.expected);
+          // Wait for image to load
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            img.src = imageUrl;
+            setTimeout(resolve, 500);
+          });
+
+          const startTime = performance.now();
+          const detected = await detectCookiesGemini(imageUrl);
+          const duration = performance.now() - startTime;
+
+          const result: TestResult = {
+            folder: testGroup.folder,
+            expected: testGroup.expected,
+            imageName,
+            detected: detected.length,
+            duration,
+            passed: detected.length === testGroup.expected,
+            imageUrl,
+            detectedCookies: detected,
+          };
+
           allResults.push(result);
           setResults([...allResults]);
-          console.log(
-            `Result: ${result.detected}/${result.expected} cookies, ${result.passed ? 'PASS' : 'FAIL'}`,
-          );
 
           // Small delay between tests
           await new Promise((resolve) => setTimeout(resolve, 300));
-        } catch (error) {
-          console.error(`Error testing ${imageName}:`, error);
+        } catch {
           allResults.push({
             folder: testGroup.folder,
             expected: testGroup.expected,
@@ -123,21 +110,19 @@ export default function CookieDetectionTest() {
       }
     }
 
-    console.log('All tests complete!');
     setTesting(false);
     setAutoTesting(false);
     setCurrentTest(null);
-  };
+  }, []);
 
   // Auto-run tests on mount
   useEffect(() => {
     // Wait a bit for page to fully load, then auto-run tests
     const timer = setTimeout(() => {
-      console.log('Auto-running tests...');
       runAllTests();
     }, 2000);
     return () => clearTimeout(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [runAllTests]);
 
   const passedCount = results.filter((r) => r.passed).length;
   const totalTests = results.length;
@@ -293,7 +278,7 @@ export default function CookieDetectionTest() {
             <strong>Test Images Available:</strong>
           </p>
           <ul>
-            {testImages.map((group) => (
+            {TEST_IMAGES.map((group) => (
               <li key={`test-group-${group.folder}-${group.expected}-${group.images.length}`}>
                 <strong>{group.folder}</strong>: {group.images.length} image(s) - Expected{' '}
                 {group.expected} cookies each
