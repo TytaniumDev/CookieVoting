@@ -5,10 +5,6 @@ description: Code quality standards for TypeScript, error handling, and maintain
 
 # Code Quality Standards
 
-## File Size Limit
-
-**Keep each rule file under 200 lines.** Many AI agents have context limits, and smaller, focused files are easier to maintain and apply.
-
 ## TypeScript Best Practices
 
 ### Type Safety

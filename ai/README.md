@@ -70,8 +70,21 @@ Files in `ai/rules/` are processed in alphabetical order. Simply add any `.md` f
 ### Creating New Rule Files
 
 1. Create a new `.md` file in `ai/rules/`
-2. Start with a `# Heading` - this becomes the description in Cursor's `.mdc` files
-3. Run `npm run sync-agent-rules`
+2. Add YAML frontmatter with `trigger` and `description` (for Cursor compatibility)
+3. Start with a `# Heading`
+4. **Keep the file under 200 lines** (see below)
+5. Run `npm run sync-agent-rules`
+
+### 200 Line Limit
+
+**Keep each rule file under 200 lines.** This is important because:
+
+- Many AI agents have context window limits
+- Smaller, focused files are easier to understand and apply
+- Agents can selectively load relevant rules instead of everything
+- Easier to maintain and update individual topics
+
+If a file grows beyond 200 lines, split it into focused sub-topics (e.g., `code-quality.md` was split into `code-quality.md`, `react-patterns.md`, `zustand-patterns.md`, `firebase-patterns.md`).
 
 ## Generated Files
 
@@ -98,9 +111,9 @@ The sync script generates these files (all auto-generated, do not edit directly)
 
 ### For File Organization
 
-1. **Use clear prefixes** - `01-`, `02-` for ordering
-2. **One topic per file** - Makes it easier to enable/disable specific rules
-3. **Keep files focused** - Under 200 lines ideally
+1. **One topic per file** - Makes it easier to enable/disable specific rules
+2. **Under 200 lines** - Required for agent compatibility (see "200 Line Limit" above)
+3. **Clear naming** - Use descriptive names like `react-patterns.md`, `testing-strategy.md`
 
 ## Automation
 

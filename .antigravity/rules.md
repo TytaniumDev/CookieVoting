@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 08:46:06 UTC · Checksum: `d59e2d643631`
+> **Last synced:** December 23, 2025 at 08:49:34 UTC · Checksum: `26bc8d37f26f`
 
 ## 🤖 Instructions for AI Agents
 
@@ -30,10 +30,6 @@ description: Code quality standards for TypeScript, error handling, and maintain
 ---
 
 # Code Quality Standards
-
-## File Size Limit
-
-**Keep each rule file under 200 lines.** Many AI agents have context limits, and smaller, focused files are easier to maintain and apply.
 
 ## TypeScript Best Practices
 
