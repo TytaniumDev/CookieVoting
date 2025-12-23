@@ -69,3 +69,5 @@ agent-plans/
 # .cursor/rules/02-*.mdc
 # .cursor/rules/03-*.mdc
 # .cursor/rules/04-*.mdc
+
+# Note: ai/ is NOT a dotfile directory so all agents can write to it

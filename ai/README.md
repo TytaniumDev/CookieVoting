@@ -4,7 +4,7 @@ This directory is the **single source of truth** for all AI agent/IDE instructio
 
 ## Quick Start
 
-**Files sync automatically!** Just edit files in `.ai/rules/` and run `npm run dev` — the sync happens automatically via a pre-hook.
+**Files sync automatically!** Just edit files in `ai/rules/` and run `npm run dev` — the sync happens automatically via a pre-hook.
 
 ```bash
 # Manual sync (if needed):
@@ -33,7 +33,7 @@ Instead of maintaining 7+ duplicate files, we maintain one source and generate t
 ## Directory Structure
 
 ```
-.ai/
+ai/
 ├── README.md           # This file
 ├── .rules-checksum     # SHA256 of source files (for change detection)
 ├── rules/              # Source instruction files
@@ -51,13 +51,13 @@ Each generated file includes:
 - **Checksum**: SHA256 hash of all source files (first 12 chars)
 - **Agent Instructions**: Tells the AI to re-run sync if sources change
 
-The `.rules-checksum` file stores the full checksum for the `--check` option.
+The `ai/.rules-checksum` file stores the full checksum for the `--check` option.
 
 ## Usage
 
 ### Adding/Editing Rules
 
-1. Edit files in `.ai/rules/`
+1. Edit files in `ai/rules/`
 2. Run `npm run dev` (sync happens automatically) or `npm run sync-agent-rules`
 3. Commit all generated files
 
@@ -65,14 +65,14 @@ The sync is hooked into `npm run dev` and `npm run build`, so you don't need to 
 
 ### File Naming Convention
 
-Files in `.ai/rules/` are processed in alphabetical order. Use numeric prefixes to control order:
+Files in `ai/rules/` are processed in alphabetical order. Use numeric prefixes to control order:
 - `01-project-guidelines.md`
 - `02-ui-components.md`
 - etc.
 
 ### Creating New Rule Files
 
-1. Create a new `.md` file in `.ai/rules/`
+1. Create a new `.md` file in `ai/rules/`
 2. Start with a `# Heading` - this becomes the description in Cursor's `.mdc` files
 3. Run `npm run sync-agent-rules`
 
@@ -120,7 +120,7 @@ It uses `--auto` mode which only syncs if the source checksum has changed, so it
 Add to `.husky/pre-commit` (if using Husky):
 ```bash
 npm run sync-agent-rules
-git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rules/ .github/copilot-instructions.md .ai/.rules-checksum
+git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rules/ .github/copilot-instructions.md ai/.rules-checksum
 ```
 
 ### CI/CD Check
@@ -159,7 +159,7 @@ To add support for a new agent:
 
 If you have existing rules scattered across the repo:
 
-1. Copy content from existing files to `.ai/rules/`
+1. Copy content from existing files to `ai/rules/`
 2. Organize into logical files
 3. Run `npm run sync-agent-rules`
 4. Verify generated files match original intent
