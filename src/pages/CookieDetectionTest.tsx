@@ -30,6 +30,7 @@ export default function CookieDetectionTest() {
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
   const [currentTest, setCurrentTest] = useState<string | null>(null);
+  const [_autoTesting, setAutoTesting] = useState(false);
 
   // Test images organized by expected cookie count
   const testImages = [
