@@ -128,7 +128,12 @@ export default function DetectionComparison() {
       
       try {
         console.log(`[Comparison] Testing ${testImage.folder}/${testImage.name}`);
-        const comparison = await compareDetectionMethods(testImage.url);
+        // Convert relative URL to absolute URL for the Cloud Function
+        // Node.js fetch requires absolute URLs since it has no origin context
+        const absoluteUrl = testImage.url.startsWith('http')
+          ? testImage.url
+          : `${window.location.origin}/${testImage.url}`;
+        const comparison = await compareDetectionMethods(absoluteUrl);
         
         const result: ComparisonResult = {
           ...comparison,
