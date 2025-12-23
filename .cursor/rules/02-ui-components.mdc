@@ -1,7 +1,11 @@
 ---
 description: UI Component Creation Standards
 alwaysApply: false
+generatedAt: "2025-12-23T00:05:46Z"
+sourceChecksum: "1d0b4e6bbbfb"
 ---
+
+> ⚠️ AUTO-GENERATED from `.ai/rules/` - Run `npm run sync-agent-rules` after editing source files.
 
 # UI Component Creation Standards
 

@@ -2,6 +2,16 @@
 
 This directory is the **single source of truth** for all AI agent/IDE instruction files in this project.
 
+## Quick Start
+
+```bash
+# Edit rules in .ai/rules/, then sync to all IDEs:
+npm run sync-agent-rules
+
+# Check if files are up to date (useful in CI):
+npm run sync-agent-rules:check
+```
+
 ## Why This Exists
 
 Different AI coding assistants expect their instructions in different locations:
@@ -23,6 +33,7 @@ Instead of maintaining 7+ duplicate files, we maintain one source and generate t
 ```
 .ai/
 ├── README.md           # This file
+├── .rules-checksum     # SHA256 of source files (for change detection)
 ├── rules/              # Source instruction files
 │   ├── 01-project-guidelines.md
 │   ├── 02-ui-components.md
@@ -30,6 +41,15 @@ Instead of maintaining 7+ duplicate files, we maintain one source and generate t
 │   └── 04-testing-strategy.md
 └── context/            # Additional context files (optional)
 ```
+
+## Change Detection
+
+Each generated file includes:
+- **Timestamp**: When the file was generated
+- **Checksum**: SHA256 hash of all source files (first 12 chars)
+- **Agent Instructions**: Tells the AI to re-run sync if sources change
+
+The `.rules-checksum` file stores the full checksum for the `--check` option.
 
 ## Usage
 
@@ -91,12 +111,18 @@ The sync script generates these files (all auto-generated, do not edit directly)
 Add to `.husky/pre-commit` (if using Husky):
 ```bash
 npm run sync-agent-rules
-git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rules/ .github/copilot-instructions.md
+git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rules/ .github/copilot-instructions.md .ai/.rules-checksum
 ```
 
 ### CI/CD Check
 
 Add to your CI pipeline to ensure generated files are up-to-date:
+```yaml
+- name: Check agent rules are synced
+  run: npm run sync-agent-rules:check
+```
+
+Or with diff check:
 ```yaml
 - name: Check agent rules are synced
   run: |

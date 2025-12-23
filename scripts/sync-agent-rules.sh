@@ -12,10 +12,11 @@
 #   - Windsurf (.windsurfrules)
 #   - GitHub Copilot (.github/copilot-instructions.md)
 #
-# Usage: ./scripts/sync-agent-rules.sh [--clean]
+# Usage: ./scripts/sync-agent-rules.sh [--clean] [--check]
 #
 # Options:
 #   --clean    Remove all generated files before regenerating
+#   --check    Check if files are out of date (for CI)
 
 set -e
 
@@ -23,6 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 AI_DIR="$PROJECT_ROOT/.ai"
 RULES_DIR="$AI_DIR/rules"
+CHECKSUM_FILE="$AI_DIR/.rules-checksum"
 
 # Colors for output
 RED='\033[0;31m'
@@ -42,6 +44,34 @@ if [ ! -d "$AI_DIR" ]; then
     exit 1
 fi
 
+# Calculate checksum of all source files
+calculate_checksum() {
+    find "$RULES_DIR" -name "*.md" -type f -exec cat {} \; 2>/dev/null | sha256sum | cut -d' ' -f1
+}
+
+# Get current checksum
+CURRENT_CHECKSUM=$(calculate_checksum)
+GENERATION_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+GENERATION_TIME_HUMAN=$(date "+%B %d, %Y at %H:%M:%S %Z")
+
+# Check mode - just verify if files are up to date
+if [ "$1" = "--check" ]; then
+    if [ -f "$CHECKSUM_FILE" ]; then
+        STORED_CHECKSUM=$(cat "$CHECKSUM_FILE")
+        if [ "$CURRENT_CHECKSUM" = "$STORED_CHECKSUM" ]; then
+            log_success "Agent rule files are up to date."
+            exit 0
+        else
+            log_error "Agent rule files are OUT OF DATE!"
+            log_info "Run 'npm run sync-agent-rules' to update."
+            exit 1
+        fi
+    else
+        log_error "No checksum file found. Run 'npm run sync-agent-rules' first."
+        exit 1
+    fi
+fi
+
 # Clean option
 if [ "$1" = "--clean" ]; then
     log_info "Cleaning generated files..."
@@ -51,20 +81,39 @@ if [ "$1" = "--clean" ]; then
     rm -f "$PROJECT_ROOT/.windsurfrules"
     rm -rf "$PROJECT_ROOT/.antigravity"
     rm -f "$PROJECT_ROOT/.github/copilot-instructions.md"
+    rm -f "$CHECKSUM_FILE"
     # Note: We don't clean .cursor/rules as it may have user-specific rules
     log_success "Cleaned generated files."
 fi
 
+# Generate the sync status header
+generate_header() {
+    local agent_name="$1"
+    cat << EOF
+# ${agent_name} - Project Instructions
+
+> **⚠️ AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY**
+>
+> This file is generated from \`.ai/rules/\`. To modify:
+> 1. Edit files in \`.ai/rules/\`
+> 2. Run \`npm run sync-agent-rules\`
+>
+> **Generated:** ${GENERATION_TIME_HUMAN}
+> **Source Checksum:** \`${CURRENT_CHECKSUM:0:12}...\`
+>
+> ---
+> **🤖 AGENT INSTRUCTION:** If you modify any files in \`.ai/rules/\`, please run:
+> \`\`\`bash
+> npm run sync-agent-rules
+> \`\`\`
+> This ensures all IDE/agent instruction files stay synchronized.
+> ---
+
+EOF
+}
+
 # Function to concatenate all rule files
 concatenate_rules() {
-    local header="$1"
-    local include_frontmatter="$2"
-    
-    if [ -n "$header" ]; then
-        echo "$header"
-        echo ""
-    fi
-    
     # Sort files by name to ensure consistent order
     for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
         if [ -f "$file" ]; then
@@ -85,27 +134,28 @@ create_mdc_file() {
     
     cat > "$dest" << EOF
 ---
-description: $description
-alwaysApply: $always_apply
+description: ${description}
+alwaysApply: ${always_apply}
+generatedAt: "${GENERATION_TIME}"
+sourceChecksum: "${CURRENT_CHECKSUM:0:12}"
 ---
+
+> ⚠️ AUTO-GENERATED from \`.ai/rules/\` - Run \`npm run sync-agent-rules\` after editing source files.
 
 EOF
     cat "$source" >> "$dest"
 }
 
 log_info "Syncing agent rules from .ai/ to IDE-specific locations..."
+log_info "Source checksum: ${CURRENT_CHECKSUM:0:12}..."
 
 # ============================================
 # 1. CLAUDE.md (Claude Code)
 # ============================================
 log_info "Generating CLAUDE.md..."
 {
-    echo "# CLAUDE.md - Project Instructions for Claude"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "CLAUDE.md"
+    concatenate_rules
 } > "$PROJECT_ROOT/CLAUDE.md"
 log_success "Generated CLAUDE.md"
 
@@ -114,12 +164,8 @@ log_success "Generated CLAUDE.md"
 # ============================================
 log_info "Generating GEMINI.md..."
 {
-    echo "# GEMINI.md - Project Instructions for Gemini"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "GEMINI.md"
+    concatenate_rules
 } > "$PROJECT_ROOT/GEMINI.md"
 log_success "Generated GEMINI.md"
 
@@ -128,6 +174,9 @@ log_success "Generated GEMINI.md"
 # ============================================
 log_info "Generating .cursor/rules/*.mdc files..."
 mkdir -p "$PROJECT_ROOT/.cursor/rules"
+
+# Remove old generated files (those starting with numbers)
+rm -f "$PROJECT_ROOT/.cursor/rules/"[0-9]*.mdc
 
 # Generate individual .mdc files for each rule
 for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
@@ -148,12 +197,8 @@ log_success "Generated .cursor/rules/*.mdc files"
 log_info "Generating .antigravity/rules.md..."
 mkdir -p "$PROJECT_ROOT/.antigravity"
 {
-    echo "# Antigravity Rules"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "Antigravity Rules"
+    concatenate_rules
 } > "$PROJECT_ROOT/.antigravity/rules.md"
 log_success "Generated .antigravity/rules.md"
 
@@ -162,12 +207,8 @@ log_success "Generated .antigravity/rules.md"
 # ============================================
 log_info "Generating .clinerules..."
 {
-    echo "# Cline Rules"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "Cline Rules"
+    concatenate_rules
 } > "$PROJECT_ROOT/.clinerules"
 log_success "Generated .clinerules"
 
@@ -176,12 +217,8 @@ log_success "Generated .clinerules"
 # ============================================
 log_info "Generating .windsurfrules..."
 {
-    echo "# Windsurf Rules"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "Windsurf Rules"
+    concatenate_rules
 } > "$PROJECT_ROOT/.windsurfrules"
 log_success "Generated .windsurfrules"
 
@@ -191,14 +228,16 @@ log_success "Generated .windsurfrules"
 log_info "Generating .github/copilot-instructions.md..."
 mkdir -p "$PROJECT_ROOT/.github"
 {
-    echo "# GitHub Copilot Instructions"
-    echo ""
-    echo "> This file is auto-generated from .ai/rules/. Edit files there instead."
-    echo "> Run \`./scripts/sync-agent-rules.sh\` to regenerate."
-    echo ""
-    concatenate_rules "" "false"
+    generate_header "GitHub Copilot Instructions"
+    concatenate_rules
 } > "$PROJECT_ROOT/.github/copilot-instructions.md"
 log_success "Generated .github/copilot-instructions.md"
+
+# ============================================
+# Save checksum for future comparison
+# ============================================
+echo "$CURRENT_CHECKSUM" > "$CHECKSUM_FILE"
+log_success "Saved checksum to .ai/.rules-checksum"
 
 # ============================================
 # Summary
@@ -216,5 +255,7 @@ echo "  - .windsurfrules         (Windsurf)"
 echo "  - .github/copilot-instructions.md (GitHub Copilot)"
 echo ""
 echo "Source of truth: .ai/rules/"
+echo "Generated at:    $GENERATION_TIME_HUMAN"
+echo "Checksum:        ${CURRENT_CHECKSUM:0:12}..."
 echo ""
-log_info "Tip: Add a pre-commit hook to run this script automatically!"
+log_info "Tip: Run 'npm run sync-agent-rules -- --check' in CI to verify files are up to date."
