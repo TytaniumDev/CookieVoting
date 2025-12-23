@@ -12,11 +12,12 @@
 #   - Windsurf (.windsurfrules)
 #   - GitHub Copilot (.github/copilot-instructions.md)
 #
-# Usage: ./scripts/sync-agent-rules.sh [--clean] [--check]
+# Usage: ./scripts/sync-agent-rules.sh [--clean] [--check] [--auto]
 #
 # Options:
 #   --clean    Remove all generated files before regenerating
-#   --check    Check if files are out of date (for CI)
+#   --check    Check if files are out of date (for CI, exits with error if outdated)
+#   --auto     Only sync if files have changed (fast, for use in pre-hooks)
 
 set -e
 
@@ -38,10 +39,23 @@ log_success() { echo -e "${GREEN}✓${NC} $1"; }
 log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 log_error() { echo -e "${RED}✗${NC} $1"; }
 
-# Check if .ai directory exists
-if [ ! -d "$AI_DIR" ]; then
-    log_error ".ai directory not found. Please create it first."
-    exit 1
+# Check if .ai directory exists - silently skip if not (for fresh clones)
+if [ ! -d "$AI_DIR" ] || [ ! -d "$RULES_DIR" ]; then
+    if [ "$1" != "--auto" ]; then
+        log_error ".ai/rules directory not found. Please create it first."
+        exit 1
+    fi
+    # In auto mode, silently exit if no rules directory
+    exit 0
+fi
+
+# Check if there are any rule files
+RULE_COUNT=$(find "$RULES_DIR" -name "*.md" -type f 2>/dev/null | wc -l)
+if [ "$RULE_COUNT" -eq 0 ]; then
+    if [ "$1" != "--auto" ]; then
+        log_warn "No rule files found in .ai/rules/"
+    fi
+    exit 0
 fi
 
 # Calculate checksum of all source files
@@ -53,6 +67,19 @@ calculate_checksum() {
 CURRENT_CHECKSUM=$(calculate_checksum)
 GENERATION_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 GENERATION_TIME_HUMAN=$(date "+%B %d, %Y at %H:%M:%S %Z")
+
+# Auto mode - only sync if checksum has changed (fast path for pre-hooks)
+if [ "$1" = "--auto" ]; then
+    if [ -f "$CHECKSUM_FILE" ]; then
+        STORED_CHECKSUM=$(cat "$CHECKSUM_FILE")
+        if [ "$CURRENT_CHECKSUM" = "$STORED_CHECKSUM" ]; then
+            # Files are up to date, nothing to do
+            exit 0
+        fi
+    fi
+    # Checksum changed or doesn't exist - do a full sync
+    log_info "Agent rules changed, syncing..."
+fi
 
 # Check mode - just verify if files are up to date
 if [ "$1" = "--check" ]; then
@@ -94,20 +121,9 @@ generate_header() {
 
 > **⚠️ AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY**
 >
-> This file is generated from \`.ai/rules/\`. To modify:
-> 1. Edit files in \`.ai/rules/\`
-> 2. Run \`npm run sync-agent-rules\`
+> **Source:** \`.ai/rules/\` — Edit files there, then run \`npm run dev\` or \`npm run sync-agent-rules\`
 >
-> **Generated:** ${GENERATION_TIME_HUMAN}
-> **Source Checksum:** \`${CURRENT_CHECKSUM:0:12}...\`
->
-> ---
-> **🤖 AGENT INSTRUCTION:** If you modify any files in \`.ai/rules/\`, please run:
-> \`\`\`bash
-> npm run sync-agent-rules
-> \`\`\`
-> This ensures all IDE/agent instruction files stay synchronized.
-> ---
+> **Last synced:** ${GENERATION_TIME_HUMAN} · Checksum: \`${CURRENT_CHECKSUM:0:12}\`
 
 EOF
 }
@@ -140,7 +156,7 @@ generatedAt: "${GENERATION_TIME}"
 sourceChecksum: "${CURRENT_CHECKSUM:0:12}"
 ---
 
-> ⚠️ AUTO-GENERATED from \`.ai/rules/\` - Run \`npm run sync-agent-rules\` after editing source files.
+> ⚠️ Auto-generated from \`.ai/rules/\` — Syncs automatically on \`npm run dev\`
 
 EOF
     cat "$source" >> "$dest"

@@ -2,20 +2,9 @@
 
 > **⚠️ AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY**
 >
-> This file is generated from `.ai/rules/`. To modify:
-> 1. Edit files in `.ai/rules/`
-> 2. Run `npm run sync-agent-rules`
+> **Source:** `.ai/rules/` — Edit files there, then run `npm run dev` or `npm run sync-agent-rules`
 >
-> **Generated:** December 23, 2025 at 00:05:46 UTC
-> **Source Checksum:** `1d0b4e6bbbfb...`
->
-> ---
-> **🤖 AGENT INSTRUCTION:** If you modify any files in `.ai/rules/`, please run:
-> ```bash
-> npm run sync-agent-rules
-> ```
-> This ensures all IDE/agent instruction files stay synchronized.
-> ---
+> **Last synced:** December 23, 2025 at 00:08:28 UTC · Checksum: `1d0b4e6bbbfb`
 
 # Project Guidelines & Standards
 

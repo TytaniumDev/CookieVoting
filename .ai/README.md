@@ -4,11 +4,13 @@ This directory is the **single source of truth** for all AI agent/IDE instructio
 
 ## Quick Start
 
+**Files sync automatically!** Just edit files in `.ai/rules/` and run `npm run dev` — the sync happens automatically via a pre-hook.
+
 ```bash
-# Edit rules in .ai/rules/, then sync to all IDEs:
+# Manual sync (if needed):
 npm run sync-agent-rules
 
-# Check if files are up to date (useful in CI):
+# Check if files are up to date (for CI):
 npm run sync-agent-rules:check
 ```
 
@@ -56,11 +58,10 @@ The `.rules-checksum` file stores the full checksum for the `--check` option.
 ### Adding/Editing Rules
 
 1. Edit files in `.ai/rules/`
-2. Run the sync script:
-   ```bash
-   npm run sync-agent-rules
-   ```
+2. Run `npm run dev` (sync happens automatically) or `npm run sync-agent-rules`
 3. Commit all generated files
+
+The sync is hooked into `npm run dev` and `npm run build`, so you don't need to remember to run it manually!
 
 ### File Naming Convention
 
@@ -104,9 +105,17 @@ The sync script generates these files (all auto-generated, do not edit directly)
 2. **One topic per file** - Makes it easier to enable/disable specific rules
 3. **Keep files focused** - Under 200 lines ideally
 
-## Automation Options
+## Automation
 
-### Pre-commit Hook
+### Built-in Hooks (Already Configured!)
+
+The sync script runs automatically before:
+- `npm run dev` (via `predev` hook)
+- `npm run build` (via `prebuild` hook)
+
+It uses `--auto` mode which only syncs if the source checksum has changed, so it's fast!
+
+### Pre-commit Hook (Optional)
 
 Add to `.husky/pre-commit` (if using Husky):
 ```bash
@@ -120,14 +129,6 @@ Add to your CI pipeline to ensure generated files are up-to-date:
 ```yaml
 - name: Check agent rules are synced
   run: npm run sync-agent-rules:check
-```
-
-Or with diff check:
-```yaml
-- name: Check agent rules are synced
-  run: |
-    npm run sync-agent-rules
-    git diff --exit-code
 ```
 
 ## Supported Agents

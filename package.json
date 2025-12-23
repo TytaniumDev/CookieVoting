@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "bash scripts/sync-agent-rules.sh --auto",
     "build": "tsc --noEmit && vite build",
+    "prebuild": "bash scripts/sync-agent-rules.sh --auto",
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
