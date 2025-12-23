@@ -14,6 +14,7 @@ const CookieDetectionTest = lazy(() => import('./pages/CookieDetectionTest'));
 const CookieDetectionDebug = lazy(() => import('./pages/CookieDetectionDebug'));
 const ImageDetectionAudit = lazy(() => import('./pages/ImageDetectionAudit'));
 const CookieDetectionVisualizer = lazy(() => import('./pages/CookieDetectionVisualizer'));
+const DetectionComparison = lazy(() => import('./pages/DetectionComparison'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -120,6 +121,14 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <CookieDetectionVisualizer />
+              </Suspense>
+            }
+          />
+          <Route
+            path="detection-comparison"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DetectionComparison />
               </Suspense>
             }
           />
