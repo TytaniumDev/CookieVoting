@@ -1,4 +1,4 @@
-# GEMINI.md - Project Instructions for Gemini
+# Antigravity Rules
 
 > This file is auto-generated from .ai/rules/. Edit files there instead.
 > Run `./scripts/sync-agent-rules.sh` to regenerate.

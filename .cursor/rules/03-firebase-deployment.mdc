@@ -1,0 +1,65 @@
+---
+description: Firebase Deployment Rules
+alwaysApply: false
+---
+
+# Firebase Deployment Rules
+
+## When to Deploy
+
+The agent should automatically deploy Firebase resources when:
+
+### 1. Function Source Code Changes (`functions/src/`)
+- After any modification to `.ts` files in `functions/src/`
+- Command: `npm run firebase:deploy:functions`
+
+### 2. Function Dependencies Changes (`functions/package.json`)
+- After any modification to `functions/package.json` (dependencies added/updated)
+- Command: `npm run firebase:deploy:functions`
+
+### 3. Firestore Rules Changes (`firebase/firestore.rules`)
+- After any modification to `firestore.rules`
+- Command: `npm run firebase:deploy:firestore`
+
+### 4. Storage Rules Changes (`firebase/storage.rules`)
+- After any modification to `storage.rules`
+- Command: `npm run firebase:deploy:storage`
+
+## Deployment Process
+
+### Before Deploying:
+- Verify the functions compile successfully (TypeScript compilation)
+- Check for any syntax errors
+- Ensure changes are intentional and correct
+
+### Available npm Scripts:
+- `npm run firebase:deploy:functions` - Build and deploy Firebase Functions
+- `npm run firebase:deploy:rules` - Deploy both Firestore and Storage rules
+- `npm run firebase:deploy:firestore` - Deploy only Firestore rules
+- `npm run firebase:deploy:storage` - Deploy only Storage rules
+
+### After Deploying:
+- Verify deployment success in output
+- Note any warnings or errors
+- Inform user of deployment completion
+
+## Important Notes
+
+### Firestore Rules Syntax Restrictions:
+- Firestore rules do NOT support `if` statements (use ternary operators instead)
+- No `const` or `let` declarations (use direct expressions)
+- Multi-line conditionals (use `&&` and `||` operators)
+
+### What NOT to Deploy:
+- ❌ **DON'T deploy** when only documentation files are changed (`.md` files)
+- ❌ **DON'T deploy** when only frontend code is changed (`src/` outside of functions)
+- ❌ **DON'T deploy** when only test files are changed (unless they affect function logic)
+
+## Error Handling
+
+If deployment fails:
+1. Read the error message carefully
+2. Check TypeScript compilation errors
+3. Fix syntax/compilation errors
+4. Retry deployment
+5. If persistent issues, inform user with specific error details
