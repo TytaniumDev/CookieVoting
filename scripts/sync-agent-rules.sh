@@ -335,3 +335,45 @@ echo "Generated at:    $GENERATION_TIME_HUMAN"
 echo "Checksum:        ${CURRENT_CHECKSUM:0:12}..."
 echo ""
 log_info "Tip: Run 'npm run sync-agent-rules -- --check' in CI to verify files are up to date."
+
+# ============================================
+# Check for files over 200 lines
+# ============================================
+MAX_LINES=200
+OVERSIZED_FILES=()
+
+for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
+    line_count=$(wc -l < "$file")
+    if [ "$line_count" -gt "$MAX_LINES" ]; then
+        OVERSIZED_FILES+=("$file:$line_count")
+    fi
+done
+
+if [ ${#OVERSIZED_FILES[@]} -gt 0 ]; then
+    echo ""
+    echo "============================================"
+    echo -e "${RED}⚠️  WARNING: FILES EXCEED 200 LINE LIMIT ⚠️${NC}"
+    echo "============================================"
+    echo ""
+    echo "The following files exceed the 200 line maximum:"
+    echo ""
+    for entry in "${OVERSIZED_FILES[@]}"; do
+        filepath="${entry%:*}"
+        lines="${entry##*:}"
+        filename=$(basename "$filepath")
+        over_by=$((lines - MAX_LINES))
+        echo -e "  ${RED}✗${NC} ${filename}: ${lines} lines (${over_by} over limit)"
+    done
+    echo ""
+    echo "Many AI agents have context limits. Please split these files"
+    echo "into smaller, focused files under 200 lines each."
+    echo ""
+    echo "Example: Split 'code-quality.md' into:"
+    echo "  - code-quality.md (general standards)"
+    echo "  - react-patterns.md (React-specific)"
+    echo "  - firebase-patterns.md (Firebase-specific)"
+    echo ""
+    echo "See ai/README.md for more guidance on the 200 line limit."
+    echo "============================================"
+    echo ""
+fi

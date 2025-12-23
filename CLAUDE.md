@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 08:49:34 UTC · Checksum: `26bc8d37f26f`
+> **Last synced:** December 23, 2025 at 08:53:58 UTC · Checksum: `26bc8d37f26f`
 
 ## 🤖 Instructions for AI Agents
 
