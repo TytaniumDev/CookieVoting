@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Standards for building, testing, and documenting UI components in Storybook.
+---
+
 # UI Component Creation Standards
 
 ## Core Principles of Reusable React Components

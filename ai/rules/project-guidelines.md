@@ -1,3 +1,8 @@
+---
+trigger: always
+description: Core project guidelines and development standards for the CookieVoting project.
+---
+
 # Project Guidelines & Standards
 
 This document outlines the core development practices for the CookieVoting project.

@@ -1,4 +1,9 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/04-testing-strategy.md` instead.
+> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/testing-strategy.md` instead.
+
+---
+trigger: model_decision
+description: Rules for creating or modifying tests following the project's testing strategy.
+---
 
 # Testing Strategy
 

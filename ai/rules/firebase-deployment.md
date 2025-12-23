@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Instructions for deploying Firebase Cloud Functions and security rules.
+---
+
 # Firebase Deployment Rules
 
 ## When to Deploy

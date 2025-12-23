@@ -1,4 +1,9 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/03-firebase-deployment.md` instead.
+> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/firebase-deployment.md` instead.
+
+---
+trigger: model_decision
+description: Instructions for deploying Firebase Cloud Functions and security rules.
+---
 
 # Firebase Deployment Rules
 

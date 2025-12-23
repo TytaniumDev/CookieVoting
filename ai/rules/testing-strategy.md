@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Rules for creating or modifying tests following the project's testing strategy.
+---
+
 # Testing Strategy
 
 Rules for creating or modifying tests following standard practices.

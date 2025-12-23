@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 00:29:01 UTC · Checksum: `1d0b4e6bbbfb`
+> **Last synced:** December 23, 2025 at 00:43:19 UTC · Checksum: `ab98c771a066`
 
 ## 🤖 Instructions for AI Agents
 
@@ -14,11 +14,7 @@
 2. **After editing:** Run `npm run dev` or `npm run sync-agent-rules` to regenerate all agent files
 3. **If you notice recurring issues:** Please proactively update the relevant file in `ai/rules/` to prevent the issue from happening again. Add new rules, clarify existing ones, or document patterns that help.
 
-The source files are:
-- `ai/rules/01-project-guidelines.md` - Core project standards
-- `ai/rules/02-ui-components.md` - UI/React component rules  
-- `ai/rules/03-firebase-deployment.md` - Firebase deployment rules
-- `ai/rules/04-testing-strategy.md` - Testing requirements
+**Source files:** All `.md` files in `ai/rules/` directory.
 
 **When to update the rules:**
 - You keep making the same mistake → Add a rule to prevent it
@@ -26,6 +22,79 @@ The source files are:
 - You discover a new best practice → Document it
 - The user corrects you on something → Add it as a rule
 
+---
+
+---
+trigger: model_decision
+description: Instructions for deploying Firebase Cloud Functions and security rules.
+---
+
+# Firebase Deployment Rules
+
+## When to Deploy
+
+The agent should automatically deploy Firebase resources when:
+
+### 1. Function Source Code Changes (`functions/src/`)
+- After any modification to `.ts` files in `functions/src/`
+- Command: `npm run firebase:deploy:functions`
+
+### 2. Function Dependencies Changes (`functions/package.json`)
+- After any modification to `functions/package.json` (dependencies added/updated)
+- Command: `npm run firebase:deploy:functions`
+
+### 3. Firestore Rules Changes (`firebase/firestore.rules`)
+- After any modification to `firestore.rules`
+- Command: `npm run firebase:deploy:firestore`
+
+### 4. Storage Rules Changes (`firebase/storage.rules`)
+- After any modification to `storage.rules`
+- Command: `npm run firebase:deploy:storage`
+
+## Deployment Process
+
+### Before Deploying:
+- Verify the functions compile successfully (TypeScript compilation)
+- Check for any syntax errors
+- Ensure changes are intentional and correct
+
+### Available npm Scripts:
+- `npm run firebase:deploy:functions` - Build and deploy Firebase Functions
+- `npm run firebase:deploy:rules` - Deploy both Firestore and Storage rules
+- `npm run firebase:deploy:firestore` - Deploy only Firestore rules
+- `npm run firebase:deploy:storage` - Deploy only Storage rules
+
+### After Deploying:
+- Verify deployment success in output
+- Note any warnings or errors
+- Inform user of deployment completion
+
+## Important Notes
+
+### Firestore Rules Syntax Restrictions:
+- Firestore rules do NOT support `if` statements (use ternary operators instead)
+- No `const` or `let` declarations (use direct expressions)
+- Multi-line conditionals (use `&&` and `||` operators)
+
+### What NOT to Deploy:
+- ❌ **DON'T deploy** when only documentation files are changed (`.md` files)
+- ❌ **DON'T deploy** when only frontend code is changed (`src/` outside of functions)
+- ❌ **DON'T deploy** when only test files are changed (unless they affect function logic)
+
+## Error Handling
+
+If deployment fails:
+1. Read the error message carefully
+2. Check TypeScript compilation errors
+3. Fix syntax/compilation errors
+4. Retry deployment
+5. If persistent issues, inform user with specific error details
+
+---
+
+---
+trigger: always
+description: Core project guidelines and development standards for the CookieVoting project.
 ---
 
 # Project Guidelines & Standards
@@ -101,6 +170,69 @@ Follow the 5-step process:
 - **Admin Access**: The seeding script automatically adds `test@local.dev` (UID: `test-user-default`) to `system/admins`. Use this account for admin functionality.
 - **Connectivity (Windows)**: Use `127.0.0.1` instead of `localhost` in Firebase configuration to avoid IPv6 connection timeouts.
 
+---
+
+---
+trigger: model_decision
+description: Rules for creating or modifying tests following the project's testing strategy.
+---
+
+# Testing Strategy
+
+Rules for creating or modifying tests following standard practices.
+
+## Testing Pyramid & Philosophy
+
+Follow the modified testing pyramid adapted for the Firebase + React stack:
+
+1. **Static Analysis**: First line of defense.
+2. **Unit Tests (`src/lib`, `functions`)**: Fast, isolated logic tests using Vitest.
+3. **Component Tests (Storybook)**: **REQUIRED** for UI. Use `play` functions for user interactions.
+4. **Integration Tests (Firebase Emulators)**: Verify backend interactions using Jest.
+5. **E2E Tests (Playwright)**: Critical user full-stack journeys.
+
+## Rules & Standards
+
+### Unit Tests
+- **Scope**: `src/lib/`, `src/hooks/`, `functions/src/`.
+- **Mocking**: Mock Firebase calls. Use Integration tests for real behavior.
+- **Coverage Goal**: Aim for high coverage on utility logic.
+
+### Component Interaction Tests (Storybook)
+- **Tool**: Storybook + `@storybook/addon-interactions`.
+- **Requirement**: Every complex interactive component MUST have a `ValidUserJourney` story simulating a successful interaction.
+- **Accessibility**: Use `storybook-addon-a11y`.
+
+### Integration Tests
+- **Environment**: Must run against `npm run emulators:start`.
+- **Scope**: Security rules, triggers, complex queries.
+
+### E2E Tests
+- **Tool**: Playwright.
+- **Focus**: Critical user journeys (e.g., Voting Flow, Admin Event Setup).
+
+## Verification Commands
+
+- **Unit/Coverage**: `npm run test:coverage`
+- **Storybook**: `npm run test-storybook`
+- **Integration**: `npm run test:integration`
+- **E2E**: `npm run test:e2e`
+- **All**: `npm run verify`
+
+## Verification Workflow
+
+1. **Start Emulators**: Ensure emulators are running with seed data.
+   - Run: `npm run emulators:start:seed`
+2. **Open Application**: Navigate to `http://localhost:5173/` in the built-in browser.
+3. **Sign In**: Click "Sign in with Test User" and verify redirect to `/admin`.
+4. **Test Feature**: Perform actions relevant to the changes. Verify UI updates, data persistence, and lack of console errors.
+5. **Debug**: Use browser dev tools (console messages) to identify and fix issues before re-testing.
+
+---
+
+---
+trigger: model_decision
+description: Standards for building, testing, and documenting UI components in Storybook.
 ---
 
 # UI Component Creation Standards
@@ -192,122 +324,6 @@ components/
 - **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
 - **Focus Management**: Properly manage focus states and focus trapping in modals
 - **Color Contrast**: Meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
-
----
-
-# Firebase Deployment Rules
-
-## When to Deploy
-
-The agent should automatically deploy Firebase resources when:
-
-### 1. Function Source Code Changes (`functions/src/`)
-- After any modification to `.ts` files in `functions/src/`
-- Command: `npm run firebase:deploy:functions`
-
-### 2. Function Dependencies Changes (`functions/package.json`)
-- After any modification to `functions/package.json` (dependencies added/updated)
-- Command: `npm run firebase:deploy:functions`
-
-### 3. Firestore Rules Changes (`firebase/firestore.rules`)
-- After any modification to `firestore.rules`
-- Command: `npm run firebase:deploy:firestore`
-
-### 4. Storage Rules Changes (`firebase/storage.rules`)
-- After any modification to `storage.rules`
-- Command: `npm run firebase:deploy:storage`
-
-## Deployment Process
-
-### Before Deploying:
-- Verify the functions compile successfully (TypeScript compilation)
-- Check for any syntax errors
-- Ensure changes are intentional and correct
-
-### Available npm Scripts:
-- `npm run firebase:deploy:functions` - Build and deploy Firebase Functions
-- `npm run firebase:deploy:rules` - Deploy both Firestore and Storage rules
-- `npm run firebase:deploy:firestore` - Deploy only Firestore rules
-- `npm run firebase:deploy:storage` - Deploy only Storage rules
-
-### After Deploying:
-- Verify deployment success in output
-- Note any warnings or errors
-- Inform user of deployment completion
-
-## Important Notes
-
-### Firestore Rules Syntax Restrictions:
-- Firestore rules do NOT support `if` statements (use ternary operators instead)
-- No `const` or `let` declarations (use direct expressions)
-- Multi-line conditionals (use `&&` and `||` operators)
-
-### What NOT to Deploy:
-- ❌ **DON'T deploy** when only documentation files are changed (`.md` files)
-- ❌ **DON'T deploy** when only frontend code is changed (`src/` outside of functions)
-- ❌ **DON'T deploy** when only test files are changed (unless they affect function logic)
-
-## Error Handling
-
-If deployment fails:
-1. Read the error message carefully
-2. Check TypeScript compilation errors
-3. Fix syntax/compilation errors
-4. Retry deployment
-5. If persistent issues, inform user with specific error details
-
----
-
-# Testing Strategy
-
-Rules for creating or modifying tests following standard practices.
-
-## Testing Pyramid & Philosophy
-
-Follow the modified testing pyramid adapted for the Firebase + React stack:
-
-1. **Static Analysis**: First line of defense.
-2. **Unit Tests (`src/lib`, `functions`)**: Fast, isolated logic tests using Vitest.
-3. **Component Tests (Storybook)**: **REQUIRED** for UI. Use `play` functions for user interactions.
-4. **Integration Tests (Firebase Emulators)**: Verify backend interactions using Jest.
-5. **E2E Tests (Playwright)**: Critical user full-stack journeys.
-
-## Rules & Standards
-
-### Unit Tests
-- **Scope**: `src/lib/`, `src/hooks/`, `functions/src/`.
-- **Mocking**: Mock Firebase calls. Use Integration tests for real behavior.
-- **Coverage Goal**: Aim for high coverage on utility logic.
-
-### Component Interaction Tests (Storybook)
-- **Tool**: Storybook + `@storybook/addon-interactions`.
-- **Requirement**: Every complex interactive component MUST have a `ValidUserJourney` story simulating a successful interaction.
-- **Accessibility**: Use `storybook-addon-a11y`.
-
-### Integration Tests
-- **Environment**: Must run against `npm run emulators:start`.
-- **Scope**: Security rules, triggers, complex queries.
-
-### E2E Tests
-- **Tool**: Playwright.
-- **Focus**: Critical user journeys (e.g., Voting Flow, Admin Event Setup).
-
-## Verification Commands
-
-- **Unit/Coverage**: `npm run test:coverage`
-- **Storybook**: `npm run test-storybook`
-- **Integration**: `npm run test:integration`
-- **E2E**: `npm run test:e2e`
-- **All**: `npm run verify`
-
-## Verification Workflow
-
-1. **Start Emulators**: Ensure emulators are running with seed data.
-   - Run: `npm run emulators:start:seed`
-2. **Open Application**: Navigate to `http://localhost:5173/` in the built-in browser.
-3. **Sign In**: Click "Sign in with Test User" and verify redirect to `/admin`.
-4. **Test Feature**: Perform actions relevant to the changes. Verify UI updates, data persistence, and lack of console errors.
-5. **Debug**: Use browser dev tools (console messages) to identify and fix issues before re-testing.
 
 ---
 

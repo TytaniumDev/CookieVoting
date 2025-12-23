@@ -36,11 +36,11 @@ Instead of maintaining 7+ duplicate files, we maintain one source and generate t
 ai/
 ├── README.md           # This file
 ├── .rules-checksum     # SHA256 of source files (for change detection)
-├── rules/              # Source instruction files
-│   ├── 01-project-guidelines.md
-│   ├── 02-ui-components.md
-│   ├── 03-firebase-deployment.md
-│   └── 04-testing-strategy.md
+├── rules/              # Source instruction files (add any .md file here)
+│   ├── project-guidelines.md
+│   ├── ui-components.md
+│   ├── firebase-deployment.md
+│   └── testing-strategy.md
 └── context/            # Additional context files (optional)
 ```
 
@@ -65,10 +65,7 @@ The sync is hooked into `npm run dev` and `npm run build`, so you don't need to 
 
 ### File Naming Convention
 
-Files in `ai/rules/` are processed in alphabetical order. Use numeric prefixes to control order:
-- `01-project-guidelines.md`
-- `02-ui-components.md`
-- etc.
+Files in `ai/rules/` are processed in alphabetical order. Simply add any `.md` file to include it.
 
 ### Creating New Rule Files
 
