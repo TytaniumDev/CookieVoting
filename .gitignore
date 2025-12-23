@@ -44,3 +44,30 @@ storybook-static
 
 # Service Account Key (DO NOT COMMIT)
 service-account.json
+
+# Agent plans (temporary planning files)
+agent-plans/
+
+# ============================================
+# AI Agent Instruction Files (Generated)
+# ============================================
+# These files are auto-generated from .ai/rules/ by running:
+#   npm run sync-agent-rules
+#
+# You can choose to:
+# 1. TRACK them (default) - so collaborators don't need to run the script
+# 2. IGNORE them - uncomment the lines below if you prefer
+#
+# To ignore generated files, uncomment these lines:
+# CLAUDE.md
+# GEMINI.md
+# .clinerules
+# .windsurfrules
+# .antigravity/
+# .github/copilot-instructions.md
+# .cursor/rules/01-*.mdc
+# .cursor/rules/02-*.mdc
+# .cursor/rules/03-*.mdc
+# .cursor/rules/04-*.mdc
+
+# Note: ai/ is NOT a dotfile directory so all agents can write to it

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "bash scripts/sync-agent-rules.sh --auto",
     "build": "tsc --noEmit && vite build",
+    "prebuild": "bash scripts/sync-agent-rules.sh --auto",
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
@@ -44,7 +46,9 @@
     "detect:all-images": "node scripts/detect-all-images.js",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "verify": "node scripts/verify.js"
+    "verify": "node scripts/verify.js",
+    "sync-agent-rules": "bash scripts/sync-agent-rules.sh",
+    "sync-agent-rules:check": "bash scripts/sync-agent-rules.sh --check"
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.3",

@@ -1,0 +1,153 @@
+> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/code-quality.md` instead.
+
+---
+trigger: always
+description: Code quality standards for TypeScript, error handling, and maintainable code.
+---
+
+# Code Quality Standards
+
+## TypeScript Best Practices
+
+### Type Safety
+
+**Avoid `any`** - It defeats the purpose of TypeScript:
+
+```typescript
+// ❌ Bad
+function process(data: any) { ... }
+
+// ✅ Good - be specific
+function process(data: UserData) { ... }
+
+// ✅ Good - use unknown if truly unknown, then narrow
+function process(data: unknown) {
+  if (isUserData(data)) { /* TypeScript knows it's UserData */ }
+}
+```
+
+**Use strict null checks:**
+
+```typescript
+// ❌ Bad - might crash
+function getName(user: User) {
+  return user.profile.name; // What if profile is null?
+}
+
+// ✅ Good - handle null cases
+function getName(user: User) {
+  return user.profile?.name ?? 'Anonymous';
+}
+```
+
+### Type Definitions
+
+**Define interfaces for all data shapes:**
+
+```typescript
+interface Event {
+  id: string;
+  name: string;
+  date: Date;
+  status: 'draft' | 'active' | 'completed';
+}
+
+function createEvent(data: Omit<Event, 'id'>): Event { ... }
+function updateEvent(id: string, updates: Partial<Event>): void { ... }
+```
+
+**Prefer union types over enums for simple cases:**
+
+```typescript
+// ✅ Preferred - simpler, better tree-shaking
+type Status = 'loading' | 'success' | 'error';
+```
+
+## Error Handling
+
+**Always handle promise rejections:**
+
+```typescript
+// ❌ Bad - unhandled rejection
+async function fetchUser(id: string) {
+  const user = await api.getUser(id);
+  return user;
+}
+
+// ✅ Good - explicit error handling
+async function fetchUser(id: string): Promise<User | null> {
+  try {
+    return await api.getUser(id);
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    return null;
+  }
+}
+```
+
+## Code Organization
+
+### Keep Functions Small
+
+```typescript
+// ❌ Bad - does too much
+function processOrder(order: Order) {
+  // validate, calculate, discount, notify... 200 lines
+}
+
+// ✅ Good - single responsibility
+function processOrder(order: Order) {
+  validateOrder(order);
+  const totals = calculateTotals(order);
+  const finalPrice = applyDiscounts(totals, order.coupons);
+  updateInventory(order.items);
+  notifyCustomer(order, finalPrice);
+}
+```
+
+### Early Returns
+
+```typescript
+// ❌ Bad - deeply nested
+function getDisplayName(user: User | null) {
+  if (user) {
+    if (user.profile) {
+      return user.profile.displayName || user.email;
+    }
+    return user.email;
+  }
+  return 'Guest';
+}
+
+// ✅ Good - flat with early returns
+function getDisplayName(user: User | null) {
+  if (!user) return 'Guest';
+  if (!user.profile) return user.email;
+  return user.profile.displayName || user.email;
+}
+```
+
+### Extract Constants
+
+```typescript
+// ❌ Bad - magic numbers
+if (cookies.length > 12) { ... }
+
+// ✅ Good - named constants
+const MAX_COOKIES_PER_BAKER = 12;
+if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
+```
+
+## Code Review Checklist
+
+### General
+- [ ] TypeScript compiles with no errors
+- [ ] No `any` types (or justified with comment)
+- [ ] Error cases are handled
+- [ ] Functions are small and focused
+- [ ] No console.log statements (except intentional logging)
+- [ ] No commented-out code
+
+### Testing
+- [ ] Tests added for new functionality
+- [ ] Storybook stories for new components
