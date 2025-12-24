@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import vision from '@google-cloud/vision';
 
 admin.initializeApp();
 
@@ -499,7 +500,7 @@ DETECTION PRIORITY:
   }
 
   // Validate and normalize the results
-  const validatedCookies: DetectedCookie[] = detectedCookies
+  const validatedCookies: DetectedCookie[] = (detectedCookies as RawCookieData[])
     .filter((cookie: RawCookieData, index: number) => {
       // Check if cookie is an object
       if (!cookie || typeof cookie !== 'object') {
@@ -540,30 +541,32 @@ DETECTION PRIORITY:
           );
         } else {
           try {
-            const filteredPolygon = (cookie.polygon as unknown[])
-              .filter((point: unknown, pointIndex: number) => {
-                const isValid =
-                  Array.isArray(point) &&
-                  point.length === 2 &&
-                  typeof point[0] === 'number' &&
-                  typeof point[1] === 'number' &&
-                  !isNaN(point[0]) &&
-                  !isNaN(point[1]);
-                if (!isValid) {
-                  console.warn(
-                    `[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`,
-                    point,
-                  );
-                }
-                return isValid;
-              })
-              .map(
-                (point: [number, number]) =>
-                  [Math.max(0, Math.min(100, point[0])), Math.max(0, Math.min(100, point[1]))] as [
-                    number,
-                    number,
-                  ],
-              );
+            const polygonPoints = cookie.polygon as unknown[];
+            const validPoints: Array<[number, number]> = [];
+            
+            polygonPoints.forEach((point: unknown, pointIndex: number) => {
+              const isValid =
+                Array.isArray(point) &&
+                point.length === 2 &&
+                typeof point[0] === 'number' &&
+                typeof point[1] === 'number' &&
+                !isNaN(point[0]) &&
+                !isNaN(point[1]);
+              if (!isValid) {
+                console.warn(
+                  `[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`,
+                  point,
+                );
+              } else {
+                const typedPoint = point as [number, number];
+                validPoints.push([
+                  Math.max(0, Math.min(100, typedPoint[0])),
+                  Math.max(0, Math.min(100, typedPoint[1])),
+                ]);
+              }
+            });
+            
+            const filteredPolygon = validPoints;
 
             // Ensure polygon has at least 3 points
             if (filteredPolygon.length >= 3) {
@@ -1087,6 +1090,356 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
     }
   },
 );
+
+// ============================================
+// CLOUD VISION API DETECTION (for comparison)
+// ============================================
+
+/**
+ * Interface for Vision API detection results
+ */
+interface VisionDetectionResult {
+  // Objects detected by object localization
+  objects: Array<{
+    name: string;
+    score: number;
+    boundingPoly: {
+      normalizedVertices: Array<{ x: number; y: number }>;
+    };
+  }>;
+  // Labels detected by label detection
+  labels: Array<{
+    description: string;
+    score: number;
+  }>;
+  // Converted cookie detections (for comparison with Gemini)
+  cookies: DetectedCookie[];
+}
+
+// Types for Vision API results
+interface VisionLocalizedObject {
+  name?: string | null;
+  score?: number | null;
+  boundingPoly?: {
+    normalizedVertices?: Array<{ x?: number | null; y?: number | null }> | null;
+  } | null;
+}
+
+interface VisionLabel {
+  description?: string | null;
+  score?: number | null;
+}
+
+/**
+ * Detects objects in an image using Google Cloud Vision API
+ * This function uses the pre-trained Vision API models to detect objects
+ * and returns both raw Vision API results and converted cookie format
+ */
+async function detectWithVisionAPI(imageUrl: string): Promise<VisionDetectionResult> {
+  console.log('[VisionAPI] Starting detection for image:', imageUrl);
+
+  // Create Vision API client
+  // When running in Firebase Functions, it uses the default service account
+  const client = new vision.ImageAnnotatorClient();
+
+  // Download the image first to ensure we can process it
+  console.log('[VisionAPI] Fetching image from URL');
+  const fetchResponse = await fetch(imageUrl);
+  if (!fetchResponse.ok) {
+    throw new Error(`Failed to fetch image: ${fetchResponse.status} ${fetchResponse.statusText}`);
+  }
+
+  const imageBuffer = await fetchResponse.arrayBuffer();
+  const imageBase64 = Buffer.from(imageBuffer).toString('base64');
+  console.log('[VisionAPI] Image downloaded, size:', imageBuffer.byteLength, 'bytes');
+
+  // Request object localization and label detection
+  console.log('[VisionAPI] Calling Vision API with object localization and label detection');
+  
+  // Use annotateImage for combined requests - more reliable
+  const [annotationResult] = await client.annotateImage({
+    image: { content: imageBase64 },
+    features: [
+      { type: 'OBJECT_LOCALIZATION', maxResults: 50 },
+      { type: 'LABEL_DETECTION', maxResults: 20 },
+    ],
+  });
+
+  const localizedObjects: VisionLocalizedObject[] = annotationResult.localizedObjectAnnotations || [];
+  const labels: VisionLabel[] = annotationResult.labelAnnotations || [];
+
+  console.log('[VisionAPI] Detected', localizedObjects.length, 'objects');
+  console.log('[VisionAPI] Detected', labels.length, 'labels');
+
+  // Log all detected objects
+  localizedObjects.forEach((obj: VisionLocalizedObject, i: number) => {
+    console.log(
+      `[VisionAPI] Object ${i + 1}: ${obj.name} (${((obj.score || 0) * 100).toFixed(1)}%)`,
+    );
+  });
+
+  // Log top labels
+  labels.slice(0, 10).forEach((label: VisionLabel, i: number) => {
+    console.log(
+      `[VisionAPI] Label ${i + 1}: ${label.description} (${((label.score || 0) * 100).toFixed(1)}%)`,
+    );
+  });
+
+  // Filter for food-related objects that could be cookies
+  // The Vision API may detect "Food", "Baked goods", "Snack", "Pastry", "Cookie", etc.
+  const foodKeywords = [
+    'food',
+    'cookie',
+    'cookies',
+    'baked goods',
+    'baked good',
+    'pastry',
+    'snack',
+    'dessert',
+    'treat',
+    'confectionery',
+    'bread',
+    'cake',
+  ];
+
+  const cookieLikeObjects = localizedObjects.filter((obj: VisionLocalizedObject) => {
+    const name = (obj.name || '').toLowerCase();
+    return foodKeywords.some((keyword) => name.includes(keyword));
+  });
+
+  console.log('[VisionAPI] Found', cookieLikeObjects.length, 'food-like objects');
+
+  // Convert Vision API results to our DetectedCookie format
+  const cookies: DetectedCookie[] = cookieLikeObjects.map((obj: VisionLocalizedObject) => {
+    const vertices = obj.boundingPoly?.normalizedVertices || [];
+
+    // Calculate bounding box from normalized vertices (0-1 range)
+    // Vision API returns normalized coordinates, we need percentages (0-100)
+    let minX = 100,
+      maxX = 0,
+      minY = 100,
+      maxY = 0;
+    vertices.forEach((v: { x?: number | null; y?: number | null }) => {
+      const x = (v.x || 0) * 100;
+      const y = (v.y || 0) * 100;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    });
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const centerX = minX + width / 2;
+    const centerY = minY + height / 2;
+
+    // Convert vertices to polygon format
+    const polygon: Array<[number, number]> = vertices.map((v: { x?: number | null; y?: number | null }) => [
+      (v.x || 0) * 100,
+      (v.y || 0) * 100,
+    ]);
+
+    return {
+      x: centerX,
+      y: centerY,
+      width,
+      height,
+      polygon: polygon.length >= 3 ? polygon : undefined,
+      confidence: obj.score || 0.5,
+    };
+  });
+
+  return {
+    objects: localizedObjects.map((obj: VisionLocalizedObject) => ({
+      name: obj.name || '',
+      score: obj.score || 0,
+      boundingPoly: {
+        normalizedVertices: (obj.boundingPoly?.normalizedVertices || []).map((v: { x?: number | null; y?: number | null }) => ({
+          x: v.x || 0,
+          y: v.y || 0,
+        })),
+      },
+    })),
+    labels: labels.map((label: VisionLabel) => ({
+      description: label.description || '',
+      score: label.score || 0,
+    })),
+    cookies,
+  };
+}
+
+/**
+ * Callable function to detect cookies using Cloud Vision API
+ * Returns both Vision API raw results and converted cookie format for comparison
+ */
+export const detectCookiesWithVision = functionsV2.https.onCall(
+  {
+    region: 'us-west1',
+    timeoutSeconds: 120,
+  },
+  async (request) => {
+    console.log('[FirebaseFunction] detectCookiesWithVision called');
+    console.log(
+      '[FirebaseFunction] Request auth:',
+      request.auth ? `User: ${request.auth.uid}` : 'No auth',
+    );
+
+    // Verify authentication
+    if (!request.auth) {
+      console.error('[FirebaseFunction] Authentication failed - no auth object');
+      throw new functionsV2.https.HttpsError(
+        'unauthenticated',
+        'User must be authenticated to detect cookies',
+      );
+    }
+
+    const { imageUrl } = request.data as { imageUrl: string };
+    console.log('[FirebaseFunction] Extracted imageUrl:', imageUrl);
+
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      console.error('[FirebaseFunction] Invalid imageUrl:', imageUrl, typeof imageUrl);
+      throw new functionsV2.https.HttpsError(
+        'invalid-argument',
+        'imageUrl is required and must be a string',
+      );
+    }
+
+    try {
+      console.log('[FirebaseFunction] Calling detectWithVisionAPI');
+      const result = await detectWithVisionAPI(imageUrl);
+
+      console.log('[FirebaseFunction] Vision API detection completed');
+      console.log('[FirebaseFunction] Objects found:', result.objects.length);
+      console.log('[FirebaseFunction] Labels found:', result.labels.length);
+      console.log('[FirebaseFunction] Cookies detected:', result.cookies.length);
+
+      return {
+        cookies: result.cookies,
+        count: result.cookies.length,
+        // Include raw Vision API results for analysis
+        rawResults: {
+          objects: result.objects,
+          labels: result.labels,
+        },
+        provider: 'vision-api',
+      };
+    } catch (error) {
+      console.error('[FirebaseFunction] Error detecting with Vision API:', error);
+      throw new functionsV2.https.HttpsError(
+        'internal',
+        'Failed to detect cookies with Vision API',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  },
+);
+
+/**
+ * Compare both Gemini and Vision API detection results for the same image
+ * This is useful for evaluating which approach works better
+ */
+export const compareDetectionMethods = functionsV2.https.onCall(
+  {
+    region: 'us-west1',
+    secrets: ['GEMINI_API_KEY'],
+    timeoutSeconds: 180, // Allow time for both API calls
+  },
+  async (request) => {
+    console.log('[FirebaseFunction] compareDetectionMethods called');
+
+    // Verify authentication
+    if (!request.auth) {
+      throw new functionsV2.https.HttpsError(
+        'unauthenticated',
+        'User must be authenticated to compare detection methods',
+      );
+    }
+
+    const { imageUrl } = request.data as { imageUrl: string };
+
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      throw new functionsV2.https.HttpsError(
+        'invalid-argument',
+        'imageUrl is required and must be a string',
+      );
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
+
+    const results: {
+      gemini: {
+        cookies: DetectedCookie[];
+        count: number;
+        duration: number;
+        error?: string;
+      };
+      vision: {
+        cookies: DetectedCookie[];
+        count: number;
+        duration: number;
+        objects: Array<{ name: string; score: number }>;
+        labels: Array<{ description: string; score: number }>;
+        error?: string;
+      };
+    } = {
+      gemini: { cookies: [], count: 0, duration: 0 },
+      vision: { cookies: [], count: 0, duration: 0, objects: [], labels: [] },
+    };
+
+    // Run Gemini detection
+    if (apiKey) {
+      try {
+        console.log('[Compare] Starting Gemini detection');
+        const geminiStart = Date.now();
+        const geminiCookies = await detectCookiesInImage(imageUrl, apiKey);
+        results.gemini = {
+          cookies: geminiCookies,
+          count: geminiCookies.length,
+          duration: Date.now() - geminiStart,
+        };
+        console.log('[Compare] Gemini detection completed:', geminiCookies.length, 'cookies');
+      } catch (error) {
+        console.error('[Compare] Gemini detection failed:', error);
+        results.gemini.error = error instanceof Error ? error.message : String(error);
+      }
+    } else {
+      results.gemini.error = 'Gemini API key not configured';
+    }
+
+    // Run Vision API detection
+    try {
+      console.log('[Compare] Starting Vision API detection');
+      const visionStart = Date.now();
+      const visionResult = await detectWithVisionAPI(imageUrl);
+      results.vision = {
+        cookies: visionResult.cookies,
+        count: visionResult.cookies.length,
+        duration: Date.now() - visionStart,
+        objects: visionResult.objects.map((o) => ({ name: o.name, score: o.score })),
+        labels: visionResult.labels.slice(0, 10), // Top 10 labels
+      };
+      console.log('[Compare] Vision API detection completed:', visionResult.cookies.length, 'cookies');
+    } catch (error) {
+      console.error('[Compare] Vision API detection failed:', error);
+      results.vision.error = error instanceof Error ? error.message : String(error);
+    }
+
+    return {
+      imageUrl,
+      results,
+      summary: {
+        geminiCount: results.gemini.count,
+        visionCount: results.vision.count,
+        geminiDuration: results.gemini.duration,
+        visionDuration: results.vision.duration,
+      },
+    };
+  },
+);
+
+// ============================================
+// END CLOUD VISION API DETECTION
+// ============================================
 
 /**
  * Add admin role to a user
