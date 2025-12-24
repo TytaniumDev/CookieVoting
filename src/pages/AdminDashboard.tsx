@@ -12,6 +12,7 @@ import {
 } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
 import { exportToCSV, exportToJSON, downloadFile } from '../lib/export';
+import { getVotes } from '../lib/firestore';
 import { useEventStore } from '../lib/stores/useEventStore';
 import { useBakerStore } from '../lib/stores/useBakerStore';
 import { useImageStore } from '../lib/stores/useImageStore';

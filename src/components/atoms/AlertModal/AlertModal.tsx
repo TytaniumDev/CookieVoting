@@ -65,10 +65,10 @@ export function AlertModal({ message, type = 'info', onClose, title }: AlertModa
       tabIndex={0}
       aria-label="Close modal"
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div
         className={styles.modal}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="alert-modal-title"

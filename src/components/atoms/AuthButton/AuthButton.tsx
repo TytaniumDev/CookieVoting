@@ -136,7 +136,6 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
       <button
         onClick={(e) => {
           e.preventDefault();
-          console.log('Sign in button clicked');
           handleSignIn();
         }}
         className={styles.signInButton}

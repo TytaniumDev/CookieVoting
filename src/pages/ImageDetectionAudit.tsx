@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
-import { auth, functions } from '../lib/firebase';
-import { getAllStoredImages, watchAllImageDetections, isGlobalAdmin } from '../lib/firestore';
+import { useAdminAuth } from '../lib/hooks/useAdminAuth';
+import { useDetectionJob } from '../lib/hooks/useDetectionJob';
+import { getAllStoredImages, watchAllImageDetections } from '../lib/firestore';
 import {
   CookieViewer,
   type DetectedCookie,
@@ -29,76 +28,35 @@ interface StoredImage {
 }
 
 export default function ImageDetectionAudit() {
+  const navigate = useNavigate();
+
+  // Use admin auth hook
+  const { isAdmin, isLoading: authLoading, error: authError } = useAdminAuth({
+    redirectIfNotAuth: '/',
+  });
+
+  // Use detection job hook for regeneration
+  const { triggerSingleDetection } = useDetectionJob({
+    enabled: isAdmin,
+    onError: (errorMsg) => setError(errorMsg),
+  });
+
   const [storedImages, setStoredImages] = useState<StoredImage[]>([]);
   const [dbDetections, setDbDetections] = useState<ImageDetection[]>([]);
   const [loadingImages, setLoadingImages] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  // Check authentication and admin access
-  useEffect(() => {
-    const checkAccess = async () => {
-      setCheckingAuth(true);
-      try {
-        const user = auth.currentUser;
-
-        const isSignedIn =
-          user && (user.email || (user.providerData && user.providerData.length > 0));
-
-        if (!isSignedIn) {
-          navigate('/', { replace: true });
-          setIsAdmin(false);
-          setCheckingAuth(false);
-          return;
-        }
-
-        setCheckingAuth(false);
-
-        // Check if user is an admin
-        const admin = await isGlobalAdmin(user.uid);
-        setIsAdmin(admin);
-
-        if (!admin) {
-          setError('You do not have admin access. Please contact a site administrator.');
-          setLoadingImages(false);
-          return;
-        }
-
-        setError((prev) =>
-          prev === 'You do not have admin access. Please contact a site administrator.'
-            ? null
-            : prev,
-        );
-      } catch (err) {
-        console.error('Failed to check admin access', err);
-        setError('Failed to verify admin access');
-        setCheckingAuth(false);
-      }
-    };
-
-    const unsubscribe = onAuthStateChanged(auth, async () => {
-      await checkAccess();
-    });
-
-    checkAccess();
-
-    return () => unsubscribe();
-  }, [navigate]);
 
   // Load stored images once
   useEffect(() => {
-    if (checkingAuth || !isAdmin) return;
+    if (authLoading || !isAdmin) return;
 
     const loadImages = async () => {
       try {
         setLoadingImages(true);
         const images = await getAllStoredImages();
         setStoredImages(images);
-      } catch (err) {
-        console.error('Failed to load stored images:', err);
+      } catch {
         setError('Failed to load images from storage.');
       } finally {
         setLoadingImages(false);
@@ -106,11 +64,11 @@ export default function ImageDetectionAudit() {
     };
 
     loadImages();
-  }, [checkingAuth, isAdmin]);
+  }, [authLoading, isAdmin]);
 
   // Subscribe to DB detections
   useEffect(() => {
-    if (checkingAuth || !isAdmin) return;
+    if (authLoading || !isAdmin) return;
 
     const unsubscribe = watchAllImageDetections((detections) => {
       // Cast to match our interface including optional status/progress
@@ -118,7 +76,7 @@ export default function ImageDetectionAudit() {
     });
 
     return () => unsubscribe();
-  }, [checkingAuth, isAdmin]);
+  }, [authLoading, isAdmin]);
 
   // Merge Data
   const detections = useMemo(() => {
@@ -215,8 +173,7 @@ export default function ImageDetectionAudit() {
     });
   }, [storedImages, dbDetections]);
 
-  const handleCookieClick = (cookie: DetectedCookie, index: number, event: React.MouseEvent) => {
-    console.log('Cookie clicked:', { cookie, index });
+  const handleCookieClick = (_cookie: DetectedCookie, _index: number, event: React.MouseEvent) => {
     event.stopPropagation();
   };
 
@@ -230,8 +187,7 @@ export default function ImageDetectionAudit() {
       await navigator.clipboard.writeText(json);
       setCopiedId(detection.id);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy JSON:', err);
+    } catch {
       setError('Failed to copy JSON to clipboard');
     }
   };
@@ -249,26 +205,17 @@ export default function ImageDetectionAudit() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Failed to download JSON:', err);
+    } catch {
       setError('Failed to download JSON file');
     }
   };
 
   const handleRegenerate = async (detection: ImageDetection) => {
-    // Just trigger the function. The UI will update via the Firestore subscription (status='processing')
-    try {
-      const detectCookiesWithGemini = httpsCallable(functions, 'detectCookiesWithGemini');
-      // We don't await the result for UI updates anymore, we rely on the subscription
-      // But we await the initial call to catch launch errors
-      await detectCookiesWithGemini({ imageUrl: detection.imageUrl });
-    } catch (error) {
-      console.error('Error triggering regeneration:', error);
-      alert('Failed to regenerate: ' + (error instanceof Error ? error.message : String(error)));
-    }
+    // Trigger regeneration via hook - UI will update via Firestore subscription
+    await triggerSingleDetection(detection.imageUrl);
   };
 
-  if (checkingAuth) {
+  if (authLoading) {
     return <div className={styles.container}>Loading...</div>;
   }
 
@@ -276,7 +223,7 @@ export default function ImageDetectionAudit() {
     return (
       <div className={styles.container}>
         <div className={styles.error}>
-          {error || 'You do not have admin access. Please contact a site administrator.'}
+          {authError || error || 'You do not have admin access. Please contact a site administrator.'}
         </div>
         <button
           onClick={() => navigate('/')}

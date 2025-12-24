@@ -3,9 +3,8 @@ import type { Category, Cookie } from '../../../lib/types';
 import { CookieViewer, type DetectedCookie } from '../CookieViewer/CookieViewer';
 import { useImageStore } from '../../../lib/stores/useImageStore';
 import { useCookieStore } from '../../../lib/stores/useCookieStore';
+import { useDetectionJob } from '../../../lib/hooks/useDetectionJob';
 import { watchImageDetectionResults } from '../../../lib/firestore';
-import { functions } from '../../../lib/firebase';
-import { httpsCallable } from 'firebase/functions';
 import styles from './EventSetupWizard.module.css';
 
 interface Baker {
@@ -44,6 +43,11 @@ export function CookieTaggingStep({
   // Store Access
   const { images, getDetectionData, watchImage } = useImageStore();
   const { cookies, createCookie, deleteCookie } = useCookieStore();
+
+  // Detection job hook for regenerating detections
+  const { triggerSingleDetection } = useDetectionJob({
+    onError: (errorMsg) => alert(errorMsg),
+  });
 
   // Local UI State
   const [showBakerSelect, setShowBakerSelect] = React.useState(false);
@@ -193,12 +197,8 @@ export function CookieTaggingStep({
 
     setIsRegenerating(true);
     try {
-      const detectCookiesWithGemini = httpsCallable(functions, 'detectCookiesWithGemini');
-      await detectCookiesWithGemini({ imageUrl: currentCategory.imageUrl });
+      await triggerSingleDetection(currentCategory.imageUrl);
       // The listener on image_detections will pick up the changes automatically
-    } catch (error) {
-      console.error('Error regenerating detections:', error);
-      alert('Failed to regenerate detections. Please try again.');
     } finally {
       setIsRegenerating(false);
     }
