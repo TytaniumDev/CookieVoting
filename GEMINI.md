@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 23, 2025 at 08:53:58 UTC · Checksum: `26bc8d37f26f`
+> **Last synced:** December 24, 2025 at 13:01:01 PST · Checksum: `cf5a4f9fe572`
 
 ## 🤖 Instructions for AI Agents
 
@@ -22,6 +22,50 @@
 - You discover a new best practice → Document it
 - The user corrects you on something → Add it as a rule
 
+---
+
+You are an expert in React component patterns.
+
+Key Principles:
+- Composition over inheritance
+- Separation of concerns
+- Reusability and maintainability
+- Clean and readable code
+
+Common Patterns:
+- Compound Components: Flexible parent-child relationship
+- Render Props: Share code between components
+- Higher-Order Components (HOC): Reuse component logic
+- Custom Hooks: Reuse stateful logic
+- Controlled vs Uncontrolled: Form handling
+
+Composition:
+- Use children prop for flexibility
+- Create layout components
+- Use slots pattern
+- Avoid prop drilling
+- Build atomic components
+
+Context Pattern:
+- Create custom providers
+- Create custom consumers/hooks
+- Split context by domain
+- Optimize context value memoization
+- Handle missing context errors
+
+Error Boundaries:
+- Catch JavaScript errors in child components
+- Log errors to service
+- Display fallback UI
+- Reset error state
+- Wrap critical parts of app
+
+Best Practices:
+- Keep components small and focused
+- Use TypeScript for props validation
+- Document component API
+- Write unit tests
+- Use Storybook for documentation
 ---
 
 ---
@@ -552,6 +596,47 @@ trigger: model_decision
 description: React-specific patterns, hooks rules, and performance optimization.
 ---
 
+You are an expert in React Hooks.
+
+Key Principles:
+- Follow Rules of Hooks strictly
+- Use custom hooks for reusable logic
+- Optimize dependency arrays
+- Avoid complex logic in components
+
+Common Hooks:
+- useState: Use functional updates for state based on previous state
+- useEffect: Clean up side effects, handle dependencies correctly
+- useContext: Avoid deep prop drilling
+- useReducer: Manage complex state logic
+- useRef: Access DOM nodes or mutable values
+
+Performance Hooks:
+- useMemo: Memoize expensive calculations
+- useCallback: Memoize functions passed to children
+- useTransition: Handle non-urgent state updates
+- useDeferredValue: Defer updating UI parts
+
+Custom Hooks:
+- Start name with 'use'
+- Encapsulate complex logic
+- Return consistent API
+- Handle errors internally
+- Document usage clearly
+
+Best Practices:
+- Don't call hooks inside loops or conditions
+- Keep effects focused on one concern
+- Use ESLint plugin for hooks
+- Avoid stale closures
+- Memoize context values
+---
+
+---
+trigger: model_decision
+description: React-specific patterns, hooks rules, and performance optimization.
+---
+
 # React Patterns
 
 ## Hooks Rules
@@ -668,6 +753,142 @@ When passing props through many levels:
 - [ ] Hooks follow rules (top-level, proper dependencies)
 - [ ] Memoization used only where needed
 - [ ] State lives at the appropriate level
+
+---
+
+You are an expert in React performance optimization.
+
+Key Principles:
+- Measure before optimizing
+- Minimize re-renders
+- Optimize bundle size
+- Use code splitting
+- Virtualize long lists
+
+Rendering Optimization:
+- Use React.memo for pure components
+- Stabilize props with useMemo/useCallback
+- Avoid inline functions in render
+- Use key prop correctly
+- Split large components
+
+Code Splitting:
+- Use React.lazy and Suspense
+- Route-based code splitting
+- Component-based code splitting
+- Lazy load libraries
+- Prefetch critical resources
+
+State Management:
+- Keep state local when possible
+- Avoid large context providers
+- Use atomic state libraries (Zustand, Jotai)
+- Normalize state structure
+- Batch state updates
+
+Assets:
+- Optimize images (Next.js Image)
+- Lazy load images and videos
+- Use SVGs correctly
+- Preload critical fonts
+- Minimize third-party scripts
+
+Tools:
+- React DevTools Profiler
+- Chrome Performance Tab
+- Bundle Analyzer
+- Lighthouse
+- Web Vitals
+---
+
+---
+trigger: always
+description: Test-Driven Development workflow and testing requirements for all code changes.
+---
+
+# Testing Strategy
+
+## Test-Driven Development (TDD) Workflow
+
+**This project follows strict Test-Driven Development.** Write tests BEFORE implementation code.
+
+### The TDD Cycle
+
+For every code change, follow this cycle:
+
+1. **Propose test cases first** - Before writing any implementation, outline the test cases you plan to write
+2. **Clarify ambiguities** - If requirements are unclear, ASK the user before proceeding
+3. **Write the tests** - Create failing tests that define expected behavior.
+4. **Run tests (expect failures)** - Confirm tests fail as expected
+5. **Implement the code** - Write the minimum code to make tests pass. Follow guidance in `testing-strategy.md` for test case quality standards.
+6. **Run tests again** - Verify all tests pass
+7. **Refactor** - Clean up code while keeping tests green
+8. **Repeat** - Continue until all functionality is complete and tests pass
+
+### Proposing Test Cases
+
+Before writing tests, present a test plan to the user that includes:
+
+```markdown
+## Proposed Test Cases for [Feature/Function]
+
+### Happy Path
+- [ ] Test case 1: [description of expected behavior]
+- [ ] Test case 2: [description of expected behavior]
+
+### Edge Cases
+- [ ] Empty input handling
+- [ ] Boundary values (min/max)
+- [ ] Invalid input types
+- [ ] Null/undefined handling
+
+### Error Cases
+- [ ] Network failures
+- [ ] Permission denied
+- [ ] Invalid state transitions
+```
+
+**Ask for clarification if:**
+- Requirements are ambiguous or incomplete
+- Edge case behavior is not specified
+- Error handling expectations are unclear
+- Performance requirements are not defined
+
+### Test Case Quality Standards
+
+Write tests that are:
+- **Readable** - Test names describe the behavior, not implementation
+- **Maintainable** - Avoid testing implementation details
+- **Thorough** - Cover happy paths, edge cases, and error conditions
+- **Independent** - Tests should not depend on each other
+
+```typescript
+// ❌ Bad - tests implementation details
+it('calls setLoading with true then false', () => { ... });
+
+// ✅ Good - tests behavior
+it('shows loading spinner while fetching data', () => { ... });
+it('displays error message when fetch fails', () => { ... });
+```
+
+### When to Skip TDD
+
+TDD is **required** for:
+- New utility functions
+- Custom hooks
+- Business logic
+- API integrations
+- Complex component interactions
+
+TDD may be **relaxed** for:
+- Simple presentational components (use Storybook visual review)
+- Configuration changes
+- Documentation updates
+- Refactoring with existing test coverage
+
+---
+
+**See also:** `testing-strategy.md` for test commands, tooling, and code examples.
 
 ---
 

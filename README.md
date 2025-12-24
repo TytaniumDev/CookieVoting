@@ -32,19 +32,31 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
    cd CookieVoting
    ```
 
-2. **Install dependencies**
+2. **Run the setup script** (recommended for new machines)
+
+   ```bash
+   ./scripts/setup.sh
+   ```
+
+   This script will:
+   - **Install Node.js 20 via Homebrew** (macOS only, if not already installed)
+   - Verify Node.js 20+ and npm are available
+   - Install all npm dependencies (root + functions)
+   - Create a `.env` file from the template
+   - Install Playwright browsers for E2E tests
+   - Set up the `cookies` command shortcut
+
+   **Or manually install:**
 
    ```bash
    npm install
+   cd functions && npm install && cd ..
+   cp .env.example .env
    ```
 
-3. **Set up environment variables**
+3. **Configure environment variables**
 
-   Create a `.env` file in the root directory:
-
-   ```env
-   VITE_USE_EMULATOR=true  # Set to false for production Firebase
-   ```
+   Update `.env` with your Firebase credentials, or keep `VITE_USE_EMULATOR=true` for local development.
 
 4. **Start the development server**
 

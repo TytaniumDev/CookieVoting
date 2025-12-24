@@ -48,7 +48,8 @@
     "build-storybook": "storybook build",
     "verify": "node scripts/verify.js",
     "sync-agent-rules": "bash scripts/sync-agent-rules.sh",
-    "sync-agent-rules:check": "bash scripts/sync-agent-rules.sh --check"
+    "sync-agent-rules:check": "bash scripts/sync-agent-rules.sh --check",
+    "setup": "bash scripts/setup.sh"
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.3",
