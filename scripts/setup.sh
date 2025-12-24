@@ -216,7 +216,7 @@ else
     if [ -f "$PROJECT_ROOT/.env.example" ]; then
         cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
         print_success "Created .env from .env.example"
-        print_warning "Remember to update .env with your Firebase credentials!"
+        print_warning "Update .env with your credentials, or run 'npm run firebase:fetch-config' if you have access."
     else
         # Create a minimal .env for emulator mode
         echo "VITE_USE_EMULATOR=true" > "$PROJECT_ROOT/.env"
@@ -265,9 +265,14 @@ if check_command firebase; then
     FIREBASE_VERSION=$(firebase --version)
     print_success "Firebase CLI $FIREBASE_VERSION found"
 else
-    print_warning "Firebase CLI not installed"
-    echo "   For deployments, install with: npm install -g firebase-tools"
-    echo "   Then authenticate with: firebase login"
+    print_step "Installing Firebase CLI globally..."
+    if npm install -g firebase-tools; then
+        print_success "Firebase CLI installed"
+    else
+        print_error "Failed to install Firebase CLI"
+        echo "   Please run manually: npm install -g firebase-tools"
+        # Don't exit here, as it's not strictly critical for running the app locally (can use npx)
+    fi
 fi
 
 echo ""

@@ -22,6 +22,7 @@
     "test:coverage": "vitest run --coverage",
     "playwright:install": "playwright install",
     "firebase:setup": "node scripts/setup-firebase.js",
+    "firebase:fetch-config": "node scripts/fetch-config.js",
     "firebase:login": "firebase login",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage",
     "firebase:deploy:firestore": "firebase deploy --only firestore:rules",
