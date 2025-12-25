@@ -499,7 +499,7 @@ DETECTION PRIORITY:
   }
 
   // Validate and normalize the results
-  const validatedCookies: DetectedCookie[] = detectedCookies
+  const validatedCookies: DetectedCookie[] = (detectedCookies as RawCookieData[])
     .filter((cookie: RawCookieData, index: number) => {
       // Check if cookie is an object
       if (!cookie || typeof cookie !== 'object') {
@@ -541,7 +541,7 @@ DETECTION PRIORITY:
         } else {
           try {
             const filteredPolygon = (cookie.polygon as unknown[])
-              .filter((point: unknown, pointIndex: number) => {
+              .filter((point: unknown): point is [number, number] => {
                 const isValid =
                   Array.isArray(point) &&
                   point.length === 2 &&
@@ -551,14 +551,14 @@ DETECTION PRIORITY:
                   !isNaN(point[1]);
                 if (!isValid) {
                   console.warn(
-                    `[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`,
+                    `[DetectCookies] Cookie ${index} has invalid polygon point:`,
                     point,
                   );
                 }
                 return isValid;
               })
               .map(
-                (point: [number, number]) =>
+                (point) =>
                   [Math.max(0, Math.min(100, point[0])), Math.max(0, Math.min(100, point[1]))] as [
                     number,
                     number,
@@ -1004,6 +1004,12 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
       return;
     }
 
+    // Skip extracted cookies to avoid recursion and infinite loops
+    if (filePath.startsWith('shared/cookies/extracted/')) {
+      console.log(`Skipping extracted cookie to prevent recursion: ${filePath}`);
+      return;
+    }
+
     // Only process image files
     if (!contentType || !contentType.startsWith('image/')) {
       console.log(`Skipping non-image file: ${filePath}`);
@@ -1201,13 +1207,16 @@ export const removeAdminRole = functionsV2.https.onCall(
 export const autoGrantAdmin =
   process.env.FUNCTIONS_EMULATOR === 'true'
     ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
-        console.log(
-          `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
-        );
-        return {
-          customClaims: {
-            admin: true,
-          },
-        };
-      })
+      console.log(
+        `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
+      );
+      return {
+        customClaims: {
+          admin: true,
+        },
+      };
+    })
     : undefined;
+
+// Re-export extraction strategy function
+export { extractCookiesWithSegmentation } from './extractionStrategy';

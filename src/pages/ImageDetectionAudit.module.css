@@ -247,3 +247,9 @@
   font-size: 1.2rem;
   backdrop-filter: blur(2px);
 }
+
+.spriteGrid {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}

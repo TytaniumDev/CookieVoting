@@ -489,7 +489,7 @@ export function watchImageDetectionResults(
   if (!filePath) {
     console.warn('[watchImageDetectionResults] Could not extract file path from URL:', imageUrl);
     callback(null);
-    return () => {}; // Return no-op unsubscribe
+    return () => { }; // Return no-op unsubscribe
   }
 
   // Create document ID from file path (same logic as storage trigger)
@@ -659,6 +659,19 @@ export function watchAllImageDetections(
       contentType?: string;
       status?: string;
       progress?: string;
+      // Extraction fields
+      extractedCookies?: Array<{
+        id: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        confidence: number;
+        extractedUrl?: string;
+      }>;
+      geminiGeneratedImageUrl?: string | null;
+      transparentImagePath?: string;
+      spritesPath?: string;
     }>,
   ) => void,
 ): () => void {
@@ -696,6 +709,11 @@ export function watchAllImageDetections(
           contentType: data.contentType,
           status: data.status,
           progress: data.progress,
+          // Extraction fields
+          extractedCookies: data.extractedCookies || [],
+          geminiGeneratedImageUrl: data.geminiGeneratedImageUrl || null,
+          transparentImagePath: data.transparentImagePath || '',
+          spritesPath: data.spritesPath || '',
         };
       });
 

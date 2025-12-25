@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 24, 2025 at 13:01:01 PST · Checksum: `cf5a4f9fe572`
+> **Last synced:** December 24, 2025 at 14:52:02 PST · Checksum: `4da9a4ead374`
 
 ## 🤖 Instructions for AI Agents
 
@@ -130,6 +130,29 @@ function updateEvent(id: string, updates: Partial<Event>): void { ... }
 // ✅ Preferred - simpler, better tree-shaking
 type Status = 'loading' | 'success' | 'error';
 ```
+
+### Type Exports (CRITICAL)
+
+**Always use `export type` for interfaces and types when re-exporting:**
+
+```typescript
+// ❌ BAD - Causes runtime error: "does not provide an export named 'X'"
+// This fails because interfaces don't exist at runtime
+export { MyInterface } from './types';
+
+// ✅ GOOD - Use 'export type' for interfaces and types
+export type { MyInterface, MyType } from './types';
+
+// ✅ GOOD - Classes and functions use regular export
+export { MyClass, myFunction } from './module';
+```
+
+**Rule of thumb:**
+- `interface` → Always use `export type`
+- `type` alias → Always use `export type`  
+- `class` → Use regular `export`
+- `function` → Use regular `export`
+- `const` → Use regular `export`
 
 ## Error Handling
 
@@ -550,13 +573,18 @@ src/
 
 ### Before Committing
 
-**Always run `npm run verify`** before considering work complete. This runs:
+**CRITICAL: You must ALWAYS run `npm run verify`** before considering work complete. This runs:
 - ESLint for code quality
-- TypeScript for type checking  
+- TypeScript for type checking
 - Vitest for unit tests
 - Build verification
 
-Fix ALL warnings and errors before reporting completion.
+**Additional Verification Rules:**
+1. **Always run a build check** (`npm run build` or `tsc`) after editing TypeScript files. This catches "undefined reference" errors immediately.
+2. **Never use lazy placeholders**. When using `replace_file_content`, do not use comments like `// ... rest of method` to skip code. You must perform precise edits or restore the full content.
+3. **Fix ALL warnings and errors** before reporting completion to the user. Do not assume "it probably works".
+
+If `npm run verify` fails, you are NOT done. Fix the issues and run it again.
 
 ### Storybook-First Development
 

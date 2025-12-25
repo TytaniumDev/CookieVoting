@@ -72,13 +72,18 @@ src/
 
 ### Before Committing
 
-**Always run `npm run verify`** before considering work complete. This runs:
+**CRITICAL: You must ALWAYS run `npm run verify`** before considering work complete. This runs:
 - ESLint for code quality
-- TypeScript for type checking  
+- TypeScript for type checking
 - Vitest for unit tests
 - Build verification
 
-Fix ALL warnings and errors before reporting completion.
+**Additional Verification Rules:**
+1. **Always run a build check** (`npm run build` or `tsc`) after editing TypeScript files. This catches "undefined reference" errors immediately.
+2. **Never use lazy placeholders**. When using `replace_file_content`, do not use comments like `// ... rest of method` to skip code. You must perform precise edits or restore the full content.
+3. **Fix ALL warnings and errors** before reporting completion to the user. Do not assume "it probably works".
+
+If `npm run verify` fails, you are NOT done. Fix the issues and run it again.
 
 ### Storybook-First Development
 

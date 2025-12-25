@@ -7,6 +7,8 @@ import {
   CookieViewer,
   type DetectedCookie,
 } from '../components/organisms/CookieViewer/CookieViewer';
+import { ExtractedCookieCard } from '../components/atoms/ExtractedCookieCard';
+import { extractCookiesWithSharp, type ExtractedCookie } from '../lib/detection';
 import styles from './ImageDetectionAudit.module.css';
 
 interface ImageDetection {
@@ -19,6 +21,8 @@ interface ImageDetection {
   contentType?: string;
   status?: string; // 'detected', 'processing', 'completed', 'error', 'missing'
   progress?: string;
+  extractedCookies?: ExtractedCookie[]; // Individual extracted cookie images
+  geminiGeneratedImageUrl?: string | null; // Debug: Gemini-generated image
 }
 
 interface StoredImage {
@@ -46,8 +50,12 @@ export default function ImageDetectionAudit() {
   const [loadingImages, setLoadingImages] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [extractingId, setExtractingId] = useState<string | null>(null);
+  const [showExtracted, setShowExtracted] = useState<Record<string, boolean>>({});
+  const [showDebugImage, setShowDebugImage] = useState<Record<string, boolean>>({});
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load stored images once
+  // Load stored images
   useEffect(() => {
     if (authLoading || !isAdmin) return;
 
@@ -64,7 +72,7 @@ export default function ImageDetectionAudit() {
     };
 
     loadImages();
-  }, [authLoading, isAdmin]);
+  }, [authLoading, isAdmin, refreshKey]);
 
   // Subscribe to DB detections
   useEffect(() => {
@@ -76,7 +84,7 @@ export default function ImageDetectionAudit() {
     });
 
     return () => unsubscribe();
-  }, [authLoading, isAdmin]);
+  }, [authLoading, isAdmin, refreshKey]);
 
   // Merge Data
   const detections = useMemo(() => {
@@ -124,16 +132,7 @@ export default function ImageDetectionAudit() {
       };
     });
 
-    // Add any DB detections that didn't match a stored image (orphaned records?)
-    dbDetections.forEach((d) => {
-      const alreadyIncluded = merged.find((m) => m.filePath === d.filePath || m.id === d.id);
-      if (!alreadyIncluded) {
-        merged.push({
-          ...d,
-          status: d.status || (d.detectedCookies.length > 0 ? 'detected' : 'unknown'),
-        });
-      }
-    });
+    // dbDetections logic removed to prevent showing images that don't exist in storage
 
     // Sort: Processing -> Missing -> Detected (Recent first)
     return merged.sort((a, b) => {
@@ -172,6 +171,10 @@ export default function ImageDetectionAudit() {
       return getTime(b) - getTime(a);
     });
   }, [storedImages, dbDetections]);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   const handleCookieClick = (_cookie: DetectedCookie, _index: number, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -215,6 +218,42 @@ export default function ImageDetectionAudit() {
     await triggerSingleDetection(detection.imageUrl);
   };
 
+  const handleExtract = async (detection: ImageDetection) => {
+    setExtractingId(detection.id);
+    setError(null);
+    try {
+      const result = await extractCookiesWithSharp(detection.imageUrl, detection.filePath);
+      console.log('[Audit] Extraction complete:', result);
+      // Update local state to show extracted cookies and gemini debug image
+      setDbDetections((prev) =>
+        prev.map((d) =>
+          d.id === detection.id
+            ? {
+              ...d,
+              // Preserver existing detectedCookies if result.cookies doesn't represent them (extractedCookies are different)
+              detectedCookies: result.cookies.length > 0 ? d.detectedCookies : d.detectedCookies,
+              extractedCookies: result.cookies,
+              geminiGeneratedImageUrl: result.geminiImageUrl,
+            }
+            : d,
+        ),
+      );
+      setShowExtracted((prev) => ({ ...prev, [detection.id]: true }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to extract cookies');
+    } finally {
+      setExtractingId(null);
+    }
+  };
+
+  const toggleShowExtracted = (id: string) => {
+    setShowExtracted((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleShowDebugImage = (id: string) => {
+    setShowDebugImage((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   if (authLoading) {
     return <div className={styles.container}>Loading...</div>;
   }
@@ -240,9 +279,14 @@ export default function ImageDetectionAudit() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Image Detection Audit</h1>
-        <button onClick={() => navigate('/admin')} className={styles.backButton}>
-          ← Back to Admin
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={handleRefresh} className={styles.jsonButton}>
+            🔄 Refresh Data
+          </button>
+          <button onClick={() => navigate('/admin')} className={styles.backButton}>
+            ← Back to Admin
+          </button>
+        </div>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -306,19 +350,19 @@ export default function ImageDetectionAudit() {
                     {detection.detectedAt && (
                       <span className={styles.timestamp}>
                         {typeof detection.detectedAt === 'object' &&
-                        detection.detectedAt !== null &&
-                        'toDate' in detection.detectedAt &&
-                        typeof (detection.detectedAt as { toDate: () => Date }).toDate ===
+                          detection.detectedAt !== null &&
+                          'toDate' in detection.detectedAt &&
+                          typeof (detection.detectedAt as { toDate: () => Date }).toDate ===
                           'function'
                           ? (detection.detectedAt as { toDate: () => Date })
-                              .toDate()
-                              .toLocaleString()
+                            .toDate()
+                            .toLocaleString()
                           : typeof detection.detectedAt === 'object' &&
-                              detection.detectedAt !== null &&
-                              'seconds' in detection.detectedAt
+                            detection.detectedAt !== null &&
+                            'seconds' in detection.detectedAt
                             ? new Date(
-                                (detection.detectedAt as { seconds: number }).seconds * 1000,
-                              ).toLocaleString()
+                              (detection.detectedAt as { seconds: number }).seconds * 1000,
+                            ).toLocaleString()
                             : typeof detection.detectedAt === 'number'
                               ? new Date(detection.detectedAt).toLocaleString()
                               : 'Unknown date'}
@@ -331,6 +375,7 @@ export default function ImageDetectionAudit() {
                     imageUrl={detection.imageUrl}
                     detectedCookies={detection.detectedCookies}
                     onCookieClick={handleCookieClick}
+                    disableZoom={true} // Disable zoom as requested
                     borderColor={
                       detection.status === 'missing'
                         ? 'rgba(255, 0, 0, 0.5)'
@@ -351,6 +396,28 @@ export default function ImageDetectionAudit() {
                     </div>
                   )}
                 </div>
+
+                {/* Debug: Gemini-Generated Image Overlay */}
+                {showDebugImage[detection.id] && detection.geminiGeneratedImageUrl && (
+                  <div className={styles.debugImageContainer} style={{ padding: '1rem', borderTop: '1px solid #333' }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#e879f9' }}>
+                      👻 Gemini-Generated Transparent Image
+                    </h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: '#9ca3af' }}>
+                      This is the raw source image generated by Gemini for extraction. It should show cookies on a transparent background.
+                    </p>
+                    <img
+                      src={detection.geminiGeneratedImageUrl}
+                      alt="Gemini generated transparent cookies"
+                      style={{
+                        maxWidth: '100%',
+                        borderRadius: '4px',
+                        background: 'repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50% / 16px 16px',
+                        border: '1px solid #444'
+                      }}
+                    />
+                  </div>
+                )}
                 <div className={styles.cardFooter}>
                   <div className={styles.filePath}>
                     <strong>Path:</strong> {detection.filePath}
@@ -368,6 +435,45 @@ export default function ImageDetectionAudit() {
                     >
                       {detection.status === 'processing' ? 'Processing...' : '🔄 Regenerate'}
                     </button>
+                    <button
+                      onClick={() => handleExtract(detection)}
+                      className={styles.jsonButton}
+                      disabled={extractingId === detection.id || detection.status === 'processing'}
+                      style={{
+                        backgroundColor: extractingId === detection.id ? '#9ca3af' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                      }}
+                    >
+                      {extractingId === detection.id ? '⏳ Extracting...' : '✂️ Extract Cookies'}
+                    </button>
+                    {detection.extractedCookies && detection.extractedCookies.length > 0 && (
+                      <button
+                        onClick={() => toggleShowExtracted(detection.id)}
+                        className={styles.jsonButton}
+                        style={{
+                          backgroundColor: showExtracted[detection.id] ? '#6366f1' : '#8b5cf6',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        {showExtracted[detection.id] ? '🔼 Hide Sprites' : '🔽 Show Sprites'}
+                      </button>
+                    )}
+
+                    {detection.geminiGeneratedImageUrl && (
+                      <button
+                        onClick={() => toggleShowDebugImage(detection.id)}
+                        className={styles.jsonButton}
+                        style={{
+                          backgroundColor: showDebugImage[detection.id] ? '#d946ef' : '#e879f9',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        {showDebugImage[detection.id] ? '👻 Hide Transparent' : '👻 Show Transparent'}
+                      </button>
+                    )}
                     {detection.status !== 'missing' && detection.status !== 'processing' && (
                       <>
                         <button
@@ -388,6 +494,41 @@ export default function ImageDetectionAudit() {
                     )}
                   </div>
                 </div>
+                {/* Extracted Cookies Sprite Grid */}
+                {showExtracted[detection.id] && detection.extractedCookies && detection.extractedCookies.length > 0 && (
+                  <div className={styles.spriteGrid}>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#fff' }}>
+                      Extracted Cookies ({detection.extractedCookies.length})
+                    </h4>
+                    {/* Debug: Show Gemini-generated image if available */}
+                    {detection.geminiGeneratedImageUrl && (
+                      <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(74, 158, 255, 0.1)', borderRadius: '8px' }}>
+                        <h5 style={{ margin: '0 0 8px 0', color: '#4a9eff' }}>
+                          🔍 Debug: Gemini-Generated Image
+                        </h5>
+                        <img
+                          src={detection.geminiGeneratedImageUrl}
+                          alt="Gemini generated transparent cookies"
+                          style={{ maxWidth: '100%', borderRadius: '4px', background: 'repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50% / 16px 16px' }}
+                        />
+                        <p style={{ margin: '8px 0 0 0', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                          This image was generated by Gemini. If cookies have transparent backgrounds here, the extraction worked correctly.
+                        </p>
+                      </div>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px' }}>
+                      {detection.extractedCookies.map((cookie, idx) => (
+                        <ExtractedCookieCard
+                          key={cookie.id}
+                          imageUrl={cookie.extractedUrl || ''}
+                          cookieId={cookie.id}
+                          index={idx}
+                          confidence={cookie.confidence}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

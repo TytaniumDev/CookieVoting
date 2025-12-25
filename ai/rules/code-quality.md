@@ -61,6 +61,29 @@ function updateEvent(id: string, updates: Partial<Event>): void { ... }
 type Status = 'loading' | 'success' | 'error';
 ```
 
+### Type Exports (CRITICAL)
+
+**Always use `export type` for interfaces and types when re-exporting:**
+
+```typescript
+// ❌ BAD - Causes runtime error: "does not provide an export named 'X'"
+// This fails because interfaces don't exist at runtime
+export { MyInterface } from './types';
+
+// ✅ GOOD - Use 'export type' for interfaces and types
+export type { MyInterface, MyType } from './types';
+
+// ✅ GOOD - Classes and functions use regular export
+export { MyClass, myFunction } from './module';
+```
+
+**Rule of thumb:**
+- `interface` → Always use `export type`
+- `type` alias → Always use `export type`  
+- `class` → Use regular `export`
+- `function` → Use regular `export`
+- `const` → Use regular `export`
+
 ## Error Handling
 
 **Always handle promise rejections:**
