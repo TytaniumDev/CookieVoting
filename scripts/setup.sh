@@ -205,58 +205,7 @@ fi
 echo ""
 
 # ------------------------------------------------------------------------------
-# Step 4: Set up environment file
-# ------------------------------------------------------------------------------
-
-print_step "Setting up environment file..."
-
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    print_success ".env file already exists"
-else
-    if [ -f "$PROJECT_ROOT/.env.example" ]; then
-        cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
-        print_success "Created .env from .env.example"
-        print_warning "Update .env with your credentials, or run 'npm run firebase:fetch-config' if you have access."
-    else
-        # Create a minimal .env for emulator mode
-        echo "VITE_USE_EMULATOR=true" > "$PROJECT_ROOT/.env"
-        print_success "Created minimal .env (emulator mode)"
-    fi
-fi
-
-echo ""
-
-# ------------------------------------------------------------------------------
-# Step 5: Install Playwright browsers (optional)
-# ------------------------------------------------------------------------------
-
-print_step "Installing Playwright browsers (for E2E tests)..."
-
-if npx playwright install --with-deps 2>/dev/null; then
-    print_success "Playwright browsers installed"
-else
-    print_warning "Playwright installation failed (E2E tests may not work)"
-    echo "   You can install later with: npm run playwright:install"
-fi
-
-echo ""
-
-# ------------------------------------------------------------------------------
-# Step 6: Set up cookies command shortcut
-# ------------------------------------------------------------------------------
-
-print_step "Setting up 'cookies' command shortcut..."
-
-if [ -f "$SCRIPT_DIR/setup-cookies.sh" ]; then
-    bash "$SCRIPT_DIR/setup-cookies.sh"
-else
-    print_warning "setup-cookies.sh not found, skipping shortcut setup"
-fi
-
-echo ""
-
-# ------------------------------------------------------------------------------
-# Step 7: Check Firebase CLI (optional)
+# Step 4: Check Firebase CLI
 # ------------------------------------------------------------------------------
 
 print_step "Checking Firebase CLI..."
@@ -275,7 +224,83 @@ else
     fi
 fi
 
+# Check if logged in
+print_step "Checking Firebase login status..."
+if firebase projects:list --json >/dev/null 2>&1; then
+    print_success "Already logged in to Firebase"
+else
+    print_warning "Not logged in to Firebase"
+    echo -e "${YELLOW}Would you like to log in to Firebase now? [Y/n]${NC}"
+    read -r response
+    if [[ "$response" =~ ^[Nn]$ ]]; then
+        print_warning "Skipping Firebase login. Environment sync might fail."
+    else
+        firebase login
+    fi
+fi
+
 echo ""
+
+# ------------------------------------------------------------------------------
+# Step 5: Set up environment file
+# ------------------------------------------------------------------------------
+
+print_step "Setting up environment file..."
+
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    print_success ".env file already exists"
+else
+    if [ -f "$PROJECT_ROOT/.env.example" ]; then
+        cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
+        print_success "Created .env from .env.example"
+    else
+        # Create a minimal .env for emulator mode
+        echo "VITE_USE_EMULATOR=true" > "$PROJECT_ROOT/.env"
+        print_success "Created minimal .env (emulator mode)"
+    fi
+fi
+
+# Always try to sync with Firebase
+print_step "Syncing environment with Firebase..."
+if npm run firebase:fetch-config; then
+    print_success "Environment synced with Firebase"
+else
+    print_warning "Could not sync with Firebase (you might need to login)"
+    echo "   Run 'npm run firebase:login' then 'npm run firebase:fetch-config' to sync."
+fi
+
+echo ""
+
+# ------------------------------------------------------------------------------
+# Step 6: Install Playwright browsers (optional)
+# ------------------------------------------------------------------------------
+
+print_step "Installing Playwright browsers (for E2E tests)..."
+
+if npx playwright install --with-deps 2>/dev/null; then
+    print_success "Playwright browsers installed"
+else
+    print_warning "Playwright installation failed (E2E tests may not work)"
+    echo "   You can install later with: npm run playwright:install"
+fi
+
+echo ""
+
+# ------------------------------------------------------------------------------
+# Step 7: Set up cookies command shortcut
+# ------------------------------------------------------------------------------
+
+print_step "Setting up 'cookies' command shortcut..."
+
+if [ -f "$SCRIPT_DIR/setup-cookies.sh" ]; then
+    bash "$SCRIPT_DIR/setup-cookies.sh"
+else
+    print_warning "setup-cookies.sh not found, skipping shortcut setup"
+fi
+
+echo ""
+
+
 
 # ------------------------------------------------------------------------------
 # Summary
