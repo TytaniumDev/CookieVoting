@@ -86,7 +86,7 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - **Backend**: Firebase (Auth, Firestore, Storage, Functions)
 - **AI Detection**: Google Gemini API
 - **UI Components**: Custom components with Storybook documentation
-- **Testing**: Jest, Playwright, Vitest
+- **Testing**: Vitest, Playwright, Storybook
 - **CI/CD**: GitHub Actions
 
 ## 📦 Available Scripts

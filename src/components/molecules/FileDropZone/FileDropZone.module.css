@@ -1,0 +1,101 @@
+.dropZone {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-6) var(--spacing-4);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.dropZone:hover,
+.dropZone.dragOver {
+    border-color: var(--color-accent);
+    background: rgba(220, 38, 38, 0.05);
+}
+
+.dropZone:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-2);
+    display: block;
+}
+
+.text {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.hint {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-style: italic;
+    margin-top: var(--spacing-1);
+}
+
+.hiddenInput {
+    display: none;
+}
+
+/* Preview state */
+.preview {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+}
+
+.previewImage {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.previewInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    min-width: 0;
+}
+
+.fileName {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+.removeButton {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-danger);
+    background: none;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+}
+
+.removeButton:hover {
+    background: rgba(220, 38, 38, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .preview {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .previewInfo {
+        align-items: center;
+    }
+}

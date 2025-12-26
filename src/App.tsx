@@ -7,7 +7,6 @@ import { Layout } from './components/layout/Layout';
 const Home = lazy(() => import('./pages/Home'));
 const AdminHome = lazy(() => import('./pages/AdminHome'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const WizardPage = lazy(() => import('./pages/WizardPage'));
 const VotingPage = lazy(() => import('./pages/VotingPage'));
 const ResultsPage = lazy(() => import('./pages/ResultsPage'));
 const CookieDetectionTest = lazy(() => import('./pages/CookieDetectionTest'));
@@ -64,14 +63,6 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <AdminDashboard />
-              </Suspense>
-            }
-          />
-          <Route
-            path="admin/:eventId/wizard"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <WizardPage />
               </Suspense>
             }
           />
