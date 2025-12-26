@@ -1,5 +1,3 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/firebase-patterns.md` instead.
-
 ---
 trigger: model_decision
 description: Firebase/Firestore coding patterns and best practices.

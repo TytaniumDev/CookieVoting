@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 24, 2025 at 13:01:01 PST · Checksum: `cf5a4f9fe572`
+> **Last synced:** December 25, 2025 at 16:27:17 PST · Checksum: `ff24aa1197be`
 
 ## 🤖 Instructions for AI Agents
 
@@ -22,50 +22,6 @@
 - You discover a new best practice → Document it
 - The user corrects you on something → Add it as a rule
 
----
-
-You are an expert in React component patterns.
-
-Key Principles:
-- Composition over inheritance
-- Separation of concerns
-- Reusability and maintainability
-- Clean and readable code
-
-Common Patterns:
-- Compound Components: Flexible parent-child relationship
-- Render Props: Share code between components
-- Higher-Order Components (HOC): Reuse component logic
-- Custom Hooks: Reuse stateful logic
-- Controlled vs Uncontrolled: Form handling
-
-Composition:
-- Use children prop for flexibility
-- Create layout components
-- Use slots pattern
-- Avoid prop drilling
-- Build atomic components
-
-Context Pattern:
-- Create custom providers
-- Create custom consumers/hooks
-- Split context by domain
-- Optimize context value memoization
-- Handle missing context errors
-
-Error Boundaries:
-- Catch JavaScript errors in child components
-- Log errors to service
-- Display fallback UI
-- Reset error state
-- Wrap critical parts of app
-
-Best Practices:
-- Keep components small and focused
-- Use TypeScript for props validation
-- Document component API
-- Write unit tests
-- Use Storybook for documentation
 ---
 
 ---
@@ -478,566 +434,187 @@ async function createEvent(data: EventData) {
 
 ---
 trigger: always
-description: Core project guidelines and development standards for the CookieVoting project.
+description: Core project guidelines, architecture, and development standards.
 ---
 
 # Project Guidelines & Standards
 
-These are the core development practices for this project. Follow these guidelines for all code changes.
-
 ## Architecture Principles
 
-### React Best Practices
-
-Follow the "Thinking in React" methodology:
-
-1. **Break UI into components** - Identify component hierarchy from the design
-2. **Build a static version first** - Render UI without interactivity initially
-3. **Identify minimal state** - Determine the absolute minimum state needed
-4. **Determine state ownership** - Place state in the lowest common ancestor
-5. **Add data flow** - Pass callbacks down for child-to-parent communication
-
 ### Separation of Concerns
-
-- **UI components are presentation-only** - They receive data via props, never fetch it
-- **Business logic lives in hooks** - Custom hooks in `src/lib/hooks/` handle data fetching, state management, and side effects
-- **Utilities are pure functions** - Complex logic (sorting, calculations, formatting) goes in `src/lib/` utilities
-- **No Firebase in components** - Components must NEVER import Firebase directly. All Firebase interactions happen through hooks
+- **UI (components/)**: Presentational only. Receive data via props.
+- **Logic (lib/hooks/)**: Data fetching, state management, side effects.
+- **Utils (lib/)**: Pure functions (formatting, calculations).
+- **No Firebase in UI**: Components must NEVER import Firebase directly.
 
 ### Project Structure
-
 ```
 src/
-├── components/
-│   ├── atoms/        # Basic UI primitives (Button, Input, Modal)
-│   ├── molecules/    # Combinations of atoms (SearchBar, FormField)
-│   └── organisms/    # Complex sections (Navigation, Forms)
+├── components/       # Atoms, Molecules, Organisms
 ├── pages/            # Route-level components
 ├── lib/
-│   ├── hooks/        # Custom React hooks (useAuth, useEvent, etc.)
-│   ├── stores/       # Zustand state stores
-│   ├── firebase.ts   # Firebase initialization
-│   ├── firestore.ts  # Firestore utilities
-│   └── storage.ts    # Storage utilities
-└── stories/          # Storybook stories and test data
+│   ├── hooks/        # Custom React hooks (useAuth, useEvent)
+│   ├── stores/       # Zustand stores
+│   └── firebase.ts   # Firebase init
 ```
 
 ## Code Standards
 
 ### Naming Conventions
+- **Components**: PascalCase (`CookieViewer.tsx`)
+- **Hooks**: camelCase + use (`useAuth.ts`)
+- **Utilities**: camelCase (`formatDate.ts`)
+- **Constants**: SCREAMING_SNAKE_CASE (`MAX_ITEMS`)
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | PascalCase | `CookieViewer.tsx` |
-| Hooks | camelCase with `use` prefix | `useAuth.ts` |
-| Utilities | camelCase | `formatDate.ts` |
-| Constants | SCREAMING_SNAKE_CASE | `MAX_COOKIES` |
-| Props/Variables | camelCase | `isLoading`, `onClick` |
-
-### File Organization
-
-- **One component per file** - Component name matches filename
-- **Co-locate related files** - Keep `.module.css`, `.stories.tsx`, and `.test.tsx` near their component
-- **Index exports** - Use `index.ts` for clean imports from directories
+### Files
+- **One component per file**.
+- **Co-locate**: Styles, stories, and tests next to the component.
+- **Index exports**: Use `index.ts` for clean directory imports.
 
 ## Development Workflow
+1. **Understand** the code patterns and finding similar implementations.
+2. **Storybook First**: Build UI components in isolation before integration.
+3. **Verify**: Always run `npm run verify` before committing.
 
-### Before Making Changes
-
-1. Understand the existing code patterns in the area you're modifying
-2. Check for similar implementations elsewhere in the codebase
-3. Consider if your change requires new tests
-
-### Before Committing
-
-**Always run `npm run verify`** before considering work complete. This runs:
-- ESLint for code quality
-- TypeScript for type checking  
-- Vitest for unit tests
-- Build verification
-
-Fix ALL warnings and errors before reporting completion.
-
-### Storybook-First Development
-
-For UI components:
-1. Create the component in Storybook first
-2. Add stories for all states (default, loading, error, empty, disabled)
-3. Add interaction tests using `play` functions
-4. Only then integrate into the application
-
-## Firebase Guidelines
-
-### Security Rules Syntax
-
-Firestore rules have specific limitations:
-- ❌ No `if` statements - use ternary operators instead
-- ❌ No `const` or `let` - use inline expressions
-- ✅ Use `&&` and `||` for complex conditions
-
-### Local Development
-
-- **Start emulators**: `npm run emulators:start:seed`
-- **Test user**: `test@local.dev` (UID: `test-user-default`) has admin access
-- **Windows users**: Use `127.0.0.1` instead of `localhost` to avoid IPv6 issues
-
-## Accessibility Requirements
-
-All UI must be accessible:
-- Use semantic HTML elements (`<button>`, `<nav>`, `<main>`)
-- Add ARIA labels where visual context is insufficient
-- Ensure keyboard navigation works for all interactive elements
-- Add `data-testid` attributes for testing
+## Universal Requirements
+- **Accessibility**: All UI must be accessible (semantic HTML, ARIA, keyboard nav).
+- **Responsiveness**: Mobile-first design.
+- **Error Handling**: Graceful degradation, user-friendly errors.
 
 ---
 
 ---
 trigger: model_decision
-description: React-specific patterns, hooks rules, and performance optimization.
+description: React patterns including hooks, component design, and performance optimization.
 ---
 
-You are an expert in React Hooks.
+# React Patterns & Best Practices
 
-Key Principles:
-- Follow Rules of Hooks strictly
-- Use custom hooks for reusable logic
-- Optimize dependency arrays
-- Avoid complex logic in components
-
-Common Hooks:
-- useState: Use functional updates for state based on previous state
-- useEffect: Clean up side effects, handle dependencies correctly
-- useContext: Avoid deep prop drilling
-- useReducer: Manage complex state logic
-- useRef: Access DOM nodes or mutable values
-
-Performance Hooks:
-- useMemo: Memoize expensive calculations
-- useCallback: Memoize functions passed to children
-- useTransition: Handle non-urgent state updates
-- useDeferredValue: Defer updating UI parts
-
-Custom Hooks:
-- Start name with 'use'
-- Encapsulate complex logic
-- Return consistent API
-- Handle errors internally
-- Document usage clearly
-
-Best Practices:
-- Don't call hooks inside loops or conditions
-- Keep effects focused on one concern
-- Use ESLint plugin for hooks
-- Avoid stale closures
-- Memoize context values
----
-
----
-trigger: model_decision
-description: React-specific patterns, hooks rules, and performance optimization.
----
-
-# React Patterns
+## Core Principles
+1. **Unidirectional Data Flow**: Data flows down, actions flow up.
+2. **Composition over Inheritance**: Use `children` prop and composition to build complex UIs.
+3. **Immutable State**: Never mutate state directly; use setters.
+4. **Separation of Concerns**: Logic in hooks, UI in components.
 
 ## Hooks Rules
+1. **Top Level Only**: Never call hooks in loops, conditions, or nested functions.
+2. **React Functions Only**: Call from components or custom hooks.
+3. **Dependencies**: `useEffect`, `useCallback`, `useMemo` dependency arrays must be exhaustive.
+4. **Naming**: Custom hooks must start with `use`.
 
-1. Only call hooks at the top level (not in loops, conditions, or nested functions)
-2. Only call hooks from React functions (components or custom hooks)
-3. Custom hooks must start with `use`
-
-## Dependency Arrays
-
-**Be explicit and complete:**
-
-```typescript
-// ❌ Bad - missing dependency
-useEffect(() => {
-  fetchUser(userId);
-}, []); // userId should be in deps
-
-// ✅ Good - all dependencies listed
-useEffect(() => {
-  fetchUser(userId);
-}, [userId]);
-
-// ✅ Good - use useCallback for stable references
-const handleSubmit = useCallback(() => {
-  submitForm(formData);
-}, [formData]);
-```
-
-## Memoization
-
-**Memoize expensive operations, not everything:**
-
-```typescript
-// ✅ Good use - expensive calculation
-const sortedItems = useMemo(
-  () => items.sort((a, b) => b.score - a.score),
-  [items]
-);
-
-// ❌ Unnecessary - simple value
-const isActive = useMemo(() => status === 'active', [status]);
-// Just use: const isActive = status === 'active';
-```
+### Common Hooks Usage
+- **useState**: For local UI state. Use functional updates `setCount(c => c + 1)` for state dependent on previous value.
+- **useEffect**: For side effects (subscriptions, DOM). **Always return a cleanup function**.
+- **useContext**: To avoid prop drilling global data (auth, theme).
+- **useMemo/useCallback**: Memoize expensive calculations or functions passed to memoized children.
 
 ## Component Patterns
 
 ### Container/Presenter
+Separate data fetching/logic from rendering.
+```tsx
+// Container: Handles logic & data
+const UserProfile = ({ id }) => {
+  const { user, loading } = useUser(id);
+  if (loading) return <Spinner />;
+  return <UserProfileView user={user} />;
+};
 
-Separate data fetching from presentation:
-
-```typescript
-// Presenter - pure UI, receives everything via props
-function UserProfileView({ user, onEdit, isLoading }: Props) {
-  if (isLoading) return <Spinner />;
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <button onClick={onEdit}>Edit</button>
-    </div>
-  );
-}
-
-// Container - handles data and logic
-function UserProfile({ userId }: { userId: string }) {
-  const { user, isLoading } = useUser(userId);
-  const handleEdit = () => { /* ... */ };
-  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
-}
+// Presenter: Pure UI
+const UserProfileView = ({ user }) => <h1>{user.name}</h1>;
 ```
 
 ### Compound Components
-
-For related components that share context:
-
-```typescript
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.card}>{children}</div>
-);
-
-Card.Header = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.header}>{children}</div>
-);
-
-Card.Body = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.body}>{children}</div>
-);
-
-// Usage
+For components that work together (e.g., Tabs, Card).
+```tsx
 <Card>
   <Card.Header>Title</Card.Header>
   <Card.Body>Content</Card.Body>
 </Card>
 ```
 
-## State Management
+## Performance Optimization
 
-### Local vs Lifted State
+### Rendering
+- **Minimize State**: Derive values during render where possible.
+- **React.memo**: Wrap pure functional components to prevent re-renders when props haven't changed.
+- **Stable Props**: Use `useCallback` for event handlers passed to child components.
+- **Virtualization**: Use `react-window` for long lists.
 
-- **Local state**: UI-only concerns (open/closed, hover, focus)
-- **Lifted state**: Shared between siblings (form data, selections)
-- **Global state**: App-wide concerns (auth, theme, notifications)
+### Code Splitting
+- **Lazy Loading**: Use `React.lazy` and `Suspense` for route-based splitting.
+- **Dynamic Imports**: Import heavy libraries on demand.
 
-### Avoid Prop Drilling
-
-When passing props through many levels:
-1. First, try lifting state to a closer common ancestor
-2. Consider using context for truly global state
-3. Use Zustand for complex state that many components need
+## Anti-Patterns to Avoid
+- **Prop Drilling**: Passing props through >2 layers (use Composition or Context).
+- **Large Components**: Split components >150 lines.
+- **Logic in JSX**: Move complex conditionals/maps to variables or sub-components.
+- **Derived State in State**: Don't store `fullName` if you have `firstName` and `lastName`.
 
 ## React Checklist
+- [ ] Hooks follow strict ordering and dependency rules
+- [ ] Components are small (<150 lines) and focused
+- [ ] State is lifted to the lowest common ancestor
+- [ ] Expensive calculations are memoized
+- [ ] No direct Firebase calls in components (use hooks)
 
-- [ ] Components receive data via props (no direct Firebase)
-- [ ] Hooks follow rules (top-level, proper dependencies)
-- [ ] Memoization used only where needed
-- [ ] State lives at the appropriate level
-
----
-
-You are an expert in React performance optimization.
-
-Key Principles:
-- Measure before optimizing
-- Minimize re-renders
-- Optimize bundle size
-- Use code splitting
-- Virtualize long lists
-
-Rendering Optimization:
-- Use React.memo for pure components
-- Stabilize props with useMemo/useCallback
-- Avoid inline functions in render
-- Use key prop correctly
-- Split large components
-
-Code Splitting:
-- Use React.lazy and Suspense
-- Route-based code splitting
-- Component-based code splitting
-- Lazy load libraries
-- Prefetch critical resources
-
-State Management:
-- Keep state local when possible
-- Avoid large context providers
-- Use atomic state libraries (Zustand, Jotai)
-- Normalize state structure
-- Batch state updates
-
-Assets:
-- Optimize images (Next.js Image)
-- Lazy load images and videos
-- Use SVGs correctly
-- Preload critical fonts
-- Minimize third-party scripts
-
-Tools:
-- React DevTools Profiler
-- Chrome Performance Tab
-- Bundle Analyzer
-- Lighthouse
-- Web Vitals
 ---
 
 ---
 trigger: always
-description: Test-Driven Development workflow and testing requirements for all code changes.
+description: TDD workflow and testing strategy - tests before code, verification requirements.
 ---
 
-# Testing Strategy
+# Testing Strategy & TDD Workflow
 
-## Test-Driven Development (TDD) Workflow
+## 1. TDD Workflow (Required)
+**Follow strict Test-Driven Development:**
 
-**This project follows strict Test-Driven Development.** Write tests BEFORE implementation code.
+1. **Propose Test Cases**: Before coding, outline what you will test.
+2. **Clarify**: Ask user if requirements are ambiguous.
+3. **Write Tests**: Create failing tests defining expected behavior.
+4. **Red**: Confirm tests fail.
+5. **Green**: Write minimum code to pass.
+6. **Refactor**: improve code while keeping tests passing.
 
-### The TDD Cycle
-
-For every code change, follow this cycle:
-
-1. **Propose test cases first** - Before writing any implementation, outline the test cases you plan to write
-2. **Clarify ambiguities** - If requirements are unclear, ASK the user before proceeding
-3. **Write the tests** - Create failing tests that define expected behavior.
-4. **Run tests (expect failures)** - Confirm tests fail as expected
-5. **Implement the code** - Write the minimum code to make tests pass. Follow guidance in `testing-strategy.md` for test case quality standards.
-6. **Run tests again** - Verify all tests pass
-7. **Refactor** - Clean up code while keeping tests green
-8. **Repeat** - Continue until all functionality is complete and tests pass
-
-### Proposing Test Cases
-
-Before writing tests, present a test plan to the user that includes:
-
+### Test Plan Template
+Use this to propose tests to the user:
 ```markdown
-## Proposed Test Cases for [Feature/Function]
-
+## Proposed Test Cases for [Feature]
 ### Happy Path
-- [ ] Test case 1: [description of expected behavior]
-- [ ] Test case 2: [description of expected behavior]
-
-### Edge Cases
-- [ ] Empty input handling
-- [ ] Boundary values (min/max)
-- [ ] Invalid input types
-- [ ] Null/undefined handling
-
-### Error Cases
-- [ ] Network failures
-- [ ] Permission denied
-- [ ] Invalid state transitions
+- [ ] [Description]
+### Edge/Error Cases
+- [ ] Empty/Null inputs
+- [ ] Network failures / Permission denied
 ```
 
-**Ask for clarification if:**
-- Requirements are ambiguous or incomplete
-- Edge case behavior is not specified
-- Error handling expectations are unclear
-- Performance requirements are not defined
+## 2. Testing Pyramid & Tools
 
-### Test Case Quality Standards
+| Layer | Tool | Scope | Command |
+|-------|------|-------|---------|
+| **E2E** | Playwright | Critical user flows | `npm run test:e2e` |
+| **Integration** | Jest + Emulators | Firestore rules, Functions | `npm run test:integration` |
+| **Component** | Storybook | UI interactions (`play` functions) | `npm run test-storybook` |
+| **Unit** | Vitest | Logic, Hooks, Utils | `npm run test` |
+| **Static** | ESLint/TSC | Code quality, Types | `npm run verify` |
 
-Write tests that are:
-- **Readable** - Test names describe the behavior, not implementation
-- **Maintainable** - Avoid testing implementation details
-- **Thorough** - Cover happy paths, edge cases, and error conditions
-- **Independent** - Tests should not depend on each other
+## 3. What to Test
+- **Unit**: Complex logic, custom hooks, utils. Mock dependencies.
+- **Component**: User interactions (clicks, forms). Don't test style details.
+- **Integration**: Security rules, backend triggers (use Emulators).
+- **Skip**: Simple presentational components, 3rd party config.
 
-```typescript
-// ❌ Bad - tests implementation details
-it('calls setLoading with true then false', () => { ... });
+## 4. Test Quality Standards
+- **Readable**: Test behavior, not implementation (`it('shows error when...')` vs `it('calls setErr')`).
+- **Independent**: Tests must not rely on execution order.
+- **Thorough**: Cover Happy Path + Edge Cases + Error States.
 
-// ✅ Good - tests behavior
-it('shows loading spinner while fetching data', () => { ... });
-it('displays error message when fetch fails', () => { ... });
-```
+## 5. Verification
+Run `npm run verify` before *every* commit. It runs lint, types, tests, and build checks.
 
-### When to Skip TDD
-
-TDD is **required** for:
-- New utility functions
-- Custom hooks
-- Business logic
-- API integrations
-- Complex component interactions
-
-TDD may be **relaxed** for:
-- Simple presentational components (use Storybook visual review)
-- Configuration changes
-- Documentation updates
-- Refactoring with existing test coverage
-
----
-
-**See also:** `testing-strategy.md` for test commands, tooling, and code examples.
-
----
-
----
-trigger: model_decision
-description: Testing strategy and requirements for maintaining code quality.
----
-
-# Testing Strategy
-
-## Testing Pyramid
-
-This project follows a testing pyramid adapted for React + Firebase:
-
-```
-         ▲
-        /E2E\        Playwright - Critical user journeys only
-       /─────\
-      /Integr-\      Jest + Emulators - Backend interactions
-     /──ation──\
-    /Component──\    Storybook - UI components with play functions
-   /─────Tests───\
-  /───Unit Tests──\  Vitest - Utility functions, hooks, business logic
- /─────────────────\
-/──Static Analysis──\ ESLint + TypeScript - Catches issues before runtime
-```
-
-**Principle:** More tests at the bottom (fast, cheap), fewer at the top (slow, expensive).
-
-## Test Types & Tools
-
-### Static Analysis (Always On)
-- **ESLint**: Code quality and consistency
-- **TypeScript**: Type safety
-- **Run**: Happens automatically, also via `npm run lint`
-
-### Unit Tests (Vitest)
-- **Scope**: `src/lib/`, custom hooks, utility functions
-- **Approach**: Test pure functions and hook logic in isolation
-- **Mocking**: Mock Firebase calls; use integration tests for real Firebase behavior
-- **Run**: `npm run test` or `npm run test:coverage`
-
-### Component Tests (Storybook)
-- **Scope**: All UI components in `src/components/`
-- **Approach**: Use `play` functions for interaction testing
-- **Required**: Every complex component needs interaction tests
-- **Run**: `npm run test-storybook`
-
-### Integration Tests (Jest + Emulators)
-- **Scope**: Firestore rules, Cloud Functions, complex queries
-- **Environment**: Requires `npm run emulators:start`
-- **Run**: `npm run test:integration`
-
-### E2E Tests (Playwright)
-- **Scope**: Critical user journeys only
-- **Examples**: Voting flow, admin event setup, authentication
-- **Run**: `npm run test:e2e`
-
-## What to Test
-
-### Always Test
-- Utility functions with logic
-- Custom hooks that manage state
-- Complex component interactions
-- Security rules (via integration tests)
-- Critical user flows (via E2E)
-
-### Don't Over-Test
-- Simple presentational components (visual review in Storybook is enough)
-- Third-party library behavior
-- Implementation details that might change
-
-## Writing Good Tests
-
-### Unit Test Example
-
-```typescript
-import { describe, it, expect } from 'vitest';
-import { calculateScore } from './scoring';
-
-describe('calculateScore', () => {
-  it('returns 0 for empty votes', () => {
-    expect(calculateScore([])).toBe(0);
-  });
-
-  it('sums positive votes correctly', () => {
-    expect(calculateScore([1, 2, 3])).toBe(6);
-  });
-
-  it('handles negative values', () => {
-    expect(calculateScore([1, -1, 2])).toBe(2);
-  });
-});
-```
-
-### Component Test Example (Storybook)
-
-```tsx
-export const SubmitFlow: Story = {
-  args: {
-    onSubmit: fn(),
-  },
-  play: async ({ canvas, args }) => {
-    const input = canvas.getByRole('textbox');
-    const button = canvas.getByRole('button', { name: /submit/i });
-
-    await userEvent.type(input, 'Test value');
-    await button.click();
-
-    await expect(args.onSubmit).toHaveBeenCalledWith('Test value');
-  },
-};
-```
-
-## Verification Workflow
-
-Before completing any code change:
-
-```bash
-# Run full verification (mirrors CI)
-npm run verify
-```
-
-This runs:
-1. ESLint
-2. TypeScript check
-3. Unit tests
-4. Build verification
-
-**All checks must pass before considering work complete.**
-
-## Test Commands Reference
-
-| Command | Purpose |
-|---------|---------|
-| `npm run verify` | Full verification (lint + type + test + build) |
-| `npm run test` | Run unit tests |
-| `npm run test:coverage` | Unit tests with coverage report |
-| `npm run test-storybook` | Run Storybook interaction tests |
-| `npm run test:integration` | Run integration tests (needs emulators) |
-| `npm run test:e2e` | Run Playwright E2E tests |
-
-## Debugging Test Failures
-
-1. **Read the error message** - Often contains the fix
-2. **Check recent changes** - What did you modify?
-3. **Run in isolation** - Focus on the failing test
-4. **Check test environment** - Emulators running? Correct node version?
-5. **Fix and re-run** - Iterate until green
+### Debugging
+- Check error message -> Check recent changes -> Run in isolation.
+- Ensure Emulators are running for integration tests (`npm run emulators:start`).
 
 ---
 
@@ -1048,183 +625,50 @@ description: Standards for building UI components with React, TypeScript, and St
 
 # UI Component Standards
 
-## Component Design Principles
-
-### Single Responsibility
-- Each component should do **one thing well**
-- If a component handles multiple concerns, split it
-- Keep components under ~150 lines; refactor if larger
-
-### Props-Based Design
-- Components receive ALL data via props
-- Never fetch data inside presentational components
-- Use callbacks for user actions (`onClick`, `onSubmit`, etc.)
-
-### TypeScript Requirements
-
-**Always define prop interfaces:**
+## Design Principles
+1. **Single Responsibility**: One thing well. Split if >150 lines.
+2. **Props-Based**: No internal data fetching. Use callbacks for actions.
+3. **Type Safety**: strict interfaces for Props. Export them.
 
 ```tsx
 interface ButtonProps {
-  variant: 'primary' | 'secondary' | 'danger';
-  size?: 'small' | 'medium' | 'large';
-  disabled?: boolean;
+  variant: 'primary' | 'secondary';
   onClick?: () => void;
   children: React.ReactNode;
 }
-
-export function Button({ 
-  variant, 
-  size = 'medium', 
-  disabled = false,
-  onClick,
-  children 
-}: ButtonProps) {
-  // ...
-}
 ```
-
-**Type rules:**
-- Export interfaces that other components might use
-- Use union types for variants: `'primary' | 'secondary'`
-- Provide sensible defaults for optional props
-- Avoid `any` - use `unknown` if type is truly unknown
 
 ## Storybook Development
+**Workflow:**
+1. **Build in Storybook**: Don't integrate until the component works in isolation.
+2. **Variations**: Create stories for Primary, Disabled, Loading, Error, Empty.
+3. **Interaction**: Use `play` functions to test behavior.
+4. **Accessibility**: Check the a11y addon tab.
 
-### Workflow
-
-1. **Create component and story together** - Don't integrate before testing in Storybook
-2. **Cover all states** - Default, loading, error, empty, disabled, hover, focus
-3. **Add interaction tests** - Use `play` functions for user interactions
-4. **Test accessibility** - Use the a11y addon
-
-### Story Structure
-
+**Story Example:**
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { fn, expect } from 'storybook/test';
-import { Button } from './Button';
-
-const meta: Meta<typeof Button> = {
-  component: Button,
-  args: {
-    children: 'Click me',
-    variant: 'primary',
-  },
-};
-
+const meta: Meta<typeof Button> = { component: Button };
 export default meta;
-type Story = StoryObj<typeof Button>;
 
-export const Primary: Story = {
-  args: { variant: 'primary' },
-};
-
-export const Disabled: Story = {
-  args: { disabled: true },
-};
-
-export const WithInteraction: Story = {
-  args: { onClick: fn() },
-  play: async ({ canvas, args }) => {
-    const button = canvas.getByRole('button');
-    await button.click();
-    await expect(args.onClick).toHaveBeenCalled();
-  },
+export const Primary: Story = { args: { variant: 'primary' } };
+export const Interaction: Story = {
+  play: async ({ canvas }) => {
+    await canvas.getByRole('button').click();
+  }
 };
 ```
 
-### Required Stories
-
-Every component should have stories for:
-- ✅ Default/primary state
-- ✅ All variants (if applicable)
-- ✅ Disabled state (if applicable)
-- ✅ Loading state (if applicable)
-- ✅ Error state (if applicable)
-- ✅ Empty/no data state (if applicable)
-- ✅ Interactive behavior (with `play` function)
-
-## Component Patterns
-
-### Container/Presenter Pattern
-
-Separate data fetching from presentation:
-
-```tsx
-// Presenter - pure UI, receives everything via props
-function UserProfileView({ user, onEdit, isLoading }: UserProfileViewProps) {
-  if (isLoading) return <Spinner />;
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <button onClick={onEdit}>Edit</button>
-    </div>
-  );
-}
-
-// Container - handles data and logic
-function UserProfile({ userId }: { userId: string }) {
-  const { user, isLoading } = useUser(userId);
-  const handleEdit = () => { /* ... */ };
-  
-  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
-}
-```
-
-### Compound Components
-
-For related components that share state:
-
-```tsx
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.card}>{children}</div>
-);
-
-Card.Header = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.header}>{children}</div>
-);
-
-Card.Body = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.body}>{children}</div>
-);
-
-// Usage
-<Card>
-  <Card.Header>Title</Card.Header>
-  <Card.Body>Content</Card.Body>
-</Card>
-```
-
-## Styling
-
-### CSS Modules
-
-- Use `.module.css` files for component styles
-- Use camelCase for class names: `styles.buttonPrimary`
-- Keep styles scoped to the component
-
-### Naming
-
-```css
-/* Button.module.css */
-.button { /* base styles */ }
-.primary { /* variant */ }
-.secondary { /* variant */ }
-.small { /* size */ }
-.disabled { /* state */ }
-```
+## Styling (CSS Modules)
+- Use `.module.css` files.
+- CamelCase class names: `styles.buttonPrimary`.
+- Scope styles strictly to the component.
 
 ## Accessibility Checklist
-
-For every interactive component:
-- [ ] Uses semantic HTML (`<button>` not `<div onClick>`)
-- [ ] Has visible focus states
-- [ ] Works with keyboard alone
-- [ ] Has appropriate ARIA labels
-- [ ] Color contrast meets WCAG AA (4.5:1 for text)
-- [ ] Tested with screen reader (or a11y addon)
+- [ ] Semantic HTML (`<button>` not `<div>`)
+- [ ] Visible focus states
+- [ ] Keyboard navigation support
+- [ ] Color contrast (WCAG AA)
+- [ ] Appropriate ARIA labels where needed
 
 ---
 

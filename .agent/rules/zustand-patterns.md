@@ -1,5 +1,3 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/zustand-patterns.md` instead.
-
 ---
 trigger: model_decision
 description: Zustand state management patterns and best practices.

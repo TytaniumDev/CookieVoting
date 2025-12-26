@@ -1,148 +1,55 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/testing-strategy.md` instead.
-
 ---
-trigger: model_decision
-description: Testing strategy and requirements for maintaining code quality.
+trigger: always
+description: TDD workflow and testing strategy - tests before code, verification requirements.
 ---
 
-# Testing Strategy
+# Testing Strategy & TDD Workflow
 
-## Testing Pyramid
+## 1. TDD Workflow (Required)
+**Follow strict Test-Driven Development:**
 
-This project follows a testing pyramid adapted for React + Firebase:
+1. **Propose Test Cases**: Before coding, outline what you will test.
+2. **Clarify**: Ask user if requirements are ambiguous.
+3. **Write Tests**: Create failing tests defining expected behavior.
+4. **Red**: Confirm tests fail.
+5. **Green**: Write minimum code to pass.
+6. **Refactor**: improve code while keeping tests passing.
 
-```
-         ▲
-        /E2E\        Playwright - Critical user journeys only
-       /─────\
-      /Integr-\      Jest + Emulators - Backend interactions
-     /──ation──\
-    /Component──\    Storybook - UI components with play functions
-   /─────Tests───\
-  /───Unit Tests──\  Vitest - Utility functions, hooks, business logic
- /─────────────────\
-/──Static Analysis──\ ESLint + TypeScript - Catches issues before runtime
-```
-
-**Principle:** More tests at the bottom (fast, cheap), fewer at the top (slow, expensive).
-
-## Test Types & Tools
-
-### Static Analysis (Always On)
-- **ESLint**: Code quality and consistency
-- **TypeScript**: Type safety
-- **Run**: Happens automatically, also via `npm run lint`
-
-### Unit Tests (Vitest)
-- **Scope**: `src/lib/`, custom hooks, utility functions
-- **Approach**: Test pure functions and hook logic in isolation
-- **Mocking**: Mock Firebase calls; use integration tests for real Firebase behavior
-- **Run**: `npm run test` or `npm run test:coverage`
-
-### Component Tests (Storybook)
-- **Scope**: All UI components in `src/components/`
-- **Approach**: Use `play` functions for interaction testing
-- **Required**: Every complex component needs interaction tests
-- **Run**: `npm run test-storybook`
-
-### Integration Tests (Jest + Emulators)
-- **Scope**: Firestore rules, Cloud Functions, complex queries
-- **Environment**: Requires `npm run emulators:start`
-- **Run**: `npm run test:integration`
-
-### E2E Tests (Playwright)
-- **Scope**: Critical user journeys only
-- **Examples**: Voting flow, admin event setup, authentication
-- **Run**: `npm run test:e2e`
-
-## What to Test
-
-### Always Test
-- Utility functions with logic
-- Custom hooks that manage state
-- Complex component interactions
-- Security rules (via integration tests)
-- Critical user flows (via E2E)
-
-### Don't Over-Test
-- Simple presentational components (visual review in Storybook is enough)
-- Third-party library behavior
-- Implementation details that might change
-
-## Writing Good Tests
-
-### Unit Test Example
-
-```typescript
-import { describe, it, expect } from 'vitest';
-import { calculateScore } from './scoring';
-
-describe('calculateScore', () => {
-  it('returns 0 for empty votes', () => {
-    expect(calculateScore([])).toBe(0);
-  });
-
-  it('sums positive votes correctly', () => {
-    expect(calculateScore([1, 2, 3])).toBe(6);
-  });
-
-  it('handles negative values', () => {
-    expect(calculateScore([1, -1, 2])).toBe(2);
-  });
-});
+### Test Plan Template
+Use this to propose tests to the user:
+```markdown
+## Proposed Test Cases for [Feature]
+### Happy Path
+- [ ] [Description]
+### Edge/Error Cases
+- [ ] Empty/Null inputs
+- [ ] Network failures / Permission denied
 ```
 
-### Component Test Example (Storybook)
+## 2. Testing Pyramid & Tools
 
-```tsx
-export const SubmitFlow: Story = {
-  args: {
-    onSubmit: fn(),
-  },
-  play: async ({ canvas, args }) => {
-    const input = canvas.getByRole('textbox');
-    const button = canvas.getByRole('button', { name: /submit/i });
+| Layer | Tool | Scope | Command |
+|-------|------|-------|---------|
+| **E2E** | Playwright | Critical user flows | `npm run test:e2e` |
+| **Integration** | Jest + Emulators | Firestore rules, Functions | `npm run test:integration` |
+| **Component** | Storybook | UI interactions (`play` functions) | `npm run test-storybook` |
+| **Unit** | Vitest | Logic, Hooks, Utils | `npm run test` |
+| **Static** | ESLint/TSC | Code quality, Types | `npm run verify` |
 
-    await userEvent.type(input, 'Test value');
-    await button.click();
+## 3. What to Test
+- **Unit**: Complex logic, custom hooks, utils. Mock dependencies.
+- **Component**: User interactions (clicks, forms). Don't test style details.
+- **Integration**: Security rules, backend triggers (use Emulators).
+- **Skip**: Simple presentational components, 3rd party config.
 
-    await expect(args.onSubmit).toHaveBeenCalledWith('Test value');
-  },
-};
-```
+## 4. Test Quality Standards
+- **Readable**: Test behavior, not implementation (`it('shows error when...')` vs `it('calls setErr')`).
+- **Independent**: Tests must not rely on execution order.
+- **Thorough**: Cover Happy Path + Edge Cases + Error States.
 
-## Verification Workflow
+## 5. Verification
+Run `npm run verify` before *every* commit. It runs lint, types, tests, and build checks.
 
-Before completing any code change:
-
-```bash
-# Run full verification (mirrors CI)
-npm run verify
-```
-
-This runs:
-1. ESLint
-2. TypeScript check
-3. Unit tests
-4. Build verification
-
-**All checks must pass before considering work complete.**
-
-## Test Commands Reference
-
-| Command | Purpose |
-|---------|---------|
-| `npm run verify` | Full verification (lint + type + test + build) |
-| `npm run test` | Run unit tests |
-| `npm run test:coverage` | Unit tests with coverage report |
-| `npm run test-storybook` | Run Storybook interaction tests |
-| `npm run test:integration` | Run integration tests (needs emulators) |
-| `npm run test:e2e` | Run Playwright E2E tests |
-
-## Debugging Test Failures
-
-1. **Read the error message** - Often contains the fix
-2. **Check recent changes** - What did you modify?
-3. **Run in isolation** - Focus on the failing test
-4. **Check test environment** - Emulators running? Correct node version?
-5. **Fix and re-run** - Iterate until green
+### Debugging
+- Check error message -> Check recent changes -> Run in isolation.
+- Ensure Emulators are running for integration tests (`npm run emulators:start`).

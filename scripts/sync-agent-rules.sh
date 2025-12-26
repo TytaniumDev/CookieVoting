@@ -234,8 +234,8 @@ log_success "Generated GEMINI.md"
 log_info "Generating .cursor/rules/*.mdc files..."
 mkdir -p "$PROJECT_ROOT/.cursor/rules"
 
-# Remove old generated files (those starting with numbers)
-rm -f "$PROJECT_ROOT/.cursor/rules/"[0-9]*.mdc
+# Remove old generated files
+rm -f "$PROJECT_ROOT/.cursor/rules/"*.mdc
 
 # Generate individual .mdc files for each rule
 for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
@@ -262,18 +262,15 @@ log_success "Generated .antigravity/rules.md"
 # ============================================
 log_info "Generating .agent/rules/*.md files..."
 mkdir -p "$PROJECT_ROOT/.agent/rules"
+rm -f "$PROJECT_ROOT/.agent/rules/"*.md
 
 # Generate individual .md files for each rule (Antigravity format)
 for file in $(find "$RULES_DIR" -name "*.md" -type f | sort); do
     filename=$(basename "$file")
     dest="$PROJECT_ROOT/.agent/rules/${filename}"
     
-    # Copy with a header noting it's auto-generated
-    {
-        echo "> ⚠️ **AUTO-GENERATED** — Do not edit. Edit \`ai/rules/${filename}\` instead."
-        echo ""
-        cat "$file"
-    } > "$dest"
+    # Copy directly without header to preserve frontmatter parsing
+    cp "$file" "$dest"
 done
 log_success "Generated .agent/rules/*.md files"
 

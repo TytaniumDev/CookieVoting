@@ -1,5 +1,3 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/firebase-deployment.md` instead.
-
 ---
 trigger: model_decision
 description: Guidelines for Firebase deployments - when and how to deploy functions and security rules.

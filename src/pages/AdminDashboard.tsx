@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { uploadImage } from '../lib/storage';
 import { type Category } from '../lib/types';
 import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
-import { Toast } from '../components/atoms/Toast/Toast';
 import {
   validateImage,
   validateCategoryName,
@@ -11,8 +10,7 @@ import {
   sanitizeInput,
 } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
-import { exportToCSV, exportToJSON, downloadFile } from '../lib/export';
-import { getVotes } from '../lib/firestore';
+
 import { useEventStore } from '../lib/stores/useEventStore';
 import { useBakerStore } from '../lib/stores/useBakerStore';
 import { useImageStore } from '../lib/stores/useImageStore';
@@ -96,7 +94,7 @@ export default function AdminDashboard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
+
   const [newBakerName, setNewBakerName] = useState('');
 
   const [editingCategoryName, setEditingCategoryName] = useState<Category | null>(null);
@@ -106,8 +104,6 @@ export default function AdminDashboard() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
 
   // Focus input when editing starts
   useEffect(() => {
@@ -155,7 +151,6 @@ export default function AdminDashboard() {
     try {
       // Image cleanup is handled by store or backend triggers
       await deleteCategory(eventId, category.id);
-      setAlertMessage('Category deleted successfully');
       setAlertType('success');
     } catch (err) {
       console.error('Failed to delete category', err);
@@ -183,8 +178,7 @@ export default function AdminDashboard() {
       await updateCategory(eventId, editingCategoryName.id, sanitizedName);
       setEditingCategoryName(null);
       setEditCategoryName('');
-      setAlertMessage('Category name updated successfully');
-      setAlertType('success');
+      // setAlertMessage('Category name updated successfully');
     } catch (err) {
       console.error('Failed to update category name', err);
       setAlertMessage('Failed to update category name. Please try again.');
@@ -242,8 +236,7 @@ export default function AdminDashboard() {
       setNewCatName('');
       setNewCatFile(null);
       setPreviewUrl(null);
-      setAlertMessage(CONSTANTS.SUCCESS_MESSAGES.CATEGORY_ADDED);
-      setAlertType('success');
+      // setAlertMessage(CONSTANTS.SUCCESS_MESSAGES.CATEGORY_ADDED);
     } catch (err) {
       console.error('Error adding category:', err);
       const errorMessage =
@@ -259,30 +252,7 @@ export default function AdminDashboard() {
     const _handleUpdateCookies = async (_cookies: CookieCoordinate[]) => { ... } 
     */
 
-  const handleExport = async (format: 'csv' | 'json') => {
-    if (!eventId || !event) return;
 
-    setExporting(true);
-    try {
-      const votes = await getVotes(eventId);
-      const content =
-        format === 'csv'
-          ? exportToCSV(event, categories, votes)
-          : exportToJSON(event, categories, votes);
-
-      const extension = format === 'csv' ? 'csv' : 'json';
-      const mimeType = format === 'csv' ? 'text/csv' : 'application/json';
-      const filename = `${event.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.${extension}`;
-
-      downloadFile(content, filename, mimeType);
-    } catch (err) {
-      console.error('Failed to export data', err);
-      setAlertMessage('Failed to export data. Please try again.');
-      setAlertType('error');
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const _handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
     if (!eventId) return;
@@ -384,8 +354,7 @@ export default function AdminDashboard() {
         // With the new store, we might need a `deleteCookiesByBaker` action or just rely on the user to re-tag.
         // Let's keep it simple: just remove baker from roster.
       }
-      setAlertMessage(`Baker "${bakerName}" removed successfully`);
-      setAlertType('success');
+      // setAlertMessage(`Baker "${bakerName}" removed successfully`);
     } catch (err) {
       console.error('Failed to remove baker', err);
       setAlertMessage('Failed to remove baker. Please try again.');
@@ -449,8 +418,7 @@ export default function AdminDashboard() {
                   if (!eventId || !date) return;
                   try {
                     await updateResultsAvailableTime(eventId, date.getTime());
-                    setAlertMessage('Results time updated');
-                    setAlertType('success');
+                    // setAlertMessage('Results time updated');
                   } catch {
                     setAlertMessage('Failed to update results time');
                     setAlertType('error');
@@ -511,8 +479,6 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/vote/${event.id}`);
-                      setToastMessage('Vote link copied to clipboard!');
-                      setToastType('success');
                       setShowOverflowMenu(false);
                     }}
                     className={styles.menuItem}
@@ -524,8 +490,6 @@ export default function AdminDashboard() {
                       navigator.clipboard.writeText(
                         `${window.location.origin}/results/${event.id}`,
                       );
-                      setToastMessage('Results link copied to clipboard!');
-                      setToastType('success');
                       setShowOverflowMenu(false);
                     }}
                     className={styles.menuItem}
@@ -549,26 +513,7 @@ export default function AdminDashboard() {
                   >
                     {event.status === 'voting' ? 'Close Voting' : 'Reopen Voting'}
                   </button>
-                  <button
-                    onClick={() => {
-                      handleExport('csv');
-                      setShowOverflowMenu(false);
-                    }}
-                    disabled={exporting || categories.length === 0}
-                    className={styles.menuItem}
-                  >
-                    {exporting ? 'Exporting...' : 'Export CSV'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleExport('json');
-                      setShowOverflowMenu(false);
-                    }}
-                    disabled={exporting || categories.length === 0}
-                    className={styles.menuItem}
-                  >
-                    {exporting ? 'Exporting...' : 'Export JSON'}
-                  </button>
+
                 </div>
               </>
             )}
@@ -885,10 +830,6 @@ export default function AdminDashboard() {
 
       {alertMessage && (
         <AlertModal message={alertMessage} type={alertType} onClose={() => setAlertMessage(null)} />
-      )}
-
-      {toastMessage && (
-        <Toast message={toastMessage} type={toastType} onClose={() => setToastMessage(null)} />
       )}
     </div>
   );

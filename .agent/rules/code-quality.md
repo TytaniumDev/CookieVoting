@@ -1,5 +1,3 @@
-> ⚠️ **AUTO-GENERATED** — Do not edit. Edit `ai/rules/code-quality.md` instead.
-
 ---
 trigger: always
 description: Code quality standards for TypeScript, error handling, and maintainable code.

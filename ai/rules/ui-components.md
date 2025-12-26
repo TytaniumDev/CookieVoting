@@ -5,180 +5,47 @@ description: Standards for building UI components with React, TypeScript, and St
 
 # UI Component Standards
 
-## Component Design Principles
-
-### Single Responsibility
-- Each component should do **one thing well**
-- If a component handles multiple concerns, split it
-- Keep components under ~150 lines; refactor if larger
-
-### Props-Based Design
-- Components receive ALL data via props
-- Never fetch data inside presentational components
-- Use callbacks for user actions (`onClick`, `onSubmit`, etc.)
-
-### TypeScript Requirements
-
-**Always define prop interfaces:**
+## Design Principles
+1. **Single Responsibility**: One thing well. Split if >150 lines.
+2. **Props-Based**: No internal data fetching. Use callbacks for actions.
+3. **Type Safety**: strict interfaces for Props. Export them.
 
 ```tsx
 interface ButtonProps {
-  variant: 'primary' | 'secondary' | 'danger';
-  size?: 'small' | 'medium' | 'large';
-  disabled?: boolean;
+  variant: 'primary' | 'secondary';
   onClick?: () => void;
   children: React.ReactNode;
 }
-
-export function Button({ 
-  variant, 
-  size = 'medium', 
-  disabled = false,
-  onClick,
-  children 
-}: ButtonProps) {
-  // ...
-}
 ```
-
-**Type rules:**
-- Export interfaces that other components might use
-- Use union types for variants: `'primary' | 'secondary'`
-- Provide sensible defaults for optional props
-- Avoid `any` - use `unknown` if type is truly unknown
 
 ## Storybook Development
+**Workflow:**
+1. **Build in Storybook**: Don't integrate until the component works in isolation.
+2. **Variations**: Create stories for Primary, Disabled, Loading, Error, Empty.
+3. **Interaction**: Use `play` functions to test behavior.
+4. **Accessibility**: Check the a11y addon tab.
 
-### Workflow
-
-1. **Create component and story together** - Don't integrate before testing in Storybook
-2. **Cover all states** - Default, loading, error, empty, disabled, hover, focus
-3. **Add interaction tests** - Use `play` functions for user interactions
-4. **Test accessibility** - Use the a11y addon
-
-### Story Structure
-
+**Story Example:**
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { fn, expect } from 'storybook/test';
-import { Button } from './Button';
-
-const meta: Meta<typeof Button> = {
-  component: Button,
-  args: {
-    children: 'Click me',
-    variant: 'primary',
-  },
-};
-
+const meta: Meta<typeof Button> = { component: Button };
 export default meta;
-type Story = StoryObj<typeof Button>;
 
-export const Primary: Story = {
-  args: { variant: 'primary' },
-};
-
-export const Disabled: Story = {
-  args: { disabled: true },
-};
-
-export const WithInteraction: Story = {
-  args: { onClick: fn() },
-  play: async ({ canvas, args }) => {
-    const button = canvas.getByRole('button');
-    await button.click();
-    await expect(args.onClick).toHaveBeenCalled();
-  },
+export const Primary: Story = { args: { variant: 'primary' } };
+export const Interaction: Story = {
+  play: async ({ canvas }) => {
+    await canvas.getByRole('button').click();
+  }
 };
 ```
 
-### Required Stories
-
-Every component should have stories for:
-- ✅ Default/primary state
-- ✅ All variants (if applicable)
-- ✅ Disabled state (if applicable)
-- ✅ Loading state (if applicable)
-- ✅ Error state (if applicable)
-- ✅ Empty/no data state (if applicable)
-- ✅ Interactive behavior (with `play` function)
-
-## Component Patterns
-
-### Container/Presenter Pattern
-
-Separate data fetching from presentation:
-
-```tsx
-// Presenter - pure UI, receives everything via props
-function UserProfileView({ user, onEdit, isLoading }: UserProfileViewProps) {
-  if (isLoading) return <Spinner />;
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <button onClick={onEdit}>Edit</button>
-    </div>
-  );
-}
-
-// Container - handles data and logic
-function UserProfile({ userId }: { userId: string }) {
-  const { user, isLoading } = useUser(userId);
-  const handleEdit = () => { /* ... */ };
-  
-  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
-}
-```
-
-### Compound Components
-
-For related components that share state:
-
-```tsx
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.card}>{children}</div>
-);
-
-Card.Header = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.header}>{children}</div>
-);
-
-Card.Body = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.body}>{children}</div>
-);
-
-// Usage
-<Card>
-  <Card.Header>Title</Card.Header>
-  <Card.Body>Content</Card.Body>
-</Card>
-```
-
-## Styling
-
-### CSS Modules
-
-- Use `.module.css` files for component styles
-- Use camelCase for class names: `styles.buttonPrimary`
-- Keep styles scoped to the component
-
-### Naming
-
-```css
-/* Button.module.css */
-.button { /* base styles */ }
-.primary { /* variant */ }
-.secondary { /* variant */ }
-.small { /* size */ }
-.disabled { /* state */ }
-```
+## Styling (CSS Modules)
+- Use `.module.css` files.
+- CamelCase class names: `styles.buttonPrimary`.
+- Scope styles strictly to the component.
 
 ## Accessibility Checklist
-
-For every interactive component:
-- [ ] Uses semantic HTML (`<button>` not `<div onClick>`)
-- [ ] Has visible focus states
-- [ ] Works with keyboard alone
-- [ ] Has appropriate ARIA labels
-- [ ] Color contrast meets WCAG AA (4.5:1 for text)
-- [ ] Tested with screen reader (or a11y addon)
+- [ ] Semantic HTML (`<button>` not `<div>`)
+- [ ] Visible focus states
+- [ ] Keyboard navigation support
+- [ ] Color contrast (WCAG AA)
+- [ ] Appropriate ARIA labels where needed

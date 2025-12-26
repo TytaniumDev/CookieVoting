@@ -1,121 +1,74 @@
 ---
 trigger: model_decision
-description: React-specific patterns, hooks rules, and performance optimization.
+description: React patterns including hooks, component design, and performance optimization.
 ---
 
-# React Patterns
+# React Patterns & Best Practices
+
+## Core Principles
+1. **Unidirectional Data Flow**: Data flows down, actions flow up.
+2. **Composition over Inheritance**: Use `children` prop and composition to build complex UIs.
+3. **Immutable State**: Never mutate state directly; use setters.
+4. **Separation of Concerns**: Logic in hooks, UI in components.
 
 ## Hooks Rules
+1. **Top Level Only**: Never call hooks in loops, conditions, or nested functions.
+2. **React Functions Only**: Call from components or custom hooks.
+3. **Dependencies**: `useEffect`, `useCallback`, `useMemo` dependency arrays must be exhaustive.
+4. **Naming**: Custom hooks must start with `use`.
 
-1. Only call hooks at the top level (not in loops, conditions, or nested functions)
-2. Only call hooks from React functions (components or custom hooks)
-3. Custom hooks must start with `use`
-
-## Dependency Arrays
-
-**Be explicit and complete:**
-
-```typescript
-// ❌ Bad - missing dependency
-useEffect(() => {
-  fetchUser(userId);
-}, []); // userId should be in deps
-
-// ✅ Good - all dependencies listed
-useEffect(() => {
-  fetchUser(userId);
-}, [userId]);
-
-// ✅ Good - use useCallback for stable references
-const handleSubmit = useCallback(() => {
-  submitForm(formData);
-}, [formData]);
-```
-
-## Memoization
-
-**Memoize expensive operations, not everything:**
-
-```typescript
-// ✅ Good use - expensive calculation
-const sortedItems = useMemo(
-  () => items.sort((a, b) => b.score - a.score),
-  [items]
-);
-
-// ❌ Unnecessary - simple value
-const isActive = useMemo(() => status === 'active', [status]);
-// Just use: const isActive = status === 'active';
-```
+### Common Hooks Usage
+- **useState**: For local UI state. Use functional updates `setCount(c => c + 1)` for state dependent on previous value.
+- **useEffect**: For side effects (subscriptions, DOM). **Always return a cleanup function**.
+- **useContext**: To avoid prop drilling global data (auth, theme).
+- **useMemo/useCallback**: Memoize expensive calculations or functions passed to memoized children.
 
 ## Component Patterns
 
 ### Container/Presenter
+Separate data fetching/logic from rendering.
+```tsx
+// Container: Handles logic & data
+const UserProfile = ({ id }) => {
+  const { user, loading } = useUser(id);
+  if (loading) return <Spinner />;
+  return <UserProfileView user={user} />;
+};
 
-Separate data fetching from presentation:
-
-```typescript
-// Presenter - pure UI, receives everything via props
-function UserProfileView({ user, onEdit, isLoading }: Props) {
-  if (isLoading) return <Spinner />;
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <button onClick={onEdit}>Edit</button>
-    </div>
-  );
-}
-
-// Container - handles data and logic
-function UserProfile({ userId }: { userId: string }) {
-  const { user, isLoading } = useUser(userId);
-  const handleEdit = () => { /* ... */ };
-  return <UserProfileView user={user} onEdit={handleEdit} isLoading={isLoading} />;
-}
+// Presenter: Pure UI
+const UserProfileView = ({ user }) => <h1>{user.name}</h1>;
 ```
 
 ### Compound Components
-
-For related components that share context:
-
-```typescript
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.card}>{children}</div>
-);
-
-Card.Header = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.header}>{children}</div>
-);
-
-Card.Body = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.body}>{children}</div>
-);
-
-// Usage
+For components that work together (e.g., Tabs, Card).
+```tsx
 <Card>
   <Card.Header>Title</Card.Header>
   <Card.Body>Content</Card.Body>
 </Card>
 ```
 
-## State Management
+## Performance Optimization
 
-### Local vs Lifted State
+### Rendering
+- **Minimize State**: Derive values during render where possible.
+- **React.memo**: Wrap pure functional components to prevent re-renders when props haven't changed.
+- **Stable Props**: Use `useCallback` for event handlers passed to child components.
+- **Virtualization**: Use `react-window` for long lists.
 
-- **Local state**: UI-only concerns (open/closed, hover, focus)
-- **Lifted state**: Shared between siblings (form data, selections)
-- **Global state**: App-wide concerns (auth, theme, notifications)
+### Code Splitting
+- **Lazy Loading**: Use `React.lazy` and `Suspense` for route-based splitting.
+- **Dynamic Imports**: Import heavy libraries on demand.
 
-### Avoid Prop Drilling
-
-When passing props through many levels:
-1. First, try lifting state to a closer common ancestor
-2. Consider using context for truly global state
-3. Use Zustand for complex state that many components need
+## Anti-Patterns to Avoid
+- **Prop Drilling**: Passing props through >2 layers (use Composition or Context).
+- **Large Components**: Split components >150 lines.
+- **Logic in JSX**: Move complex conditionals/maps to variables or sub-components.
+- **Derived State in State**: Don't store `fullName` if you have `firstName` and `lastName`.
 
 ## React Checklist
-
-- [ ] Components receive data via props (no direct Firebase)
-- [ ] Hooks follow rules (top-level, proper dependencies)
-- [ ] Memoization used only where needed
-- [ ] State lives at the appropriate level
+- [ ] Hooks follow strict ordering and dependency rules
+- [ ] Components are small (<150 lines) and focused
+- [ ] State is lifted to the lowest common ancestor
+- [ ] Expensive calculations are memoized
+- [ ] No direct Firebase calls in components (use hooks)

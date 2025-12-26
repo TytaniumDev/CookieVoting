@@ -31,14 +31,16 @@ export default function AdminHome() {
   } = useDetectionJob({
     enabled: isAdmin,
     onComplete: (result) => {
-      const message =
-        `Detection complete!\n` +
-        `Total images: ${result.total}\n` +
-        `Processed: ${result.processed}\n` +
-        `Skipped (already detected): ${result.skipped}\n` +
-        `Errors: ${result.errors}`;
-      setAlertMessage(message);
-      setAlertType(result.errors > 0 ? 'error' : 'success');
+      if (result.errors > 0) {
+        const message =
+          `Detection complete with errors!\n` +
+          `Total images: ${result.total}\n` +
+          `Processed: ${result.processed}\n` +
+          `Skipped (already detected): ${result.skipped}\n` +
+          `Errors: ${result.errors}`;
+        setAlertMessage(message);
+        setAlertType('error');
+      }
     },
     onError: (errorMsg) => {
       setAlertMessage(errorMsg);
