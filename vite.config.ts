@@ -39,6 +39,19 @@ export default defineConfig({
   },
   test: {
     projects: [
+      // Unit and integration tests
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'jsdom',
+          include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
+          exclude: ['**/node_modules/**', '**/dist/**', '**/*.stories.*'],
+          setupFiles: ['./config/vitest.setup.ts'],
+          globals: true,
+        },
+      },
+      // Storybook component tests
       {
         extends: true,
         plugins: [

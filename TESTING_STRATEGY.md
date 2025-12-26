@@ -15,7 +15,7 @@ We follow a modified testing pyramid adapted for our Firebase + React stack:
 ## 2. Current Status & Coverage
 
 - **Unit**: Covered via Vitest. Coverage is enabled (`npm run test:coverage`).
-- **Integration**: `tests/integration` folder contains Jest tests running against Firebase Emulator.
+- **Integration**: `tests/integration` folder contains Vitest tests running against Firebase Emulator.
 - **UI/Component**: Storybook is configured with `addon-interactions`. Key components (`VotingSessionView`, `CookieViewer`) have interaction tests.
 - **E2E**: Playwright is configured.
 
@@ -26,7 +26,7 @@ We follow a modified testing pyramid adapted for our Firebase + React stack:
 - **Scope**: `src/lib/`, `src/hooks/`, `functions/src/`.
 - **Tool**: Vitest.
 - **Goal**: 80%+ coverage on `src/lib` logic.
-- **Mocking**: Mock Firebase calls in unit tests; use Integration tests for real Firebase behavior.
+- **Mocking**: Use `vi.mock()` to mock Firebase calls in unit tests; use Integration tests for real Firebase behavior.
 
 ### B. Component Interaction Tests (Storybook)
 
@@ -38,7 +38,7 @@ We follow a modified testing pyramid adapted for our Firebase + React stack:
 ### C. Integration Tests
 
 - **Scope**: Firebase security rules, Cloud Functions triggers, and complex Firestore queries.
-- **Tool**: Jest + `@firebase/rules-unit-testing`.
+- **Tool**: Vitest + `@firebase/rules-unit-testing`.
 - **Environment**: `npm run emulators:start`.
 - **Key Scenarios**:
   - User can only vote once per event.
@@ -73,7 +73,9 @@ We follow a modified testing pyramid adapted for our Firebase + React stack:
 ## 5. Running Tests
 
 - **All (Verify)**: `npm run verify`
-- **Unit/Coverage**: `npm run test:coverage`
+- **Unit**: `npm run test`
+- **Unit (Watch)**: `npm run test:watch`
+- **Coverage**: `npm run test:coverage`
 - **Storybook**: `npm run test-storybook`
 - **Integration**: `npm run test:integration`
 - **E2E**: `npm run test:e2e`

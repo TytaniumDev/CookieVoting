@@ -271,3 +271,75 @@ export const ZoomDisabled: Story = {
     onCookieClick: fn(),
   },
 };
+
+/**
+ * Story in a height-constrained container
+ *
+ * This story tests that the image scales properly to fit within a fixed-height
+ * container without being cropped. The full image should be visible.
+ *
+ * **Visual test criteria:**
+ * - Image should be fully visible (not cropped)
+ * - Image should scale down to fit the container
+ * - Detection overlays should align with the scaled image
+ */
+export const InConstrainedContainer: Story = {
+  args: {
+    imageUrl: 'test-cookies-6.jpg',
+    detectedCookies: Array.from({ length: 6 }, (_, i) => ({
+      x: 20 + (i % 3) * 30,
+      y: 30 + Math.floor(i / 3) * 40,
+      width: 15,
+      height: 15,
+      confidence: 0.9,
+      polygon: [
+        [15 + (i % 3) * 30, 25 + Math.floor(i / 3) * 40],
+        [25 + (i % 3) * 30, 25 + Math.floor(i / 3) * 40],
+        [25 + (i % 3) * 30, 35 + Math.floor(i / 3) * 40],
+        [15 + (i % 3) * 30, 35 + Math.floor(i / 3) * 40],
+      ] as Array<[number, number]>,
+    })),
+    // Show visible borders and numbered markers for visual verification
+    borderColor: '#2196F3',
+    cookieNumbers: [1, 2, 3, 4, 5, 6],
+    disableZoom: true,
+    onCookieClick: fn(),
+    onSelectCookie: fn(),
+  },
+  decorators: [
+    (Story) => (
+      <div
+        style={{
+          width: '600px',
+          height: '400px',
+          background: '#1a1a1a',
+          border: '2px solid #dc2626',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
+  parameters: {
+    docs: {
+      description: {
+        story: `
+**Visual Regression Test for Image Cropping**
+
+This story renders the CookieViewer inside a fixed 600x400 container.
+The image should scale to fit completely within the container without any cropping.
+
+**Pass criteria:**
+- All detection zones are visible
+- Image is centered in the container
+- No scrollbars or hidden content
+        `,
+      },
+    },
+  },
+};

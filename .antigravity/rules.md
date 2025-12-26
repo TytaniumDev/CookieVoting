@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 25, 2025 at 16:27:17 PST · Checksum: `ff24aa1197be`
+> **Last synced:** December 25, 2025 at 18:56:50 PST · Checksum: `4524808863ce`
 
 ## 🤖 Instructions for AI Agents
 
@@ -593,27 +593,41 @@ Use this to propose tests to the user:
 | Layer | Tool | Scope | Command |
 |-------|------|-------|---------|
 | **E2E** | Playwright | Critical user flows | `npm run test:e2e` |
-| **Integration** | Jest + Emulators | Firestore rules, Functions | `npm run test:integration` |
+| **Integration** | Vitest + Emulators | Firestore rules, Functions | `npm run test:integration` |
 | **Component** | Storybook | UI interactions (`play` functions) | `npm run test-storybook` |
 | **Unit** | Vitest | Logic, Hooks, Utils | `npm run test` |
 | **Static** | ESLint/TSC | Code quality, Types | `npm run verify` |
 
 ## 3. What to Test
-- **Unit**: Complex logic, custom hooks, utils. Mock dependencies.
+- **Unit**: Complex logic, custom hooks, utils. Mock dependencies with `vi.mock()`.
 - **Component**: User interactions (clicks, forms). Don't test style details.
 - **Integration**: Security rules, backend triggers (use Emulators).
 - **Skip**: Simple presentational components, 3rd party config.
 
-## 4. Test Quality Standards
-- **Readable**: Test behavior, not implementation (`it('shows error when...')` vs `it('calls setErr')`).
-- **Independent**: Tests must not rely on execution order.
-- **Thorough**: Cover Happy Path + Edge Cases + Error States.
+## 4. Vitest Best Practices
+
+### Mocking
+```typescript
+import { vi, type Mock } from 'vitest';
+
+vi.mock('../lib/firestore');
+const mockedFn = someFn as Mock;
+mockedFn.mockResolvedValue({ id: '123' });
+```
+
+### Cleanup
+```typescript
+afterEach(() => {
+  vi.clearAllMocks();
+});
+```
 
 ## 5. Verification
 Run `npm run verify` before *every* commit. It runs lint, types, tests, and build checks.
 
 ### Debugging
 - Check error message -> Check recent changes -> Run in isolation.
+- Use `npm run test:watch` for interactive development.
 - Ensure Emulators are running for integration tests (`npm run emulators:start`).
 
 ---
