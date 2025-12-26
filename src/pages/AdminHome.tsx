@@ -8,6 +8,8 @@ import { CONSTANTS } from '../lib/constants';
 import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
 import styles from './AdminHome.module.css';
 import { type VoteEvent } from '../lib/types';
+import { AdminEventList } from '../components/organisms/admin/AdminEventList/AdminEventList';
+import { AdminPageHeader } from '../components/organisms/admin/AdminPageHeader/AdminPageHeader';
 
 export default function AdminHome() {
   const navigate = useNavigate();
@@ -240,74 +242,13 @@ export default function AdminHome() {
         <AlertModal message={alertMessage} type={alertType} onClose={() => setAlertMessage(null)} />
       )}
       <section className={styles.section}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1rem',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
-          <h1 style={{ margin: 0 }}>Create Voting Event</h1>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => window.open('/admin/audit/detections', '_blank')}
-              className={styles.button}
-              style={{
-                background: 'rgba(33, 150, 243, 0.8)',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                transition: 'background 0.2s',
-              }}
-            >
-              🔍 Image Detection Audit
-            </button>
-            {detectingAll && currentJobId && (
-              <button
-                onClick={handleCancelDetection}
-                className={styles.button}
-                style={{
-                  background: 'rgba(244, 67, 54, 0.8)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  transition: 'background 0.2s',
-                }}
-              >
-                ⏹️ Stop Detection
-              </button>
-            )}
-            <button
-              onClick={handleDetectAllImages}
-              disabled={detectingAll}
-              className={styles.button}
-              style={{
-                background: detectingAll ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.8)',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '6px',
-                cursor: detectingAll ? 'not-allowed' : 'pointer',
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                transition: 'background 0.2s',
-              }}
-            >
-              {detectingAll ? '🔄 Detecting...' : '🔍 Auto-detect All Images'}
-            </button>
-          </div>
-        </div>
+        <AdminPageHeader
+          detectingAll={detectingAll}
+          currentJobId={currentJobId}
+          onAuditClick={() => window.open('/admin/audit/detections', '_blank')}
+          onCancelDetection={handleCancelDetection}
+          onDetectAll={handleDetectAllImages}
+        />
         {detectionProgress && (
           <div
             style={{
@@ -352,79 +293,21 @@ export default function AdminHome() {
         <h2>Existing Events</h2>
         {loadingEvents ? (
           <p>Loading events...</p>
-        ) : events.length > 0 ? (
-          <div className={styles.eventsGrid}>
-            {events.map((event) => {
-              const images = eventImages[event.id] || [];
-              return (
-                <div
-                  key={event.id}
-                  className={`${styles.eventCard} ${deleting === event.id ? styles.deletingItem : ''}`}
-                  onClick={() => navigate(`/admin/${event.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      navigate(`/admin/${event.id}`);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View event: ${event.name}`}
-                >
-                  <div className={styles.eventHeader}>
-                    <h3>{event.name}</h3>
-                    <div className={styles.eventActions}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(`/results/${event.id}`, '_blank');
-                        }}
-                        className={styles.resultsButton}
-                      >
-                        See Results
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(event.id);
-                        }}
-                        className={`${styles.deleteButton} ${deleting === event.id ? styles.deleting : ''}`}
-                        disabled={deleting === event.id}
-                      >
-                        <span
-                          className={styles.buttonText}
-                          style={{ opacity: deleting === event.id ? 0 : 1 }}
-                        >
-                          Delete
-                        </span>
-                        {deleting === event.id && <span className={styles.spinner} />}
-                      </button>
-                    </div>
-                  </div>
-                  {images.length > 0 ? (
-                    <div className={styles.imageCarousel}>
-                      {images.map((imageUrl, index) => {
-                        // Create a stable key from URL hash
-                        const urlHash = imageUrl.split('/').pop() || imageUrl.slice(-30);
-                        return (
-                          <img
-                            key={`${event.id}-${urlHash}`}
-                            src={imageUrl}
-                            alt={`${event.name} - ${index + 1}`}
-                            className={styles.carouselImage}
-                          />
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className={styles.noImages}>No images yet</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
         ) : (
-          <p>No events found.</p>
+          <AdminEventList
+            events={events}
+            eventImages={eventImages}
+            deletingId={deleting}
+            onDeleteClick={(eventId, e) => {
+              e.stopPropagation();
+              handleDeleteClick(eventId);
+            }}
+            onResultClick={(eventId, e) => {
+              e.stopPropagation();
+              window.open(`/results/${eventId}`, '_blank');
+            }}
+            onEventClick={(eventId) => navigate(`/admin/${eventId}`)}
+          />
         )}
       </section>
 
@@ -442,6 +325,7 @@ export default function AdminHome() {
           tabIndex={0}
           aria-label="Close delete confirmation"
         >
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             className={styles.modal}
             onClick={(e) => e.stopPropagation()}

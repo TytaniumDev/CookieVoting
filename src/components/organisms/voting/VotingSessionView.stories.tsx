@@ -101,8 +101,9 @@ export const ValidUserJourneyTest: Story = {
 
     // 6. Complete remaining
     await step('Vote through remaining categories', async () => {
-      // Cat 2 (Best Look)
-      await userEvent.click(canvas.getByLabelText('Cookie 1'));
+      // Cat 2 (Best Look) - Wait for overlay to render (image load/sized)
+      const cookie1Cat2 = await canvas.findByLabelText('Cookie 1');
+      await userEvent.click(cookie1Cat2);
 
       const nextBtn = canvas.getByText('Next Category');
       await waitFor(() => expect(nextBtn).toBeVisible());
@@ -112,7 +113,8 @@ export const ValidUserJourneyTest: Story = {
       });
 
       // Cat 3 (Most Creative)
-      await userEvent.click(canvas.getByLabelText('Cookie 1'));
+      const cookie1Cat3 = await canvas.findByLabelText('Cookie 1');
+      await userEvent.click(cookie1Cat3);
 
       const nextBtn2 = canvas.getByText('Next Category');
       await waitFor(() => expect(nextBtn2).toBeVisible());
@@ -122,7 +124,8 @@ export const ValidUserJourneyTest: Story = {
       });
 
       // Cat 4 (Holiday Spirit) - Last One
-      await userEvent.click(canvas.getByLabelText('Cookie 1'));
+      const cookie1Cat4 = await canvas.findByLabelText('Cookie 1');
+      await userEvent.click(cookie1Cat4);
 
       // Button should change text
       const finishBtn = canvas.getByText('Finish Voting');

@@ -1,0 +1,65 @@
+.container {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+}
+
+.dot:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.dot:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.dot.active {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+}
+
+.dot.complete {
+    background: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.dot.partial {
+    background: linear-gradient(135deg, var(--color-accent) 50%, transparent 50%);
+    border-color: var(--color-accent);
+}
+
+.dot.empty {
+    background: transparent;
+}
+
+/* Size variants */
+.small .dot {
+    width: 8px;
+    height: 8px;
+}
+
+.large .dot {
+    width: 16px;
+    height: 16px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .dot {
+        width: 10px;
+        height: 10px;
+    }
+}

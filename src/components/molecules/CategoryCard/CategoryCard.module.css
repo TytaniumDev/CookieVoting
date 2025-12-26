@@ -1,0 +1,114 @@
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-md);
+}
+
+.imageButton {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+}
+
+.content {
+    padding: var(--spacing-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.nameButton {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+    word-break: break-word;
+}
+
+.nameButton:hover {
+    color: var(--color-accent);
+}
+
+.editRow {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.editInput {
+    flex: 1;
+    padding: var(--spacing-1) var(--spacing-2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    min-width: 0;
+}
+
+.editInput:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.cookieCount {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.actions {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-1);
+}
+
+.smallButton {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.smallButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.smallButtonPrimary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.smallButtonPrimary:hover {
+    background: var(--color-accent-hover);
+}
+
+.smallButtonDanger:hover {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}

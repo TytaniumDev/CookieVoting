@@ -35,7 +35,7 @@ function getProjectId() {
             const firebaserc = JSON.parse(readFileSync(firebasercPath, 'utf8'));
             return firebaserc.projects?.default;
         }
-    } catch (e) {
+    } catch {
         // ignore
     }
     return null;
@@ -99,7 +99,6 @@ async function main() {
 
         // 5. Update .env
         const envPath = join(projectRoot, '.env');
-        let envContent = '';
         let existingEnv = {};
 
         // Read existing .env if it exists

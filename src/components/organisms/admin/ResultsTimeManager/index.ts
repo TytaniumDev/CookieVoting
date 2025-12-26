@@ -1,0 +1,1 @@
+export { ResultsTimeManager } from './ResultsTimeManager';

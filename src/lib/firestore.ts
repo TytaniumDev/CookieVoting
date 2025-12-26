@@ -414,26 +414,21 @@ export async function getImageDetectionResults(imageUrl: string): Promise<Array<
   confidence: number;
 }> | null> {
   try {
-    console.log(`[getImageDetectionResults] Attempting to get results for imageUrl: ${imageUrl}`);
     const filePath = extractFilePathFromUrl(imageUrl);
     if (!filePath) {
       console.warn('[getImageDetectionResults] Could not extract file path from URL:', imageUrl);
       return null;
     }
-    console.log(`[getImageDetectionResults] Extracted filePath: ${filePath}`);
 
     // Create document ID from file path (same logic as storage trigger)
     const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
-    console.log(`[getImageDetectionResults] Generated detectionDocId: ${detectionDocId}`);
     const detectionRef = doc(db, 'image_detections', detectionDocId);
     const detectionSnap = await getDoc(detectionRef);
 
-    console.log(`[getImageDetectionResults] Document exists: ${detectionSnap.exists()}`);
     if (detectionSnap.exists()) {
       const data = detectionSnap.data();
       const cookies = data.detectedCookies || null;
       if (cookies && Array.isArray(cookies)) {
-        console.log(`[getImageDetectionResults] Found ${cookies.length} detected cookies`);
         // Convert polygons from Firestore format back to tuple format
         interface FirestoreCookie {
           x?: unknown;
@@ -445,16 +440,10 @@ export async function getImageDetectionResults(imageUrl: string): Promise<Array<
           [key: string]: unknown;
         }
         const convertedCookies = cookies.map((cookie: FirestoreCookie) => {
-          const converted = {
+          return {
             ...cookie,
             polygon: convertPolygonFromFirestore(cookie.polygon),
           };
-          if (converted.polygon) {
-            console.log(
-              `[getImageDetectionResults] Cookie has polygon with ${converted.polygon.length} points`,
-            );
-          }
-          return converted;
         });
         return convertedCookies;
       }
@@ -489,42 +478,21 @@ export function watchImageDetectionResults(
   if (!filePath) {
     console.warn('[watchImageDetectionResults] Could not extract file path from URL:', imageUrl);
     callback(null);
-    return () => {}; // Return no-op unsubscribe
+    return () => { }; // Return no-op unsubscribe
   }
 
   // Create document ID from file path (same logic as storage trigger)
   const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
   const detectionRef = doc(db, 'image_detections', detectionDocId);
 
-  console.log(`[watchImageDetectionResults] Setting up listener for imageUrl: ${imageUrl}`);
-  console.log(`[watchImageDetectionResults] Extracted filePath: ${filePath}`);
-  console.log(`[watchImageDetectionResults] Generated detectionDocId: ${detectionDocId}`);
-  console.log(
-    `[watchImageDetectionResults] Full document path: image_detections/${detectionDocId}`,
-  );
-
   // Set up real-time listener
   const unsubscribe = onSnapshot(
     detectionRef,
     (snapshot) => {
-      console.log(`[watchImageDetectionResults] Snapshot exists: ${snapshot.exists()}`);
-      console.log(`[watchImageDetectionResults] Document path: image_detections/${detectionDocId}`);
-      if (!snapshot.exists()) {
-        console.warn(
-          `[watchImageDetectionResults] Detection document does not exist. File path: ${filePath}, Doc ID: ${detectionDocId}`,
-        );
-        console.warn(
-          `[watchImageDetectionResults] This usually means detection hasn't been run for this image yet.`,
-        );
-      }
       if (snapshot.exists()) {
         const data = snapshot.data();
         const cookies = data.detectedCookies || null;
-        console.log(
-          `[watchImageDetectionResults] Cookies data type: ${typeof cookies}, isArray: ${Array.isArray(cookies)}, length: ${cookies?.length || 0}`,
-        );
         if (cookies && Array.isArray(cookies)) {
-          console.log(`[watchImageDetectionResults] Found ${cookies.length} detected cookies`);
           // Convert polygons from Firestore format to tuple format
           interface FirestoreCookie {
             x?: unknown;
@@ -535,18 +503,10 @@ export function watchImageDetectionResults(
             confidence?: unknown;
             [key: string]: unknown;
           }
-          const convertedCookies = cookies.map((cookie: FirestoreCookie) => {
-            const converted = {
-              ...cookie,
-              polygon: convertPolygonFromFirestore(cookie.polygon),
-            };
-            if (converted.polygon) {
-              console.log(
-                `[watchImageDetectionResults] Cookie has polygon with ${converted.polygon.length} points`,
-              );
-            }
-            return converted;
-          });
+          const convertedCookies = cookies.map((cookie: FirestoreCookie) => ({
+            ...cookie,
+            polygon: convertPolygonFromFirestore(cookie.polygon),
+          }));
           callback(convertedCookies);
         } else {
           callback(null);
