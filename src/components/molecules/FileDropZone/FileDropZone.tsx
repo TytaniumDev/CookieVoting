@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import styles from './FileDropZone.module.css';
+import { cn } from '../../../lib/cn';
 
 export interface FileDropZoneProps {
     /** Accepted file types (e.g., "image/*") */
@@ -20,9 +20,6 @@ export interface FileDropZoneProps {
 
 /**
  * FileDropZone - A drag-and-drop file upload component.
- *
- * Supports clicking to open file dialog or drag-and-drop.
- * Provides visual feedback during drag operations.
  */
 export function FileDropZone({
     accept = 'image/*',
@@ -49,7 +46,7 @@ export function FileDropZone({
                 fileInputRef.current?.click();
             }
         },
-        [disabled],
+        [disabled]
     );
 
     const handleFileChange = useCallback(
@@ -60,7 +57,7 @@ export function FileDropZone({
                 e.target.value = '';
             }
         },
-        [onFileSelect],
+        [onFileSelect]
     );
 
     const handleDrop = useCallback(
@@ -72,7 +69,7 @@ export function FileDropZone({
                 onFileSelect(e.dataTransfer.files[0]);
             }
         },
-        [disabled, onFileSelect],
+        [disabled, onFileSelect]
     );
 
     const handleDragOver = useCallback(
@@ -82,7 +79,7 @@ export function FileDropZone({
                 setDragOver(true);
             }
         },
-        [disabled],
+        [disabled]
     );
 
     const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -92,7 +89,12 @@ export function FileDropZone({
 
     return (
         <div
-            className={`${styles.dropZone} ${dragOver ? styles.dragOver : ''} `}
+            className={cn(
+                'flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
+                'border-surface-tertiary bg-surface-tertiary/30 hover:border-primary-500/50 hover:bg-surface-tertiary/50',
+                dragOver && 'border-primary-500 bg-primary-500/10',
+                disabled && 'opacity-50 cursor-not-allowed'
+            )}
             onClick={handleClick}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -103,15 +105,15 @@ export function FileDropZone({
             aria-label={ariaLabel}
             aria-disabled={disabled}
         >
-            <span className={styles.icon}>{icon}</span>
-            <span className={styles.text}>{text}</span>
-            {hint && <span className={styles.hint}>{hint}</span>}
+            <span className="text-4xl mb-2">{icon}</span>
+            <span className="text-gray-400 text-sm">{text}</span>
+            {hint && <span className="text-gray-600 text-xs mt-1">{hint}</span>}
             <input
                 ref={fileInputRef}
                 type="file"
                 accept={accept}
                 onChange={handleFileChange}
-                className={styles.hiddenInput}
+                className="hidden"
                 disabled={disabled}
             />
         </div>

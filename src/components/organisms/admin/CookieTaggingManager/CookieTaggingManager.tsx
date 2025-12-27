@@ -36,8 +36,8 @@ export function CookieTaggingManager({
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Store access
-    const { cookies, createCookie, deleteCookie, fetchCookies } = useCookieStore();
-    const { bakers, fetchBakers } = useBakerStore();
+    const { cookies, createCookie, deleteCookie } = useCookieStore();
+    const { bakers } = useBakerStore();
     const { images, getDetectionData } = useImageStore();
 
     // Local state
@@ -48,13 +48,7 @@ export function CookieTaggingManager({
     // Watch for live detection updates via hook
     const liveDetections = useDetectionResults(imageUrl);
 
-    // Fetch data on mount
-    useEffect(() => {
-        if (eventId) {
-            fetchCookies(eventId);
-            fetchBakers(eventId);
-        }
-    }, [eventId, fetchCookies, fetchBakers]);
+
 
     // Find image entity and get detections
     const imageEntity = useMemo(

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import styles from './CategoryCard.module.css';
+
 
 export interface CategoryCardProps {
     /** Unique identifier for the category */
@@ -20,9 +20,6 @@ export interface CategoryCardProps {
 
 /**
  * CategoryCard - Displays a category with image, editable name, and actions.
- *
- * A standalone presentational component for displaying a single category
- * in a grid. Supports inline name editing and delete functionality.
  */
 export function CategoryCard({
     id,
@@ -75,28 +72,35 @@ export function CategoryCard({
                 handleCancel();
             }
         },
-        [handleSave, handleCancel],
+        [handleSave, handleCancel]
     );
 
     return (
-        <div className={styles.card} data-category-id={id}>
+        <div
+            className="bg-surface-tertiary rounded-xl overflow-hidden border border-surface-tertiary hover:border-primary-600/50 transition-colors"
+            data-category-id={id}
+        >
+            {/* Image */}
             <button
                 type="button"
-                className={styles.imageButton}
+                className="w-full aspect-video relative overflow-hidden bg-surface-secondary group"
                 onClick={onImageClick}
                 aria-label={`View ${name}`}
             >
                 <img
                     src={imageUrl}
                     alt={name}
-                    className={styles.image}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
                 />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
             </button>
 
-            <div className={styles.content}>
+            {/* Content */}
+            <div className="p-3 space-y-2">
+                {/* Name / Edit */}
                 {isEditing ? (
-                    <div className={styles.editRow}>
+                    <div className="flex items-center gap-2">
                         <input
                             ref={inputRef}
                             type="text"
@@ -104,13 +108,13 @@ export function CategoryCard({
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={handleKeyDown}
                             onBlur={handleSave}
-                            className={styles.editInput}
+                            className="flex-1 px-2 py-1 bg-surface-secondary border border-primary-500 focus:outline-none rounded text-white text-sm"
                             maxLength={100}
                         />
                         <button
                             type="button"
                             onClick={handleSave}
-                            className={`${styles.smallButton} ${styles.smallButtonPrimary}`}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-primary-600 hover:bg-primary-700 text-white text-sm"
                             aria-label="Save"
                         >
                             ✓
@@ -118,7 +122,7 @@ export function CategoryCard({
                         <button
                             type="button"
                             onClick={handleCancel}
-                            className={styles.smallButton}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface text-gray-400 text-sm"
                             aria-label="Cancel"
                         >
                             ✕
@@ -127,7 +131,7 @@ export function CategoryCard({
                 ) : (
                     <button
                         type="button"
-                        className={styles.nameButton}
+                        className="text-white font-medium text-sm hover:text-primary-400 transition-colors text-left truncate w-full"
                         onClick={handleStartEdit}
                         title="Click to rename"
                     >
@@ -135,15 +139,17 @@ export function CategoryCard({
                     </button>
                 )}
 
-                <span className={styles.cookieCount}>
+                {/* Cookie count */}
+                <span className="block text-gray-500 text-xs">
                     {cookieCount} cookie{cookieCount !== 1 ? 's' : ''} tagged
                 </span>
 
-                <div className={styles.actions}>
+                {/* Actions */}
+                <div className="pt-2 border-t border-surface-secondary">
                     <button
                         type="button"
                         onClick={onDelete}
-                        className={`${styles.smallButton} ${styles.smallButtonDanger}`}
+                        className="text-red-400 hover:text-red-300 text-sm"
                     >
                         Delete
                     </button>

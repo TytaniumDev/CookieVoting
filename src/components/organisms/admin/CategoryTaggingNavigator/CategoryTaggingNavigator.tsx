@@ -26,26 +26,22 @@ interface CategoryProgress {
  */
 export function CategoryTaggingNavigator({ eventId, initialCategoryId }: CategoryTaggingNavigatorProps) {
     // Store access
-    const { categories, fetchCategories, loading: categoriesLoading } = useEventStore();
-    const { cookies, fetchCookies } = useCookieStore();
-    const { images, getDetectionData, fetchImagesForEvent } = useImageStore();
+    const { categories, loading: categoriesLoading } = useEventStore();
+    const { cookies } = useCookieStore();
+    const { images, getDetectionData } = useImageStore();
 
     // Local state
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Watch detection counts for all categories via hook
-    const { counts: detectionCounts } = useCategoryDetectionCounts(
-        categories.map((c) => ({ id: c.id, imageUrl: c.imageUrl })),
+    const categoriesForDetection = useMemo(
+        () => categories.map((c) => ({ id: c.id, imageUrl: c.imageUrl })),
+        [categories],
     );
 
-    // Fetch data on mount
-    useEffect(() => {
-        if (eventId) {
-            fetchCategories(eventId);
-            fetchCookies(eventId);
-            fetchImagesForEvent(eventId);
-        }
-    }, [eventId, fetchCategories, fetchCookies, fetchImagesForEvent]);
+    const { counts: detectionCounts } = useCategoryDetectionCounts(categoriesForDetection);
+
+
 
     // Set initial index if provided
     useEffect(() => {

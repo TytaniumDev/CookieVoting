@@ -15,23 +15,55 @@ export interface CookieMaker {
 export type Baker = CookieMaker; // Alias for clarity in new architecture
 
 export interface ImageEntity {
-  id: string; // Firestore Doc ID
+  /** Firestore Document ID */
+  id: string;
+  /** Public download URL for the image */
   url: string;
+  /** Firebase Storage path (e.g., "shared/cookies/uuid.png" or "cropped_cookies/eventId/catId/uuid.png") */
   storagePath: string;
+  /** AI-detected cookie regions on this image (for tray images) */
   detectedCookies: DetectedCookie[];
-  eventId?: string; // Optional association
+  /** Associated event ID */
+  eventId?: string;
+  /** Timestamp when the image was uploaded */
   createdAt: number;
+  /** 
+   * Image type to distinguish between tray images and individual cropped cookies
+   * - 'tray_image': Full tray/plate image uploaded to a category
+   * - 'cropped_cookie': Individual cookie image created by the Cookie Cropper
+   */
+  type?: 'tray_image' | 'cropped_cookie';
+  /** Category this image belongs to (required for cropped_cookie type) */
+  categoryId?: string;
+  /** Assigned baker ID (for cropped_cookie type, set during tagging) */
+  bakerId?: string;
+  /** Source tray image URL this was cropped from (for cropped_cookie type) */
+  sourceTrayImageUrl?: string;
 }
 
+/**
+ * AI-detected cookie bounding box.
+ * Coordinates are in PIXELS (absolute position on the source image).
+ */
 export interface DetectedCookie {
+  /** X position in pixels from left edge of image */
   x: number;
+  /** Y position in pixels from top edge of image */
   y: number;
+  /** Width in pixels */
   width: number;
+  /** Height in pixels */
   height: number;
+  /** AI confidence score (0-1) */
   confidence: number;
+  /** Optional polygon outline for irregular cookie shapes */
   polygon?: [number, number][];
 }
 
+/**
+ * Tagged cookie entity for voting.
+ * Coordinates are NORMALIZED as percentages (0-100) relative to the category image.
+ */
 export interface CookieEntity {
   id: string; // Unique ID (Vote target)
   eventId: string;
@@ -40,16 +72,24 @@ export interface CookieEntity {
   imageId: string; // Visual source
   detectionId?: string; // Link to raw detection (for polygon/bbox). Optional because manual tags might not have detections.
   label: number; // "Cookie #1"
-  x: number; // Normalized X (0-100)
-  y: number; // Normalized Y (0-100)
+  /** Normalized X position (0-100 percentage from left edge) */
+  x: number;
+  /** Normalized Y position (0-100 percentage from top edge) */
+  y: number;
 }
 
+/**
+ * Cookie coordinate for display on category images.
+ * Coordinates are PERCENTAGES (0-100) for responsive positioning.
+ */
 export interface CookieCoordinate {
   id: string; // Unique ID for this specific cookie marker
   number: number; // The visible number (1, 2, 3...)
   makerName: string; // "Ryan", "Kelly", etc.
-  x: number; // Percent x (for display/backward compatibility)
-  y: number; // Percent y (for display/backward compatibility)
+  /** Percentage X position (0-100) for display */
+  x: number;
+  /** Percentage Y position (0-100) for display */
+  y: number;
   detectedCookieId?: string; // ID of the detected cookie this tag is associated with (new ID-based approach)
   detection?: DetectedCookie; // The full detection object for rendering
 }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useBakerStore } from '../../../../lib/stores/useBakerStore';
 import { validateMakerName, sanitizeInput } from '../../../../lib/validation';
-import styles from './BakerManager.module.css';
+import { cn } from '../../../../lib/cn';
 
 export interface BakerManagerProps {
     eventId: string;
@@ -55,7 +55,7 @@ export function BakerManager({ eventId }: BakerManagerProps) {
         async (bakerId: string, bakerName: string) => {
             if (
                 !window.confirm(
-                    `Are you sure you want to remove "${bakerName}"? This will remove their cookie assignments.`,
+                    `Are you sure you want to remove "${bakerName}"? This will remove their cookie assignments.`
                 )
             ) {
                 return;
@@ -68,7 +68,7 @@ export function BakerManager({ eventId }: BakerManagerProps) {
                 setError('Failed to remove baker. Please try again.');
             }
         },
-        [eventId, removeBaker],
+        [eventId, removeBaker]
     );
 
     const handleKeyPress = useCallback(
@@ -78,17 +78,23 @@ export function BakerManager({ eventId }: BakerManagerProps) {
                 handleAddBaker();
             }
         },
-        [handleAddBaker],
+        [handleAddBaker]
     );
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Bakers</h3>
-                {bakers.length > 0 && <span className={styles.count}>{bakers.length}</span>}
+        <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-white">Bakers</h3>
+                {bakers.length > 0 && (
+                    <span className="px-2 py-0.5 bg-primary-600/30 text-primary-400 text-sm rounded-full">
+                        {bakers.length}
+                    </span>
+                )}
             </div>
 
-            <div className={styles.addForm}>
+            {/* Add form */}
+            <div className="flex gap-2">
                 <input
                     type="text"
                     value={newBakerName}
@@ -98,7 +104,7 @@ export function BakerManager({ eventId }: BakerManagerProps) {
                     }}
                     onKeyDown={handleKeyPress}
                     placeholder="Baker name"
-                    className={styles.input}
+                    className="flex-1 px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
                     maxLength={50}
                     disabled={isAdding || loading}
                     aria-label="New baker name"
@@ -106,29 +112,40 @@ export function BakerManager({ eventId }: BakerManagerProps) {
                 <button
                     type="button"
                     onClick={handleAddBaker}
-                    onMouseDown={(e) => e.preventDefault()} // Prevent keyboard dismiss on mobile
+                    onMouseDown={(e) => e.preventDefault()}
                     disabled={!newBakerName.trim() || isAdding || loading}
-                    className={styles.addButton}
+                    className={cn(
+                        'px-4 py-2 rounded-lg font-medium transition-colors',
+                        !newBakerName.trim() || isAdding || loading
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white'
+                    )}
                 >
                     {isAdding ? 'Adding...' : 'Add'}
                 </button>
             </div>
 
+            {/* Error */}
             {error && (
-                <div className={styles.error} role="alert">
+                <div className="text-red-400 text-sm" role="alert">
                     {error}
                 </div>
             )}
 
+            {/* Baker list */}
             {bakers.length > 0 ? (
-                <div className={styles.bakerList} role="list" aria-label="Bakers list">
+                <div className="flex flex-wrap gap-2" role="list" aria-label="Bakers list">
                     {bakers.map((baker) => (
-                        <div key={baker.id} className={styles.bakerChip} role="listitem">
-                            <span className={styles.bakerName}>{baker.name}</span>
+                        <div
+                            key={baker.id}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-tertiary rounded-full text-gray-300"
+                            role="listitem"
+                        >
+                            <span>{baker.name}</span>
                             <button
                                 type="button"
                                 onClick={() => handleRemoveBaker(baker.id, baker.name)}
-                                className={styles.removeButton}
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-surface-secondary hover:bg-red-600/30 hover:text-red-400 transition-colors"
                                 aria-label={`Remove ${baker.name}`}
                             >
                                 ×
@@ -137,7 +154,7 @@ export function BakerManager({ eventId }: BakerManagerProps) {
                     ))}
                 </div>
             ) : (
-                !loading && <p className={styles.emptyState}>No bakers added yet</p>
+                !loading && <p className="text-gray-500 text-sm">No bakers added yet</p>
             )}
         </div>
     );

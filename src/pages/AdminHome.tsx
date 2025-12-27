@@ -1,93 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../lib/hooks/useAdminAuth';
-import { useDetectionJob } from '../lib/hooks/useDetectionJob';
-import { createEvent, getAllEvents, deleteEvent, getCategories } from '../lib/firestore';
+import { createEvent, getAllEvents } from '../lib/firestore';
 import { validateEventName, sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
-import { AlertModal } from '../components/atoms/AlertModal/AlertModal';
-import styles from './AdminHome.module.css';
 import { type VoteEvent } from '../lib/types';
-import { AdminEventList } from '../components/organisms/admin/AdminEventList/AdminEventList';
-import { AdminPageHeader } from '../components/organisms/admin/AdminPageHeader/AdminPageHeader';
 
+/**
+ * AdminHome - Event picker page for admin.
+ * Shows list of events to select or create a new one.
+ */
 export default function AdminHome() {
   const navigate = useNavigate();
 
-  // Use admin auth hook for auth state management
   const { user, isAdmin, isLoading: authLoading, error: authError } = useAdminAuth({
     redirectIfNotAuth: '/',
   });
 
-  // Alert state
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
-
-  // Use detection job hook
-  const {
-    isDetecting: detectingAll,
-    progress: detectionProgress,
-    currentJobId,
-    startDetection,
-    cancelDetection,
-  } = useDetectionJob({
-    enabled: isAdmin,
-    onComplete: (result) => {
-      if (result.errors > 0) {
-        const message =
-          `Detection complete with errors!\n` +
-          `Total images: ${result.total}\n` +
-          `Processed: ${result.processed}\n` +
-          `Skipped (already detected): ${result.skipped}\n` +
-          `Errors: ${result.errors}`;
-        setAlertMessage(message);
-        setAlertType('error');
-      }
-    },
-    onError: (errorMsg) => {
-      setAlertMessage(errorMsg);
-      setAlertType('error');
-    },
-    onStatusChange: (msg) => {
-      setAlertMessage(msg);
-      setAlertType('info');
-    },
-  });
-
-  // Event management state
   const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [events, setEvents] = useState<VoteEvent[]>([]);
-  const [eventImages, setEventImages] = useState<Record<string, string[]>>({});
   const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<VoteEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
+  // Fetch events
   useEffect(() => {
-    // Only fetch events if user is admin and auth check is complete
     if (authLoading || !isAdmin) return;
 
     const fetchEvents = async () => {
       try {
         const allEvents = await getAllEvents();
-        // Sort by most recent first (createdAt is timestamp)
         const sortedEvents = allEvents.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setEvents(sortedEvents);
-
-        // Fetch images for each event
-        const imagesMap: Record<string, string[]> = {};
-        await Promise.all(
-          sortedEvents.map(async (event) => {
-            try {
-              const categories = await getCategories(event.id);
-              imagesMap[event.id] = categories.map((cat) => cat.imageUrl);
-            } catch {
-              imagesMap[event.id] = [];
-            }
-          }),
-        );
-        setEventImages(imagesMap);
       } catch {
         setError(CONSTANTS.ERROR_MESSAGES.FAILED_TO_LOAD);
       } finally {
@@ -100,7 +45,6 @@ export default function AdminHome() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate event name
     const validation = validateEventName(eventName);
     if (!validation.valid) {
       setError(validation.error || 'Invalid event name');
@@ -113,23 +57,20 @@ export default function AdminHome() {
     try {
       const sanitizedName = sanitizeInput(eventName);
       const event = await createEvent(sanitizedName);
-      // Navigate directly to admin page
-      navigate(`/admin/${event.id}`);
+      navigate(`/admin/${event.id}/overview`);
     } catch (error) {
       console.error('Error creating event:', error);
       let errorMessage =
         error instanceof Error ? error.message : CONSTANTS.ERROR_MESSAGES.FAILED_TO_SAVE;
 
-      // Provide more helpful error message for permission errors
       if (
         error instanceof Error &&
         (error.message.includes('permission') || error.message.includes('Permission'))
       ) {
         if (user) {
-          errorMessage = `Permission denied: Your account (${user.email || user.uid}) is not a global admin. Use the local script to bootstrap your admin access: node scripts/set-admin.js ${user.email}`;
+          errorMessage = `Permission denied: Your account (${user.email || user.uid}) is not a global admin.`;
         } else {
-          errorMessage =
-            'Permission denied: You must be signed in as a global admin to create events.';
+          errorMessage = 'Permission denied: You must be signed in as a global admin to create events.';
         }
       }
 
@@ -139,96 +80,36 @@ export default function AdminHome() {
     }
   };
 
-  const handleDeleteClick = (eventId: string) => {
-    setConfirmDelete(eventId);
+  const handleEventClick = (eventId: string) => {
+    navigate(`/admin/${eventId}/overview`);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete) return;
-
-    const eventId = confirmDelete;
-    setConfirmDelete(null);
-    setDeleting(eventId);
-    try {
-      await deleteEvent(eventId);
-      // Wait for fade-out animation to complete before removing from list
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      // Update state to remove deleted event (event is deleted even if storage cleanup failed)
-      setEvents(events.filter((event) => event.id !== eventId));
-      // Remove images from state
-      const newImages = { ...eventImages };
-      delete newImages[eventId];
-      setEventImages(newImages);
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      // Check if it's a storage error - if so, event was still deleted from Firestore
-      const isStorageError =
-        error instanceof Error &&
-        (error.message.includes('storage') || error.message.includes('Storage'));
-
-      if (isStorageError) {
-        // Event was deleted from Firestore, just storage cleanup failed
-        // Still update state to reflect the deletion
-        setEvents(events.filter((event) => event.id !== eventId));
-        const newImages = { ...eventImages };
-        delete newImages[eventId];
-        setEventImages(newImages);
-        // Show a warning but don't treat it as a failure
-        setError('Event deleted, but some files may not have been removed from storage.');
-      } else {
-        // Real error - event deletion failed
-        const errorMessage =
-          error instanceof Error ? error.message : CONSTANTS.ERROR_MESSAGES.FAILED_TO_DELETE;
-        setError(errorMessage);
-      }
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setConfirmDelete(null);
-  };
-
-  const handleDetectAllImages = async () => {
-    if (
-      !window.confirm(
-        'This will detect cookies in all images in shared storage. This may take a few minutes. Continue?',
-      )
-    ) {
-      return;
-    }
-    setError(null);
-    await startDetection();
-  };
-
-  const handleCancelDetection = async () => {
-    if (!currentJobId) return;
-
-    if (
-      !window.confirm(
-        'Are you sure you want to cancel the detection job? It will stop processing after the current image.',
-      )
-    ) {
-      return;
-    }
-    await cancelDetection();
+  const formatDate = (timestamp: number | undefined) => {
+    if (!timestamp) return 'Unknown date';
+    return new Date(timestamp).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   if (authLoading) {
-    return <div className={styles.container}>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-primary-400 text-lg">Loading...</div>
+      </div>
+    );
   }
 
   if (!isAdmin) {
     return (
-      <div className={styles.container}>
-        <div className={styles.error}>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-white">
+        <p className="text-red-400 mb-4">
           {authError || error || 'You do not have admin access. Please contact a site administrator.'}
-        </div>
+        </p>
         <button
           onClick={() => navigate('/')}
-          className={styles.button}
-          style={{ marginTop: '1rem' }}
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
         >
           Go Home
         </button>
@@ -237,131 +118,125 @@ export default function AdminHome() {
   }
 
   return (
-    <div className={styles.container}>
-      {alertMessage && (
-        <AlertModal message={alertMessage} type={alertType} onClose={() => setAlertMessage(null)} />
-      )}
-      <section className={styles.section}>
-        <AdminPageHeader
-          detectingAll={detectingAll}
-          currentJobId={currentJobId}
-          onAuditClick={() => window.open('/admin/audit/detections', '_blank')}
-          onCancelDetection={handleCancelDetection}
-          onDetectAll={handleDetectAllImages}
-        />
-        {detectionProgress && (
-          <div
-            style={{
-              marginBottom: '1rem',
-              padding: '0.75rem 1rem',
-              background: 'rgba(76, 175, 80, 0.2)',
-              border: '1px solid rgba(76, 175, 80, 0.5)',
-              borderRadius: '6px',
-              color: '#c8e6c9',
-              fontSize: '0.875rem',
-            }}
-          >
-            {detectionProgress}
-          </div>
-        )}
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Page header */}
+        <div className="border-b border-surface-tertiary pb-4">
+          <h2 className="text-3xl font-bold text-white">🍪 Cookie Voting Admin</h2>
+          <p className="text-gray-400 mt-1 text-lg">Select an event to manage or create a new one</p>
+        </div>
+
         {error && (
-          <div className={styles.error} style={{ marginBottom: '1rem' }}>
+          <div className="p-4 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300">
             {error}
           </div>
         )}
-        <form onSubmit={handleCreate} className={styles.form}>
-          <input
-            type="text"
-            placeholder="Event Name (e.g. Holiday Cookie-Off)"
-            value={eventName}
-            onChange={(e) => {
-              setEventName(e.target.value);
-              setError(null);
-            }}
-            className={styles.input}
-            disabled={loading}
-            maxLength={100}
-            required
-          />
-          <button type="submit" disabled={loading} className={styles.button}>
-            {loading ? 'Creating...' : 'Create Event'}
-          </button>
-        </form>
-      </section>
 
-      <section className={styles.section}>
-        <h2>Existing Events</h2>
-        {loadingEvents ? (
-          <p>Loading events...</p>
-        ) : (
-          <AdminEventList
-            events={events}
-            eventImages={eventImages}
-            deletingId={deleting}
-            onDeleteClick={(eventId, e) => {
-              e.stopPropagation();
-              handleDeleteClick(eventId);
-            }}
-            onResultClick={(eventId, e) => {
-              e.stopPropagation();
-              window.open(`/results/${eventId}`, '_blank');
-            }}
-            onEventClick={(eventId) => navigate(`/admin/${eventId}`)}
-          />
-        )}
-      </section>
-
-      {confirmDelete && (
-        <div
-          className={styles.modalOverlay}
-          onClick={handleDeleteCancel}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
-              e.preventDefault();
-              handleDeleteCancel();
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Close delete confirmation"
-        >
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === 'Escape') {
-                handleDeleteCancel();
-              }
-            }}
-            role="dialog"
-            aria-modal="true"
-          >
-            <h3>Delete Event</h3>
-            <p>
-              Are you sure you want to delete this event and all its data? This action cannot be
-              undone.
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                onClick={handleDeleteCancel}
-                className={styles.modalButton}
-                disabled={deleting === confirmDelete}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className={styles.modalDeleteButton}
-                disabled={deleting === confirmDelete}
-              >
-                {deleting === confirmDelete ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
+        {/* Create Event Section */}
+        <div className="bg-surface rounded-xl p-6 border border-surface-tertiary">
+          {!showCreateForm ? (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="w-full py-4 border-2 border-dashed border-surface-tertiary rounded-lg text-gray-400 hover:border-primary-500 hover:text-primary-400 transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="text-2xl">+</span>
+              <span className="font-medium">Create New Event</span>
+            </button>
+          ) : (
+            <form onSubmit={handleCreate} className="space-y-4">
+              <h3 className="text-xl font-semibold text-white flex items-center gap-3">
+                <span className="text-2xl">✨</span>
+                Create New Event
+              </h3>
+              <input
+                type="text"
+                placeholder="Event Name (e.g. Holiday Cookie-Off)"
+                value={eventName}
+                onChange={(e) => {
+                  setEventName(e.target.value);
+                  setError(null);
+                }}
+                className="w-full px-4 py-3 bg-surface-secondary border border-surface-tertiary rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                disabled={loading}
+                maxLength={100}
+                required
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setEventName('');
+                    setError(null);
+                  }}
+                  className="px-4 py-2 bg-surface-secondary border border-surface-tertiary rounded-lg text-gray-300 hover:bg-surface-tertiary transition-colors"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Event'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-      )}
+
+        {/* Events List */}
+        <div className="bg-surface rounded-xl p-6 border border-surface-tertiary">
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
+            <span className="text-2xl">📋</span>
+            Your Events
+          </h3>
+
+          {loadingEvents ? (
+            <div className="text-gray-400 py-8 text-center">Loading events...</div>
+          ) : events.length === 0 ? (
+            <div className="text-gray-400 py-8 text-center">
+              <p className="mb-2">No events yet</p>
+              <p className="text-sm">Create your first event to get started!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {events.map((event) => (
+                <button
+                  key={event.id}
+                  onClick={() => handleEventClick(event.id)}
+                  className="w-full p-4 bg-surface-secondary rounded-lg border border-surface-tertiary hover:border-primary-500/50 hover:bg-surface-tertiary transition-all text-left group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium group-hover:text-primary-400 transition-colors">
+                        {event.name}
+                      </h4>
+                      <p className="text-gray-500 text-sm mt-1">
+                        Created {formatDate(event.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${event.status === 'voting'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-gray-500/20 text-gray-400'
+                          }`}
+                      >
+                        {event.status === 'voting' ? '● Voting' : '○ Closed'}
+                      </span>
+                      <span className="text-gray-500 group-hover:text-primary-400 transition-colors">
+                        →
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

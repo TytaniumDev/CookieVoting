@@ -1,13 +1,20 @@
 :root {
   /* Colors - Winter/Christmas Theme */
-  --color-bg-primary: #0a1628; /* Deep winter blue */
-  --color-bg-secondary: #1a2b47; /* Slightly lighter winter blue */
-  --color-text-primary: #f8fafc; /* Snow white */
-  --color-text-secondary: #cbd5e1; /* Light gray-blue */
-  --color-accent: #dc2626; /* Christmas red */
-  --color-accent-hover: #b91c1c; /* Darker red */
+  --color-bg-primary: #0a1628;
+  /* Deep winter blue */
+  --color-bg-secondary: #1a2b47;
+  /* Slightly lighter winter blue */
+  --color-text-primary: #f8fafc;
+  /* Snow white */
+  --color-text-secondary: #cbd5e1;
+  /* Light gray-blue */
+  --color-accent: #dc2626;
+  /* Christmas red */
+  --color-accent-hover: #b91c1c;
+  /* Darker red */
   --color-danger: #ef4444;
-  --color-success: #16a34a; /* Festive green */
+  --color-success: #16a34a;
+  /* Festive green */
 
   /* Typography */
   --font-family-base: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -48,7 +55,8 @@ html {
 body {
   background: linear-gradient(135deg, var(--color-bg-primary) 0%, #0d1b2a 100%);
   background-attachment: fixed;
-  background-color: var(--color-bg-primary); /* Fallback for iOS overscroll */
+  background-color: var(--color-bg-primary);
+  /* Fallback for iOS overscroll */
   color: var(--color-text-primary);
   font-family: var(--font-family-base);
   line-height: 1.5;
@@ -68,6 +76,17 @@ a {
 a:hover {
   color: var(--color-accent-hover);
 }
+
+/* Reset link colors inside admin layout to allow Tailwind classes to work */
+.admin-layout a {
+  color: inherit;
+}
+
+.admin-layout a:hover {
+  color: inherit;
+}
+
+
 
 button {
   cursor: pointer;
