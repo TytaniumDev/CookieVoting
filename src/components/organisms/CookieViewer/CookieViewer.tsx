@@ -54,7 +54,7 @@ interface Props {
 /**
  * Smooth out polygon corners by converting sharp angles to curved segments.
  */
-function smoothPolygon(points: Array<[number, number]>, radius: number = 2): string {
+export function smoothPolygon(points: Array<[number, number]>, radius: number = 2): string {
   if (points.length < 3) {
     return points.map(([x, y]) => `${x},${y}`).join(' ');
   }
