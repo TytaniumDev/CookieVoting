@@ -15,6 +15,6 @@
 ## Phase 3: Integration & Live Updates
 - [x] Task: Refactor `useImageStore` to use Firestore real-time listeners (`onSnapshot`) for `fetchCroppedCookiesForCategory` to enable live updates. 676905d
 - [x] Task: Optimize the `CroppedCookieTaggingGrid` for performance when handling 20+ cookie cutouts. f154ca5
-- [ ] Task: Verify that baker assignments and crop coordinates are correctly persisted in Firestore.
-- [ ] Task: Conduct a full end-to-end audit of the admin flow from image upload to final tagging.
-- [ ] Task: Conductor - User Manual Verification 'Integration & Tagging' (Protocol in workflow.md)
+- [x] Task: Verify that baker assignments and crop coordinates are correctly persisted in Firestore.
+- [x] Task: Conduct a full end-to-end audit of the admin flow from image upload to final tagging.
+- [x] Task: Conductor - User Manual Verification 'Integration & Tagging' (Protocol in workflow.md)
