@@ -1,7 +1,7 @@
 # Plan - Cookie Detection & Cropping
 
 ## Phase 1: Detection Reliability & Utilities
-- [ ] Task: Improve Gemini detection prompt and response parsing for better reliability.
+- [x] Task: Improve Gemini detection prompt and response parsing for better reliability. 07e7d02
 - [ ] Task: Implement robust error handling and fallback logic in `cookieDetectionGemini.ts`.
 - [ ] Task: Write unit tests for detection utility functions (coordinate transformation, scaling).
 - [ ] Task: Conductor - User Manual Verification 'Detection Reliability' (Protocol in workflow.md)
