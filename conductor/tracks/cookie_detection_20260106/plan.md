@@ -3,7 +3,7 @@
 ## Phase 1: Detection Reliability & Utilities
 - [x] Task: Improve Gemini detection prompt and response parsing for better reliability. 07e7d02
 - [x] Task: Implement robust error handling and fallback logic in `cookieDetectionGemini.ts`. 5720c78
-- [ ] Task: Write unit tests for detection utility functions (coordinate transformation, scaling).
+- [x] Task: Write unit tests for detection utility functions (coordinate transformation, scaling). 58a0a69
 - [ ] Task: Conductor - User Manual Verification 'Detection Reliability' (Protocol in workflow.md)
 
 ## Phase 2: UI Refinement & Mobile Experience
