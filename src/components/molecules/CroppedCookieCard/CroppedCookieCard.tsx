@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import styles from './CroppedCookieCard.module.css';
 
 export interface CroppedCookieCardProps {
@@ -20,7 +20,7 @@ export interface CroppedCookieCardProps {
  * Shows a square thumbnail of the cookie with a baker name badge (or "Untagged" indicator).
  * Used in the CroppedCookieTaggingGrid to allow admins to assign bakers to each cookie.
  */
-export function CroppedCookieCard({
+export const CroppedCookieCard = memo(function CroppedCookieCard({
     imageUrl,
     bakerName,
     isSelected = false,
@@ -84,4 +84,4 @@ export function CroppedCookieCard({
             </div>
         </button>
     );
-}
+});
