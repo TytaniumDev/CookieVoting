@@ -39,6 +39,13 @@ export interface ImageEntity {
   bakerId?: string;
   /** Source tray image URL this was cropped from (for cropped_cookie type) */
   sourceTrayImageUrl?: string;
+  /** Original crop region on the source image (for cropped_cookie type) */
+  cropRegion?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**

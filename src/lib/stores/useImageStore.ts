@@ -17,6 +17,13 @@ export interface UploadImageOptions {
   categoryId?: string;
   /** Source tray image URL (for cropped_cookie type, for reference) */
   sourceTrayImageUrl?: string;
+  /** Original crop region on the source image (for cropped_cookie type) */
+  cropRegion?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 interface ImageState {
@@ -54,6 +61,7 @@ export const useImageStore = create<ImageState>((set, get) => ({
       const type = options?.type ?? 'tray_image';
       const categoryId = options?.categoryId;
       const sourceTrayImageUrl = options?.sourceTrayImageUrl;
+      const cropRegion = options?.cropRegion;
 
       // Determine storage path based on image type
       const fileExtension = file.name.split('.').pop() || 'png';
@@ -83,6 +91,7 @@ export const useImageStore = create<ImageState>((set, get) => ({
         type,
         ...(categoryId && { categoryId }),
         ...(sourceTrayImageUrl && { sourceTrayImageUrl }),
+        ...(cropRegion && { cropRegion }),
         // bakerId is intentionally omitted - Firestore doesn't accept undefined values
         // It will be set when the cropped cookie is tagged
       };

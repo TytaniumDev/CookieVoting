@@ -27,6 +27,10 @@ export interface SliceRegion {
     width: number;
     /** Height in pixels */
     height: number;
+    /** Whether this region has already been saved to the backend */
+    isSaved?: boolean;
+    /** ID of the saved image if isSaved is true */
+    savedImageId?: string;
 }
 
 /**

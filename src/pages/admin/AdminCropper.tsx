@@ -23,8 +23,8 @@ export default function AdminCropper() {
     // Find the category if categoryId is provided
     const category = categoryId ? categories.find((c) => c.id === categoryId) : null;
 
-    const handleSave = async (blobs: Blob[]) => {
-        if (saving || blobs.length === 0) return;
+    const handleSave = async (data: { blob: Blob; region: { x: number; y: number; width: number; height: number } }[]) => {
+        if (saving || data.length === 0) return;
 
         // Require category for cropping individual cookies
         if (!category) {
@@ -38,7 +38,7 @@ export default function AdminCropper() {
         setSaving(true);
         try {
             // Upload all blobs in parallel with proper metadata
-            const uploadPromises = blobs.map((blob, index) => {
+            const uploadPromises = data.map(({ blob, region }, index) => {
                 const file = new File([blob], `cropped_cookie_${Date.now()}_${index}.png`, {
                     type: 'image/png',
                 });
@@ -46,13 +46,14 @@ export default function AdminCropper() {
                     type: 'cropped_cookie',
                     categoryId: category.id,
                     sourceTrayImageUrl: category.imageUrl,
+                    cropRegion: region,
                 });
             });
 
             await Promise.all(uploadPromises);
 
             setAlert({
-                message: `Successfully saved ${blobs.length} cookie images!`,
+                message: `Successfully saved ${data.length} cookie images!`,
                 type: 'success',
             });
 
@@ -87,6 +88,8 @@ export default function AdminCropper() {
                 onCancel={() => navigate(`/admin/${eventId}/categories`)}
                 initialImageUrl={category?.imageUrl}
                 categoryName={category?.name}
+                eventId={eventId}
+                categoryId={categoryId}
             />
 
             {saving && (

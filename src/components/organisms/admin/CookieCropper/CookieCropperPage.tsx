@@ -11,23 +11,28 @@
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMediaQuery } from '../../../../lib/hooks/useMediaQuery';
+import { useImageStore } from '../../../../lib/stores/useImageStore';
 import { FloatingPalette, MobileDrawer, EmptyState } from './components';
 import { CookieCropper } from './CookieCropper';
 import { detectBlobsFromImage } from './blobDetection';
 import { detectCookiesGemini } from '../../../../lib/cookieDetectionGemini';
-import { sliceImage, generateGrid, type SliceRegion, type GridConfig } from './cropUtils';
+import { sliceImage, generateGrid, clampRegion, validateRegion, type SliceRegion, type GridConfig } from './cropUtils';
 import { cn } from '../../../../lib/cn';
 import styles from './CookieCropperPage.module.css';
 
 export interface CookieCropperPageProps {
     /** Called when cookies are saved */
-    onSave: (blobs: Blob[]) => void;
+    onSave: (data: { blob: Blob; region: SliceRegion }[]) => void;
     /** Called when user cancels/exits */
     onCancel: () => void;
     /** Optional initial image URL */
     initialImageUrl?: string;
     /** Optional category name to display in header */
     categoryName?: string;
+    /** Optional event ID for loading existing crops */
+    eventId?: string;
+    /** Optional category ID for loading existing crops */
+    categoryId?: string;
 }
 
 export function CookieCropperPage({
@@ -35,9 +40,17 @@ export function CookieCropperPage({
     onCancel,
     initialImageUrl,
     categoryName,
+    eventId,
+    categoryId,
 }: CookieCropperPageProps) {
     const isMobile = useMediaQuery('(max-width: 768px)');
     const imageRef = useRef<HTMLImageElement>(null);
+    const { 
+        subscribeToCroppedCookies, 
+        unsubscribeFromCroppedCookies, 
+        getCroppedCookiesForCategory,
+        images: storeImages 
+    } = useImageStore();
 
     // State
     const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl || null);
@@ -51,12 +64,58 @@ export function CookieCropperPage({
     const [isUploading, setIsUploading] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Desktop sidebar state
 
+    // Load existing crops
+    useEffect(() => {
+        if (!eventId || !categoryId) return;
+
+        subscribeToCroppedCookies(eventId, categoryId);
+        
+        return () => {
+            unsubscribeFromCroppedCookies(categoryId);
+        };
+    }, [eventId, categoryId, subscribeToCroppedCookies, unsubscribeFromCroppedCookies]);
+
+    // Sync existing crops to regions
+    useEffect(() => {
+        if (!categoryId) return;
+
+        // Get cookies from store
+        const existingCookies = getCroppedCookiesForCategory(categoryId);
+        
+        if (existingCookies.length === 0) return;
+
+        setRegions(prevRegions => {
+            // Convert existing cookies to regions
+            const savedRegions: SliceRegion[] = existingCookies
+                .filter(c => c.cropRegion) // Only those with crop data
+                .map(c => ({
+                    ...c.cropRegion!,
+                    isSaved: true,
+                    savedImageId: c.id
+                }));
+
+            // Merge with current regions, avoiding duplicates
+            // We keep all user-added regions (isSaved undefined/false)
+            const userRegions = prevRegions.filter(r => !r.isSaved);
+            
+            // For saved regions, we replace the set
+            // This ensures if a crop is deleted elsewhere, it disappears here (due to subscription)
+            // But if we want to allow editing saved ones... simple overwrite is safer for "View" mode
+            return [...savedRegions, ...userRegions];
+        });
+    }, [storeImages, categoryId, getCroppedCookiesForCategory]);
+
     // Handle file upload
     const handleFileSelect = useCallback((file: File) => {
         setIsUploading(true);
         const reader = new FileReader();
         reader.onload = (e) => {
             setImageUrl(e.target?.result as string);
+            // Don't clear regions if we are just reloading the same image, 
+            // but here we are selecting a NEW file, so yes, clear regions.
+            // Wait, if we are editing an existing category, we shouldn't be uploading a NEW image usually?
+            // The "EmptyState" is only shown if !imageUrl.
+            // If passed initialImageUrl, we skip EmptyState.
             setRegions([]);
             setIsUploading(false);
         };
@@ -93,7 +152,11 @@ export function CookieCropperPage({
             height: Math.max(1, region.height - paddingPx * 2),
         }));
 
-        setRegions(paddedRegions);
+        setRegions(prev => {
+            // Keep saved regions, replace unsaved ones with grid
+            const saved = prev.filter(r => r.isSaved);
+            return [...saved, ...paddedRegions];
+        });
     }, [gridConfig, imageDimensions]);
 
     // Auto-detect blobs (Gemini first, then Blob fallback)
@@ -130,7 +193,10 @@ export function CookieCropperPage({
                     };
                 });
                 
-                setRegions(newRegions);
+                setRegions(prev => {
+                    const saved = prev.filter(r => r.isSaved);
+                    return [...saved, ...newRegions];
+                });
                 setDetectionStatus(`Found ${newRegions.length} cookies with AI`);
                 setTimeout(() => setDetectionStatus(null), 3000);
                 return; // Success!
@@ -144,7 +210,10 @@ export function CookieCropperPage({
             try {
                 // Fallback to local blob detection
                 const detectedBlobs = await detectBlobsFromImage(imageRef.current);
-                setRegions(detectedBlobs);
+                setRegions(prev => {
+                    const saved = prev.filter(r => r.isSaved);
+                    return [...saved, ...detectedBlobs];
+                });
                 setDetectionStatus(`Found ${detectedBlobs.length} cookies (Local fallback)`);
             } catch (blobError) {
                 console.error('All detection methods failed:', blobError);
@@ -158,12 +227,42 @@ export function CookieCropperPage({
 
     // Save cookies
     const handleSave = useCallback(async () => {
-        if (!imageRef.current || regions.length === 0) return;
+        // Filter out already saved regions
+        const unsavedRegions = regions.filter(r => !r.isSaved);
+
+        if (!imageRef.current || unsavedRegions.length === 0) {
+            // Nothing new to save
+            if (regions.some(r => r.isSaved)) {
+                // If we have saved regions, user might just want to close
+                onSave([]); 
+            }
+            return;
+        }
 
         setIsSaving(true);
         try {
-            const blobs = await sliceImage(imageRef.current, regions);
-            onSave(blobs);
+            const imageWidth = imageRef.current.naturalWidth;
+            const imageHeight = imageRef.current.naturalHeight;
+
+            // Pre-process regions to match sliceImage logic so we can zip them
+            const validRegions = unsavedRegions
+                .map(r => clampRegion(r, imageWidth, imageHeight))
+                .filter(r => validateRegion(r, imageWidth, imageHeight));
+
+            if (validRegions.length === 0) {
+                setIsSaving(false);
+                return;
+            }
+
+            const blobs = await sliceImage(imageRef.current, validRegions);
+            
+            // Zip blobs with regions
+            const result = blobs.map((blob, i) => ({
+                blob,
+                region: validRegions[i]
+            }));
+
+            onSave(result);
         } catch (error) {
             console.error('Slice failed:', error);
         } finally {

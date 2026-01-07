@@ -325,6 +325,8 @@ export function CookieCropper({
                     imageDimensions.width > 0 &&
                     regions.map((region, index) => {
                         const isSelected = selectedId === region.id;
+                        const isSaved = region.isSaved;
+                        
                         return (
                         <Rnd
                             key={region.id}
@@ -337,9 +339,9 @@ export function CookieCropper({
                                 width: region.width * scaleX,
                                 height: region.height * scaleY,
                             }}
-                            onDragStop={(_e, d) => handleDragStop(region.id, d.x, d.y)}
+                            onDragStop={(_e, d) => !isSaved && handleDragStop(region.id, d.x, d.y)}
                             onResizeStop={(_e, _direction, ref, _delta, position) =>
-                                handleResizeStop(
+                                !isSaved && handleResizeStop(
                                     region.id,
                                     ref.offsetWidth,
                                     ref.offsetHeight,
@@ -349,12 +351,11 @@ export function CookieCropper({
                             }
                             onClick={(e) => {
                                 e.stopPropagation(); // Stop propagation to prevent drawing
-                                setSelectedId(region.id);
+                                if (!isSaved) setSelectedId(region.id);
                             }}
-                            onDragStart={() => setSelectedId(region.id)} // Select on drag start
-                            bounds="parent"
-                            className={`${styles.cropBox} ${isSelected ? 'ring-2 ring-blue-500 z-40' : 'z-20'}`}
-                            enableResizing={{
+                            onDragStart={() => !isSaved && setSelectedId(region.id)} // Select on drag start
+                            disableDragging={isSaved}
+                            enableResizing={isSaved ? false : {
                                 top: true,
                                 right: true,
                                 bottom: true,
@@ -364,22 +365,28 @@ export function CookieCropper({
                                 bottomLeft: true,
                                 topLeft: true,
                             }}
+                            bounds="parent"
+                            className={`${styles.cropBox} ${isSaved ? 'border-green-500 bg-green-500/10 z-10' : (isSelected ? 'ring-2 ring-blue-500 z-40' : 'z-20')}`}
                             // Ensure crop boxes are above grid
-                            style={{ zIndex: isSelected ? 40 : 20 }}
+                            style={{ zIndex: isSaved ? 10 : (isSelected ? 40 : 20) }}
                         >
                             <div className={styles.cropBoxContent}>
-                                <span className={styles.cropBoxIndex}>{index + 1}</span>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent box selection when clicking delete
-                                        handleRemoveBox(region.id);
-                                    }}
-                                    className={styles.deleteButton}
-                                    aria-label="Delete region"
-                                >
-                                    ×
-                                </button>
+                                <span className={`${styles.cropBoxIndex} ${isSaved ? 'bg-green-500' : ''}`}>
+                                    {isSaved ? '✓' : index + 1}
+                                </span>
+                                {!isSaved && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent box selection when clicking delete
+                                            handleRemoveBox(region.id);
+                                        }}
+                                        className={styles.deleteButton}
+                                        aria-label="Delete region"
+                                    >
+                                        ×
+                                    </button>
+                                )}
                             </div>
                         </Rnd>
                     );
