@@ -35,14 +35,18 @@ interface ImageState {
 
   // Real-time updates
   watchImage: (imageId: string) => () => void;
+  subscribeToCroppedCookies: (eventId: string, categoryId: string) => void;
+  unsubscribeFromCroppedCookies: (categoryId: string) => void;
 
   // Internal
+  unsubscribers: Record<string, () => void>;
   updateLocalDetections: (imageId: string, detections: DetectedCookie[]) => void;
 }
 
 export const useImageStore = create<ImageState>((set, get) => ({
   images: {},
   loading: false,
+  unsubscribers: {},
 
   uploadImage: async (file: File, eventId: string, options?: UploadImageOptions) => {
     set({ loading: true });
@@ -118,6 +122,7 @@ export const useImageStore = create<ImageState>((set, get) => ({
   },
 
   fetchCroppedCookiesForCategory: async (eventId: string, categoryId: string) => {
+    // Deprecated: Use subscribeToCroppedCookies instead
     set({ loading: true });
     try {
       // Query for cropped cookies matching event and category
@@ -143,6 +148,59 @@ export const useImageStore = create<ImageState>((set, get) => ({
     } catch (error) {
       console.error('Error fetching cropped cookies:', error);
       set({ loading: false });
+    }
+  },
+
+  subscribeToCroppedCookies: (eventId: string, categoryId: string) => {
+    const { unsubscribers } = get();
+    
+    // If already subscribed, do nothing
+    if (unsubscribers[categoryId]) return;
+
+    set({ loading: true });
+
+    const q = query(
+      collection(db, 'images'),
+      where('eventId', '==', eventId),
+      where('categoryId', '==', categoryId),
+      where('type', '==', 'cropped_cookie')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const croppedCookies = snapshot.docs.reduce(
+        (acc, docSnap) => {
+          // Merge with existing image data to preserve local state if any (though typically Firestore is source of truth)
+          acc[docSnap.id] = { id: docSnap.id, ...docSnap.data() } as ImageEntity;
+          return acc;
+        },
+        {} as Record<string, ImageEntity>,
+      );
+
+      set((state) => ({
+        images: { ...state.images, ...croppedCookies },
+        loading: false,
+      }));
+    }, (error) => {
+      console.error('Error in cropped cookies subscription:', error);
+      set({ loading: false });
+    });
+
+    set((state) => ({
+      unsubscribers: { ...state.unsubscribers, [categoryId]: unsubscribe }
+    }));
+  },
+
+  unsubscribeFromCroppedCookies: (categoryId: string) => {
+    const { unsubscribers } = get();
+    const unsubscribe = unsubscribers[categoryId];
+    
+    if (unsubscribe) {
+      unsubscribe();
+      set((state) => {
+        const newUnsubscribers = { ...state.unsubscribers };
+        delete newUnsubscribers[categoryId];
+        return { unsubscribers: newUnsubscribers };
+      });
     }
   },
 

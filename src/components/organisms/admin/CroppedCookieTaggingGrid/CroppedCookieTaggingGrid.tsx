@@ -37,7 +37,8 @@ export function CroppedCookieTaggingGrid({
     const {
         images,
         loading,
-        fetchCroppedCookiesForCategory,
+        subscribeToCroppedCookies,
+        unsubscribeFromCroppedCookies,
         assignBaker,
         getCroppedCookiesForCategory,
     } = useImageStore();
@@ -48,12 +49,18 @@ export function CroppedCookieTaggingGrid({
     const [selectedCookieId, setSelectedCookieId] = useState<string | null>(null);
     const [dropdownPosition, setDropdownPosition] = useState<{ x: number; y: number } | null>(null);
 
-    // Fetch cropped cookies when category changes
+    // Subscribe to cropped cookies when category changes
     useEffect(() => {
         if (eventId && categoryId) {
-            fetchCroppedCookiesForCategory(eventId, categoryId);
+            subscribeToCroppedCookies(eventId, categoryId);
         }
-    }, [eventId, categoryId, fetchCroppedCookiesForCategory]);
+        
+        return () => {
+            if (categoryId) {
+                unsubscribeFromCroppedCookies(categoryId);
+            }
+        };
+    }, [eventId, categoryId, subscribeToCroppedCookies, unsubscribeFromCroppedCookies]);
 
     // Get cropped cookies for this category
     // We depend on the images count to trigger recomputation when images change
