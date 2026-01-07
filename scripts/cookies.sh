@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 
 # Cookie Voting - Local Development Script
 # Usage:
@@ -27,8 +27,8 @@ fi
 echo -e "${GREEN}🍪 Starting Cookie Voting local development environment...${NC}"
 
 # Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+SCRIPT_DIR=${0:a:h}
+PROJECT_ROOT=${SCRIPT_DIR:h}
 
 # Change to project root
 cd "$PROJECT_ROOT"
