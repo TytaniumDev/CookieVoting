@@ -18,7 +18,7 @@
 
 ## AI & Image Processing
 - **AI Detection:** [Google Gemini API](https://ai.google.dev/) - Vision models used for detecting cookies within images.
-- **Browser-based Detection:** [TensorFlow.js (Coco SSD)](https://www.tensorflow.org/js/models) - Used for local, client-side object detection.
+- **Fallback Detection:** Lightweight client-side blob detection algorithm for offline or fallback scenarios.
 
 ## Testing & Quality Assurance
 - **Unit & Integration Testing:** [Vitest](https://vitest.dev/) - Fast Vite-native testing framework.

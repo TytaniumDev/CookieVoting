@@ -303,6 +303,8 @@ export function CookieViewer({
                 // while maintaining aspect ratio. The image will be letterboxed if aspect ratios differ.
                 width: '100%',
                 height: '100%',
+                maxWidth: '100%',
+                maxHeight: '100%',
                 objectFit: 'contain',
               }}
             />

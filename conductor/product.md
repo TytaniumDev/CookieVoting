@@ -16,7 +16,7 @@ Cookie Voting aims to revolutionize cookie competitions by replacing manual tall
 - **Real-Time Engagement:** Deliver live voting capabilities and real-time result visualizations that include attribution to the bakers who made the winning cookies.
 
 ## Key Features
-- **Automated Detection & Cropping:** Automatic identification of individual cookies within a single large image, allowing admins to quickly isolate and "cut out" each entry.
+- **Smart & Manual Cropping:** A hybrid workflow combining AI detection with "butter smooth" manual tools (drag-to-create, resize handles) for precise cookie isolation.
 - **Category-Based Voting:** A flexible system where voters can choose their favorites across multiple distinct categories (e.g., "Most Creative," "Best Classic," "Best Overall").
 - **Admin Management Suite:** Comprehensive tools for baker management, event configuration, and category tagging.
 - **Real-Time Results & Reveal:** A results engine that tallies votes live, with a "reveal" feature that allows admins to control exactly when winners are announced to the crowd.
