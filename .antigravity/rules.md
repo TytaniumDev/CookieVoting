@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** December 25, 2025 at 18:56:50 PST · Checksum: `4524808863ce`
+> **Last synced:** December 26, 2025 at 18:08:39 PST · Checksum: `19cd54107b76`
 
 ## 🤖 Instructions for AI Agents
 
@@ -557,6 +557,105 @@ For components that work together (e.g., Tabs, Card).
 - [ ] State is lifted to the lowest common ancestor
 - [ ] Expensive calculations are memoized
 - [ ] No direct Firebase calls in components (use hooks)
+
+---
+
+---
+trigger: model_decision
+description: Best practices for using Tailwind CSS - utility-first, responsiveness, and class merging.
+---
+
+# Tailwind CSS Best Practices
+
+## Core Principles
+
+### 1. Utility-First, Avoid `@apply`
+**Avoid using `@apply` in CSS files.** It re-introduces the problems of traditional CSS (naming things, file jumping) that Tailwind solves.
+
+```css
+/* ❌ Bad */
+.btn-primary {
+  @apply bg-blue-500 text-white px-4 py-2 rounded;
+}
+```
+
+```tsx
+/* ✅ Good */
+function Button({ children }) {
+  return <button className="bg-blue-500 text-white px-4 py-2 rounded">{children}</button>;
+}
+```
+*Exception: Overriding styles of third-party libraries where you cannot control the markup.*
+
+### 2. Mobile-First Responsiveness
+**Write styles for mobile first**, then "add" styles for larger screens.
+
+```tsx
+/* ❌ Bad - Desktop first mentally */
+<div className="w-1/2 xs:w-full">
+```
+
+```tsx
+/* ✅ Good - Mobile default, expand on desktop */
+<div className="w-full md:w-1/2">
+```
+
+### 3. Use `tailwind-merge` with `clsx`
+When building reusable components that accept `className` props, **ALWAYS** use `tailwind-merge` (`twMerge`) combined with `clsx` (or `cn` helper) to safely merge classes.
+
+```tsx
+import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from 'clsx';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Usage
+export function Card({ className, children }: Props) {
+  // If className has 'p-0', it will correctly override 'p-6'
+  return <div className={cn("bg-white p-6 rounded-lg", className)}>{children}</div>;
+}
+```
+
+## Styling Patterns
+
+### 1. Design Tokens over Arbitrary Values
+Avoid square bracket notation for colors or spacing unless absolutely unique.
+
+```tsx
+/* ❌ Bad - Magic values */
+<div className="bg-[#123456] p-[13px]">
+
+/* ✅ Good - Theme tokens */
+<div className="bg-primary-900 p-4">
+```
+
+### 2. Logical Grouping
+Group classes in a consistent order to improve readability.
+1. **Layout**: `flex`, `grid`, `absolute`, `relative`
+2. **Box Model**: `w-`, `h-`, `p-`, `m-`
+3. **Typography**: `text-`, `font-`
+4. **Visuals**: `bg-`, `border-`, `shadow-`, `opacity-`
+5. **Interactive**: `hover:`, `focus:`
+
+### 3. Handle Dynamic Classes Safely
+Do not construct class strings dynamically in a way that breaks the Tailwind compiler/scanner.
+
+```tsx
+/* ❌ Bad - Parser can't see the full class name */
+<div className={`text-${error ? 'red' : 'green'}-500`}>
+
+/* ✅ Good - Full class names */
+<div className={error ? 'text-red-500' : 'text-green-500'}>
+```
+
+## Checklist before PR
+- [ ] No new `.css` files created (unless for global reset).
+- [ ] No `@apply` used in components.
+- [ ] All reusable components accept a `className` prop.
+- [ ] `cn()` or `twMerge` used for merging checks.
+- [ ] Responsiveness verified (mobile layout looks good).
 
 ---
 

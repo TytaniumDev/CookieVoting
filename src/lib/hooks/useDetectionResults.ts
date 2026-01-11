@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { watchImageDetectionResults } from '../firestore';
 import type { DetectedCookie } from '../../components/organisms/CookieViewer/CookieViewer';
 
@@ -44,6 +44,13 @@ export function useCategoryDetectionCounts(
 ) {
     const [counts, setCounts] = useState<Record<string, number>>({});
 
+    // Create a stable key from category IDs to prevent infinite re-subscription
+    // when parent component passes a new array reference each render
+    const categoriesKey = useMemo(
+        () => categories.map((c) => `${c.id}:${c.imageUrl}`).sort().join(','),
+        [categories]
+    );
+
     useEffect(() => {
         const unsubscribes: (() => void)[] = [];
 
@@ -60,7 +67,8 @@ export function useCategoryDetectionCounts(
         return () => {
             unsubscribes.forEach((unsub) => unsub());
         };
-    }, [categories]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Using categoriesKey for stability
+    }, [categoriesKey]);
 
     const resetCounts = useCallback(() => {
         setCounts({});
@@ -68,3 +76,4 @@ export function useCategoryDetectionCounts(
 
     return { counts, resetCounts };
 }
+

@@ -28,6 +28,25 @@ service firebase.storage {
       // Allow any authenticated user (including anonymous) to write in test mode
       allow write: if request.auth != null;
     }
+    
+    // Cropped individual cookie images - organized by event and category
+    // These are created when admins use the Cookie Cropper to slice tray images
+    match /cropped_cookies/{eventId}/{categoryId}/{fileName} {
+      // Allow anyone to read (needed for voting UI and tagging page)
+      allow read: if true;
+      
+      // Only admins can upload/delete cropped cookie images
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Test cropped cookies - allow authenticated users for testing
+    match /cropped_cookies_test/{eventId}/{categoryId}/{fileName} {
+      // Allow anyone to read test images
+      allow read: if true;
+      
+      // Allow any authenticated user to write in test mode
+      allow write: if request.auth != null;
+    }
   }
 }
 

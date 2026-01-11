@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useEventStore } from '../../../../lib/stores/useEventStore';
-import styles from './VotingControls.module.css';
+import { cn } from '../../../../lib/cn';
 
 export interface VotingControlsProps {
     eventId: string;
@@ -49,48 +49,67 @@ export function VotingControls({ eventId }: VotingControlsProps) {
     }
 
     return (
-        <div className={styles.container}>
-            <div className={styles.statusRow}>
+        <div className="space-y-6">
+            {/* Status indicator */}
+            <div className="flex items-center gap-3 p-4 bg-surface-secondary rounded-xl border border-surface-tertiary">
                 <span
-                    className={`${styles.statusDot} ${isVotingOpen ? styles.open : styles.closed}`}
+                    className={cn(
+                        'w-3 h-3 rounded-full animate-pulse',
+                        isVotingOpen ? 'bg-green-500' : 'bg-red-500'
+                    )}
                     aria-hidden="true"
                 />
-                <span>Voting: {isVotingOpen ? 'Open' : 'Closed'}</span>
+                <span className="text-white font-medium text-lg">
+                    Voting is currently {isVotingOpen ? 'Open' : 'Closed'}
+                </span>
             </div>
 
-            <div className={styles.buttonRow}>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3">
                 <button
                     type="button"
-                    className={styles.button}
                     onClick={() => handleCopyLink('vote')}
+                    className="relative inline-flex items-center gap-2 px-5 py-3 bg-surface-tertiary hover:bg-primary-600/20 hover:border-primary-600 text-gray-200 hover:text-white rounded-xl transition-all text-base font-medium border border-surface-tertiary"
                     aria-label="Copy voting link"
-                    style={{ position: 'relative' }}
                 >
-                    <span className={styles.icon}>📋</span>
-                    Vote Link
-                    {copiedLink === 'vote' && <span className={styles.tooltip}>Copied!</span>}
+                    <span className="text-lg">📋</span>
+                    Copy Vote Link
+                    {copiedLink === 'vote' && (
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
+                            Copied!
+                        </span>
+                    )}
                 </button>
 
                 <button
                     type="button"
-                    className={styles.button}
                     onClick={() => handleCopyLink('results')}
+                    className="relative inline-flex items-center gap-2 px-5 py-3 bg-surface-tertiary hover:bg-primary-600/20 hover:border-primary-600 text-gray-200 hover:text-white rounded-xl transition-all text-base font-medium border border-surface-tertiary"
                     aria-label="Copy results link"
-                    style={{ position: 'relative' }}
                 >
-                    <span className={styles.icon}>📋</span>
-                    Results Link
-                    {copiedLink === 'results' && <span className={styles.tooltip}>Copied!</span>}
+                    <span className="text-lg">📊</span>
+                    Copy Results Link
+                    {copiedLink === 'results' && (
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
+                            Copied!
+                        </span>
+                    )}
                 </button>
 
                 <button
                     type="button"
-                    className={`${styles.button} ${isVotingOpen ? styles.buttonDanger : styles.buttonPrimary}`}
                     onClick={handleToggleVoting}
                     disabled={isUpdating}
+                    className={cn(
+                        'inline-flex items-center gap-2 px-6 py-3 rounded-xl transition-all text-base font-semibold shadow-lg',
+                        isVotingOpen
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white',
+                        isUpdating && 'opacity-50 cursor-not-allowed'
+                    )}
                     aria-label={isVotingOpen ? 'Close voting' : 'Open voting'}
                 >
-                    {isUpdating ? 'Updating...' : isVotingOpen ? 'Close Voting' : 'Open Voting'}
+                    {isUpdating ? 'Updating...' : isVotingOpen ? '🚫 Close Voting' : '✅ Open Voting'}
                 </button>
             </div>
         </div>
