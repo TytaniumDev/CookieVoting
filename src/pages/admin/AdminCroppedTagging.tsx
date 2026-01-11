@@ -24,7 +24,7 @@ export default function AdminCroppedTagging() {
 
     // Store access
     const { categories, loading: categoriesLoading } = useEventStore();
-    const { images, fetchCroppedCookiesForCategory, getCroppedCookiesForCategory } = useImageStore();
+    const { fetchCroppedCookiesForCategory, getCroppedCookiesForCategory } = useImageStore();
 
     // Local state
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,8 +39,7 @@ export default function AdminCroppedTagging() {
     }, [eventId, categories, fetchCroppedCookiesForCategory]);
 
     // Calculate progress for each category
-    // We depend on the images count to trigger recomputation when images change
-    const imageCount = Object.keys(images).length;
+    // getCroppedCookiesForCategory reads from the store, so this will recompute when the store changes
     const categoryProgress = useMemo<CategoryProgress[]>(() => {
         return categories.map(cat => {
             const croppedCookies = getCroppedCookiesForCategory(cat.id);
@@ -51,7 +50,7 @@ export default function AdminCroppedTagging() {
                 totalCount: croppedCookies.length,
             };
         });
-    }, [categories, getCroppedCookiesForCategory, imageCount]);
+    }, [categories, getCroppedCookiesForCategory]);
 
     // Convert to ProgressDots format
     const progressItems = useMemo<DotItem[]>(() =>

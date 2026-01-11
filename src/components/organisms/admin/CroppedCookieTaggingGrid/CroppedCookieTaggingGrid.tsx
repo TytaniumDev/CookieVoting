@@ -63,11 +63,10 @@ export function CroppedCookieTaggingGrid({
     }, [eventId, categoryId, subscribeToCroppedCookies, unsubscribeFromCroppedCookies]);
 
     // Get cropped cookies for this category
-    // We depend on the images count to trigger recomputation when images change
-    const imageCount = Object.keys(images).length;
+    // getCroppedCookiesForCategory reads from the store, so this will recompute when the store changes
     const croppedCookies = useMemo(() => {
         return getCroppedCookiesForCategory(categoryId);
-    }, [getCroppedCookiesForCategory, categoryId, imageCount]);
+    }, [getCroppedCookiesForCategory, categoryId]);
 
     // Apply filter
     const filteredCookies = useMemo(() => {

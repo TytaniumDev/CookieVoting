@@ -42,28 +42,38 @@ export function parseGeminiResponse(text: string): DetectedCookie[] {
 
     // Validate and normalize items
     // We reuse the validation logic from the original file but make it pure
+    interface RawCookie {
+      x: unknown;
+      y: unknown;
+      width: unknown;
+      height: unknown;
+      polygon?: unknown;
+      confidence?: unknown;
+    }
+
     return detectedCookies
-      .filter((cookie: any) => {
+      .filter((cookie: unknown): cookie is RawCookie => {
         if (!cookie || typeof cookie !== 'object') return false;
+        const c = cookie as Record<string, unknown>;
 
         // Basic numeric checks
         const isValid =
-          typeof cookie.x === 'number' &&
-          typeof cookie.y === 'number' &&
-          typeof cookie.width === 'number' &&
-          typeof cookie.height === 'number' &&
-          !isNaN(cookie.x) &&
-          !isNaN(cookie.y) &&
-          !isNaN(cookie.width) &&
-          !isNaN(cookie.height);
+          typeof c.x === 'number' &&
+          typeof c.y === 'number' &&
+          typeof c.width === 'number' &&
+          typeof c.height === 'number' &&
+          !isNaN(c.x) &&
+          !isNaN(c.y) &&
+          !isNaN(c.width) &&
+          !isNaN(c.height);
           
          return isValid;
       })
-      .map((cookie: any) => {
+      .map((cookie: RawCookie) => {
           let polygon: Array<[number, number]> | undefined = undefined;
           
           if (Array.isArray(cookie.polygon)) {
-              const validPoints = cookie.polygon.filter((p: any) => 
+              const validPoints = cookie.polygon.filter((p: unknown): p is [number, number] => 
                   Array.isArray(p) && p.length === 2 && 
                   typeof p[0] === 'number' && typeof p[1] === 'number'
               ).map((p: [number, number]) => [
@@ -77,10 +87,10 @@ export function parseGeminiResponse(text: string): DetectedCookie[] {
           }
 
           return {
-            x: Math.max(0, Math.min(100, cookie.x)),
-            y: Math.max(0, Math.min(100, cookie.y)),
-            width: Math.max(0.1, Math.min(100, cookie.width)),
-            height: Math.max(0.1, Math.min(100, cookie.height)),
+            x: Math.max(0, Math.min(100, cookie.x as number)),
+            y: Math.max(0, Math.min(100, cookie.y as number)),
+            width: Math.max(0.1, Math.min(100, cookie.width as number)),
+            height: Math.max(0.1, Math.min(100, cookie.height as number)),
             polygon,
             confidence: typeof cookie.confidence === 'number' ? Math.max(0, Math.min(1, cookie.confidence)) : 0.8,
           };

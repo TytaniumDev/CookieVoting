@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { detectCookiesGemini } from './cookieDetectionGemini';
 import { httpsCallable } from 'firebase/functions';
 
@@ -12,7 +12,7 @@ vi.mock('firebase/functions', () => ({
 }));
 
 describe('detectCookiesGemini', () => {
-  const mockHttpsCallable = httpsCallable as any;
+  const mockHttpsCallable = httpsCallable as Mock;
   const mockFunction = vi.fn();
 
   beforeEach(() => {

@@ -50,18 +50,6 @@ describe('CookieViewer Utils', () => {
     });
 
     it('handles polygon with negative coordinates', () => {
-      const detection: DetectedCookie = {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-        confidence: 0.9,
-        polygon: [
-          [-10, -10],
-          [10, 10],
-        ],
-      };
-      
       // Should fallback to box if polygon length < 3
       // But let's test a valid polygon
        const validDetection: DetectedCookie = {

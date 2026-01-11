@@ -87,9 +87,9 @@ export function CookieCropperPage({
         setRegions(prevRegions => {
             // Convert existing cookies to regions
             const savedRegions: SliceRegion[] = existingCookies
-                .filter(c => c.cropRegion) // Only those with crop data
+                .filter((c): c is typeof c & { cropRegion: NonNullable<typeof c.cropRegion> } => !!c.cropRegion) // Only those with crop data
                 .map(c => ({
-                    ...c.cropRegion!,
+                    ...c.cropRegion,
                     isSaved: true,
                     savedImageId: c.id
                 }));
@@ -362,6 +362,7 @@ export function CookieCropperPage({
                     )}
                 >
                     {/* Hidden image ref for detection/slicing */}
+                    {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
                     <img
                         ref={imageRef}
                         src={imageUrl}

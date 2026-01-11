@@ -1,13 +1,20 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { CookieCropper } from './CookieCropper';
 import type { SliceRegion } from './cropUtils';
 
+interface MockRndProps {
+    children?: React.ReactNode;
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+    onClick?: () => void;
+    'data-testid'?: string;
+}
+
 // Mock react-rnd
 vi.mock('react-rnd', () => ({
-    Rnd: ({ children, position, size, ...props }: any) => (
+    Rnd: ({ children, position, size, ...props }: MockRndProps) => (
         <div
             data-testid={props['data-testid'] || 'rnd-box'}
             style={{
@@ -59,7 +66,6 @@ describe('CookieCropper Interactions', () => {
 
     it('should allow drag-to-create a new crop box', async () => {
         const mockOnRegionsChange = vi.fn();
-        const user = userEvent.setup();
 
         render(
             <CookieCropper

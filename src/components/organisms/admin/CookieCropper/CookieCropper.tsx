@@ -285,9 +285,11 @@ export function CookieCropper({
     return (
         <div className={styles.container}>
             {/* Image Container */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <div 
                 className={styles.imageContainer} 
                 ref={containerRef}
+                role="application"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}

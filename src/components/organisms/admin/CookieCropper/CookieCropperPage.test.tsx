@@ -1,9 +1,10 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CookieCropperPage } from './CookieCropperPage';
 import * as geminiDetection from '../../../../lib/cookieDetectionGemini';
 import * as blobDetection from './blobDetection';
+import type { FloatingPaletteProps } from './components/FloatingPalette/FloatingPalette';
 
 // Mock dependencies
 vi.mock('../../../../lib/cookieDetectionGemini');
@@ -17,7 +18,7 @@ vi.mock('./CookieCropper', () => ({
     CookieCropper: () => <div data-testid="cookie-cropper" />
 }));
 vi.mock('./components/FloatingPalette/FloatingPalette', () => ({
-    FloatingPalette: ({ onAutoDetect, isDetecting }: any) => (
+    FloatingPalette: ({ onAutoDetect, isDetecting }: Pick<FloatingPaletteProps, 'onAutoDetect' | 'isDetecting'>) => (
         <div data-testid="floating-palette">
             <button onClick={onAutoDetect} disabled={isDetecting}>
                 Auto Detect
