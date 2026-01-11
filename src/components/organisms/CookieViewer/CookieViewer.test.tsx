@@ -65,6 +65,14 @@ describe('CookieViewer', () => {
             // Mock image dimensions
             Object.defineProperty(image, 'offsetWidth', { value: 400, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 300, configurable: true });
 
             fireEvent.load(image);
 
@@ -82,6 +90,10 @@ describe('CookieViewer', () => {
             // Simulate a wide container where image is constrained by width
             Object.defineProperty(image, 'offsetWidth', { value: 400, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 200, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 200, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 200, configurable: true });
 
             fireEvent.load(image);
 
@@ -100,6 +112,10 @@ describe('CookieViewer', () => {
             // Simulate a tall container where image is constrained by height
             Object.defineProperty(image, 'offsetWidth', { value: 200, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 200, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 200, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 400, configurable: true });
 
             fireEvent.load(image);
 
@@ -117,6 +133,10 @@ describe('CookieViewer', () => {
 
             Object.defineProperty(image, 'offsetWidth', { value: 400, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 300, configurable: true });
 
             fireEvent.load(image);
 
@@ -137,6 +157,10 @@ describe('CookieViewer', () => {
 
             Object.defineProperty(image, 'offsetWidth', { value: 400, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 300, configurable: true });
 
             fireEvent.load(image);
 
@@ -165,6 +189,10 @@ describe('CookieViewer', () => {
             // Initial dimensions
             Object.defineProperty(image, 'offsetWidth', { value: 400, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 300, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 400, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 300, configurable: true });
 
             fireEvent.load(image);
 
@@ -176,6 +204,10 @@ describe('CookieViewer', () => {
             // Simulate resize - update dimensions
             Object.defineProperty(image, 'offsetWidth', { value: 200, configurable: true });
             Object.defineProperty(image, 'offsetHeight', { value: 150, configurable: true });
+            Object.defineProperty(image, 'naturalWidth', { value: 200, configurable: true });
+            Object.defineProperty(image, 'naturalHeight', { value: 150, configurable: true });
+            Object.defineProperty(image, 'clientWidth', { value: 200, configurable: true });
+            Object.defineProperty(image, 'clientHeight', { value: 150, configurable: true });
 
             fireEvent(window, new Event('resize'));
 

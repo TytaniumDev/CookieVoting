@@ -2,19 +2,26 @@
 
 # Setup script to add cookies command to PATH
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts"
 
 echo "🍪 Setting up cookies command..."
 
 # Determine which profile file to use
-if [ -f "$HOME/.bash_profile" ]; then
+if [[ "$SHELL" == */zsh ]] || [ -n "$ZSH_VERSION" ]; then
+    PROFILE_FILE="$HOME/.zshrc"
+elif [ -f "$HOME/.bash_profile" ]; then
     PROFILE_FILE="$HOME/.bash_profile"
 elif [ -f "$HOME/.bashrc" ]; then
     PROFILE_FILE="$HOME/.bashrc"
 else
-    PROFILE_FILE="$HOME/.bash_profile"
+    # Default to .zshrc on Mac if nothing else exists
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        PROFILE_FILE="$HOME/.zshrc"
+    else
+        PROFILE_FILE="$HOME/.bash_profile"
+    fi
     touch "$PROFILE_FILE"
 fi
 
@@ -42,9 +49,11 @@ chmod +x "$SCRIPTS_DIR/cookies.sh"
 # Create a symlink or alias for easier use
 if [ ! -f "$SCRIPTS_DIR/cookies" ] && [ ! -L "$SCRIPTS_DIR/cookies" ]; then
     ln -s "$SCRIPTS_DIR/cookies.sh" "$SCRIPTS_DIR/cookies" 2>/dev/null || cp "$SCRIPTS_DIR/cookies.sh" "$SCRIPTS_DIR/cookies"
-    chmod +x "$SCRIPTS_DIR/cookies"
     echo "   ✅ Created cookies command"
 fi
+
+# Always make sure the command is executable
+chmod +x "$SCRIPTS_DIR/cookies"
 
 echo ""
 echo "✅ Setup complete!"

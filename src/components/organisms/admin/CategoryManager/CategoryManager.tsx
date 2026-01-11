@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useEventStore } from '../../../../lib/stores/useEventStore';
-import { uploadImage } from '../../../../lib/storage';
+import { useImageStore } from '../../../../lib/stores/useImageStore';
 import { validateImage, validateCategoryName, sanitizeInput } from '../../../../lib/validation';
 import { CONSTANTS } from '../../../../lib/constants';
 import { CategoryCard } from '../../../molecules/CategoryCard';
 import { FileDropZone } from '../../../molecules/FileDropZone';
 import type { Category } from '../../../../lib/types';
-import styles from './CategoryManager.module.css';
+import { cn } from '../../../../lib/cn';
 
 export interface CategoryManagerProps {
     eventId: string;
@@ -15,12 +15,9 @@ export interface CategoryManagerProps {
 
 /**
  * CategoryManager - Manages category listing, creation, and editing.
- *
- * Uses CategoryCard for displaying individual categories and FileDropZone
- * for image upload. Orchestrates data fetching and CRUD operations.
  */
 export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerProps) {
-    const { categories, fetchCategories, addCategory, deleteCategory, updateCategory, loading } =
+    const { categories, addCategory, deleteCategory, updateCategory, loading } =
         useEventStore();
 
     // Add form state
@@ -30,12 +27,7 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch categories on mount
-    useEffect(() => {
-        if (eventId) {
-            fetchCategories(eventId);
-        }
-    }, [eventId, fetchCategories]);
+
 
     // Cleanup preview URL on unmount
     useEffect(() => {
@@ -62,7 +54,7 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
             setPreviewUrl(URL.createObjectURL(file));
             setError(null);
         },
-        [previewUrl],
+        [previewUrl]
     );
 
     const handleRemovePreview = useCallback(() => {
@@ -89,9 +81,9 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
 
             try {
                 const sanitizedName = sanitizeInput(newCatName);
-                const storagePath = `shared/cookies`;
-                const imageUrl = await uploadImage(newCatFile, storagePath);
-                await addCategory(eventId, sanitizedName, imageUrl);
+                const { uploadImage } = useImageStore.getState();
+                const imageEntity = await uploadImage(newCatFile, eventId, { type: 'tray_image' });
+                await addCategory(eventId, sanitizedName, imageEntity.url);
                 handleRemovePreview();
                 setNewCatName('');
             } catch (err) {
@@ -101,7 +93,7 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                 setUploading(false);
             }
         },
-        [eventId, newCatFile, newCatName, uploading, addCategory, handleRemovePreview],
+        [eventId, newCatFile, newCatName, uploading, addCategory, handleRemovePreview]
     );
 
     const handleNameSave = useCallback(
@@ -121,14 +113,14 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                 setError('Failed to update category name.');
             }
         },
-        [eventId, updateCategory],
+        [eventId, updateCategory]
     );
 
     const handleDelete = useCallback(
         async (category: Category) => {
             if (
                 !window.confirm(
-                    `Are you sure you want to delete "${category.name}"? This will remove all associated cookie data.`,
+                    `Are you sure you want to delete "${category.name}"? This will remove all associated cookie data.`
                 )
             ) {
                 return;
@@ -141,25 +133,31 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                 setError('Failed to delete category. Please try again.');
             }
         },
-        [eventId, deleteCategory],
+        [eventId, deleteCategory]
     );
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Categories &amp; Images</h3>
-                {categories.length > 0 && <span className={styles.count}>{categories.length}</span>}
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-white">Categories & Images</h3>
+                {categories.length > 0 && (
+                    <span className="px-2 py-0.5 bg-primary-600/30 text-primary-400 text-sm rounded-full">
+                        {categories.length}
+                    </span>
+                )}
             </div>
 
+            {/* Error */}
             {error && (
-                <div className={styles.error} role="alert">
+                <div className="text-red-400 text-sm p-3 bg-red-900/20 border border-red-900/50 rounded-lg" role="alert">
                     {error}
                 </div>
             )}
 
             {/* Category Grid */}
             {categories.length > 0 ? (
-                <div className={styles.grid}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => (
                         <CategoryCard
                             key={category.id}
@@ -175,17 +173,17 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                 </div>
             ) : (
                 !loading && (
-                    <div className={styles.emptyState}>
-                        <span className={styles.emptyIcon}>🍪</span>
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                        <span className="text-4xl mb-4">🍪</span>
                         <p>No categories yet. Add your first category below!</p>
                     </div>
                 )
             )}
 
             {/* Add Category Form */}
-            <div className={styles.addSection}>
-                <h4 className={styles.addTitle}>Add Category</h4>
-                <form onSubmit={handleAddCategory} className={styles.addForm}>
+            <div className="border-t border-surface-tertiary pt-6">
+                <h4 className="text-md font-semibold text-white mb-4">Add Category</h4>
+                <form onSubmit={handleAddCategory} className="space-y-4">
                     {!newCatFile ? (
                         <FileDropZone
                             accept="image/*"
@@ -195,11 +193,19 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                             ariaLabel="Upload category image"
                         />
                     ) : (
-                        <div className={styles.previewContainer}>
-                            <img src={previewUrl || ''} alt="Preview" className={styles.previewImage} />
-                            <div className={styles.previewInfo}>
-                                <span className={styles.previewFileName}>{newCatFile.name}</span>
-                                <button type="button" onClick={handleRemovePreview} className={styles.removePreview}>
+                        <div className="flex items-center gap-4 p-4 bg-surface-tertiary rounded-lg">
+                            <img
+                                src={previewUrl || ''}
+                                alt="Preview"
+                                className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <div className="flex-1">
+                                <p className="text-gray-300 text-sm truncate">{newCatFile.name}</p>
+                                <button
+                                    type="button"
+                                    onClick={handleRemovePreview}
+                                    className="text-red-400 hover:text-red-300 text-sm mt-1"
+                                >
                                     Remove
                                 </button>
                             </div>
@@ -216,14 +222,19 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                                     setError(null);
                                 }}
                                 placeholder="Category name (e.g., Sugar Cookies)"
-                                className={styles.input}
+                                className="w-full px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
                                 maxLength={100}
                                 required
                             />
                             <button
                                 type="submit"
                                 disabled={!newCatName.trim() || uploading}
-                                className={styles.addButton}
+                                className={cn(
+                                    'w-full px-4 py-2 rounded-lg font-medium transition-colors',
+                                    !newCatName.trim() || uploading
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                        : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                )}
                             >
                                 {uploading ? 'Uploading...' : 'Add Category'}
                             </button>

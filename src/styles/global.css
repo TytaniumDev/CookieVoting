@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
 @import './variables.css';
 
 *,
@@ -24,6 +27,7 @@ img {
 
 /* Mobile improvements */
 @media (max-width: 768px) {
+
   /* Improve touch targets */
   button,
   a {

@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { parseGeminiResponse, DetectedCookie } from './parsing';
 
 admin.initializeApp();
 
@@ -14,19 +15,6 @@ const DETECTION_FUNCTION_VERSION = '3.1';
 // The secret name for Gemini API key
 // This secret must be created in Firebase Secret Manager
 // Access it via process.env.GEMINI_API_KEY when the function runs
-
-interface DetectedCookie {
-  // Center point (for backward compatibility and point-based operations)
-  x: number;
-  y: number;
-  // Bounding box (for backward compatibility)
-  width: number;
-  height: number;
-  // Polygon shape as array of [x, y] points (percentages)
-  // Each point is [x%, y%] where (0,0) is top-left and (100,100) is bottom-right
-  polygon?: Array<[number, number]>;
-  confidence: number;
-}
 
 /**
  * Detects cookies in an image using Gemini Vision API
@@ -294,72 +282,29 @@ These are decorated Christmas cookies that may have:
 - HIGHLY DECORATED: Cookies may have extensive frosting, sprinkles, candies, or other decorative elements
 - NON-STANDARD FORMS: Look for cookies of ANY shape - geometric, organic, or abstract forms
 - Do NOT limit detection to round cookies - actively look for oddly shaped, decorated Christmas cookies
-- A cookie is still a cookie even if it's shaped like a star, tree, or any other non-circular form
-
-MENTAL GRID REFERENCE:
-Imagine dividing the image into a 10x10 grid:
-- Top-left region: x: 0-10, y: 0-10
-- Top-center region: x: 45-55, y: 0-10
-- Center region: x: 45-55, y: 45-55
-- Bottom-right region: x: 90-100, y: 90-100
 
 For each cookie (regardless of shape):
-1. Identify which grid region(s) it occupies
-2. Calculate precise percentages based on its position within those regions
-3. The center (x, y) should reflect the cookie's actual center position
-4. The polygon should trace the cookie's outer edge with 8-16 points (or more for complex shapes)
+1. Identify its position and shape
+2. The center (x, y) should reflect the cookie's actual center position
+3. The polygon should trace the cookie's outer edge with sufficient points to capture the shape
 
 POLYGON SIZE GUIDANCE - CRITICAL:
-- ERR ON THE SIDE OF MAKING THE POLYGON TOO LARGE rather than too small
-- The polygon should fully encompass the ENTIRE cookie, including:
-  * All decorative elements (frosting, sprinkles, candies)
-  * Any protrusions or irregular edges
-  * The full extent of the cookie shape, even if slightly irregular
+- The polygon should fully encompass the ENTIRE cookie, including all decorative elements
 - It's better to have a polygon that's 5-10% larger than needed than one that cuts off part of the cookie
-- Think of the polygon as a "safety boundary" that should definitely include everything
-- If unsure about the exact edge, extend the polygon slightly outward
+- Think of the polygon as a "safety boundary"
 
-COORDINATE ACCURACY:
-- x: Percentage from LEFT edge (0 = leftmost, 100 = rightmost)
-- y: Percentage from TOP edge (0 = topmost, 100 = bottommost)
-- Center (x, y) should be the geometric center of the visible cookie
-- Width and height represent the bounding box that would contain the cookie
-
-POLYGON REQUIREMENTS:
-- Use 8-16 points for round cookies, 12-20+ points for complex/irregular shapes (stars, trees, etc.)
-- Points should trace the OUTERMOST visible edge of the cookie, following its actual shape
-- For oddly shaped cookies (stars, trees, etc.), use more points to accurately capture points, corners, and curves
-- Include any decorative elements that extend beyond the base cookie shape
-- Order points clockwise or counter-clockwise around the cookie
-- Make sure the polygon fully encloses the cookie - if in doubt, make it larger
-- For non-circular shapes, the polygon should match the cookie's actual outline, not approximate it as a circle
-
-VERIFICATION:
-Before finalizing, check:
-- Does the polygon fully cover the cookie? If not, expand it slightly
-- Are all decorative elements (sprinkles, frosting edges) inside the polygon?
-- Would the polygon still work if the cookie were slightly larger? If not, expand it
-- Better to have extra space around the cookie than to cut off any part of it
-
-Return JSON array only:
+Return ONLY a JSON array. Do not wrap in markdown code blocks.
+Format:
 [
   {
-    "x": <center x as percentage>,
-    "y": <center y as percentage>,
-    "width": <width as percentage>,
-    "height": <height as percentage>,
+    "x": <center x %>,
+    "y": <center y %>,
+    "width": <width %>,
+    "height": <height %>,
     "polygon": [[x1, y1], [x2, y2], ...],
     "confidence": <0.0-1.0>
   }
-]
-
-Remember: It's better to make the polygon 10% too large than 1% too small. Ensure full cookie coverage.
-
-DETECTION PRIORITY:
-- Actively search for ALL cookies, including those with unusual shapes
-- Do not skip oddly shaped cookies - they are still valid cookies
-- Look for decorated Christmas cookies of any form: round, star-shaped, tree-shaped, or any other custom shape
-- If you see a decorated cookie-like object with frosting or decorations, it's likely a cookie regardless of its shape`;
+]`;
 
   console.log('[DetectCookies] Calling Gemini generateContent');
   let result;
@@ -389,209 +334,9 @@ DETECTION PRIORITY:
   console.log('[DetectCookies] Response obtained');
   const responseText = geminiResponse.text() || '[]';
   console.log('[DetectCookies] Response text length:', responseText.length);
-  console.log(
-    '[DetectCookies] Response text preview (first 500 chars):',
-    responseText.substring(0, 500),
-  );
-
-  // Parse the JSON response
-  let detectedCookies: unknown[] = [];
-  try {
-    console.log('[DetectCookies] Parsing JSON response');
-
-    // Clean and extract JSON from response
-    let jsonString = responseText.trim();
-
-    // Remove markdown code blocks if present
-    jsonString = jsonString
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    // Try to find JSON array in the text
-    // First try: Look for array wrapped in markdown
-    let jsonMatch = jsonString.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-
-    // Second try: Look for array that starts with [ and ends with ]
-    if (!jsonMatch) {
-      const arrayStart = jsonString.indexOf('[');
-      const arrayEnd = jsonString.lastIndexOf(']');
-      if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
-        jsonString = jsonString.substring(arrayStart, arrayEnd + 1);
-        jsonMatch = [jsonString, jsonString];
-      }
-    } else {
-      jsonString = jsonMatch[1];
-    }
-
-    // If still no match, try parsing the whole cleaned string
-    if (!jsonMatch) {
-      jsonString = responseText.trim();
-    }
-
-    console.log('[DetectCookies] Extracted JSON string length:', jsonString.length);
-    console.log('[DetectCookies] Extracted JSON preview:', jsonString.substring(0, 500));
-
-    // Parse JSON
-    detectedCookies = JSON.parse(jsonString);
-
-    // Validate it's an array
-    if (!Array.isArray(detectedCookies)) {
-      console.error('[DetectCookies] Parsed result is not an array:', typeof detectedCookies);
-      detectedCookies = [];
-    } else {
-      console.log('[DetectCookies] Parsed', detectedCookies.length, 'cookies from response');
-    }
-  } catch (parseError) {
-    console.error('[DetectCookies] Failed to parse Gemini response');
-    console.error('[DetectCookies] Parse error:', parseError);
-    if (parseError instanceof Error) {
-      console.error('[DetectCookies] Parse error message:', parseError.message);
-      console.error('[DetectCookies] Parse error stack:', parseError.stack);
-    }
-    console.error('[DetectCookies] Full response text:', responseText);
-    console.error('[DetectCookies] Response text length:', responseText.length);
-
-    // Try one more time with a more aggressive cleanup
-    try {
-      // Remove any text before first [ and after last ]
-      const firstBracket = responseText.indexOf('[');
-      const lastBracket = responseText.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-        const cleanedJson = responseText.substring(firstBracket, lastBracket + 1);
-        console.log('[DetectCookies] Attempting fallback parse with cleaned JSON');
-        detectedCookies = JSON.parse(cleanedJson);
-        if (!Array.isArray(detectedCookies)) {
-          detectedCookies = [];
-        } else {
-          console.log(
-            '[DetectCookies] Fallback parse succeeded:',
-            detectedCookies.length,
-            'cookies',
-          );
-        }
-      } else {
-        detectedCookies = [];
-      }
-    } catch (fallbackError) {
-      console.error('[DetectCookies] Fallback parse also failed:', fallbackError);
-      detectedCookies = [];
-    }
-  }
-
-  console.log('[DetectCookies] Validating and normalizing', detectedCookies.length, 'cookies');
-
-  // Validate that we have an array
-  if (!Array.isArray(detectedCookies)) {
-    console.error('[DetectCookies] Parsed result is not an array, got:', typeof detectedCookies);
-    detectedCookies = [];
-  }
-
-  // Type for raw cookie data from API before validation
-  interface RawCookieData {
-    x?: unknown;
-    y?: unknown;
-    width?: unknown;
-    height?: unknown;
-    polygon?: unknown;
-    confidence?: unknown;
-    [key: string]: unknown;
-  }
-
-  // Validate and normalize the results
-  const validatedCookies: DetectedCookie[] = detectedCookies
-    .filter((cookie: RawCookieData, index: number) => {
-      // Check if cookie is an object
-      if (!cookie || typeof cookie !== 'object') {
-        console.warn('[DetectCookies] Cookie at index', index, 'is not an object:', cookie);
-        return false;
-      }
-
-      const isValid =
-        typeof cookie.x === 'number' &&
-        typeof cookie.y === 'number' &&
-        typeof cookie.width === 'number' &&
-        typeof cookie.height === 'number' &&
-        !isNaN(cookie.x) &&
-        !isNaN(cookie.y) &&
-        !isNaN(cookie.width) &&
-        !isNaN(cookie.height) &&
-        cookie.x >= 0 &&
-        cookie.x <= 100 &&
-        cookie.y >= 0 &&
-        cookie.y <= 100 &&
-        cookie.width > 0 &&
-        cookie.width <= 100 &&
-        cookie.height > 0 &&
-        cookie.height <= 100;
-      if (!isValid) {
-        console.warn('[DetectCookies] Invalid cookie at index', index, ':', JSON.stringify(cookie));
-      }
-      return isValid;
-    })
-    .map((cookie: RawCookieData, index: number) => {
-      // Validate and normalize polygon if present
-      let polygon: Array<[number, number]> | undefined = undefined;
-      if (cookie.polygon) {
-        if (!Array.isArray(cookie.polygon)) {
-          console.warn(
-            `[DetectCookies] Cookie ${index} has invalid polygon (not an array):`,
-            typeof cookie.polygon,
-          );
-        } else {
-          try {
-            const filteredPolygon = (cookie.polygon as unknown[])
-              .filter((point: unknown, pointIndex: number) => {
-                const isValid =
-                  Array.isArray(point) &&
-                  point.length === 2 &&
-                  typeof point[0] === 'number' &&
-                  typeof point[1] === 'number' &&
-                  !isNaN(point[0]) &&
-                  !isNaN(point[1]);
-                if (!isValid) {
-                  console.warn(
-                    `[DetectCookies] Cookie ${index} has invalid polygon point at index ${pointIndex}:`,
-                    point,
-                  );
-                }
-                return isValid;
-              })
-              .map(
-                (point: [number, number]) =>
-                  [Math.max(0, Math.min(100, point[0])), Math.max(0, Math.min(100, point[1]))] as [
-                    number,
-                    number,
-                  ],
-              );
-
-            // Ensure polygon has at least 3 points
-            if (filteredPolygon.length >= 3) {
-              polygon = filteredPolygon;
-            } else {
-              console.warn(
-                `[DetectCookies] Cookie ${index} polygon has insufficient points (${filteredPolygon.length}, need at least 3)`,
-              );
-            }
-          } catch (polygonError) {
-            console.error(
-              `[DetectCookies] Error processing polygon for cookie ${index}:`,
-              polygonError,
-            );
-          }
-        }
-      }
-
-      return {
-        x: Math.max(0, Math.min(100, cookie.x as number)),
-        y: Math.max(0, Math.min(100, cookie.y as number)),
-        width: Math.max(0.1, Math.min(100, cookie.width as number)),
-        height: Math.max(0.1, Math.min(100, cookie.height as number)),
-        polygon,
-        confidence:
-          typeof cookie.confidence === 'number' ? Math.max(0, Math.min(1, cookie.confidence)) : 0.8, // Default confidence if not provided
-      };
-    });
+  
+  // Use shared parsing logic
+  const validatedCookies = parseGeminiResponse(responseText);
 
   console.log(
     '[DetectCookies] Validation complete. Returning',

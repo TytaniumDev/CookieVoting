@@ -21,6 +21,7 @@ interface EventState {
 
   // Actions
   setActiveEvent: (eventId: string) => Promise<void>;
+  fetchAllEvents: () => Promise<void>;
   fetchCategories: (eventId: string) => Promise<void>;
   addCategory: (eventId: string, name: string, imageUrl: string) => Promise<void>;
   updateCategory: (eventId: string, categoryId: string, name: string) => Promise<void>;
@@ -33,10 +34,20 @@ interface EventState {
 export const useEventStore = create<EventState>((set, get) => ({
   activeEvent: null,
   categories: [],
+  events: [],
   loading: false,
   error: null,
 
   setActiveEvent: async (eventId: string) => {
+    // Check if we already have the event in our list
+    const { events } = get();
+    const cachedEvent = events.find((e) => e.id === eventId);
+
+    if (cachedEvent) {
+      set({ activeEvent: cachedEvent, error: null });
+      return;
+    }
+
     set({ loading: true, error: null });
     try {
       const docRef = doc(db, 'events', eventId);
@@ -49,6 +60,19 @@ export const useEventStore = create<EventState>((set, get) => ({
     } catch (error) {
       console.error('Error fetching event:', error);
       set({ error: 'Failed to fetch event', loading: false });
+    }
+  },
+
+  fetchAllEvents: async () => {
+    set({ loading: true, error: null });
+    try {
+      const q = query(collection(db, 'events'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as VoteEvent);
+      set({ events, loading: false });
+    } catch (error) {
+      console.error('Error fetching all events:', error);
+      set({ error: 'Failed to fetch events', loading: false });
     }
   },
 

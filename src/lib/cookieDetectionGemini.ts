@@ -32,27 +32,65 @@ export async function detectCookiesGemini(imageUrl: string): Promise<DetectedCoo
       { cookies: DetectedCookie[]; count: number }
     >(functions, 'detectCookiesWithGemini');
 
-    // Call the function
-    console.log('[CookieDetection] Calling Firebase function with imageUrl:', imageUrl);
-    const result = await detectCookies({ imageUrl });
+    // Call the function with retry logic
+    const maxRetries = 2;
+    let lastError: unknown;
 
-    console.log('[CookieDetection] Function call completed');
-    console.log('[CookieDetection] Result data:', result.data);
-    console.log('[CookieDetection] Cookies count:', result.data?.count);
-    console.log('[CookieDetection] Cookies array:', result.data?.cookies);
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[CookieDetection] Calling Firebase function (attempt ${attempt + 1}/${maxRetries + 1})`);
+        const result = await detectCookies({ imageUrl });
 
-    // Return the detected cookies
-    const cookies = result.data?.cookies || [];
-    console.log('[CookieDetection] Returning', cookies.length, 'cookies');
-    return cookies;
-  } catch (error) {
-    console.error('[CookieDetection] Error detecting cookies with Gemini:', error);
+        console.log('[CookieDetection] Function call completed');
+        console.log('[CookieDetection] Result data:', result.data);
+        console.log('[CookieDetection] Cookies count:', result.data?.count);
+        console.log('[CookieDetection] Cookies array:', result.data?.cookies);
 
+        // Return the detected cookies
+        const cookies = result.data?.cookies || [];
+        console.log('[CookieDetection] Returning', cookies.length, 'cookies');
+        return cookies;
+      } catch (error) {
+        lastError = error;
+        console.error(`[CookieDetection] Error on attempt ${attempt + 1}:`, error);
+
+        // Check for fatal errors that shouldn't be retried
+        if (error instanceof Error) {
+          const msg = error.message.toLowerCase();
+          if (
+            msg.includes('unauthenticated') ||
+            msg.includes('failed-precondition') ||
+            msg.includes('not found') ||
+            msg.includes('404')
+          ) {
+            // Throw specific errors immediately
+            if (msg.includes('unauthenticated')) {
+              throw new Error('You must be signed in to use cookie detection.');
+            } else if (msg.includes('failed-precondition')) {
+              throw new Error('Gemini API is not configured. Please contact the administrator.');
+            } else {
+               throw new Error(
+                'Cookie detection service is not available. Please deploy Firebase Functions first.',
+              );
+            }
+          }
+        }
+
+        // If this was the last attempt, break loop (will throw below)
+        if (attempt === maxRetries) break;
+        
+        // Optional: Add a small delay between retries
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    // Process the last error after all retries failed
+    const error = lastError;
     // Log detailed error information
     if (error instanceof Error) {
-      console.error('[CookieDetection] Error name:', error.name);
-      console.error('[CookieDetection] Error message:', error.message);
-      console.error('[CookieDetection] Error stack:', error.stack);
+      console.error('[CookieDetection] Final error name:', error.name);
+      console.error('[CookieDetection] Final error message:', error.message);
+      console.error('[CookieDetection] Final error stack:', error.stack);
 
       // Check if it's a Firebase error with code/details
       interface FirebaseError {
@@ -66,25 +104,24 @@ export async function detectCookiesGemini(imageUrl: string): Promise<DetectedCoo
       if (firebaseError.details) {
         console.error('[CookieDetection] Firebase error details:', firebaseError.details);
       }
-      if (firebaseError.message) {
-        console.error('[CookieDetection] Full error message:', firebaseError.message);
-      }
-
-      // Provide helpful error messages
-      if (error.message.includes('unauthenticated')) {
-        throw new Error('You must be signed in to use cookie detection.');
-      } else if (error.message.includes('failed-precondition')) {
-        throw new Error('Gemini API is not configured. Please contact the administrator.');
-      } else if (error.message.includes('not found') || error.message.includes('404')) {
-        throw new Error(
-          'Cookie detection service is not available. Please deploy Firebase Functions first.',
-        );
-      }
     } else {
       console.error('[CookieDetection] Unknown error type:', typeof error);
       console.error('[CookieDetection] Error value:', error);
     }
 
+    throw new Error('Failed to detect cookies. Please try again or use manual tagging.');
+  } catch (error) {
+    // If we re-throw a specific error (like "You must be signed in"), just let it propagate
+    if (error instanceof Error && (
+        error.message.includes('signed in') || 
+        error.message.includes('configured') || 
+        error.message.includes('service is not available')
+    )) {
+        throw error;
+    }
+    
+    // Fallback for any other errors caught in the outer block (should mostly be handled inside loop)
+    console.error('[CookieDetection] Unhandled error:', error);
     throw new Error('Failed to detect cookies. Please try again or use manual tagging.');
   }
 }

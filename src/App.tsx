@@ -1,18 +1,27 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { useAuthStore } from './lib/stores/useAuthStore';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { AdminLayout } from './components/layout/AdminLayout';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home'));
 const AdminHome = lazy(() => import('./pages/AdminHome'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const VotingPage = lazy(() => import('./pages/VotingPage'));
 const ResultsPage = lazy(() => import('./pages/ResultsPage'));
 const CookieDetectionTest = lazy(() => import('./pages/CookieDetectionTest'));
 const CookieDetectionDebug = lazy(() => import('./pages/CookieDetectionDebug'));
 const ImageDetectionAudit = lazy(() => import('./pages/ImageDetectionAudit'));
 const CookieDetectionVisualizer = lazy(() => import('./pages/CookieDetectionVisualizer'));
+
+// Admin sub-pages
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
+const AdminBakers = lazy(() => import('./pages/admin/AdminBakers'));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminCropper = lazy(() => import('./pages/admin/AdminCropper'));
+const AdminTagging = lazy(() => import('./pages/admin/AdminTagging'));
+const AdminCroppedTagging = lazy(() => import('./pages/admin/AdminCroppedTagging'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -55,14 +64,6 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <AdminHome />
-              </Suspense>
-            }
-          />
-          <Route
-            path="admin/:eventId"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdminDashboard />
               </Suspense>
             }
           />
@@ -115,9 +116,86 @@ function App() {
             }
           />
         </Route>
+
+        {/* Admin Dashboard with Sidebar Layout */}
+        <Route
+          path="admin/:eventId"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminLayout />
+            </Suspense>
+          }
+        >
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route
+            path="overview"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminOverview />
+              </Suspense>
+            }
+          />
+          <Route
+            path="bakers"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminBakers />
+              </Suspense>
+            }
+          />
+          <Route
+            path="categories"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminCategories />
+              </Suspense>
+            }
+          />
+          <Route
+            path="cropper"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminCropper />
+              </Suspense>
+            }
+          />
+          <Route
+            path="cropper/:categoryId"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminCropper />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tagging"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminTagging />
+              </Suspense>
+            }
+          />
+          <Route
+            path="cropped-tagging"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminCroppedTagging />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdminSettings />
+              </Suspense>
+            }
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
+
