@@ -9,7 +9,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 
 **Never deploy without verification.** Always:
 1. Run `npm run verify` to ensure code quality
-2. Test changes locally with emulators first
+2. Test changes locally first
 3. Confirm the deployment is intentional
 
 ## When to Deploy
@@ -43,12 +43,12 @@ Do not trigger deployment for:
 ### For Functions:
 - [ ] TypeScript compiles without errors: `npm run build --prefix functions`
 - [ ] Related unit tests pass
-- [ ] Tested against local emulators
+- [ ] Tested against local dev environment
 - [ ] Changes reviewed for security implications
 
 ### For Security Rules:
 - [ ] Rules syntax is valid (no `if`, `const`, `let`)
-- [ ] Tested read/write scenarios in emulator
+- [ ] Tested read/write scenarios
 - [ ] No unintended permission changes
 
 ## Firestore Rules Syntax

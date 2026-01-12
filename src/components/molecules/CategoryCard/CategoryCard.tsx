@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-
+import type { ProcessingStatus } from '../../../lib/firestore';
+import { AlertModal } from '../../atoms/AlertModal/AlertModal';
 
 export interface CategoryCardProps {
     /** Unique identifier for the category */
@@ -16,6 +17,17 @@ export interface CategoryCardProps {
     onNameSave?: (newName: string) => void;
     /** Callback when delete is clicked */
     onDelete?: () => void;
+    /** Processing status for Vision API */
+    processingStatus?: ProcessingStatus;
+    /** Error message for processing (shown in modal) */
+    processingError?: string | null;
+    /** Callback when process button is clicked */
+    onProcess?: () => void;
+    /** Callback when reprocess button is clicked */
+    /** Callback when reprocess button is clicked */
+    onReprocess?: () => void;
+    /** Event ID this category belongs to (for navigation) */
+    eventId?: string;
 }
 
 /**
@@ -29,9 +41,15 @@ export function CategoryCard({
     onImageClick,
     onNameSave,
     onDelete,
+    processingStatus,
+    processingError,
+    onProcess,
+    onReprocess,
+    eventId,
 }: CategoryCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(name);
+    const [showErrorModal, setShowErrorModal] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Focus input when editing starts
@@ -144,17 +162,91 @@ export function CategoryCard({
                     {cookieCount} cookie{cookieCount !== 1 ? 's' : ''} tagged
                 </span>
 
+                {/* Processing status */}
+                {processingStatus && (
+                    <div className="text-xs">
+                        {processingStatus === 'not_processed' && (
+                            <span className="text-gray-500">Not Processed</span>
+                        )}
+                        {processingStatus === 'review_required' && (
+                            <span className="text-yellow-500 font-bold">In Review</span>
+                        )}
+                        {processingStatus === 'in_progress' && (
+                            <div className="flex items-center gap-2 text-blue-400">
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Processing...</span>
+                            </div>
+                        )}
+                        {processingStatus === 'processed' && (
+                            <span className="text-green-400">Processed</span>
+                        )}
+                        {processingStatus === 'error' && (
+                            <button
+                                type="button"
+                                onClick={() => setShowErrorModal(true)}
+                                className="text-red-400 hover:text-red-300 hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 focus:ring-offset-surface-tertiary rounded"
+                                aria-label="View error details"
+                            >
+                                Error
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {/* Actions */}
-                <div className="pt-2 border-t border-surface-secondary">
+                {processingStatus === 'review_required' && (
                     <button
                         type="button"
-                        onClick={onDelete}
-                        className="text-red-400 hover:text-red-300 text-sm"
+                        onClick={() => {
+                            // If eventId is provided, use it. Otherwise fall back to ID parsing or similar logic
+                            const eId = eventId || id.split('_')[0]; // Fallback might still be brittle if ID is random
+                            window.location.href = `/admin/${eId}/categories/${id}/review`;
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1 rounded shadow-sm"
                     >
-                        Delete
+                        Review & Crop
                     </button>
-                </div>
+                )}
+                {processingStatus === 'not_processed' && onProcess && (
+                    <button
+                        type="button"
+                        onClick={onProcess}
+                        className="text-primary-400 hover:text-primary-300 text-sm"
+                    >
+                        Process
+                    </button>
+                )}
+                {/* Show Reprocess if processed, error, or not_processed (and onProcess is missing) */}
+                {(processingStatus === 'processed' || processingStatus === 'error' || (processingStatus === 'not_processed' && !onProcess)) && onReprocess && (
+                    <button
+                        type="button"
+                        onClick={onReprocess}
+                        className="text-primary-400 hover:text-primary-300 text-sm"
+                    >
+                        Reprocess
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={onDelete}
+                    className="text-red-400 hover:text-red-300 text-sm"
+                >
+                    Delete
+                </button>
             </div>
+
+            {/* Error Modal */}
+            {showErrorModal && processingError && (
+                <AlertModal
+                    message={processingError}
+                    type="error"
+                    title="Processing Error"
+                    onClose={() => setShowErrorModal(false)}
+                />
+            )}
         </div>
     );
 }

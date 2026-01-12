@@ -1,12 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { v4 as uuidv4 } from 'uuid';
 import { useEventStore } from '../../../../lib/stores/useEventStore';
 import { useImageStore } from '../../../../lib/stores/useImageStore';
 import { sanitizeInput } from '../../../../lib/validation';
 import { CONSTANTS } from '../../../../lib/constants';
 import { CategoryCard } from '../../../molecules/CategoryCard';
 import { FileDropZone } from '../../../molecules/FileDropZone';
+import { uploadTray } from '../../../../lib/uploadTray';
+import { addCategory as addCategoryFirestore } from '../../../../lib/firestore';
+import { useCategoryProcessing } from '../../../../lib/hooks/useCategoryProcessing';
+import { reprocessCategory } from '../../../../lib/firestore';
+import { ConfirmationModal } from '../../../atoms/ConfirmationModal/ConfirmationModal';
 import type { Category } from '../../../../lib/types';
 import { cn } from '../../../../lib/cn';
 import { categoryCreateSchema, categoryNameSchema, type CategoryCreateFormData } from '../../../../lib/schemas';
@@ -16,15 +22,50 @@ export interface CategoryManagerProps {
     onCategoryClick?: (category: Category) => void;
 }
 
+// Wrapper component that uses useCategoryProcessing hook
+function CategoryCardWithProcessing({
+    category,
+    onImageClick,
+    onNameSave,
+    onDelete,
+    onReprocess,
+    eventId,
+}: {
+    category: Category;
+    onImageClick?: () => void;
+    onNameSave?: (newName: string) => void;
+    onDelete?: () => void;
+    onReprocess?: () => void;
+    eventId: string;
+}) {
+    const { status: processingStatus, errorMessage: processingError } = useCategoryProcessing(category.batchId || null);
+    return (
+        <CategoryCard
+            id={category.id}
+            name={category.name}
+            imageUrl={category.imageUrl}
+            cookieCount={category.cookies.length}
+            onImageClick={onImageClick}
+            onNameSave={onNameSave}
+            onDelete={onDelete}
+            processingStatus={processingStatus}
+            processingError={processingError}
+            onReprocess={onReprocess}
+            eventId={eventId}
+        />
+    );
+}
+
 /**
  * CategoryManager - Manages category listing, creation, and editing.
  */
 export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerProps) {
-    const { categories, addCategory, deleteCategory, updateCategory, loading } =
+    const { categories, addCategory, deleteCategory, updateCategory, loading, fetchCategories } =
         useEventStore();
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [processWithVisionAPI, setProcessWithVisionAPI] = useState(false);
 
     const {
         register,
@@ -83,19 +124,84 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
         async (data: CategoryCreateFormData) => {
             setError(null);
 
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:120', message: 'onSubmit entry', data: { eventId, processWithVisionAPI, fileName: data.image?.name }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,B,C,D,E' }) }).catch(() => { });
+            // #endregion
+
             try {
                 const sanitizedName = sanitizeInput(data.name);
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:125', message: 'before uploadImage', data: { sanitizedName, fileSize: data.image?.size }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+                // #endregion
+
                 const { uploadImage } = useImageStore.getState();
                 const imageEntity = await uploadImage(data.image, eventId, { type: 'tray_image' });
-                await addCategory(eventId, sanitizedName, imageEntity.url);
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:130', message: 'after uploadImage', data: { imageId: imageEntity?.id, imageUrl: imageEntity?.url }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+                // #endregion
+
+                if (processWithVisionAPI) {
+                    // Vision API processing: generate batchId, create category with batchId, upload to pipeline
+                    const batchId = uuidv4();
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:136', message: 'before addCategoryFirestore', data: { batchId, eventId, sanitizedName }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
+                    // #endregion
+
+                    const category = await addCategoryFirestore(eventId, sanitizedName, imageEntity.url, batchId);
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:141', message: 'after addCategoryFirestore', data: { categoryId: category?.id, batchId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
+                    // #endregion
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:144', message: 'before uploadTray', data: { batchId, eventId, categoryId: category?.id, fileSize: data.image?.size }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
+                    // #endregion
+
+                    await uploadTray(data.image, batchId, eventId, category.id);
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:147', message: 'after uploadTray', data: { batchId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
+                    // #endregion
+                } else {
+                    // Regular flow: just create category with imageUrl
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:153', message: 'before addCategory (non-Vision)', data: { eventId, sanitizedName }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
+                    // #endregion
+
+                    await addCategory(eventId, sanitizedName, imageEntity.url);
+
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:156', message: 'after addCategory (non-Vision)', data: { eventId }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
+                    // #endregion
+                }
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:162', message: 'onSubmit success', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,B,C,D,E' }) }).catch(() => { });
+                // #endregion
+
+                // Refresh categories list to show the new category immediately
+                await fetchCategories(eventId);
+
                 handleRemovePreview();
                 reset();
             } catch (err) {
                 console.error('Error adding category:', err);
-                setError(err instanceof Error ? err.message : CONSTANTS.ERROR_MESSAGES.FAILED_TO_UPLOAD);
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CategoryManager.tsx:171', message: 'onSubmit error', data: { error: err instanceof Error ? err.message : String(err), errorStack: err instanceof Error ? err.stack : undefined }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A,B,C,D,E' }) }).catch(() => { });
+                // #endregion
+
+                const errorMessage = err instanceof Error ? err.message : CONSTANTS.ERROR_MESSAGES.FAILED_TO_UPLOAD;
+                setError(errorMessage);
+                // Re-throw error so react-hook-form can properly track submission state
+                throw err;
             }
         },
-        [eventId, addCategory, handleRemovePreview, reset]
+        [eventId, addCategory, handleRemovePreview, reset, processWithVisionAPI, fetchCategories]
     );
 
     const handleNameSave = useCallback(
@@ -119,24 +225,70 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
         [eventId, updateCategory]
     );
 
-    const handleDelete = useCallback(
-        async (category: Category) => {
-            if (
-                !window.confirm(
-                    `Are you sure you want to delete "${category.name}"? This will remove all associated cookie data.`
-                )
-            ) {
-                return;
-            }
+    const [confirmation, setConfirmation] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        action: () => Promise<void>;
+        isDestructive: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        action: async () => { },
+        isDestructive: false,
+    });
 
-            try {
-                await deleteCategory(eventId, category.id);
-            } catch (err) {
-                console.error('Failed to delete category:', err);
-                setError('Failed to delete category. Please try again.');
-            }
+    const closeConfirmation = useCallback(() => {
+        setConfirmation((prev) => ({ ...prev, isOpen: false }));
+    }, []);
+
+    const handleConfirmAction = useCallback(async () => {
+        try {
+            await confirmation.action();
+        } finally {
+            closeConfirmation();
+        }
+    }, [confirmation, closeConfirmation]);
+
+    const handleDelete = useCallback(
+        (category: Category) => {
+            setConfirmation({
+                isOpen: true,
+                title: 'Delete Category',
+                message: `Are you sure you want to delete "${category.name}"? This will remove all associated cookie data.`,
+                isDestructive: true,
+                action: async () => {
+                    try {
+                        await deleteCategory(eventId, category.id);
+                    } catch (err) {
+                        console.error('Failed to delete category:', err);
+                        setError('Failed to delete category. Please try again.');
+                    }
+                },
+            });
         },
         [eventId, deleteCategory]
+    );
+
+    const handleReprocess = useCallback(
+        (category: Category) => {
+            setConfirmation({
+                isOpen: true,
+                title: 'Reprocess Category',
+                message: `Are you sure you want to reprocess "${category.name}"? This will clear existing cookies and create new ones.`,
+                isDestructive: true,
+                action: async () => {
+                    try {
+                        await reprocessCategory(eventId, category.id);
+                    } catch (err) {
+                        console.error('Failed to reprocess category:', err);
+                        setError('Failed to reprocess category. Please try again.');
+                    }
+                },
+            });
+        },
+        [eventId]
     );
 
     return (
@@ -162,15 +314,14 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
             {categories.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => (
-                        <CategoryCard
+                        <CategoryCardWithProcessing
                             key={category.id}
-                            id={category.id}
-                            name={category.name}
-                            imageUrl={category.imageUrl}
-                            cookieCount={category.cookies.length}
+                            category={category}
                             onImageClick={() => onCategoryClick?.(category)}
                             onNameSave={(newName) => handleNameSave(category.id, newName)}
                             onDelete={() => handleDelete(category)}
+                            onReprocess={() => handleReprocess(category)}
+                            eventId={eventId}
                         />
                     ))}
                 </div>
@@ -231,6 +382,21 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                                     <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
                                 )}
                             </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="process-with-vision-api"
+                                    checked={processWithVisionAPI}
+                                    onChange={(e) => setProcessWithVisionAPI(e.target.checked)}
+                                    className="w-4 h-4 rounded border-surface-secondary bg-surface-tertiary text-primary-600 focus:ring-primary-500"
+                                />
+                                <label
+                                    htmlFor="process-with-vision-api"
+                                    className="text-sm text-gray-300 cursor-pointer"
+                                >
+                                    Process with Vision API
+                                </label>
+                            </div>
                             {errors.image && (
                                 <p className="text-sm text-red-400">{errors.image.message}</p>
                             )}
@@ -250,6 +416,15 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                     )}
                 </form>
             </div>
-        </div>
+
+            <ConfirmationModal
+                isOpen={confirmation.isOpen}
+                title={confirmation.title}
+                message={confirmation.message}
+                onConfirm={handleConfirmAction}
+                onCancel={closeConfirmation}
+                isDestructive={confirmation.isDestructive}
+            />
+        </div >
     );
 }

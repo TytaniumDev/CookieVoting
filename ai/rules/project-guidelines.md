@@ -44,5 +44,17 @@ src/
 
 ## Universal Requirements
 - **Accessibility**: All UI must be accessible (semantic HTML, ARIA, keyboard nav).
-- **Responsiveness**: Mobile-first design.
+- **Responsiveness**: Mobile-first design. All UIs must be fully functional and aesthetic on mobile devices, while adapting gracefully to larger screens.
 - **Error Handling**: Graceful degradation, user-friendly errors.
+
+## Design Philosophy
+- **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
+- **Mobile-First**: Design for touch targets and small screens first.
+
+## UX Standards
+1.  **Optimistic UI Required**: All user actions (likes, edits, deletes) must update the UI *instantly*. The network request happens in the background.
+2.  **No Jarring Reloads**: 
+    - **NEVER** trigger a full-page loading spinner for a small action.
+    - **NEVER** unmount a component just to show a loader state during an update.
+    - Only use full-page loaders for initial route navigation.
+3.  **Seamless Persistence**: Data saving should be transparent (auto-save), not requiring manual "Save" buttons unless necessary for large forms.

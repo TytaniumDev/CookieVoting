@@ -14,21 +14,25 @@ const meta: Meta<typeof VotingSessionView> = {
 export default meta;
 type Story = StoryObj<typeof VotingSessionView>;
 
-const InteractiveStory = ({ initialVotes = {} }: { initialVotes?: Record<string, number> }) => {
-  const [votes, setVotes] = useState<Record<string, number>>(initialVotes);
+const InteractiveStory = ({ initialVotes = {} }: { initialVotes?: Record<string, string[]> }) => {
+  const [votes, setVotes] = useState<Record<string, string[]>>(initialVotes);
 
   return (
     <VotingSessionView
       categories={testCategories}
       votes={votes}
-      onVote={(catId, cookieNum) => setVotes((prev) => ({ ...prev, [catId]: cookieNum }))}
+      onVote={(catId, cookieId) => setVotes((prev) => ({ ...prev, [catId]: [cookieId] }))}
       onComplete={() => console.log('Completed!')}
     />
   );
 };
 
 export const Default: Story = {
-  render: () => <InteractiveStory initialVotes={{ '1': 1 }} />,
+  render: () => {
+    // Get first cookie ID from first category for initial vote
+    const firstCookieId = testCategories[0]?.cookies[0]?.id;
+    return <InteractiveStory initialVotes={firstCookieId ? { '1': [firstCookieId] } : {}} />;
+  },
 };
 
 import { within, userEvent, expect, waitFor } from 'storybook/test';
@@ -46,7 +50,9 @@ export const ValidUserJourneyTest: Story = {
 
     // 2. Select a Cookie
     await step('Vote for Cookie 1', async () => {
-      const cookie1 = canvas.getByLabelText('Cookie 1');
+      // Get first cookie ID from first category
+      const firstCookieId = testCategories[0]?.cookies[0]?.id || 'c_A';
+      const cookie1 = canvas.getByLabelText(`Select cookie ${firstCookieId}`);
       await userEvent.click(cookie1);
 
       const nextBtn = canvas.getByText('Next Category');
@@ -101,8 +107,9 @@ export const ValidUserJourneyTest: Story = {
 
     // 6. Complete remaining
     await step('Vote through remaining categories', async () => {
-      // Cat 2 (Best Look) - Wait for overlay to render (image load/sized)
-      const cookie1Cat2 = await canvas.findByLabelText('Cookie 1');
+      // Cat 2 (Best Look) - Get first cookie ID
+      const cookie1Cat2Id = testCategories[1]?.cookies[0]?.id || 'c_D';
+      const cookie1Cat2 = await canvas.findByLabelText(`Select cookie ${cookie1Cat2Id}`);
       await userEvent.click(cookie1Cat2);
 
       const nextBtn = canvas.getByText('Next Category');
@@ -113,7 +120,8 @@ export const ValidUserJourneyTest: Story = {
       });
 
       // Cat 3 (Most Creative)
-      const cookie1Cat3 = await canvas.findByLabelText('Cookie 1');
+      const cookie1Cat3Id = testCategories[2]?.cookies[0]?.id || 'c_H';
+      const cookie1Cat3 = await canvas.findByLabelText(`Select cookie ${cookie1Cat3Id}`);
       await userEvent.click(cookie1Cat3);
 
       const nextBtn2 = canvas.getByText('Next Category');
@@ -124,7 +132,8 @@ export const ValidUserJourneyTest: Story = {
       });
 
       // Cat 4 (Holiday Spirit) - Last One
-      const cookie1Cat4 = await canvas.findByLabelText('Cookie 1');
+      const cookie1Cat4Id = testCategories[3]?.cookies[0]?.id || 'c_M';
+      const cookie1Cat4 = await canvas.findByLabelText(`Select cookie ${cookie1Cat4Id}`);
       await userEvent.click(cookie1Cat4);
 
       // Button should change text

@@ -16,6 +16,8 @@ const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminBakers = lazy(() => import('./pages/admin/AdminBakers'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const CookieAssignmentPage = lazy(() => import('./pages/admin/CookieAssignmentPage'));
+const ReviewProcessingPage = lazy(() => import('./pages/admin/ReviewProcessingPage').then(module => ({ default: module.ReviewProcessingPage })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -45,86 +47,102 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route
-            index
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <Home />
-              </Suspense>
-            }
-          />
-          <Route
-            path="admin"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdminHome />
-              </Suspense>
-            }
-          />
-          <Route
-            path="vote/:eventId"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <VotingPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="results/:eventId"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ResultsPage />
-              </Suspense>
-            }
-          />
-        </Route>
+          <Route path="/" element={<Layout />}>
+            <Route
+              index
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Home />
+                </Suspense>
+              }
+            />
+            <Route
+              path="admin"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminHome />
+                </Suspense>
+              }
+            />
+            <Route
+              path="vote/:eventId"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <VotingPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="results/:eventId"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <ResultsPage />
+                </Suspense>
+              }
+            />
+          </Route>
 
-        {/* Admin Dashboard with Sidebar Layout */}
-        <Route
-          path="admin/:eventId"
-          element={
-            <Suspense fallback={<PageLoader />}>
-              <AdminLayout />
-            </Suspense>
-          }
-        >
-          <Route index element={<Navigate to="overview" replace />} />
+          {/* Admin Dashboard with Sidebar Layout */}
           <Route
-            path="overview"
+            path="admin/:eventId"
             element={
               <Suspense fallback={<PageLoader />}>
-                <AdminOverview />
+                <AdminLayout />
               </Suspense>
             }
-          />
-          <Route
-            path="bakers"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdminBakers />
-              </Suspense>
-            }
-          />
-          <Route
-            path="categories"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdminCategories />
-              </Suspense>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdminSettings />
-              </Suspense>
-            }
-          />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route
+              path="overview"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminOverview />
+                </Suspense>
+              }
+            />
+            <Route
+              path="bakers"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminBakers />
+                </Suspense>
+              }
+            />
+            <Route
+              path="categories"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminCategories />
+                </Suspense>
+              }
+            />
+            <Route
+              path="categories/:categoryId/assign"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <CookieAssignmentPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="categories/:categoryId/review"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <ReviewProcessingPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminSettings />
+                </Suspense>
+              }
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

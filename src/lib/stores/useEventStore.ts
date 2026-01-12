@@ -11,7 +11,7 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore';
-import type { VoteEvent, Category } from '../types';
+import type { VoteEvent, Category, Cookie } from '../types';
 
 interface EventState {
   activeEvent: VoteEvent | null;
@@ -23,12 +23,15 @@ interface EventState {
   setActiveEvent: (eventId: string) => Promise<void>;
   fetchAllEvents: () => Promise<void>;
   fetchCategories: (eventId: string) => Promise<void>;
-  addCategory: (eventId: string, name: string, imageUrl: string) => Promise<void>;
+  addCategory: (eventId: string, name: string, imageUrl: string, batchId?: string) => Promise<void>;
   updateCategory: (eventId: string, categoryId: string, name: string) => Promise<void>;
   deleteCategory: (eventId: string, categoryId: string) => Promise<void>;
+  events: VoteEvent[];
   updateCategoryOrder: (eventId: string, categoryId: string, newOrder: number) => Promise<void>;
   updateResultsAvailableTime: (eventId: string, time: number | null) => Promise<void>;
   updateEventStatus: (eventId: string, status: 'voting' | 'completed') => Promise<void>;
+  updateCategoryCookies: (eventId: string, categoryId: string, cookies: Cookie[]) => Promise<void>;
+  confirmCrops: (batchId: string, crops: import('../types').CropData[]) => Promise<void>;
 }
 
 export const useEventStore = create<EventState>((set, get) => ({
@@ -89,7 +92,7 @@ export const useEventStore = create<EventState>((set, get) => ({
     }
   },
 
-  addCategory: async (eventId: string, name: string, imageUrl: string) => {
+  addCategory: async (eventId: string, name: string, imageUrl: string, batchId?: string) => {
     set({ loading: true, error: null });
     try {
       const newOrder = get().categories.length;
@@ -98,6 +101,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         imageUrl,
         cookies: [],
         order: newOrder,
+        ...(batchId && { batchId }),
       });
       await get().fetchCategories(eventId);
     } catch (error) {
@@ -189,6 +193,52 @@ export const useEventStore = create<EventState>((set, get) => ({
     } catch (error) {
       console.error('Error updating event status:', error);
       set({ error: 'Failed to update event status', loading: false });
+    }
+  },
+
+  updateCategoryCookies: async (eventId: string, categoryId: string, cookies: Cookie[]) => {
+    // Optimistic update immediately
+    set((state) => ({
+      categories: state.categories.map((c) =>
+        c.id === categoryId ? { ...c, cookies } : c
+      ),
+    }));
+
+    try {
+      const docRef = doc(db, 'events', eventId, 'categories', categoryId);
+      const sanitizedCookies = cookies.map(c => {
+        const cookie = { ...c };
+        if (cookie.bakerId === undefined) {
+          delete cookie.bakerId;
+        }
+        return cookie;
+      });
+      await updateDoc(docRef, { cookies: sanitizedCookies });
+    } catch (error) {
+      console.error('Error updating category cookies:', error);
+      // Revert optimistic update on error would be ideal, but for now just show error
+      set({ error: 'Failed to update cookies' });
+      // Force fetch to revert state?
+      await get().fetchCategories(eventId);
+      await get().fetchCategories(eventId);
+    }
+  },
+
+  confirmCrops: async (batchId: string, crops: import('../types').CropData[]) => {
+    set({ loading: true, error: null });
+    try {
+      // Import functions safely - assuming it's exported from firebase.ts
+      const { functions } = await import('../firebase');
+      const { httpsCallable } = await import('firebase/functions');
+
+      const confirmCookieCrops = httpsCallable(functions, 'confirmCookieCrops');
+      await confirmCookieCrops({ batchId, crops });
+
+      set({ loading: false });
+    } catch (error) {
+      console.error('Error confirming crops:', error);
+      set({ error: 'Failed to confirm crops', loading: false });
+      throw error;
     }
   },
 }));

@@ -14,7 +14,7 @@ import { db, storage, auth } from './firebase';
 import {
   type VoteEvent,
   type Category,
-  type CookieCoordinate,
+  type Cookie,
   type UserVote,
   type CookieMaker,
 } from './types';
@@ -43,7 +43,7 @@ export function getUserIdForVoting(): string {
 export async function submitVote(
   eventId: string,
   userId: string | null,
-  votes: Record<string, number>,
+  votes: Record<string, string[]>,
 ): Promise<void> {
   // Use provided userId, or get one (authenticated user or session ID)
   const finalUserId = userId || getUserIdForVoting();
@@ -108,7 +108,7 @@ export async function getUserVote(
 export async function updateCategoryCookies(
   eventId: string,
   categoryId: string,
-  cookies: CookieCoordinate[],
+  cookies: Cookie[],
 ): Promise<void> {
   const ref = doc(db, 'events', eventId, 'categories', categoryId);
   await updateDoc(ref, { cookies });
@@ -189,6 +189,7 @@ export async function addCategory(
   eventId: string,
   name: string,
   imageUrl: string,
+  batchId?: string,
 ): Promise<Category> {
   console.log(`[addCategory] Starting - eventId: ${eventId}, name: ${name}`);
 
@@ -233,6 +234,7 @@ export async function addCategory(
     imageUrl,
     cookies: [], // No cookies tagged yet
     order: maxOrder + 1,
+    ...(batchId && { batchId }),
   };
 
   // Store categories as a subcollection
@@ -342,14 +344,29 @@ export async function deleteCategory(
 export async function updateCategory(
   eventId: string,
   categoryId: string,
-  updates: { name?: string },
+  updates: { name?: string; batchId?: string | null },
 ): Promise<void> {
   const ref = doc(db, 'events', eventId, 'categories', categoryId);
-  const updateData: { name?: string } = {};
+  const updateData: { name?: string; batchId?: string | null } = {};
   if (updates.name !== undefined) {
     updateData.name = updates.name;
   }
+  if (updates.batchId !== undefined) {
+    updateData.batchId = updates.batchId;
+  }
   await updateDoc(ref, updateData);
+}
+
+export async function getCategory(
+  eventId: string,
+  categoryId: string,
+): Promise<Category | null> {
+  const categoryRef = doc(db, 'events', eventId, 'categories', categoryId);
+  const categorySnap = await getDoc(categoryRef);
+  if (categorySnap.exists()) {
+    return categorySnap.data() as Category;
+  }
+  return null;
 }
 
 export async function addBaker(eventId: string, bakerName: string): Promise<CookieMaker> {
@@ -384,5 +401,104 @@ export async function deleteEvent(eventId: string): Promise<void> {
   // Note: Images are now stored in shared/cookies and can be reused across events
   // We don't delete shared images when deleting an event since they might be used by other events
   // If you need to clean up unused images, you'll need to check which events reference each image
+}
+
+// Processing status type
+export type ProcessingStatus = 'not_processed' | 'in_progress' | 'processed' | 'error' | 'review_required';
+
+/**
+ * Get processing status for a category based on its batch
+ */
+export async function getCategoryProcessingStatus(
+  eventId: string,
+  categoryId: string,
+): Promise<ProcessingStatus> {
+  const category = await getCategory(eventId, categoryId);
+  if (!category?.batchId) {
+    return 'not_processed';
+  }
+
+  const batchRef = doc(db, 'cookie_batches', category.batchId);
+  const batchSnap = await getDoc(batchRef);
+  if (!batchSnap.exists()) {
+    return 'not_processed';
+  }
+
+  const batch = batchSnap.data();
+  if (batch.status === 'ready') {
+    return 'processed';
+  }
+  if (batch.status === 'error') {
+    return 'error';
+  }
+  return 'in_progress';
+}
+
+/**
+ * Clear cookies from a category
+ */
+export async function clearCategoryCookies(
+  eventId: string,
+  categoryId: string,
+): Promise<void> {
+  const categoryRef = doc(db, 'events', eventId, 'categories', categoryId);
+  await updateDoc(categoryRef, { cookies: [] });
+}
+
+/**
+ * Reprocess a category by clearing cookies and batch
+ */
+// Import uploadTray to restart processing
+import { uploadTray } from './uploadTray';
+
+/**
+ * Reprocess a category by clearing cookies and restarting the pipeline
+ * This fetches the existing image, creates a new batch, and triggers the Cloud Function
+ */
+export async function reprocessCategory(
+  eventId: string,
+  categoryId: string,
+): Promise<void> {
+  const category = await getCategory(eventId, categoryId);
+  if (!category) {
+    throw new Error('Category not found');
+  }
+
+  if (!category.imageUrl) {
+    throw new Error('Category has no image to reprocess');
+  }
+
+  // 1. Clear existing cookies so the UI shows "Processing" instead of old partial data
+  await clearCategoryCookies(eventId, categoryId);
+
+  // 2. Delete old batch if it exists (cleanup)
+  if (category.batchId) {
+    try {
+      await deleteDoc(doc(db, 'cookie_batches', category.batchId));
+    } catch (e) {
+      console.warn('Failed to delete old batch during reprocess:', e);
+      // Continue anyway - we want to process
+    }
+  }
+
+  // 3. Fetch the original image
+  // We fetch it as a blob to re-upload it to the new batch path
+  const response = await fetch(category.imageUrl);
+  if (!response.ok) {
+    throw new Error('Failed to fetch original image for reprocessing');
+  }
+  const blob = await response.blob();
+  const file = new File([blob], "reprocess_original.jpg", { type: blob.type });
+
+  // 4. Generate new batch ID and start pipeline
+  const newBatchId = uuidv4();
+
+  // This creates the batch doc and uploads the file triggers the Cloud Function
+  await uploadTray(file, newBatchId, eventId, categoryId);
+
+  // 5. Link new batch to category
+  await updateDoc(doc(db, 'events', eventId, 'categories', categoryId), {
+    batchId: newBatchId,
+  });
 }
 

@@ -18,7 +18,8 @@ export const testCookieImages = {
   cookies8: 'test-images/8-cookies/PXL_20251215_000711294-EDIT.jpg',
 };
 
-// Helper to map raw detections to CookieCoordinate
+// Helper to map raw detections to Cookie objects
+// For test data, we create mock image URLs since we don't have actual cropped cookie images
 const mapDetectionsToCookies = (
   detections: DetectedCookie[],
   startChar: string,
@@ -26,13 +27,12 @@ const mapDetectionsToCookies = (
   return detections.map((detection, index) => {
     const charCode = startChar.charCodeAt(0) + index;
     const makerName = String.fromCharCode(charCode);
+    // Create a mock image URL for testing (in real app, these would be cropped cookie images)
+    const mockImageUrl = `https://picsum.photos/seed/cookie-${startChar}-${index}/200/200`;
     return {
       id: `c_${makerName}`,
-      number: index + 1,
-      x: detection.x,
-      y: detection.y,
-      makerName: `Maker ${makerName}`,
-      detection: detection,
+      imageUrl: mockImageUrl,
+      bakerId: `baker-${makerName}`, // Optional baker ID
     };
   });
 };

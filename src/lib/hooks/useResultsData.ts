@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
 import { getEvent, getCategories, getVotes } from '../firestore';
-import type { VoteEvent, Category, CookieCoordinate, UserVote } from '../types';
-import type { DetectedCookie } from '../../components/organisms/CookieViewer/CookieViewer';
+import type { VoteEvent, Category, Cookie, UserVote } from '../types';
 import { CONSTANTS } from '../constants';
 
 export interface CookieScore {
-  cookieNumber: number;
+  cookieId: string;
   votes: number;
-  maker: string;
-  cookie: CookieCoordinate;
+  cookie: Cookie;
 }
 
 export interface CategoryResult {
   category: Category;
   scores: CookieScore[];
-  detectedCookies: DetectedCookie[] | null;
 }
 
 export const useResultsData = (eventId: string | undefined) => {
@@ -55,21 +52,22 @@ export const useResultsData = (eventId: string | undefined) => {
 // Helper to tally votes
 function calculateResults(categories: Category[], votesData: UserVote[]): CategoryResult[] {
   return categories.map((cat) => {
-    const scoresMap = new Map<number, number>();
-    cat.cookies.forEach((c) => scoresMap.set(c.number, 0));
+    const scoresMap = new Map<string, number>();
+    cat.cookies.forEach((c) => scoresMap.set(c.id, 0));
 
     votesData.forEach((userVote) => {
-      const votedNumber = userVote.votes[cat.id];
-      if (votedNumber !== undefined) {
-        scoresMap.set(votedNumber, (scoresMap.get(votedNumber) || 0) + 1);
+      const voteArray = userVote.votes[cat.id];
+      if (voteArray && voteArray.length > 0) {
+        // For single vote: use first element [cookieId]
+        const cookieId = voteArray[0];
+        scoresMap.set(cookieId, (scoresMap.get(cookieId) || 0) + 1);
       }
     });
 
     const scores: CookieScore[] = cat.cookies
       .map((c) => ({
-        cookieNumber: c.number,
-        votes: scoresMap.get(c.number) || 0,
-        maker: c.makerName || 'Unknown',
+        cookieId: c.id,
+        votes: scoresMap.get(c.id) || 0,
         cookie: c,
       }))
       .sort((a, b) => b.votes - a.votes);
@@ -77,7 +75,6 @@ function calculateResults(categories: Category[], votesData: UserVote[]): Catego
     return {
       category: cat,
       scores,
-      detectedCookies: null,
     };
   });
 }

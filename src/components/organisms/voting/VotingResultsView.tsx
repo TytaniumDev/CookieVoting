@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { CategoryResult } from '../../../lib/hooks/useResultsData';
-import { CookieViewer } from '../../organisms/CookieViewer/CookieViewer';
-import type { DetectedCookie } from '../../../lib/types';
+import { CookieGrid } from './CookieGrid/CookieGrid';
 import { cn } from '../../../lib/cn';
 
 interface VotingResultsViewProps {
@@ -103,19 +102,7 @@ const ResultSlide = ({
   total: number;
   className?: string;
 }) => {
-  const { category, scores, detectedCookies } = result;
-
-  // Use detected cookies if available, otherwise fallback
-  const cookiesToDisplay: DetectedCookie[] =
-    detectedCookies && detectedCookies.length > 0
-      ? detectedCookies
-      : scores.map((score) => ({
-          x: score.cookie.x,
-          y: score.cookie.y,
-          width: 15,
-          height: 15,
-          confidence: 1.0,
-        }));
+  const { category, scores } = result;
 
   // Dense Ranking Logic: Sort scores by votes descending and assign rank based on unique vote counts
   const sortedScores = [...scores].sort((a, b) => b.votes - a.votes);
@@ -173,51 +160,35 @@ const ResultSlide = ({
         </div>
       </header>
 
-      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black overflow-hidden z-0 pt-[120px] pb-[120px] box-border">
-        <CookieViewer
-          imageUrl={category.imageUrl}
-          detectedCookies={cookiesToDisplay}
-          className="w-full h-full"
-          renderCenter={({ index: cookieIndex }) => {
-            const detected = cookiesToDisplay[cookieIndex];
-            const score = rankedScores.find((s) => {
-              const distance = Math.sqrt(
-                Math.pow(detected.x - s.cookie.x, 2) + Math.pow(detected.y - s.cookie.y, 2),
-              );
-              return distance < 5;
-            });
-
-            const isWinner = score && score.votes === maxVotes && maxVotes > 0;
-            if (!isWinner) return null;
-
-            return (
-              <div className="absolute -inset-5 rounded-[15px] bg-[radial-gradient(circle,rgba(255,215,0,0.4)_0%,rgba(255,215,0,0)_70%)] animate-[pulseGlow_2s_infinite_alternate_ease-in-out] pointer-events-none" />
-            );
-          }}
-          renderBottom={({ index: cookieIndex }) => {
-            const detected = cookiesToDisplay[cookieIndex];
-            const score = rankedScores.find((s) => {
-              const distance = Math.sqrt(
-                Math.pow(detected.x - s.cookie.x, 2) + Math.pow(detected.y - s.cookie.y, 2),
-              );
-              return distance < 5;
-            });
-
-            if (!score) return null;
-
+      <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black overflow-hidden z-0 pt-[120px] pb-[120px] box-border">
+        <CookieGrid
+          cookies={category.cookies}
+          className="flex-1 w-full"
+          onSelectCookie={() => {}} // No selection in results view
+        />
+        {/* Scores list */}
+        <div className="w-full max-w-4xl px-4 mt-4 space-y-2">
+          {rankedScores.slice(0, 3).map((score) => {
             const medal = getMedal(score.rank);
-
+            const isWinner = score.votes === maxVotes && maxVotes > 0;
             return (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[110%] flex flex-row items-center gap-2 bg-black/80 backdrop-blur-sm py-2 px-4 rounded-xl border border-white/20 min-w-[120px] whitespace-nowrap">
+              <div
+                key={score.cookieId}
+                className={cn(
+                  'flex items-center gap-4 bg-black/80 backdrop-blur-sm py-3 px-4 rounded-xl border',
+                  isWinner ? 'border-[#ffd700] border-2' : 'border-white/20'
+                )}
+              >
                 {medal && <div className="text-3xl leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{medal}</div>}
-                <div className="flex flex-col items-start">
-                  <div className="font-bold text-sm text-white">{score.maker}</div>
-                  <div className="text-xs text-[#cbd5e1]">{score.votes} votes</div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm text-white">
+                    {score.votes} vote{score.votes !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
             );
-          }}
-        />
+          })}
+        </div>
       </div>
     </div>
   );

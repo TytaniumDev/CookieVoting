@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import type { Category } from '../../../lib/types';
-import { CookieViewer } from '../CookieViewer/CookieViewer';
-import type { DetectedCookie } from '../../../lib/types';
+import { CookieGrid } from './CookieGrid/CookieGrid';
 import { cn } from '../../../lib/cn';
 
 interface VotingSessionViewProps {
   categories: Category[];
-  votes: Record<string, number>; // categoryId -> cookieNumber
-  onVote: (categoryId: string, cookieNumber: number) => void;
+  votes: Record<string, string[]>; // categoryId -> cookieId[]
+  onVote: (categoryId: string, cookieId: string) => void;
   onComplete: () => void;
 }
 
@@ -25,29 +24,12 @@ const CategorySlide = ({
   category: Category;
   index: number;
   total: number;
-  currentVote?: number;
-  onVote: (catId: string, cookieNum: number) => void;
+  currentVote?: string;
+  onVote: (catId: string, cookieId: string) => void;
   onNext: () => void;
   isLast: boolean;
   className?: string;
 }) => {
-  // Map cookies to detectedCookies format for CookieViewer
-  const detectedCookies: DetectedCookie[] = category.cookies.map((cookie) => {
-    if (cookie.detection) {
-      return cookie.detection;
-    }
-    // Fallback if no specific detection data (using legacy x,y)
-    return {
-      x: cookie.x,
-      y: cookie.y,
-      width: 15,
-      height: 15,
-      confidence: 1.0,
-      // Create a simple box polygon or circle for legacy points
-    };
-  });
-
-  const cookieNumbers = category.cookies.map((c) => c.number);
 
   const getAnimationStyle = () => {
     if (!className) return {};
@@ -83,36 +65,13 @@ const CategorySlide = ({
         </div>
       </div>
 
-      {/* CookieViewer replaced manual image/buttons */}
-      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black overflow-hidden z-0">
-        <CookieViewer
-          imageUrl={category.imageUrl}
-          detectedCookies={detectedCookies}
-          cookieNumbers={cookieNumbers}
-          selectedCookieNumber={currentVote}
-          onSelectCookie={(num) => onVote(category.id, num)}
+      {/* CookieGrid */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black overflow-hidden z-0 pt-[120px] pb-[100px]">
+        <CookieGrid
+          cookies={category.cookies}
+          selectedCookieId={currentVote}
+          onSelectCookie={(cookieId) => onVote(category.id, cookieId)}
           className="w-full h-full"
-          // Custom render for the number/sparkle to match previous design
-          renderCenter={({ index }) => {
-            const cookie = category.cookies[index];
-            const isSelected = currentVote === cookie.number;
-
-            return (
-              <>
-                {isSelected && (
-                  <span
-                    className="absolute -top-6 -right-4 text-3xl animate-[bounce_1s_infinite_alternate] z-[50] drop-shadow-[0_0_5px_gold]"
-                    style={{
-                      transform: 'translate(-50%, -50%)',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    ✨
-                  </span>
-                )}
-              </>
-            );
-          }}
         />
       </div>
 
@@ -195,7 +154,7 @@ export const VotingSessionView = ({
         category={cat}
         index={index}
         total={allCategories.length}
-        currentVote={votes[cat.id]}
+        currentVote={votes[cat.id]?.[0]}
         onVote={onVote}
         onNext={handleNext}
         isLast={index === allCategories.length - 1}

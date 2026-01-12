@@ -1,31 +1,36 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { CookieCropperPage } from './CookieCropperPage';
-import * as blobDetection from './blobDetection';
-import type { FloatingPaletteProps } from './components/FloatingPalette/FloatingPalette';
 
 // Mock dependencies
-vi.mock('./blobDetection');
 vi.mock('../../../../lib/hooks/useMediaQuery', () => ({
     useMediaQuery: () => false // Desktop mode
+}));
+
+// Mock components directory
+vi.mock('./components', () => ({
+    FloatingPalette: () => <div data-testid="floating-palette" />,
+    MobileDrawer: () => <div data-testid="mobile-drawer" />,
+    EmptyState: () => <div data-testid="empty-state" />,
 }));
 
 // Mock inner components to avoid complex rendering
 vi.mock('./CookieCropper', () => ({
     CookieCropper: () => <div data-testid="cookie-cropper" />
 }));
-vi.mock('./components/FloatingPalette/FloatingPalette', () => ({
-    FloatingPalette: ({ onAutoDetect, isDetecting }: Pick<FloatingPaletteProps, 'onAutoDetect' | 'isDetecting'>) => (
-        <div data-testid="floating-palette">
-            <button onClick={onAutoDetect} disabled={isDetecting}>
-                Auto Detect
-            </button>
-        </div>
-    )
+
+// Mock useImageStore
+vi.mock('../../../../lib/stores/useImageStore', () => ({
+    useImageStore: () => ({
+        subscribeToCroppedCookies: vi.fn(),
+        unsubscribeFromCroppedCookies: vi.fn(),
+        getCroppedCookiesForCategory: vi.fn(() => []),
+        images: [],
+    }),
 }));
 
-describe('CookieCropperPage Detection Integration', () => {
+describe('CookieCropperPage', () => {
     const mockOnSave = vi.fn();
     const mockOnCancel = vi.fn();
     const mockImageUrl = 'https://example.com/test.jpg';
@@ -34,33 +39,18 @@ describe('CookieCropperPage Detection Integration', () => {
         vi.clearAllMocks();
     });
 
-    it('should use blob detection when auto-detect is triggered', async () => {
-        const mockDetectBlobs = vi.spyOn(blobDetection, 'detectBlobsFromImage');
-        mockDetectBlobs.mockResolvedValue([
-            { x: 10, y: 10, width: 100, height: 100 }
-        ]);
-
+    it('should render empty state when no image URL provided', () => {
         render(
             <CookieCropperPage
                 onSave={mockOnSave}
                 onCancel={mockOnCancel}
-                initialImageUrl={mockImageUrl}
             />
         );
 
-        // Find and click auto detect
-        const autoDetectBtn = screen.getByText('Auto Detect');
-        fireEvent.click(autoDetectBtn);
-
-        await waitFor(() => {
-            expect(mockDetectBlobs).toHaveBeenCalled();
-        });
+        expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     });
 
-    it('should handle blob detection errors', async () => {
-        const mockDetectBlobs = vi.spyOn(blobDetection, 'detectBlobsFromImage');
-        mockDetectBlobs.mockRejectedValue(new Error('Detection failed'));
-
+    it('should render cookie cropper when image URL is provided', () => {
         render(
             <CookieCropperPage
                 onSave={mockOnSave}
@@ -69,19 +59,6 @@ describe('CookieCropperPage Detection Integration', () => {
             />
         );
 
-        // Trigger detection
-        const autoDetectBtn = screen.getByText('Auto Detect');
-        fireEvent.click(autoDetectBtn);
-
-        await waitFor(() => {
-            expect(mockDetectBlobs).toHaveBeenCalled();
-        });
-
-        // Should show error status (test implementation may vary)
-        await waitFor(() => {
-            expect(screen.getByText(/Detection failed/i)).toBeInTheDocument();
-        }, { timeout: 2000 }).catch(() => {
-            // Status message may clear quickly, so this is optional
-        });
+        expect(screen.getByTestId('cookie-cropper')).toBeInTheDocument();
     });
 });

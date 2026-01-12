@@ -7,7 +7,7 @@ import {
   updateCategoryOrder,
   updateCategoryCookies,
 } from '../firestore';
-import { type Category, type CookieCoordinate } from '../types';
+import { type Category, type Cookie } from '../types';
 
 export function useCategories(eventId: string) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -78,7 +78,7 @@ export function useCategories(eventId: string) {
     }
   };
 
-  const updateCookies = async (categoryId: string, cookies: CookieCoordinate[]) => {
+  const updateCookies = async (categoryId: string, cookies: Cookie[]) => {
     try {
       await updateCategoryCookies(eventId, categoryId, cookies);
       setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, cookies } : c)));

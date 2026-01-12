@@ -74,9 +74,21 @@ export const processCookieImage = onObjectFinalized(
         });
       }
 
-      // Get paddingPercentage from batch document (default to 0.1 if not set)
+      // Get batch data including eventId and categoryId
       const batchData = (await batchRef.get()).data();
+      const eventId = batchData?.eventId;
+      const categoryId = batchData?.categoryId;
       let paddingPercentage = batchData?.paddingPercentage ?? DEFAULT_PADDING_PERCENTAGE;
+
+      // Validate eventId and categoryId
+      if (!eventId || !categoryId) {
+        console.error(`Missing eventId or categoryId in batch ${batchId}. Cannot write to Category.`);
+        await batchRef.update({
+          status: 'error',
+          error: 'Missing eventId or categoryId',
+        });
+        return;
+      }
 
       // Validate padding is within range
       if (typeof paddingPercentage !== 'number' || paddingPercentage < MIN_PADDING || paddingPercentage > MAX_PADDING) {
@@ -90,112 +102,62 @@ export const processCookieImage = onObjectFinalized(
       const file = bucket.file(filePath);
       await file.download({ destination: tempFilePath });
 
-      // Call Vision API objectLocalization
+      // Pre-process image for better detection (high contrast)
+      const enhancedTempFilePath = path.join(os.tmpdir(), `enhanced-${batchId}.jpg`);
+      console.log(`Pre-processing image for Vision API: ${enhancedTempFilePath}`);
+
+      // Normalize and slightly increase contrast
+      await sharp(tempFilePath)
+        // Normalize: expand the full dynamic range
+        .normalize()
+        // Increase contrast slightly (1.0 is original, >1.0 is higher)
+        .linear(1.1, -(128 * 1.1) + 128)
+        .toFile(enhancedTempFilePath);
+
+      // Call Vision API objectLocalization with ENHANCED image
       console.log(`Calling Vision API for ${filePath}`);
       // @ts-expect-error - objectLocalization exists but TypeScript types may not be fully accurate
-      const [result] = await visionClient.objectLocalization(tempFilePath);
+      const [result] = await visionClient.objectLocalization(enhancedTempFilePath);
+
+      // Clean up enhanced image immediately
+      await fs.remove(enhancedTempFilePath).catch(e => console.warn('Failed to cleanup enhanced image:', e));
 
       const objects = result.localizedObjectAnnotations || [];
       console.log(`Vision API detected ${objects.length} objects`);
 
       if (objects.length === 0) {
-        await batchRef.update({
-          status: 'ready',
-          totalCandidates: 0,
-        });
-        console.log(`No objects detected in ${filePath}`);
-        return;
+        // Even if 0 objects, we set to review_required so user can manually add boxes
+        // We write an empty array of detectedObjects
       }
 
-      // Read original image metadata
-      const imageMetadata = await sharp(tempFilePath).metadata();
-      const imageWidth = imageMetadata.width || 0;
-      const imageHeight = imageMetadata.height || 0;
+      // Collect detected objects to save for review
+      const detectedObjects: Array<{
+        normalizedVertices: Array<{ x?: number | null; y?: number | null }>;
+        confidence: number;
+      }> = [];
 
-      // Process each detected object
-      let candidateCount = 0;
       for (const obj of objects) {
         if (!obj.boundingPoly || !obj.boundingPoly.normalizedVertices || obj.boundingPoly.normalizedVertices.length < 2) {
-          console.warn('Skipping object with invalid boundingPoly');
           continue;
         }
-
-        const vertices = obj.boundingPoly.normalizedVertices;
-
-        // Calculate bounding box from normalized vertices (0-1 coordinates)
-        const minX = Math.min(...vertices.map((v) => v.x || 0));
-        const minY = Math.min(...vertices.map((v) => v.y || 0));
-        const maxX = Math.max(...vertices.map((v) => v.x || 1));
-        const maxY = Math.max(...vertices.map((v) => v.y || 1));
-
-        // Convert normalized coordinates to pixel coordinates
-        let x = Math.floor(minX * imageWidth);
-        let y = Math.floor(minY * imageHeight);
-        let width = Math.ceil((maxX - minX) * imageWidth);
-        let height = Math.ceil((maxY - minY) * imageHeight);
-
-        // Apply padding
-        const padX = Math.floor(width * paddingPercentage);
-        const padY = Math.floor(height * paddingPercentage);
-
-        x = Math.max(0, x - padX);
-        y = Math.max(0, y - padY);
-        width = Math.min(imageWidth - x, width + padX * 2);
-        height = Math.min(imageHeight - y, height + padY * 2);
-
-        // Ensure dimensions are valid
-        if (width <= 0 || height <= 0) {
-          console.warn('Skipping object with invalid dimensions after padding');
-          continue;
-        }
-
-        // Crop using Sharp
-        const cookieId = `cookie-${Date.now()}-${candidateCount}`;
-        const croppedImagePath = path.join(os.tmpdir(), `${cookieId}.jpg`);
-        await sharp(tempFilePath)
-          .extract({ left: x, top: y, width, height })
-          .jpeg({ quality: 95 })
-          .toFile(croppedImagePath);
-
-        // Upload cropped image to Storage
-        const storagePath = `processed_cookies/${batchId}/${cookieId}.jpg`;
-        const storageFile = bucket.file(storagePath);
-        await storageFile.save(await fs.readFile(croppedImagePath), {
-          contentType: 'image/jpeg',
-          metadata: {
-            metadata: {
-              originalFile: filePath,
-              batchId,
-              cookieId,
-            },
-          },
-        });
-
-        // Make file publicly accessible
-        await storageFile.makePublic();
-
-        // Save to Firestore
-        await batchRef.collection('candidates').doc(cookieId).set({
-          storagePath,
-          detectedLabel: obj.name || 'cookie',
+        detectedObjects.push({
+          normalizedVertices: obj.boundingPoly.normalizedVertices,
           confidence: obj.score || 0,
-          votes: 0,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-        // Clean up temp cropped image
-        await fs.remove(croppedImagePath);
-
-        candidateCount++;
       }
 
-      // Update batch status to ready
+      // Update batch status to review_required and save detected objects
       await batchRef.update({
-        status: 'ready',
-        totalCandidates: candidateCount,
+        status: 'review_required',
+        detectedObjects,
+        originalImageRef: filePath,
+        // We don't save cookies to Category yet
       });
 
-      console.log(`Processed ${candidateCount} cookies for batch ${batchId}`);
+      console.log(`Batch ${batchId} set to review_required with ${detectedObjects.length} detected objects`);
+
+      // Clean up temp files
+      await fs.remove(tempFilePath).catch(e => console.warn('Failed to cleanup temp file:', e));
     } catch (error) {
       console.error(`Error processing cookie image ${filePath}:`, error);
       await batchRef.update({
@@ -203,13 +165,6 @@ export const processCookieImage = onObjectFinalized(
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
-    } finally {
-      // Clean up temp original image
-      try {
-        await fs.remove(tempFilePath);
-      } catch (cleanupError) {
-        console.warn('Failed to cleanup temp file:', cleanupError);
-      }
     }
   },
 );
@@ -327,13 +282,142 @@ export const removeAdminRole = functionsV2.https.onCall(
 export const autoGrantAdmin =
   process.env.FUNCTIONS_EMULATOR === 'true'
     ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
-        console.log(
-          `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
-        );
-        return {
-          customClaims: {
-            admin: true,
-          },
-        };
-      })
+      console.log(
+        `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
+      );
+      return {
+        customClaims: {
+          admin: true,
+        },
+      };
+    })
     : undefined;
+
+/**
+ * Confirm and process cookie crops
+ * Input: batchId, crops (array of {x, y, width, height}) - in normalized coordinates (0-1)
+ * Action: Crops image, uploads cookies, updates Category
+ */
+export const confirmCookieCrops = functionsV2.https.onCall(
+  {
+    region: 'us-west1',
+    memory: '1GiB', // Sharp might need more memory
+  },
+  async (request) => {
+    // Check authentication (admin only)
+    if (!request.auth || request.auth.token.admin !== true) {
+      throw new functionsV2.https.HttpsError(
+        'permission-denied',
+        'Only admins can confirm crops.',
+      );
+    }
+
+    const { batchId, crops } = request.data;
+
+    if (!batchId || !Array.isArray(crops)) {
+      throw new functionsV2.https.HttpsError('invalid-argument', 'BatchId and crops array required.');
+    }
+
+    console.log(`Confirming crops for batch ${batchId} with ${crops.length} crops`);
+
+    const db = admin.firestore();
+    const batchRef = db.collection(TARGET_COLLECTION).doc(batchId);
+    const batchSnap = await batchRef.get();
+
+    if (!batchSnap.exists) {
+      throw new functionsV2.https.HttpsError('not-found', 'Batch not found.');
+    }
+
+    const batchData = batchSnap.data();
+    const eventId = batchData?.eventId;
+    const categoryId = batchData?.categoryId;
+    const originalImageRef = batchData?.originalImageRef;
+
+    if (!eventId || !categoryId || !originalImageRef) {
+      throw new functionsV2.https.HttpsError('failed-precondition', 'Incomplete batch data.');
+    }
+
+    const bucket = admin.storage().bucket(); // Default bucket
+    const tempFilePath = path.join(os.tmpdir(), `confirm-${batchId}.jpg`);
+
+    try {
+      // Download original image
+      const file = bucket.file(originalImageRef);
+      await file.download({ destination: tempFilePath });
+
+      // Get metadata for dimensions
+      const imageMetadata = await sharp(tempFilePath).metadata();
+      const imageWidth = imageMetadata.width || 0;
+      const imageHeight = imageMetadata.height || 0;
+
+      const cookies: Array<{ id: string; imageUrl: string }> = [];
+
+      // Process crops
+      for (let i = 0; i < crops.length; i++) {
+        const crop = crops[i]; // { x, y, width, height } in 0-1 normalized stats
+
+        // Convert to pixels
+        const left = Math.max(0, Math.floor(crop.x * imageWidth));
+        const top = Math.max(0, Math.floor(crop.y * imageHeight));
+        const width = Math.min(imageWidth - left, Math.ceil(crop.width * imageWidth));
+        const height = Math.min(imageHeight - top, Math.ceil(crop.height * imageHeight));
+
+        if (width <= 0 || height <= 0) {
+          console.warn(`Skipping invalid crop: ${JSON.stringify(crop)}`);
+          continue;
+        }
+
+        const cookieId = `cookie-${Date.now()}-${i}`;
+        const croppedImagePath = path.join(os.tmpdir(), `${cookieId}.jpg`);
+
+        await sharp(tempFilePath)
+          .extract({ left, top, width, height })
+          .jpeg({ quality: 95 })
+          .toFile(croppedImagePath);
+
+        // Upload
+        const storagePath = `processed_cookies/${batchId}/${cookieId}.jpg`;
+        const storageFile = bucket.file(storagePath);
+        await storageFile.save(await fs.readFile(croppedImagePath), {
+          contentType: 'image/jpeg',
+          metadata: {
+            metadata: {
+              batchId,
+              cookieId,
+              originalFile: originalImageRef,
+            },
+          },
+        });
+
+        await storageFile.makePublic();
+        const bucketName = bucket.name;
+        const publicUrl = `https://storage.googleapis.com/${bucketName}/${storagePath}`;
+
+        cookies.push({
+          id: cookieId,
+          imageUrl: publicUrl,
+        });
+
+        await fs.remove(croppedImagePath);
+      }
+
+      // Update Category
+      const categoryRef = db.collection('events').doc(eventId).collection('categories').doc(categoryId);
+      await categoryRef.update({ cookies });
+
+      // Update Batch
+      await batchRef.update({
+        status: 'ready',
+        totalCandidates: cookies.length,
+      });
+
+      return { success: true, count: cookies.length };
+
+    } catch (error) {
+      console.error('Error confirming crops:', error);
+      throw new functionsV2.https.HttpsError('internal', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      await fs.remove(tempFilePath).catch(() => { });
+    }
+  }
+);

@@ -19,13 +19,11 @@ type Story = StoryObj<typeof VotingResultsView>;
 const mockResults: CategoryResult[] = testCategories.map((cat, catIdx) => ({
   category: cat,
   scores: cat.cookies.map((cookie, i) => ({
-    cookieNumber: cookie.number,
+    cookieId: cookie.id,
     // Create some varied scores: 1st place gets more, some ties for 2nd/3rd
     votes: catIdx === 0 && i < 2 ? 10 : cat.cookies.length - i,
-    maker: cookie.makerName || `Baker ${cookie.number}`,
     cookie: cookie,
   })),
-  detectedCookies: cat.cookies.map((c) => c.detection).filter((d): d is DetectedCookie => !!d),
 }));
 
 export const Default: Story = {
@@ -42,13 +40,10 @@ export const Ties: Story = {
       {
         category: testCategories[0],
         scores: [
-          { cookieNumber: 1, votes: 5, maker: 'Tie 1A', cookie: testCategories[0].cookies[0] },
-          { cookieNumber: 2, votes: 5, maker: 'Tie 1B', cookie: testCategories[0].cookies[1] },
-          { cookieNumber: 3, votes: 3, maker: 'Third', cookie: testCategories[0].cookies[2] },
+          { cookieId: testCategories[0].cookies[0].id, votes: 5, cookie: testCategories[0].cookies[0] },
+          { cookieId: testCategories[0].cookies[1].id, votes: 5, cookie: testCategories[0].cookies[1] },
+          { cookieId: testCategories[0].cookies[2].id, votes: 3, cookie: testCategories[0].cookies[2] },
         ],
-        detectedCookies: testCategories[0].cookies
-          .map((c) => c.detection)
-          .filter((d): d is DetectedCookie => !!d),
       },
     ],
   },

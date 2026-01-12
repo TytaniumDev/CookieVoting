@@ -116,6 +116,50 @@ async function seedData() {
       console.log(`   ✅ Created sample event: "${eventData.name}"`);
       console.log(`   📋 Event ID: ${eventId}`);
       console.log(`   🔑 Admin Code: ${adminCode}`);
+
+      // Add sample category and cookies
+      console.log('\n4. Creating sample category and cookies...');
+      const categoryId = uuidv4();
+      const cookie1Id = uuidv4();
+      const cookie2Id = uuidv4();
+      const cookie3Id = uuidv4();
+      const bakerId1 = uuidv4();
+      const bakerId2 = uuidv4();
+
+      // Create Bakers
+      await db.collection('events').doc(eventId).collection('bakers').doc(bakerId1).set({
+        name: 'Ryan',
+        id: bakerId1
+      });
+      await db.collection('events').doc(eventId).collection('bakers').doc(bakerId2).set({
+        name: 'Kelly',
+        id: bakerId2
+      });
+
+      const sampleCookies = [
+        {
+          id: cookie1Id,
+          imageUrl: 'https://placehold.co/400x400/orange/white?text=Cookie+1',
+        },
+        {
+          id: cookie2Id,
+          imageUrl: 'https://placehold.co/400x400/purple/white?text=Cookie+2',
+        },
+        {
+          id: cookie3Id,
+          imageUrl: 'https://placehold.co/400x400/green/white?text=Cookie+3',
+        }
+      ];
+
+      await db.collection('events').doc(eventId).collection('categories').doc(categoryId).set({
+        name: 'Sugar Cookies',
+        imageUrl: 'https://placehold.co/600x400/blue/white?text=Sugar+Cookies',
+        cookies: sampleCookies,
+        order: 0,
+      });
+
+      console.log('   ✅ Created sample category: "Sugar Cookies" with 3 cookies');
+      console.log('   ✅ Created sample bakers: Ryan, Kelly');
     }
 
     console.log('\n✅ Seeding complete!');

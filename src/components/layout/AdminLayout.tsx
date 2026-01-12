@@ -19,7 +19,7 @@ interface NavItem {
     children?: NavItem[];
 }
 
-const getNavItems = (categories: { id: string; name: string }[]): NavItem[] => [
+const getNavItems = (_categories: { id: string; name: string }[]): NavItem[] => [
     { id: 'overview', label: 'Dashboard', icon: '📊', path: 'overview' },
     { id: 'bakers', label: 'Bakers', icon: '👩‍🍳', path: 'bakers' },
     { id: 'categories', label: 'Categories', icon: '🍪', path: 'categories' },

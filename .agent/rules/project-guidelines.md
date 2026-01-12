@@ -44,5 +44,10 @@ src/
 
 ## Universal Requirements
 - **Accessibility**: All UI must be accessible (semantic HTML, ARIA, keyboard nav).
-- **Responsiveness**: Mobile-first design.
+- **Responsiveness**: Mobile-first design. All UIs must be fully functional and aesthetic on mobile devices, while adapting gracefully to larger screens.
 - **Error Handling**: Graceful degradation, user-friendly errors.
+
+## Design Philosophy
+- **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
+- **Mobile-First**: Design for touch targets and small screens first.
+- **Instant Interactions**: Optimistic UI updates for all data mutations.

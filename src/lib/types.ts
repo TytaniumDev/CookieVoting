@@ -104,17 +104,35 @@ export interface CookieCoordinate {
 // Cookie coordinate without maker name (for voting UI privacy)
 export type CookieCoordinatePublic = Omit<CookieCoordinate, 'makerName'>;
 
+/**
+ * Cookie interface for individual cookie images.
+ * Used for Vision API processed cookies stored in Category.cookies array.
+ */
+export interface Cookie {
+  id: string; // Unique ID (used for voting)
+  imageUrl: string; // Public URL to the individual cropped cookie image
+  bakerId?: string; // Optional baker ID reference
+}
+
 export interface Category {
   id: string;
   name: string;
   imageUrl: string;
-  cookies: CookieCoordinate[];
+  cookies: Cookie[]; // Array of individual cookie images
   order?: number; // Optional order field for sorting
+  batchId?: string; // Links to cookie_batches/{batchId} if processed via Vision API
 }
 
 export interface UserVote {
   userId: string;
-  votes: Record<string, number>; // categoryId -> cookieNumber
+  votes: Record<string, string[]>; // categoryId -> cookieId[] (array for ranked choice compatibility)
   timestamp: number;
   viewedResults?: boolean; // If true, user has seen results and cannot change votes
+}
+
+export interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }

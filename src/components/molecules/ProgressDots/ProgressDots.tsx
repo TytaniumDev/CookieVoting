@@ -32,19 +32,19 @@ export function ProgressDots({
     onDotClick,
     size = 'medium',
 }: ProgressDotsProps) {
-    const getDotSize = () => {
-        switch (size) {
-            case 'small':
-                return 'w-2 h-2 max-[480px]:w-2.5 max-[480px]:h-2.5';
-            case 'large':
-                return 'w-4 h-4 max-[480px]:w-2.5 max-[480px]:h-2.5';
-            default:
-                return 'w-3 h-3 max-[480px]:w-2.5 max-[480px]:h-2.5';
-        }
-    };
-
     const getDotClass = useCallback(
         (item: DotItem, index: number): string => {
+            const getDotSize = () => {
+                switch (size) {
+                    case 'small':
+                        return 'w-2 h-2 max-[480px]:w-2.5 max-[480px]:h-2.5';
+                    case 'large':
+                        return 'w-4 h-4 max-[480px]:w-2.5 max-[480px]:h-2.5';
+                    default:
+                        return 'w-3 h-3 max-[480px]:w-2.5 max-[480px]:h-2.5';
+                }
+            };
+
             return cn(
                 'rounded-full border-2 bg-transparent cursor-pointer p-0 transition-all hover:border-white/50 hover:scale-110 focus-visible:outline-2 focus-visible:outline-[#dc2626] focus-visible:outline-offset-2',
                 getDotSize(),

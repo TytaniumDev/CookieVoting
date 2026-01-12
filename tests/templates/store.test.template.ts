@@ -10,6 +10,7 @@
  * - Test error handling
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 // import { useYourStore } from '../../src/lib/stores/useYourStore';
 

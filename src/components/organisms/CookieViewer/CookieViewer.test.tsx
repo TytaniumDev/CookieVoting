@@ -41,8 +41,9 @@ describe('CookieViewer', () => {
             render(React.createElement(CookieViewer, defaultProps));
 
             const image = screen.getByAltText('Cookie detection');
-            // CSS modules will hash the class name, so we check if it contains 'image'
-            expect(image.className).toMatch(/image/);
+            // Component now uses Tailwind classes, check for key styling classes
+            expect(image.className).toContain('object-contain');
+            expect(image.className).toContain('block');
         });
 
         it('ensures image is never cropped with object-fit: contain', () => {

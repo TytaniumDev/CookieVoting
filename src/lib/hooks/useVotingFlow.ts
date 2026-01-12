@@ -10,7 +10,7 @@ export const useVotingFlow = (eventId: string | undefined) => {
   const { user, getOrCreateAnonymousId } = useAuth();
 
   const [currentStep, setCurrentStep] = useState<VotingStep>('LANDING');
-  const [votes, setVotes] = useState<Record<string, number>>({});
+  const [votes, setVotes] = useState<Record<string, string[]>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Initial state check
@@ -23,7 +23,7 @@ export const useVotingFlow = (eventId: string | undefined) => {
         const existingVote = await getUserVote(eventId, userId);
 
         if (existingVote) {
-          // Pre-fill votes
+          // Pre-fill votes (already in new format: Record<string, string[]>)
           setVotes(existingVote.votes);
 
           // Check if they are locked out because they viewed results
@@ -52,10 +52,10 @@ export const useVotingFlow = (eventId: string | undefined) => {
     }
   };
 
-  const handleVote = (categoryId: string, cookieNumber: number) => {
+  const handleVote = (categoryId: string, cookieId: string) => {
     setVotes((prev) => ({
       ...prev,
-      [categoryId]: cookieNumber,
+      [categoryId]: [cookieId], // Store as array for forward-compatibility with ranked choice
     }));
   };
 

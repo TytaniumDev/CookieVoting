@@ -168,6 +168,9 @@ service cloud.firestore {
                     && request.resource.data.status == resource.data.status
                     && resource.data.status in ["uploading", "processing"];
       
+      // Allow admins to delete batches (for reprocessing)
+      allow delete: if isGlobalAdmin();
+
       // Functions write via admin SDK (bypasses rules)
       allow write: if false;
       

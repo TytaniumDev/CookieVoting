@@ -2,12 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from '../useAuthStore';
 import * as firebaseAuth from 'firebase/auth';
 
-// Mock Firebase Auth
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(),
-  signInAnonymously: vi.fn(),
-  signOut: vi.fn(),
-}));
+// Mock Firebase Auth - need to include getAuth for firebase.ts initialization
+vi.mock('firebase/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof firebaseAuth>();
+  return {
+    ...actual,
+    getAuth: vi.fn(() => ({})),
+    onAuthStateChanged: vi.fn(),
+    signInAnonymously: vi.fn(),
+    signOut: vi.fn(),
+  };
+});
 
 describe('useAuthStore', () => {
   beforeEach(() => {

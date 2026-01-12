@@ -4,8 +4,11 @@
  * Copy this template and adapt it for your component.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, vi } from 'vitest';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { render, screen } from '@testing-library/react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import userEvent from '@testing-library/user-event';
 // import { YourComponent } from '../../src/components/YourComponent';
 

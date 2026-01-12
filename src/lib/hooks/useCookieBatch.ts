@@ -19,6 +19,8 @@ export interface CookieBatch {
   totalCandidates?: number;
   paddingPercentage?: number;
   error?: string;
+  eventId?: string;
+  categoryId?: string;
 }
 
 export interface UseCookieBatchResult {

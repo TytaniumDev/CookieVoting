@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** January 11, 2026 at 16:25:12 PST · Checksum: `3002479977fd`
+> **Last synced:** January 11, 2026 at 22:17:11 PST · Checksum: `f447fd985432`
 
 ## 🤖 Instructions for AI Agents
 
@@ -189,7 +189,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 
 **Never deploy without verification.** Always:
 1. Run `npm run verify` to ensure code quality
-2. Test changes locally with emulators first
+2. Test changes locally first
 3. Confirm the deployment is intentional
 
 ## When to Deploy
@@ -223,12 +223,12 @@ Do not trigger deployment for:
 ### For Functions:
 - [ ] TypeScript compiles without errors: `npm run build --prefix functions`
 - [ ] Related unit tests pass
-- [ ] Tested against local emulators
+- [ ] Tested against local dev environment
 - [ ] Changes reviewed for security implications
 
 ### For Security Rules:
 - [ ] Rules syntax is valid (no `if`, `const`, `let`)
-- [ ] Tested read/write scenarios in emulator
+- [ ] Tested read/write scenarios
 - [ ] No unintended permission changes
 
 ## Firestore Rules Syntax
@@ -478,8 +478,13 @@ src/
 
 ## Universal Requirements
 - **Accessibility**: All UI must be accessible (semantic HTML, ARIA, keyboard nav).
-- **Responsiveness**: Mobile-first design.
+- **Responsiveness**: Mobile-first design. All UIs must be fully functional and aesthetic on mobile devices, while adapting gracefully to larger screens.
 - **Error Handling**: Graceful degradation, user-friendly errors.
+
+## Design Philosophy
+- **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
+- **Mobile-First**: Design for touch targets and small screens first.
+- **Instant Interactions**: Optimistic UI updates for all data mutations.
 
 ---
 
@@ -727,7 +732,7 @@ Run `npm run verify` before *every* commit. It runs lint, types, tests, and buil
 ### Debugging
 - Check error message -> Check recent changes -> Run in isolation.
 - Use `npm run test:watch` for interactive development.
-- Ensure Emulators are running for integration tests (`npm run emulators:start`).
+- Ensure the development environment is ready.
 
 ---
 

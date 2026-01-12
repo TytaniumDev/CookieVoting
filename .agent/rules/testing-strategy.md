@@ -66,4 +66,4 @@ Run `npm run verify` before *every* commit. It runs lint, types, tests, and buil
 ### Debugging
 - Check error message -> Check recent changes -> Run in isolation.
 - Use `npm run test:watch` for interactive development.
-- Ensure Emulators are running for integration tests (`npm run emulators:start`).
+- Ensure the development environment is ready.
