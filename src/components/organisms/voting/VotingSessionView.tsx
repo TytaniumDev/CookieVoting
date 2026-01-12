@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { Category } from '../../../lib/types';
-import styles from './VotingSessionView.module.css';
+import { CookieViewer } from '../CookieViewer/CookieViewer';
+import type { DetectedCookie } from '../../../lib/types';
+import { cn } from '../../../lib/cn';
 
 interface VotingSessionViewProps {
   categories: Category[];
@@ -8,9 +10,6 @@ interface VotingSessionViewProps {
   onVote: (categoryId: string, cookieNumber: number) => void;
   onComplete: () => void;
 }
-
-import { CookieViewer } from '../CookieViewer/CookieViewer';
-import type { DetectedCookie } from '../../../lib/types';
 
 // Internal component for a single category slide
 const CategorySlide = ({
@@ -50,44 +49,60 @@ const CategorySlide = ({
 
   const cookieNumbers = category.cookies.map((c) => c.number);
 
+  const getAnimationStyle = () => {
+    if (!className) return {};
+    if (className.includes('exitNext')) {
+      return { animation: 'zoomOutUp 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards' };
+    }
+    if (className.includes('enterNext')) {
+      return { animation: 'slideInUpExpand 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards' };
+    }
+    if (className.includes('exitPrev')) {
+      return { animation: 'zoomOutDown 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards' };
+    }
+    if (className.includes('enterPrev')) {
+      return { animation: 'slideInDownExpand 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards' };
+    }
+    return {};
+  };
+
   return (
-    <div className={`${styles.slide} ${className || ''}`}>
+    <div
+      className={cn(
+        'absolute inset-0 w-full h-full flex flex-col bg-black will-change-[transform,opacity]',
+        className?.includes('exitNext') || className?.includes('enterPrev') ? 'z-[1]' : '',
+        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : ''
+      )}
+      style={getAnimationStyle()}
+    >
       {/* Header */}
-      <div className={styles.header}>
-        <h2 className={styles.categoryTitle}>{category.name}</h2>
-        <div className={styles.progress}>
+      <div className="p-4 pt-14 bg-black z-10 text-center">
+        <h2 className="text-2xl m-0 font-bold uppercase tracking-wide">{category.name}</h2>
+        <div className="text-sm text-[#94a3b8] mt-1">
           Category {index + 1} of {total}
         </div>
       </div>
 
       {/* CookieViewer replaced manual image/buttons */}
-      <div className={styles.imageContainer}>
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black overflow-hidden z-0">
         <CookieViewer
           imageUrl={category.imageUrl}
           detectedCookies={detectedCookies}
           cookieNumbers={cookieNumbers}
           selectedCookieNumber={currentVote}
           onSelectCookie={(num) => onVote(category.id, num)}
-          className={styles.cookieViewer}
+          className="w-full h-full"
           // Custom render for the number/sparkle to match previous design
           renderCenter={({ index }) => {
             const cookie = category.cookies[index];
             const isSelected = currentVote === cookie.number;
 
-            // We rely on CookieViewer's internal positioning, but we can override appearance here
-            // Actually, CookieViewer handles the number button logic if we pass onSelectCookie
-            // But we want the sparkle animation which CookieViewer might not have by default unless we customize
-
-            // CookieViewer renders a number button at detected.x/y or bounds.center.
-            // If we want the sparkle, we should probably render it here.
-
             return (
               <>
                 {isSelected && (
                   <span
-                    className={styles.sparkle}
+                    className="absolute -top-6 -right-4 text-3xl animate-[bounce_1s_infinite_alternate] z-[50] drop-shadow-[0_0_5px_gold]"
                     style={{
-                      position: 'absolute',
                       transform: 'translate(-50%, -50%)',
                       pointerEvents: 'none',
                     }}
@@ -95,7 +110,6 @@ const CategorySlide = ({
                     ✨
                   </span>
                 )}
-                {/* The number itself is rendered by CookieViewer's default since we passed cookieNumbers */}
               </>
             );
           }}
@@ -103,8 +117,16 @@ const CategorySlide = ({
       </div>
 
       {/* Next Button inside slide so it animates with it */}
-      <div className={`${styles.footer} ${currentVote ? styles.visible : ''}`}>
-        <button onClick={onNext} className={styles.nextButton}>
+      <div
+        className={cn(
+          'fixed bottom-0 left-0 w-full p-6 bg-black flex justify-center z-20 transition-transform duration-300 ease-out',
+          currentVote ? 'translate-y-0' : 'translate-y-full'
+        )}
+      >
+        <button
+          onClick={onNext}
+          className="bg-[#22c55e] text-white border-none text-xl font-bold px-12 py-4 rounded-[50px] shadow-[0_4px_12px_rgba(34,197,94,0.4)] cursor-pointer transition-transform active:scale-95"
+        >
           {isLast ? 'Finish Voting' : 'Next Category'}
         </button>
       </div>
@@ -183,14 +205,11 @@ export const VotingSessionView = ({
   };
 
   return (
-    <div className={styles.container}>
-      {/* Global Back Arrow (animates out if needed, but user didn't ask) */}
-      {/* We only show back arrow if target index > 0. If animating to 0, it should disappear? */}
-      {/* Let's simplify: show if currentIndex > 0 OR (animating & to > 0) */}
+    <div className="fixed inset-0 h-screen w-screen bg-black overflow-hidden text-white z-10">
       {(currentIndex > 0 || (animatingState && animatingState.to > 0)) && (
         <button
           onClick={!animatingState ? handlePrev : undefined}
-          className={styles.backArrow}
+          className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/20 border-none text-white text-2xl w-10 h-10 rounded-full cursor-pointer z-[100] backdrop-blur-sm transition-all hover:bg-white/40 hover:-translate-x-1/2 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Go back"
           disabled={!!animatingState}
         >
@@ -200,21 +219,16 @@ export const VotingSessionView = ({
 
       {/* Slides */}
       {!animatingState ? (
-        // Stable State
         renderSlide(currentIndex)
       ) : (
-        // Animating State
         <>
-          {/* Outgoing Slide */}
           {renderSlide(
             animatingState.from,
-            animatingState.direction === 'next' ? styles.exitNext : styles.exitPrev,
+            animatingState.direction === 'next' ? 'exitNext' : 'exitPrev'
           )}
-
-          {/* Incoming Slide */}
           {renderSlide(
             animatingState.to,
-            animatingState.direction === 'next' ? styles.enterNext : styles.enterPrev,
+            animatingState.direction === 'next' ? 'enterNext' : 'enterPrev'
           )}
         </>
       )}

@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEventStore } from '../../../../lib/stores/useEventStore';
 import { useImageStore } from '../../../../lib/stores/useImageStore';
-import { validateImage, validateCategoryName, sanitizeInput } from '../../../../lib/validation';
+import { sanitizeInput } from '../../../../lib/validation';
 import { CONSTANTS } from '../../../../lib/constants';
 import { CategoryCard } from '../../../molecules/CategoryCard';
 import { FileDropZone } from '../../../molecules/FileDropZone';
 import type { Category } from '../../../../lib/types';
 import { cn } from '../../../../lib/cn';
+import { categoryCreateSchema, categoryNameSchema, type CategoryCreateFormData } from '../../../../lib/schemas';
 
 export interface CategoryManagerProps {
     eventId: string;
@@ -20,92 +23,92 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
     const { categories, addCategory, deleteCategory, updateCategory, loading } =
         useEventStore();
 
-    // Add form state
-    const [newCatName, setNewCatName] = useState('');
-    const [newCatFile, setNewCatFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        watch,
+        reset,
+        setValue,
+    } = useForm<CategoryCreateFormData>({
+        resolver: zodResolver(categoryCreateSchema),
+        defaultValues: {
+            name: '',
+        },
+    });
+
+    const watchedImage = watch('image');
 
 
-    // Cleanup preview URL on unmount
+
+    // Update preview when image changes
     useEffect(() => {
+        if (watchedImage && watchedImage instanceof File) {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+            setPreviewUrl(URL.createObjectURL(watchedImage));
+            setError(null);
+        } else if (!watchedImage && previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+
         return () => {
             if (previewUrl) {
                 URL.revokeObjectURL(previewUrl);
             }
         };
-    }, [previewUrl]);
+    }, [watchedImage, previewUrl]);
 
     const handleFileSelect = useCallback(
         (file: File) => {
-            const validation = validateImage(file);
-            if (!validation.valid) {
-                setError(validation.error || CONSTANTS.ERROR_MESSAGES.INVALID_IMAGE_TYPE);
-                return;
-            }
-
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
-
-            setNewCatFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-            setError(null);
+            setValue('image', file, { shouldValidate: true });
         },
-        [previewUrl]
+        [setValue]
     );
 
     const handleRemovePreview = useCallback(() => {
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl);
         }
-        setNewCatFile(null);
+        setValue('image', undefined as unknown as File, { shouldValidate: false });
         setPreviewUrl(null);
-    }, [previewUrl]);
+    }, [previewUrl, setValue]);
 
-    const handleAddCategory = useCallback(
-        async (e: React.FormEvent) => {
-            e.preventDefault();
-            if (!newCatFile || uploading) return;
-
-            const nameValidation = validateCategoryName(newCatName);
-            if (!nameValidation.valid) {
-                setError(nameValidation.error || 'Invalid category name');
-                return;
-            }
-
-            setUploading(true);
+    const onSubmit = useCallback(
+        async (data: CategoryCreateFormData) => {
             setError(null);
 
             try {
-                const sanitizedName = sanitizeInput(newCatName);
+                const sanitizedName = sanitizeInput(data.name);
                 const { uploadImage } = useImageStore.getState();
-                const imageEntity = await uploadImage(newCatFile, eventId, { type: 'tray_image' });
+                const imageEntity = await uploadImage(data.image, eventId, { type: 'tray_image' });
                 await addCategory(eventId, sanitizedName, imageEntity.url);
                 handleRemovePreview();
-                setNewCatName('');
+                reset();
             } catch (err) {
                 console.error('Error adding category:', err);
                 setError(err instanceof Error ? err.message : CONSTANTS.ERROR_MESSAGES.FAILED_TO_UPLOAD);
-            } finally {
-                setUploading(false);
             }
         },
-        [eventId, newCatFile, newCatName, uploading, addCategory, handleRemovePreview]
+        [eventId, addCategory, handleRemovePreview, reset]
     );
 
     const handleNameSave = useCallback(
         async (categoryId: string, newName: string) => {
-            const validation = validateCategoryName(newName);
-            if (!validation.valid) {
-                setError(validation.error || 'Invalid category name');
-                return;
-            }
-
             try {
-                const sanitizedName = sanitizeInput(newName);
+                // Validate using Zod schema
+                const result = categoryNameSchema.safeParse({ name: newName });
+                if (!result.success) {
+                    setError(result.error.errors[0]?.message || 'Invalid category name');
+                    return;
+                }
+
+                const sanitizedName = sanitizeInput(result.data.name);
                 await updateCategory(eventId, categoryId, sanitizedName);
                 setError(null);
             } catch (err) {
@@ -183,8 +186,8 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
             {/* Add Category Form */}
             <div className="border-t border-surface-tertiary pt-6">
                 <h4 className="text-md font-semibold text-white mb-4">Add Category</h4>
-                <form onSubmit={handleAddCategory} className="space-y-4">
-                    {!newCatFile ? (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {!watchedImage ? (
                         <FileDropZone
                             accept="image/*"
                             onFileSelect={handleFileSelect}
@@ -200,7 +203,9 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                                 className="w-20 h-20 object-cover rounded-lg"
                             />
                             <div className="flex-1">
-                                <p className="text-gray-300 text-sm truncate">{newCatFile.name}</p>
+                                <p className="text-gray-300 text-sm truncate">
+                                    {watchedImage instanceof File ? watchedImage.name : 'Image'}
+                                </p>
                                 <button
                                     type="button"
                                     onClick={handleRemovePreview}
@@ -212,31 +217,34 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                         </div>
                     )}
 
-                    {newCatFile && (
+                    {watchedImage && (
                         <>
-                            <input
-                                type="text"
-                                value={newCatName}
-                                onChange={(e) => {
-                                    setNewCatName(e.target.value);
-                                    setError(null);
-                                }}
-                                placeholder="Category name (e.g., Sugar Cookies)"
-                                className="w-full px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
-                                maxLength={100}
-                                required
-                            />
+                            <div>
+                                <input
+                                    type="text"
+                                    {...register('name')}
+                                    placeholder="Category name (e.g., Sugar Cookies)"
+                                    className="w-full px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
+                                    maxLength={100}
+                                />
+                                {errors.name && (
+                                    <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+                                )}
+                            </div>
+                            {errors.image && (
+                                <p className="text-sm text-red-400">{errors.image.message}</p>
+                            )}
                             <button
                                 type="submit"
-                                disabled={!newCatName.trim() || uploading}
+                                disabled={isSubmitting}
                                 className={cn(
                                     'w-full px-4 py-2 rounded-lg font-medium transition-colors',
-                                    !newCatName.trim() || uploading
+                                    isSubmitting
                                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                         : 'bg-primary-600 hover:bg-primary-700 text-white'
                                 )}
                             >
-                                {uploading ? 'Uploading...' : 'Add Category'}
+                                {isSubmitting ? 'Uploading...' : 'Add Category'}
                             </button>
                         </>
                     )}

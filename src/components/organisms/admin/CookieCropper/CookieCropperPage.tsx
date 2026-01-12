@@ -14,11 +14,8 @@ import { useMediaQuery } from '../../../../lib/hooks/useMediaQuery';
 import { useImageStore } from '../../../../lib/stores/useImageStore';
 import { FloatingPalette, MobileDrawer, EmptyState } from './components';
 import { CookieCropper } from './CookieCropper';
-import { detectBlobsFromImage } from './blobDetection';
-import { detectCookiesGemini } from '../../../../lib/cookieDetectionGemini';
 import { sliceImage, generateGrid, clampRegion, validateRegion, type SliceRegion, type GridConfig } from './cropUtils';
 import { cn } from '../../../../lib/cn';
-import styles from './CookieCropperPage.module.css';
 
 export interface CookieCropperPageProps {
     /** Called when cookies are saved */
@@ -58,8 +55,6 @@ export function CookieCropperPage({
     const [regions, setRegions] = useState<SliceRegion[]>([]);
     const [gridConfig, setGridConfig] = useState<GridConfig>({ rows: 2, cols: 3, padding: 0 });
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [isDetecting, setIsDetecting] = useState(false);
-    const [detectionStatus, setDetectionStatus] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Desktop sidebar state
@@ -159,72 +154,6 @@ export function CookieCropperPage({
         });
     }, [gridConfig, imageDimensions]);
 
-    // Auto-detect blobs (Gemini first, then Blob fallback)
-    const handleAutoDetect = useCallback(async () => {
-        if (!imageRef.current || isDetecting || !imageUrl) return;
-
-        setIsDetecting(true);
-        setDetectionStatus('Detecting with AI...');
-        
-        try {
-            // Try Gemini detection first
-            console.log('Attempting Gemini detection...');
-            const detectedCookies = await detectCookiesGemini(imageUrl);
-            
-            if (detectedCookies && detectedCookies.length > 0) {
-                // Convert Gemini (percentage center) to SliceRegion (pixel top-left)
-                const newRegions: SliceRegion[] = detectedCookies.map(cookie => {
-                    // Gemini coords are 0-100 percentages
-                    const widthPx = (cookie.width / 100) * imageDimensions.width;
-                    const heightPx = (cookie.height / 100) * imageDimensions.height;
-                    
-                    // Center X/Y to Top-Left X/Y
-                    const centerX_Px = (cookie.x / 100) * imageDimensions.width;
-                    const centerY_Px = (cookie.y / 100) * imageDimensions.height;
-                    
-                    const x = centerX_Px - (widthPx / 2);
-                    const y = centerY_Px - (heightPx / 2);
-                    
-                    return {
-                        x: Math.round(x),
-                        y: Math.round(y),
-                        width: Math.round(widthPx),
-                        height: Math.round(heightPx)
-                    };
-                });
-                
-                setRegions(prev => {
-                    const saved = prev.filter(r => r.isSaved);
-                    return [...saved, ...newRegions];
-                });
-                setDetectionStatus(`Found ${newRegions.length} cookies with AI`);
-                setTimeout(() => setDetectionStatus(null), 3000);
-                return; // Success!
-            }
-            
-            throw new Error('No cookies found with Gemini');
-        } catch (geminiError) {
-            console.warn('Gemini detection failed, falling back to local blob detection:', geminiError);
-            setDetectionStatus('AI failed, trying local detection...');
-            
-            try {
-                // Fallback to local blob detection
-                const detectedBlobs = await detectBlobsFromImage(imageRef.current);
-                setRegions(prev => {
-                    const saved = prev.filter(r => r.isSaved);
-                    return [...saved, ...detectedBlobs];
-                });
-                setDetectionStatus(`Found ${detectedBlobs.length} cookies (Local fallback)`);
-            } catch (blobError) {
-                console.error('All detection methods failed:', blobError);
-                setDetectionStatus('Detection failed');
-            }
-        } finally {
-            setIsDetecting(false);
-            setTimeout(() => setDetectionStatus(null), 3000);
-        }
-    }, [isDetecting, imageUrl, imageDimensions]);
-
     // Save cookies
     const handleSave = useCallback(async () => {
         // Filter out already saved regions
@@ -294,8 +223,8 @@ export function CookieCropperPage({
     // Render empty state if no image
     if (!imageUrl) {
         return (
-            <div className={styles.containerFullPage}>
-                <header className="flex items-center gap-4 px-6 py-4 bg-surface border-b border-white/10 flex-shrink-0">
+            <div className="flex flex-col w-full h-full bg-background overflow-hidden relative">
+                <header className="flex items-center gap-4 px-6 py-4 bg-surface border-b border-white/10 flex-shrink-0 max-md:px-4 max-md:h-14">
                     <button
                         type="button"
                         onClick={onCancel}
@@ -312,9 +241,9 @@ export function CookieCropperPage({
                         </svg>
                         Back
                     </button>
-                    <h1 className="text-xl font-semibold text-white/90 flex-1">{displayTitle}</h1>
+                    <h1 className="text-xl font-semibold text-white/90 flex-1 max-md:text-base">{displayTitle}</h1>
                 </header>
-                <main className={styles.main}>
+                <main className="flex-1 flex items-center justify-center p-4 overflow-hidden relative w-full max-md:p-0">
                     <EmptyState onFileSelect={handleFileSelect} isUploading={isUploading} />
                 </main>
             </div>
@@ -322,9 +251,9 @@ export function CookieCropperPage({
     }
 
     return (
-        <div className={styles.containerFullPage}>
+        <div className="flex flex-col w-full h-full bg-background overflow-hidden relative">
             {/* Header */}
-            <header className="flex items-center gap-4 px-6 py-4 bg-surface border-b border-white/10 flex-shrink-0">
+            <header className="flex items-center gap-4 px-6 py-4 bg-surface border-b border-white/10 flex-shrink-0 max-md:px-4 max-md:h-14">
                 <button
                     type="button"
                     onClick={onCancel}
@@ -341,12 +270,7 @@ export function CookieCropperPage({
                     </svg>
                     Back
                 </button>
-                <h1 className="text-xl font-semibold text-white/90 flex-1">{displayTitle}</h1>
-                {detectionStatus && (
-                    <span className="text-sm text-blue-200 bg-blue-900/30 px-3 py-1.5 rounded-lg animate-pulse">
-                        {detectionStatus}
-                    </span>
-                )}
+                <h1 className="text-xl font-semibold text-white/90 flex-1 max-md:text-base">{displayTitle}</h1>
                 <span className="text-sm text-white/50 bg-white/5 px-3 py-1.5 rounded-lg">
                     {regions.length} {regions.length === 1 ? 'region' : 'regions'}
                 </span>
@@ -367,7 +291,7 @@ export function CookieCropperPage({
                         ref={imageRef}
                         src={imageUrl}
                         alt=""
-                        className={styles.hiddenImage}
+                        className="absolute opacity-0 pointer-events-none w-0 h-0"
                         onLoad={handleImageLoad}
                         crossOrigin="anonymous"
                     />
@@ -390,9 +314,7 @@ export function CookieCropperPage({
                         config={gridConfig}
                         onChange={setGridConfig}
                         onApply={handleApplyGrid}
-                        onAutoDetect={handleAutoDetect}
                         onSave={handleSave}
-                        isDetecting={isDetecting}
                         isSaving={isSaving}
                         isOpen={isSidebarOpen}
                         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -431,9 +353,7 @@ export function CookieCropperPage({
                         config={gridConfig}
                         onChange={setGridConfig}
                         onApply={handleApplyGrid}
-                        onAutoDetect={handleAutoDetect}
                         onSave={handleSave}
-                        isDetecting={isDetecting}
                         isSaving={isSaving}
                     />
                 )}

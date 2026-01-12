@@ -13,12 +13,16 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google-cloud/vision": "^4.0.0",
     "firebase-admin": "^13.0.1",
-    "firebase-functions": "^7.0.2"
+    "firebase-functions": "^7.0.2",
+    "fs-extra": "^11.2.0",
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.10.1",
+    "@types/sharp": "^0.31.1",
     "typescript": "^5.9.3"
   },
   "private": true

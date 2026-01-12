@@ -1,4 +1,3 @@
-import styles from './BakerDropdown.module.css';
 
 export interface Baker {
     id: string;
@@ -38,12 +37,16 @@ export function BakerDropdown({
     showRemove = false,
 }: BakerDropdownProps) {
     return (
-        <div className={styles.dropdown} role="dialog" aria-label={title}>
-            <div className={styles.header}>
-                <span className={styles.title}>{title}</span>
+        <div
+            className="min-w-[180px] max-w-[280px] bg-[#1a2b47] border border-white/20 rounded-md shadow-lg overflow-hidden"
+            role="dialog"
+            aria-label={title}
+        >
+            <div className="flex justify-between items-center py-2 px-3 border-b border-white/10 bg-black/20">
+                <span className="text-sm font-semibold text-[#f8fafc]">{title}</span>
                 <button
                     type="button"
-                    className={styles.closeButton}
+                    className="bg-transparent border-none text-[#cbd5e1] text-xl cursor-pointer p-0 leading-none transition-colors hover:text-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#dc2626] focus-visible:outline-offset-2"
                     onClick={onClose}
                     aria-label="Close"
                 >
@@ -51,7 +54,7 @@ export function BakerDropdown({
                 </button>
             </div>
 
-            <div className={styles.list} role="listbox">
+            <div className="max-h-[200px] overflow-y-auto" role="listbox">
                 {bakers.length > 0 ? (
                     bakers.map((baker) => {
                         const isSelected = selectedBakerId === baker.id;
@@ -59,25 +62,29 @@ export function BakerDropdown({
                             <button
                                 key={baker.id}
                                 type="button"
-                                className={`${styles.option} ${isSelected ? styles.selected : ''}`}
+                                className={`flex items-center justify-between w-full py-2 px-3 bg-transparent border-none text-[#f8fafc] text-sm text-left cursor-pointer transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#dc2626] focus-visible:outline-inset ${
+                                    isSelected ? 'bg-[rgba(220,38,38,0.2)]' : ''
+                                }`}
                                 onClick={() => onSelect(baker.id)}
                                 role="option"
                                 aria-selected={isSelected}
                             >
                                 {baker.name}
-                                {isSelected && <span className={styles.checkmark}>✓</span>}
+                                {isSelected && <span className="text-[#16a34a] font-bold">✓</span>}
                             </button>
                         );
                     })
                 ) : (
-                    <div className={styles.emptyMessage}>No bakers available</div>
+                    <div className="py-3 text-[#cbd5e1] text-sm italic text-center">
+                        No bakers available
+                    </div>
                 )}
             </div>
 
             {showRemove && onRemove && (
                 <button
                     type="button"
-                    className={styles.removeButton}
+                    className="w-full py-2 px-3 bg-transparent border-none border-t border-white/10 text-[#ef4444] text-sm text-left cursor-pointer transition-colors hover:bg-[rgba(220,38,38,0.1)] focus-visible:outline-2 focus-visible:outline-[#ef4444] focus-visible:outline-inset"
                     onClick={onRemove}
                 >
                     Remove Assignment

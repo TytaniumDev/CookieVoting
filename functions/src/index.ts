@@ -1,751 +1,37 @@
 import * as functionsV2 from 'firebase-functions/v2';
 import { beforeUserCreated } from 'firebase-functions/v2/identity';
-import * as admin from 'firebase-admin';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { parseGeminiResponse, DetectedCookie } from './parsing';
+import * as admin from 'firebase-admin';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
+import sharp from 'sharp';
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import * as os from 'os';
 
 admin.initializeApp();
 
-// Detection function version - increment this when prompt/model changes
-// This allows re-processing images when detection logic improves
-const DETECTION_FUNCTION_VERSION = '3.1';
-
-// The secret name for Gemini API key
-// This secret must be created in Firebase Secret Manager
-// Access it via process.env.GEMINI_API_KEY when the function runs
+// Configuration constants
+const TARGET_COLLECTION = 'cookie_batches';
+const DEFAULT_PADDING_PERCENTAGE = 0.1; // 10% default padding
+const MIN_PADDING = 0.0;
+const MAX_PADDING = 0.5;
 
 /**
- * Detects cookies in an image using Gemini Vision API
- * Uses Firebase Secret Manager to securely store the Gemini API key
+ * Process cookie image when uploaded to uploads/{batchId}/original.jpg
+ * Uses Vision API to detect cookies and Sharp to crop them
  */
-export const detectCookiesWithGemini = functionsV2.https.onCall(
+export const processCookieImage = onObjectFinalized(
   {
     region: 'us-west1',
-    secrets: ['GEMINI_API_KEY'],
-    timeoutSeconds: 120, // Increased timeout for Gemini API calls (default is 60s)
-  },
-  async (request) => {
-    console.log('[FirebaseFunction] detectCookiesWithGemini called');
-    console.log(
-      '[FirebaseFunction] Request auth:',
-      request.auth ? `User: ${request.auth.uid}` : 'No auth',
-    );
-
-    // Verify authentication
-    if (!request.auth) {
-      console.error('[FirebaseFunction] Authentication failed - no auth object');
-      throw new functionsV2.https.HttpsError(
-        'unauthenticated',
-        'User must be authenticated to detect cookies',
-      );
-    }
-
-    const { imageUrl } = request.data as { imageUrl: string };
-    console.log('[FirebaseFunction] Extracted imageUrl:', imageUrl);
-
-    if (!imageUrl || typeof imageUrl !== 'string') {
-      console.error('[FirebaseFunction] Invalid imageUrl:', imageUrl, typeof imageUrl);
-      throw new functionsV2.https.HttpsError(
-        'invalid-argument',
-        'imageUrl is required and must be a string',
-      );
-    }
-
-    // Get API key from secret
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
-
-    if (!apiKey) {
-      console.error('[FirebaseFunction] Gemini API key not configured');
-      throw new functionsV2.https.HttpsError(
-        'failed-precondition',
-        'Gemini API key not configured. Please set the GEMINI_API_KEY secret in Firebase Secret Manager.',
-      );
-    }
-
-    const db = admin.firestore();
-    const filePath = extractFilePathFromUrl(imageUrl);
-    let detectionRef: admin.firestore.DocumentReference | null = null;
-
-    // Initialize progress if possible
-    if (filePath) {
-      const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
-      detectionRef = db.collection('image_detections').doc(detectionDocId);
-      try {
-        await detectionRef.set(
-          {
-            filePath,
-            imageUrl,
-            status: 'processing',
-            progress: 'Initializing...',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true },
-        );
-      } catch (e) {
-        console.warn('Failed to set initial progress:', e);
-      }
-    }
-
-    try {
-      console.log('[FirebaseFunction] Calling detectCookiesInImage with imageUrl:', imageUrl);
-
-      // Update progress: Downloading
-      if (detectionRef) {
-        await detectionRef
-          .set({ progress: 'Downloading image...' }, { merge: true })
-          .catch(console.warn);
-      }
-
-      // Use the shared detection function
-      // Note: We can't easily inject progress updates *inside* detectCookiesInImage without refactoring it to accept a callback
-      // For now, we update before/after major steps
-      const detectedCookies = await detectCookiesInImage(imageUrl, apiKey);
-
-      // Update progress: Saving
-      if (detectionRef) {
-        await detectionRef
-          .set({ progress: 'Finalizing results...' }, { merge: true })
-          .catch(console.warn);
-      }
-
-      console.log(
-        '[FirebaseFunction] Detection completed. Found',
-        detectedCookies.length,
-        'cookies',
-      );
-
-      // Save to Firestore 'image_detections' collection
-      try {
-        if (detectionRef) {
-          console.log('[FirebaseFunction] Saving detections to Firestore');
-
-          // Configure detected cookies for Firestore (convert nested arrays if needed)
-          const firestoreCookies = detectedCookies.map((cookie) => ({
-            x: cookie.x,
-            y: cookie.y,
-            width: cookie.width,
-            height: cookie.height,
-            confidence: cookie.confidence,
-            polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
-          }));
-
-          await detectionRef.set(
-            {
-              filePath,
-              imageUrl,
-              detectedCookies: firestoreCookies,
-              count: detectedCookies.length,
-              detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-              processedBy: 'detectCookiesWithGemini-onCall',
-              detectionVersion: DETECTION_FUNCTION_VERSION,
-              status: 'completed',
-              progress: 'Completed',
-            },
-            { merge: true },
-          );
-          console.log('[FirebaseFunction] Successfully saved detections');
-        } else {
-          console.warn(
-            '[FirebaseFunction] Could not extract file path from URL, skipping Firestore save',
-          );
-        }
-      } catch (saveError) {
-        console.error('[FirebaseFunction] Error saving to Firestore:', saveError);
-      }
-
-      return {
-        cookies: detectedCookies,
-        count: detectedCookies.length,
-      };
-    } catch (error) {
-      console.error('[FirebaseFunction] Error detecting cookies with Gemini:', error);
-
-      // Update status to error
-      if (detectionRef) {
-        await detectionRef
-          .set(
-            {
-              status: 'error',
-              progress: 'Failed',
-              error: error instanceof Error ? error.message : String(error),
-            },
-            { merge: true },
-          )
-          .catch(console.warn);
-      }
-
-      throw new functionsV2.https.HttpsError(
-        'internal',
-        'Failed to detect cookies',
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-  },
-);
-
-/**
- * Extract file path from Firebase Storage download URL
- */
-function extractFilePathFromUrl(imageUrl: string): string | null {
-  try {
-    // Try firebasestorage.googleapis.com format first (most specific)
-    if (imageUrl.includes('firebasestorage.googleapis.com')) {
-      const urlParts = imageUrl.split('/');
-      const oIndex = urlParts.findIndex((part) => part === 'o');
-      if (oIndex !== -1 && oIndex < urlParts.length - 1) {
-        // Get the path after 'o' and before '?'
-        const encodedPath = urlParts[oIndex + 1].split('?')[0];
-        const filePath = decodeURIComponent(encodedPath);
-        return filePath;
-      }
-    }
-
-    // Try storage.googleapis.com format
-    if (imageUrl.includes('storage.googleapis.com')) {
-      const urlParts = imageUrl.split('storage.googleapis.com/');
-      if (urlParts.length > 1) {
-        const pathPart = urlParts[1].split('?')[0];
-        return pathPart;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error extracting file path from URL:', error);
-    return null;
-  }
-}
-
-/**
- * Helper function to detect cookies in an image using Gemini
- * Extracted for reuse by both callable function and storage trigger
- */
-async function detectCookiesInImage(imageUrl: string, apiKey: string): Promise<DetectedCookie[]> {
-  console.log('[DetectCookies] Starting detection for image:', imageUrl);
-
-  // Initialize Gemini AI with the API key
-  console.log('[DetectCookies] Initializing GoogleGenerativeAI');
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  // Fetch the image
-  console.log('[DetectCookies] Fetching image from URL:', imageUrl);
-  let response: Response;
-  try {
-    response = await fetch(imageUrl);
-    console.log('[DetectCookies] Fetch response status:', response.status, response.statusText);
-    console.log(
-      '[DetectCookies] Fetch response headers:',
-      Object.fromEntries(response.headers.entries()),
-    );
-  } catch (fetchError) {
-    console.error('[DetectCookies] Failed to fetch image:', fetchError);
-    if (fetchError instanceof Error) {
-      console.error('[DetectCookies] Fetch error details:', fetchError.message, fetchError.stack);
-    }
-    throw new Error(
-      `Failed to fetch image: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
-    );
-  }
-
-  if (!response.ok) {
-    console.error(
-      '[DetectCookies] Image fetch failed with status:',
-      response.status,
-      response.statusText,
-    );
-    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-  }
-
-  console.log('[DetectCookies] Converting image to base64');
-  const imageBuffer = await response.arrayBuffer();
-  console.log('[DetectCookies] Image buffer size:', imageBuffer.byteLength, 'bytes');
-  const imageBase64 = Buffer.from(imageBuffer).toString('base64');
-  console.log('[DetectCookies] Base64 length:', imageBase64.length);
-  const imageMimeType = response.headers.get('content-type') || 'image/jpeg';
-  console.log('[DetectCookies] Detected MIME type:', imageMimeType);
-
-  // Use Gemini to detect cookies with polygon shapes
-  // Use gemini-3-flash-preview for best accuracy
-  console.log('[DetectCookies] Getting Gemini model: gemini-3-flash-preview');
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview',
-  });
-  console.log('[DetectCookies] Successfully initialized gemini-3-flash-preview');
-
-  const prompt = `Analyze this image and detect all cookies. Use a percentage-based coordinate system where (0,0) is top-left and (100,100) is bottom-right.
-
-IMPORTANT CONTEXT - CHRISTMAS COOKIES:
-These are decorated Christmas cookies that may have:
-- UNUSUAL OR IRREGULAR SHAPES: Cookies may be cut into strange shapes (stars, trees, snowflakes, animals, etc.) - NOT just round circles
-- HIGHLY DECORATED: Cookies may have extensive frosting, sprinkles, candies, or other decorative elements
-- NON-STANDARD FORMS: Look for cookies of ANY shape - geometric, organic, or abstract forms
-- Do NOT limit detection to round cookies - actively look for oddly shaped, decorated Christmas cookies
-
-For each cookie (regardless of shape):
-1. Identify its position and shape
-2. The center (x, y) should reflect the cookie's actual center position
-3. The polygon should trace the cookie's outer edge with sufficient points to capture the shape
-
-POLYGON SIZE GUIDANCE - CRITICAL:
-- The polygon should fully encompass the ENTIRE cookie, including all decorative elements
-- It's better to have a polygon that's 5-10% larger than needed than one that cuts off part of the cookie
-- Think of the polygon as a "safety boundary"
-
-Return ONLY a JSON array. Do not wrap in markdown code blocks.
-Format:
-[
-  {
-    "x": <center x %>,
-    "y": <center y %>,
-    "width": <width %>,
-    "height": <height %>,
-    "polygon": [[x1, y1], [x2, y2], ...],
-    "confidence": <0.0-1.0>
-  }
-]`;
-
-  console.log('[DetectCookies] Calling Gemini generateContent');
-  let result;
-  try {
-    result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType: imageMimeType,
-          data: imageBase64,
-        },
-      },
-    ]);
-    console.log('[DetectCookies] Gemini API call completed');
-  } catch (geminiError) {
-    console.error('[DetectCookies] Gemini API call failed:', geminiError);
-    if (geminiError instanceof Error) {
-      console.error('[DetectCookies] Gemini error name:', geminiError.name);
-      console.error('[DetectCookies] Gemini error message:', geminiError.message);
-      console.error('[DetectCookies] Gemini error stack:', geminiError.stack);
-    }
-    throw geminiError;
-  }
-
-  console.log('[DetectCookies] Getting response from result');
-  const geminiResponse = await result.response;
-  console.log('[DetectCookies] Response obtained');
-  const responseText = geminiResponse.text() || '[]';
-  console.log('[DetectCookies] Response text length:', responseText.length);
-  
-  // Use shared parsing logic
-  const validatedCookies = parseGeminiResponse(responseText);
-
-  console.log(
-    '[DetectCookies] Validation complete. Returning',
-    validatedCookies.length,
-    'validated cookies',
-  );
-  return validatedCookies;
-}
-
-/**
- * Storage trigger that automatically detects cookies when an image is uploaded
- * Triggers on files uploaded to shared/cookies/ path
- */
-
-/**
- * Background processing function - processes images asynchronously
- */
-async function processImagesInBackground(jobId: string, apiKey: string) {
-  const db = admin.firestore();
-  const jobRef = db.collection('detection_jobs').doc(jobId);
-
-  try {
-    // Update job status to processing
-    await jobRef.update({
-      status: 'processing',
-      startedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    const bucket = admin.storage().bucket();
-
-    // List all files in shared/cookies/
-    console.log('[DetectAllImages] Listing files in shared/cookies/');
-    const [files] = await bucket.getFiles({ prefix: 'shared/cookies/' });
-
-    // Filter for image files
-    const imageFiles = files.filter((file) => {
-      const name = file.name.toLowerCase();
-      return (
-        name.endsWith('.jpg') ||
-        name.endsWith('.jpeg') ||
-        name.endsWith('.png') ||
-        name.endsWith('.webp') ||
-        name.endsWith('.gif')
-      );
-    });
-
-    console.log(`[DetectAllImages] Found ${imageFiles.length} image file(s) to process`);
-
-    // Update job with total count
-    await jobRef.update({
-      total: imageFiles.length,
-      processed: 0,
-      skipped: 0,
-      errors: 0,
-    });
-
-    // Process each image (no limit - process all)
-    for (let i = 0; i < imageFiles.length; i++) {
-      // Check if job was cancelled
-      const jobSnapshot = await jobRef.get();
-      const jobData = jobSnapshot.data();
-      if (jobData?.status === 'cancelled') {
-        console.log('[DetectAllImages] Job cancelled, stopping processing');
-        await jobRef.update({
-          cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        return;
-      }
-
-      const file = imageFiles[i];
-      const filePath = file.name;
-      console.log(`[DetectAllImages] Processing ${i + 1}/${imageFiles.length}: ${filePath}`);
-
-      // Update progress
-      await jobRef.update({
-        currentFile: filePath,
-        currentIndex: i + 1,
-      });
-
-      try {
-        // Check if detection already exists
-        const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
-        const detectionRef = db.collection('image_detections').doc(detectionDocId);
-        const existingDoc = await detectionRef.get();
-
-        if (existingDoc.exists) {
-          const existingData = existingDoc.data();
-          const existingVersion = existingData?.detectionVersion;
-          const hasCookies =
-            existingData?.detectedCookies && existingData.detectedCookies.length > 0;
-
-          // Skip if already processed with current version
-          if (hasCookies && existingVersion === DETECTION_FUNCTION_VERSION) {
-            console.log(
-              `[DetectAllImages] Skipping ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION}, has ${existingData.detectedCookies.length} cookies)`,
-            );
-            await jobRef.update({
-              skipped: admin.firestore.FieldValue.increment(1),
-            });
-            continue;
-          } else if (hasCookies && existingVersion !== DETECTION_FUNCTION_VERSION) {
-            console.log(
-              `[DetectAllImages] Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`,
-            );
-          }
-        }
-
-        // Make file publicly accessible
-        await file.makePublic();
-
-        // Get download URL
-        const imageUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
-
-        // Detect cookies
-        console.log(`[DetectAllImages] Detecting cookies in ${filePath}`);
-        const detectedCookies = await detectCookiesInImage(imageUrl, apiKey);
-
-        // Store results in Firestore (convert polygons to Firestore-compatible format)
-        // Firestore doesn't support nested arrays, so convert [[x,y], [x,y]] to [{x, y}, {x, y}]
-        const firestoreCookies = detectedCookies.map((cookie) => ({
-          x: cookie.x,
-          y: cookie.y,
-          width: cookie.width,
-          height: cookie.height,
-          confidence: cookie.confidence,
-          polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
-        }));
-
-        await detectionRef.set(
-          {
-            filePath,
-            imageUrl,
-            detectedCookies: firestoreCookies,
-            count: detectedCookies.length,
-            detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-            contentType: file.metadata.contentType || 'image/jpeg',
-            processedBy: 'detectAllImages-function',
-            detectionVersion: DETECTION_FUNCTION_VERSION,
-          },
-          { merge: true },
-        );
-
-        console.log(`[DetectAllImages] Processed ${filePath}: ${detectedCookies.length} cookies`);
-        await jobRef.update({
-          processed: admin.firestore.FieldValue.increment(1),
-        });
-
-        // Small delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error(`[DetectAllImages] Error processing ${filePath}:`, error);
-        await jobRef.update({
-          errors: admin.firestore.FieldValue.increment(1),
-        });
-      }
-    }
-
-    // Check if job was cancelled before marking as completed
-    const jobDoc = await jobRef.get();
-    const finalJobData = jobDoc.data();
-    if (finalJobData?.status === 'cancelled') {
-      console.log('[DetectAllImages] Job was cancelled, not marking as completed');
-      return;
-    }
-
-    // Mark job as completed
-    await jobRef.update({
-      status: 'completed',
-      completedAt: admin.firestore.FieldValue.serverTimestamp(),
-      processed: finalJobData?.processed || 0,
-      skipped: finalJobData?.skipped || 0,
-      errors: finalJobData?.errors || 0,
-    });
-
-    console.log(
-      `[DetectAllImages] Completed: ${finalJobData?.processed || 0} processed, ${finalJobData?.skipped || 0} skipped, ${finalJobData?.errors || 0} errors`,
-    );
-  } catch (error) {
-    console.error('[DetectAllImages] Fatal error in background processing:', error);
-    await jobRef.update({
-      status: 'error',
-      error: error instanceof Error ? error.message : String(error),
-      completedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-}
-
-/**
- * Callable function to start async detection of all images
- * Returns immediately with a job ID, processing happens in background
- */
-export const detectAllImages = functionsV2.https.onCall(
-  {
-    region: 'us-west1',
-    secrets: ['GEMINI_API_KEY'],
-    timeoutSeconds: 60, // Just need time to start the job
-  },
-  async (request) => {
-    console.log('[FirebaseFunction] detectAllImages called');
-    console.log(
-      '[FirebaseFunction] Request auth:',
-      request.auth ? `User: ${request.auth.uid}` : 'No auth',
-    );
-
-    // Verify authentication
-    if (!request.auth) {
-      console.error('[FirebaseFunction] Authentication failed - no auth object');
-      throw new functionsV2.https.HttpsError(
-        'unauthenticated',
-        'User must be authenticated to detect cookies',
-      );
-    }
-
-    // Get API key from secret
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
-    if (!apiKey) {
-      console.error('[FirebaseFunction] Gemini API key not configured');
-      throw new functionsV2.https.HttpsError(
-        'failed-precondition',
-        'Gemini API key not configured',
-      );
-    }
-
-    const db = admin.firestore();
-
-    // Check if there's already a running job
-    const runningJobs = await db
-      .collection('detection_jobs')
-      .where('status', '==', 'processing')
-      .limit(1)
-      .get();
-
-    if (!runningJobs.empty) {
-      const existingJob = runningJobs.docs[0];
-      return {
-        jobId: existingJob.id,
-        status: 'already_running',
-        message: 'A detection job is already running. Check the job status for progress.',
-      };
-    }
-
-    // Create a new job document
-    const jobRef = db.collection('detection_jobs').doc();
-    const jobId = jobRef.id;
-
-    await jobRef.set({
-      status: 'queued',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: request.auth.uid,
-      total: 0,
-      processed: 0,
-      skipped: 0,
-      errors: 0,
-    });
-
-    // Job processing will be handled by the Firestore trigger (processDetectionJob)
-    // This ensures reliable background processing that won't be terminated early
-    // Return immediately with job ID
-    return {
-      jobId,
-      status: 'queued',
-      message:
-        'Detection job queued. Processing will start shortly. Check job status for progress.',
-    };
-  },
-);
-
-/**
- * Cancel a running detection job
- */
-export const cancelDetectionJob = functionsV2.https.onCall(
-  {
-    region: 'us-west1',
-  },
-  async (request) => {
-    console.log('[FirebaseFunction] cancelDetectionJob called');
-
-    // Verify authentication
-    if (!request.auth) {
-      console.error('[FirebaseFunction] Authentication failed - no auth object');
-      throw new functionsV2.https.HttpsError(
-        'unauthenticated',
-        'User must be authenticated to cancel jobs',
-      );
-    }
-
-    const { jobId } = request.data as { jobId: string };
-
-    if (!jobId || typeof jobId !== 'string') {
-      throw new functionsV2.https.HttpsError('invalid-argument', 'jobId is required');
-    }
-
-    const db = admin.firestore();
-    const jobRef = db.collection('detection_jobs').doc(jobId);
-    const jobDoc = await jobRef.get();
-
-    if (!jobDoc.exists) {
-      throw new functionsV2.https.HttpsError('not-found', 'Job not found');
-    }
-
-    const jobData = jobDoc.data();
-    const status = jobData?.status;
-
-    // Only allow cancellation of queued or processing jobs
-    if (status !== 'queued' && status !== 'processing') {
-      throw new functionsV2.https.HttpsError(
-        'failed-precondition',
-        `Cannot cancel job with status: ${status}`,
-      );
-    }
-
-    // Mark job as cancelled
-    await jobRef.update({
-      status: 'cancelled',
-      cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-      cancelledBy: request.auth.uid,
-    });
-
-    console.log(`[FirebaseFunction] Job ${jobId} cancelled by ${request.auth.uid}`);
-
-    return {
-      success: true,
-      message: 'Job cancelled successfully',
-    };
-  },
-);
-
-/**
- * Firestore trigger that processes detection jobs when they're created with status 'queued'
- * This ensures reliable background processing that won't be terminated early
- * The trigger runs in its own function instance, separate from the callable function
- */
-export const processDetectionJob = onDocumentCreated(
-  {
-    document: 'detection_jobs/{jobId}',
-    region: 'us-west1',
-    secrets: ['GEMINI_API_KEY'],
-    timeoutSeconds: 540, // Max supported timeout for Firestore triggers
-  },
-  async (event) => {
-    const jobId = event.params.jobId;
-
-    if (!event.data) {
-      console.error(`[ProcessDetectionJob] No data for job: ${jobId}`);
-      return;
-    }
-
-    const jobData = event.data.data();
-    const jobRef = event.data.ref;
-
-    console.log(`[ProcessDetectionJob] Triggered for job: ${jobId}`);
-    console.log(`[ProcessDetectionJob] Job data:`, JSON.stringify(jobData));
-
-    // Only process jobs with status 'queued'
-    if (jobData?.status !== 'queued') {
-      console.log(`[ProcessDetectionJob] Job ${jobId} status is '${jobData?.status}', skipping`);
-      return;
-    }
-
-    // Check if there's already a processing job
-    const db = admin.firestore();
-    const runningJobs = await db
-      .collection('detection_jobs')
-      .where('status', '==', 'processing')
-      .limit(1)
-      .get();
-
-    if (!runningJobs.empty && runningJobs.docs[0].id !== jobId) {
-      console.log(`[ProcessDetectionJob] Another job is already processing, skipping job ${jobId}`);
-      // Update this job to indicate it's waiting
-      await jobRef.update({
-        status: 'waiting',
-        message: 'Another job is currently processing',
-      });
-      return;
-    }
-
-    // Get API key from secret
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
-    if (!apiKey) {
-      console.error('[ProcessDetectionJob] Gemini API key not configured');
-      await jobRef.update({
-        status: 'error',
-        error: 'Gemini API key not configured',
-        completedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      return;
-    }
-
-    // Process the job - this runs in its own function instance
-    // The function won't terminate until this completes
-    await processImagesInBackground(jobId, apiKey);
-
-    console.log(`[ProcessDetectionJob] Completed processing job: ${jobId}`);
-  },
-);
-
-export const autoDetectCookiesOnUpload = onObjectFinalized(
-  {
-    region: 'us-west1',
-    secrets: ['GEMINI_API_KEY'],
   },
   async (event) => {
     const filePath = event.data.name;
     const contentType = event.data.contentType;
+    const bucket = admin.storage().bucket(event.data.bucket);
 
-    // Only process images in the shared/cookies/ folder
-    if (!filePath.startsWith('shared/cookies/')) {
-      console.log(`Skipping file outside shared/cookies/: ${filePath}`);
+    // Only process images in the uploads/{batchId}/ path
+    if (!filePath.startsWith('uploads/') || !filePath.endsWith('/original.jpg')) {
+      console.log(`Skipping file outside uploads/{batchId}/original.jpg pattern: ${filePath}`);
       return;
     }
 
@@ -755,80 +41,175 @@ export const autoDetectCookiesOnUpload = onObjectFinalized(
       return;
     }
 
-    console.log(`Processing image upload: ${filePath}`);
+    // Extract batchId from path: uploads/{batchId}/original.jpg
+    const pathParts = filePath.split('/');
+    if (pathParts.length !== 3 || pathParts[0] !== 'uploads' || pathParts[2] !== 'original.jpg') {
+      console.log(`Invalid file path format: ${filePath}`);
+      return;
+    }
+    const batchId = pathParts[1];
+
+    console.log(`Processing cookie image upload: ${filePath} (batchId: ${batchId})`);
+
+    const db = admin.firestore();
+    const batchRef = db.collection(TARGET_COLLECTION).doc(batchId);
+    const tempFilePath = path.join(os.tmpdir(), `cookie-image-${batchId}.jpg`);
+    const visionClient = new ImageAnnotatorClient();
 
     try {
-      // Get API key from secret
-      const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_LOCAL;
-      if (!apiKey) {
-        console.error('Gemini API key not configured');
+      // Initialize batch status if not exists
+      const batchDoc = await batchRef.get();
+      if (!batchDoc.exists) {
+        await batchRef.set({
+          status: 'processing',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          originalImageRef: filePath,
+          paddingPercentage: DEFAULT_PADDING_PERCENTAGE,
+        });
+      } else {
+        // Update status to processing
+        await batchRef.update({
+          status: 'processing',
+          originalImageRef: filePath,
+        });
+      }
+
+      // Get paddingPercentage from batch document (default to 0.1 if not set)
+      const batchData = (await batchRef.get()).data();
+      let paddingPercentage = batchData?.paddingPercentage ?? DEFAULT_PADDING_PERCENTAGE;
+
+      // Validate padding is within range
+      if (typeof paddingPercentage !== 'number' || paddingPercentage < MIN_PADDING || paddingPercentage > MAX_PADDING) {
+        console.warn(
+          `Invalid paddingPercentage ${paddingPercentage}, using default ${DEFAULT_PADDING_PERCENTAGE}`,
+        );
+        paddingPercentage = DEFAULT_PADDING_PERCENTAGE;
+      }
+
+      // Download image to temp directory
+      const file = bucket.file(filePath);
+      await file.download({ destination: tempFilePath });
+
+      // Call Vision API objectLocalization
+      console.log(`Calling Vision API for ${filePath}`);
+      // @ts-expect-error - objectLocalization exists but TypeScript types may not be fully accurate
+      const [result] = await visionClient.objectLocalization(tempFilePath);
+
+      const objects = result.localizedObjectAnnotations || [];
+      console.log(`Vision API detected ${objects.length} objects`);
+
+      if (objects.length === 0) {
+        await batchRef.update({
+          status: 'ready',
+          totalCandidates: 0,
+        });
+        console.log(`No objects detected in ${filePath}`);
         return;
       }
 
-      // Get download URL for the uploaded file
-      const bucket = admin.storage().bucket(event.data.bucket);
-      const file = bucket.file(filePath);
-      await file.makePublic(); // Ensure file is publicly accessible
-      const imageUrl = `https://storage.googleapis.com/${event.data.bucket}/${filePath}`;
+      // Read original image metadata
+      const imageMetadata = await sharp(tempFilePath).metadata();
+      const imageWidth = imageMetadata.width || 0;
+      const imageHeight = imageMetadata.height || 0;
 
-      // Detect cookies in the image
-      const detectedCookies = await detectCookiesInImage(imageUrl, apiKey);
-
-      console.log(`Detected ${detectedCookies.length} cookies in ${filePath}`);
-
-      // Store detection results in Firestore
-      // Use a hash of the file path as the document ID to avoid duplicates
-      const db = admin.firestore();
-      const detectionDocId = filePath.replace(/\//g, '_').replace(/\./g, '_');
-      const detectionRef = db.collection('image_detections').doc(detectionDocId);
-
-      // Check if detection already exists with current version
-      const existingDoc = await detectionRef.get();
-      if (existingDoc.exists) {
-        const existingData = existingDoc.data();
-        const existingVersion = existingData?.detectionVersion;
-        const hasCookies = existingData?.detectedCookies && existingData.detectedCookies.length > 0;
-
-        if (hasCookies && existingVersion === DETECTION_FUNCTION_VERSION) {
-          console.log(
-            `Skipping detection for ${filePath} (already processed with version ${DETECTION_FUNCTION_VERSION})`,
-          );
-          return;
-        } else if (hasCookies && existingVersion !== DETECTION_FUNCTION_VERSION) {
-          console.log(
-            `Re-processing ${filePath} (version ${existingVersion || 'unknown'} -> ${DETECTION_FUNCTION_VERSION})`,
-          );
+      // Process each detected object
+      let candidateCount = 0;
+      for (const obj of objects) {
+        if (!obj.boundingPoly || !obj.boundingPoly.normalizedVertices || obj.boundingPoly.normalizedVertices.length < 2) {
+          console.warn('Skipping object with invalid boundingPoly');
+          continue;
         }
+
+        const vertices = obj.boundingPoly.normalizedVertices;
+
+        // Calculate bounding box from normalized vertices (0-1 coordinates)
+        const minX = Math.min(...vertices.map((v) => v.x || 0));
+        const minY = Math.min(...vertices.map((v) => v.y || 0));
+        const maxX = Math.max(...vertices.map((v) => v.x || 1));
+        const maxY = Math.max(...vertices.map((v) => v.y || 1));
+
+        // Convert normalized coordinates to pixel coordinates
+        let x = Math.floor(minX * imageWidth);
+        let y = Math.floor(minY * imageHeight);
+        let width = Math.ceil((maxX - minX) * imageWidth);
+        let height = Math.ceil((maxY - minY) * imageHeight);
+
+        // Apply padding
+        const padX = Math.floor(width * paddingPercentage);
+        const padY = Math.floor(height * paddingPercentage);
+
+        x = Math.max(0, x - padX);
+        y = Math.max(0, y - padY);
+        width = Math.min(imageWidth - x, width + padX * 2);
+        height = Math.min(imageHeight - y, height + padY * 2);
+
+        // Ensure dimensions are valid
+        if (width <= 0 || height <= 0) {
+          console.warn('Skipping object with invalid dimensions after padding');
+          continue;
+        }
+
+        // Crop using Sharp
+        const cookieId = `cookie-${Date.now()}-${candidateCount}`;
+        const croppedImagePath = path.join(os.tmpdir(), `${cookieId}.jpg`);
+        await sharp(tempFilePath)
+          .extract({ left: x, top: y, width, height })
+          .jpeg({ quality: 95 })
+          .toFile(croppedImagePath);
+
+        // Upload cropped image to Storage
+        const storagePath = `processed_cookies/${batchId}/${cookieId}.jpg`;
+        const storageFile = bucket.file(storagePath);
+        await storageFile.save(await fs.readFile(croppedImagePath), {
+          contentType: 'image/jpeg',
+          metadata: {
+            metadata: {
+              originalFile: filePath,
+              batchId,
+              cookieId,
+            },
+          },
+        });
+
+        // Make file publicly accessible
+        await storageFile.makePublic();
+
+        // Save to Firestore
+        await batchRef.collection('candidates').doc(cookieId).set({
+          storagePath,
+          detectedLabel: obj.name || 'cookie',
+          confidence: obj.score || 0,
+          votes: 0,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Clean up temp cropped image
+        await fs.remove(croppedImagePath);
+
+        candidateCount++;
       }
 
-      // Convert polygons to Firestore-compatible format (nested arrays not supported)
-      const firestoreCookies = detectedCookies.map((cookie) => ({
-        x: cookie.x,
-        y: cookie.y,
-        width: cookie.width,
-        height: cookie.height,
-        confidence: cookie.confidence,
-        polygon: cookie.polygon ? cookie.polygon.map(([x, y]) => ({ x, y })) : undefined,
-      }));
+      // Update batch status to ready
+      await batchRef.update({
+        status: 'ready',
+        totalCandidates: candidateCount,
+      });
 
-      await detectionRef.set(
-        {
-          filePath,
-          imageUrl,
-          detectedCookies: firestoreCookies,
-          count: detectedCookies.length,
-          detectedAt: admin.firestore.FieldValue.serverTimestamp(),
-          contentType,
-          processedBy: 'autoDetectCookiesOnUpload',
-          detectionVersion: DETECTION_FUNCTION_VERSION,
-        },
-        { merge: true },
-      );
-
-      console.log(`Stored detection results for ${filePath}`);
+      console.log(`Processed ${candidateCount} cookies for batch ${batchId}`);
     } catch (error) {
-      console.error(`Error auto-detecting cookies for ${filePath}:`, error);
-      // Don't throw - we don't want to fail the upload if detection fails
+      console.error(`Error processing cookie image ${filePath}:`, error);
+      await batchRef.update({
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    } finally {
+      // Clean up temp original image
+      try {
+        await fs.remove(tempFilePath);
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp file:', cleanupError);
+      }
     }
   },
 );

@@ -25,12 +25,8 @@ export interface MobileDrawerProps {
     onChange: (config: GridConfig) => void;
     /** Called when Apply button is clicked */
     onApply: () => void;
-    /** Called when Auto Detect is clicked */
-    onAutoDetect: () => void;
     /** Called when Save is clicked */
     onSave: () => void;
-    /** Whether detection is in progress */
-    isDetecting?: boolean;
     /** Whether saving is in progress */
     isSaving?: boolean;
 }
@@ -41,9 +37,7 @@ export function MobileDrawer({
     config,
     onChange,
     onApply,
-    onAutoDetect,
     onSave,
-    isDetecting = false,
     isSaving = false,
 }: MobileDrawerProps) {
     const handleChange = (key: keyof GridConfig, value: number) => {
@@ -116,14 +110,9 @@ export function MobileDrawer({
                                 <h3 className="text-xs font-medium text-white/50 uppercase tracking-widest mb-4">
                                     Actions
                                 </h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <ActionButton onClick={onApply}>
-                                        Apply Grid
-                                    </ActionButton>
-                                    <ActionButton onClick={onAutoDetect} disabled={isDetecting}>
-                                        {isDetecting ? 'Detecting...' : 'Auto Detect'}
-                                    </ActionButton>
-                                </div>
+                                <ActionButton onClick={onApply}>
+                                    Apply Grid
+                                </ActionButton>
                             </section>
 
                             {/* Save Button */}

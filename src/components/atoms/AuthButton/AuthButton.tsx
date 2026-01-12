@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { User } from 'firebase/auth';
 import { AlertModal } from '../AlertModal/AlertModal';
-import styles from './AuthButton.module.css';
 
 /**
  * Props for the AuthButton component
@@ -89,8 +88,8 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
 
   if (loading) {
     return (
-      <div className={styles.loading}>
-        <div className={styles.spinner} />
+      <div className="w-9 h-9 flex items-center justify-center text-[#cbd5e1]">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-[#6366f1] rounded-full animate-spin" />
       </div>
     );
   }
@@ -98,31 +97,34 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
   // Show user menu if user is authenticated
   if (user && user.email) {
     return (
-      <div className={styles.userMenu} ref={menuRef}>
+      <div className="relative flex items-center" ref={menuRef}>
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className={styles.avatarButton}
+          className="bg-transparent border-none cursor-pointer p-0 rounded-full transition-transform transition-shadow hover:scale-105 hover:shadow-md"
           title={`Signed in as ${user.displayName || user.email}`}
         >
           {user.photoURL ? (
             <img
               src={user.photoURL}
               alt={user.displayName || 'User avatar'}
-              className={styles.avatar}
+              className="w-9 h-9 rounded-full object-cover border-2 border-white/20"
             />
           ) : (
-            <div className={styles.avatarPlaceholder}>
+            <div className="w-9 h-9 rounded-full bg-[#6366f1] text-white flex items-center justify-center font-semibold text-sm border-2 border-white/20">
               {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
             </div>
           )}
         </button>
         {showMenu && (
-          <div className={styles.dropdown}>
-            <div className={styles.userInfo}>
-              <div className={styles.userName}>{user.displayName || 'User'}</div>
-              <div className={styles.userEmail}>{user.email}</div>
+          <div className="absolute top-[calc(100%+8px)] right-0 bg-[#0a1628] border border-white/10 rounded-lg shadow-lg min-w-[200px] z-[1000] overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/10">
+              <div className="font-semibold text-[#f8fafc] mb-1 text-sm">{user.displayName || 'User'}</div>
+              <div className="text-xs text-[#cbd5e1] break-all">{user.email}</div>
             </div>
-            <button onClick={handleSignOut} className={styles.signOutButton}>
+            <button
+              onClick={handleSignOut}
+              className="w-full px-4 py-3 bg-transparent border-none text-[#f8fafc] text-left cursor-pointer text-sm transition-colors hover:bg-white/10"
+            >
               Sign out
             </button>
           </div>
@@ -132,15 +134,15 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
   }
 
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+    <div className="flex gap-2 items-center">
       <button
         onClick={(e) => {
           e.preventDefault();
           handleSignIn();
         }}
-        className={styles.signInButton}
+        className="flex items-center px-4 py-2 bg-white text-[#333] border border-[#dadce0] rounded transition-colors transition-shadow hover:bg-[#f8f9fa] hover:shadow-sm active:bg-[#e8eaed] text-sm font-medium cursor-pointer"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" className="mr-2">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

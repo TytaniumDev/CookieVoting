@@ -8,6 +8,7 @@ import { useCookieStore } from '../../lib/stores/useCookieStore';
 import { useAdmins } from '../../lib/hooks/useAdmins';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { AuthButton } from '../atoms/AuthButton/AuthButton';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 interface NavItem {
     id: string;
@@ -22,23 +23,6 @@ const getNavItems = (categories: { id: string; name: string }[]): NavItem[] => [
     { id: 'overview', label: 'Dashboard', icon: '📊', path: 'overview' },
     { id: 'bakers', label: 'Bakers', icon: '👩‍🍳', path: 'bakers' },
     { id: 'categories', label: 'Categories', icon: '🍪', path: 'categories' },
-    {
-        id: 'cropper',
-        label: 'Cookie Cropper',
-        icon: '✂️',
-        path: 'cropper',
-        children: [
-            { id: 'cropper-upload', label: 'Upload Trays', icon: '', path: 'cropper' },
-            ...categories.map((cat) => ({
-                id: `cropper-${cat.id}`,
-                label: cat.name,
-                icon: '',
-                path: `cropper/${cat.id}`,
-            })),
-        ],
-    },
-    { id: 'tagging', label: 'Tag Cookies', icon: '🏷️', path: 'tagging' },
-    { id: 'cropped-tagging', label: 'Tag Cropped Cookies', icon: '🖼️', path: 'cropped-tagging' },
     { id: 'settings', label: 'Settings', icon: '⚙️', path: 'settings' },
 ];
 
@@ -299,7 +283,9 @@ export function AdminLayout() {
 
                 {/* Page Content */}
                 <main className="flex-1 p-4 md:p-6 overflow-auto">
-                    <Outlet />
+                    <ErrorBoundary>
+                        <Outlet />
+                    </ErrorBoundary>
                 </main>
             </div>
         </div>

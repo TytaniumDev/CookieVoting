@@ -4,7 +4,7 @@ import { useImageStore } from '../../../../lib/stores/useImageStore';
 import { useDetectionJob } from '../../../../lib/hooks/useDetectionJob';
 import { useDetectionResults } from '../../../../lib/hooks/useDetectionResults';
 import { DetectionToolbar } from '../../../molecules/DetectionToolbar';
-import styles from './CookieCutoutEditor.module.css';
+import { cn } from '../../../../lib/cn';
 
 export interface CookieCutoutEditorProps {
     eventId: string;
@@ -138,9 +138,9 @@ export function CookieCutoutEditor({
 
     if (!imageUrl) {
         return (
-            <div className={styles.container}>
-                <div className={styles.emptyState}>
-                    <span className={styles.emptyIcon}>🖼️</span>
+            <div className="flex flex-col gap-3 w-full h-full">
+                <div className="flex flex-col items-center justify-center h-full text-[#cbd5e1] text-center p-4">
+                    <span className="text-5xl mb-3 block">🖼️</span>
                     <p>No image to display</p>
                 </div>
             </div>
@@ -148,7 +148,7 @@ export function CookieCutoutEditor({
     }
 
     return (
-        <div className={styles.container} ref={containerRef}>
+        <div className="flex flex-col gap-3 w-full h-full" ref={containerRef}>
             {/* Toolbar (using DetectionToolbar molecule) */}
             <DetectionToolbar
                 detectionCount={detectedCookies.length}
@@ -158,15 +158,18 @@ export function CookieCutoutEditor({
                 onToggleAddMode={handleToggleAddMode}
             />
 
-            {error && <div className={styles.error}>{error}</div>}
+            {error && <div className="text-danger text-sm">{error}</div>}
 
             {/* Image Container */}
             <div
-                className={`${styles.imageContainer} ${isAddMode ? styles.addMode : ''}`}
+                className={cn(
+                    'relative flex-1 min-h-[300px] bg-black/30 rounded-md overflow-hidden',
+                    isAddMode ? 'cursor-crosshair' : 'cursor-default'
+                )}
                 onClick={handleImageClick}
                 role="presentation"
             >
-                <div className={styles.viewerWrapper}>
+                <div className="w-full h-full">
                     <CookieViewer
                         imageUrl={imageUrl}
                         detectedCookies={detectedCookies}
@@ -178,7 +181,7 @@ export function CookieCutoutEditor({
                         renderTopLeft={({ index }) => (
                             <button
                                 type="button"
-                                className={styles.deleteButton}
+                                className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center bg-danger border-2 border-[#0a1628] rounded-full text-white text-xs font-bold cursor-pointer transition-all pointer-events-auto z-[25] hover:scale-110 hover:bg-[#b91c1c] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
                                 onClick={(e) => handleDeleteDetection(index, e)}
                                 aria-label={`Delete detection ${index + 1}`}
                             >

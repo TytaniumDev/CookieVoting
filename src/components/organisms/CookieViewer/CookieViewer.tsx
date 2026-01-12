@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import type { DetectedCookie } from '../../../lib/cookieDetectionGemini';
-import styles from './CookieViewer.module.css';
+import type { DetectedCookie } from '../../../lib/types';
+import { cn } from '../../../lib/cn';
 
 // Re-export for convenience
 export type { DetectedCookie };
@@ -262,8 +262,12 @@ export function CookieViewer({
 
   return (
     <div
-      className={`${styles.container} ${className || ''} ${isZoomed ? styles.zoomedContainer : ''}`}
-      style={isZoomed ? { zIndex: 100 } : undefined}
+      className={cn(
+        'relative w-full h-full flex items-center justify-center overflow-hidden',
+        isZoomed && 'fixed inset-0 w-screen h-screen bg-black z-[9999]',
+        className
+      )}
+      style={isZoomed ? { zIndex: 9999 } : undefined}
     >
       <TransformWrapper
         initialScale={1}
@@ -291,13 +295,13 @@ export function CookieViewer({
           }}
         >
           {/* Image wrapper that sizes to image content */}
-          <div className={styles.imageWrapper}>
+          <div className="absolute inset-0 flex items-center justify-center">
             {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <img
               ref={imageRef}
               src={imageUrl}
               alt="Cookie detection"
-              className={`${styles.image} ${imageClassName || ''}`}
+              className={cn('block w-full h-full object-contain relative z-[1] pointer-events-none', imageClassName)}
               onLoad={updateImageDimensions}
               style={{
                 // Critical: width/height 100% with object-fit: contain ensures image fits within container
@@ -313,7 +317,7 @@ export function CookieViewer({
             {/* Overlay container - matches the actual rendered image area (accounting for object-fit: contain letterboxing) */}
             {renderedImageBounds && (
               <div
-                className={styles.overlayContainer}
+                className="absolute top-0 left-0 pointer-events-none z-10"
                 data-testid="overlay-container"
                 style={{
                   position: 'absolute',
@@ -396,7 +400,7 @@ export function CookieViewer({
                       ) : (
                         /* Fallback Rect */
                         <div
-                          className={styles.boundingBox}
+                          className="absolute border-[0.5px] bg-[rgba(33,150,243,0)] box-border rounded z-[5] transition-colors"
                           style={{
                             left: `${detected.x - detected.width / 2}%`,
                             top: `${detected.y - detected.height / 2}%`,
@@ -436,7 +440,10 @@ export function CookieViewer({
                       {/* Marker Button */}
                       {hasNumber && (
                         <button
-                          className={`${styles.marker} ${selected ? styles.selected : ''}`}
+                          className={cn(
+                            'absolute -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 border-2 border-white rounded-full flex items-center justify-center cursor-pointer z-10 transition-all p-0 m-0 hover:bg-[#dc2626] hover:-translate-x-1/2 hover:-translate-y-1/2 hover:scale-120 hover:z-[11] focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.5)] md:w-12 md:h-12 md:min-w-12 md:min-h-12',
+                            selected && 'bg-[#16a34a] border-[#16a34a] shadow-[0_0_10px_#16a34a]'
+                          )}
                           style={{
                             left: `${detected.x}%`,
                             top: `${detected.y}%`,
@@ -450,7 +457,7 @@ export function CookieViewer({
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
                         >
-                          <span className={styles.markerNumber}>{cookieNumber}</span>
+                          <span className="text-white font-extrabold text-xl text-shadow-[0_1px_2px_black] md:text-[1.4rem]">{cookieNumber}</span>
                         </button>
                       )}
 

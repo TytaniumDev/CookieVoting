@@ -154,24 +154,31 @@ service cloud.firestore {
       }
     }
     
-    // Image detections collection - stores automatic cookie detection results
-    // Public read (anyone can read detection results), write only by Firebase Functions (admin)
-    match /image_detections/{detectionId} {
-      // Allow anyone to read detection results (needed for ImageTagger)
+    // Cookie batches collection - for automated cookie segmentation pipeline
+    match /cookie_batches/{batchId} {
+      // Public read for voting UI
       allow read: if true;
       
-      // Only Firebase Functions (admin) can write - no client writes allowed
-      // In practice, this will be written by the Storage trigger function
-      allow write: if false; // Client writes disabled, only functions can write
-    }
-    
-    // Detection jobs collection - tracks async detection job progress
-    match /detection_jobs/{jobId} {
-      // Allow authenticated users to read job status
-      allow read: if request.auth != null;
+      // Allow admins to create batch with paddingPercentage before processing starts
+      allow create: if isGlobalAdmin() 
+                    && request.resource.data.status == "uploading";
       
-      // Only Firebase Functions can write job status
-      allow write: if false; // Client writes disabled, only functions can write
+      // Allow admins to update paddingPercentage before processing starts
+      allow update: if isGlobalAdmin()
+                    && request.resource.data.status == resource.data.status
+                    && resource.data.status in ["uploading", "processing"];
+      
+      // Functions write via admin SDK (bypasses rules)
+      allow write: if false;
+      
+      // Candidates subcollection
+      match /candidates/{candidateId} {
+        // Public read for voting
+        allow read: if true;
+        
+        // Only functions can write (via admin SDK)
+        allow write: if false;
+      }
     }
   }
 }

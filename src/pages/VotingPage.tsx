@@ -4,6 +4,7 @@ import { VotingLandingView } from '../components/organisms/voting/VotingLandingV
 import { VotingSessionView } from '../components/organisms/voting/VotingSessionView';
 import { VotingWaitingView } from '../components/organisms/voting/VotingWaitingView';
 import { VotingResultsView } from '../components/organisms/voting/VotingResultsView';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import type { Category } from '../lib/types';
 import { CONSTANTS } from '../lib/constants';
 
@@ -25,16 +26,7 @@ export default function VotingPage() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          height: '100dvh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000',
-          color: 'white',
-        }}
-      >
+      <div className="h-screen flex items-center justify-center bg-black text-white">
         Loading event...
       </div>
     );
@@ -42,16 +34,7 @@ export default function VotingPage() {
 
   if (error || !event) {
     return (
-      <div
-        style={{
-          height: '100dvh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000',
-          color: 'white',
-        }}
-      >
+      <div className="h-screen flex items-center justify-center bg-black text-white">
         {error || CONSTANTS.ERROR_MESSAGES.EVENT_NOT_FOUND}
       </div>
     );
@@ -60,21 +43,9 @@ export default function VotingPage() {
   const categories: Category[] = results.map((r) => r.category);
 
   return (
-    <>
+    <ErrorBoundary>
       {submitError && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 9999,
-            background: '#ef4444',
-            color: 'white',
-            padding: '1rem',
-            textAlign: 'center',
-          }}
-        >
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-danger text-white p-4 text-center">
           Error: {submitError}
         </div>
       )}
@@ -104,6 +75,6 @@ export default function VotingPage() {
       )}
 
       {currentStep === 'RESULTS' && <VotingResultsView eventName={event.name} results={results} />}
-    </>
+    </ErrorBoundary>
   );
 }

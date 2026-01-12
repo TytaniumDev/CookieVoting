@@ -47,6 +47,24 @@ service firebase.storage {
       // Allow any authenticated user to write in test mode
       allow write: if request.auth != null;
     }
+    
+    // Uploads folder - for automated cookie segmentation pipeline input
+    match /uploads/{batchId}/{fileName} {
+      // Allow authenticated users to read their uploads
+      allow read: if request.auth != null;
+      
+      // Only admins can upload
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Processed cookies folder - output from automated segmentation pipeline
+    match /processed_cookies/{batchId}/{fileName} {
+      // Public read for voting UI
+      allow read: if true;
+      
+      // Only functions can write (via admin SDK)
+      allow write: if false;
+    }
   }
 }
 

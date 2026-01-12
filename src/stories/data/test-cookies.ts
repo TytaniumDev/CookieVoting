@@ -1,5 +1,5 @@
 import type { Category } from '../../lib/types';
-import type { DetectedCookie } from '../../lib/cookieDetectionGemini';
+import type { DetectedCookie } from '../../lib/types';
 
 import detections3Raw from './detections/detections3.json';
 import detections4Raw from './detections/detections4.json';

@@ -1,5 +1,3 @@
-import styles from './AlertModal.module.css';
-
 /**
  * Props for the AlertModal component
  */
@@ -47,6 +45,17 @@ export function AlertModal({ message, type = 'info', onClose, title }: AlertModa
     }
   };
 
+  const getTitleColor = () => {
+    switch (type) {
+      case 'success':
+        return 'text-[#28a745]';
+      case 'error':
+        return 'text-[#dc3545]';
+      default:
+        return 'text-[#f8fafc]';
+    }
+  };
+
   const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -58,7 +67,7 @@ export function AlertModal({ message, type = 'info', onClose, title }: AlertModa
 
   return (
     <div
-      className={styles.modalOverlay}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]"
       onClick={onClose}
       onKeyDown={handleOverlayKeyDown}
       role="button"
@@ -67,22 +76,22 @@ export function AlertModal({ message, type = 'info', onClose, title }: AlertModa
     >
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <div
-        className={styles.modal}
+        className="bg-[#1a2b47] text-[#f8fafc] p-8 rounded-lg max-w-[400px] w-[90%] shadow-md border border-white/10"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="alert-modal-title"
       >
-        <h3
-          id="alert-modal-title"
-          className={styles[`title${type.charAt(0).toUpperCase() + type.slice(1)}`]}
-        >
+        <h3 id="alert-modal-title" className={`m-0 mb-4 text-2xl ${getTitleColor()}`}>
           {getTitle()}
         </h3>
-        <p className={styles.message}>{message}</p>
-        <div className={styles.modalActions}>
-          <button onClick={onClose} className={styles.modalButton}>
+        <p className="m-0 mb-6 text-[#cbd5e1] whitespace-pre-line">{message}</p>
+        <div className="flex gap-4 justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 text-base cursor-pointer bg-blue-600 text-white border-none rounded transition-colors hover:bg-[#0056b3] focus:outline-2 focus:outline-blue-600 focus:outline-offset-2"
+          >
             OK
           </button>
         </div>

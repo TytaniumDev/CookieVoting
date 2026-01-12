@@ -1,7 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useBakerStore } from '../../../../lib/stores/useBakerStore';
-import { validateMakerName, sanitizeInput } from '../../../../lib/validation';
+import { sanitizeInput } from '../../../../lib/validation';
 import { cn } from '../../../../lib/cn';
+import { bakerNameSchema, type BakerNameFormData } from '../../../../lib/schemas';
 
 export interface BakerManagerProps {
     eventId: string;
@@ -9,9 +12,19 @@ export interface BakerManagerProps {
 
 export function BakerManager({ eventId }: BakerManagerProps) {
     const { bakers, fetchBakers, addBaker, removeBaker, loading } = useBakerStore();
-    const [newBakerName, setNewBakerName] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [isAdding, setIsAdding] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        reset,
+    } = useForm<BakerNameFormData>({
+        resolver: zodResolver(bakerNameSchema),
+        defaultValues: {
+            name: '',
+        },
+    });
 
     // Fetch bakers on mount
     useEffect(() => {
@@ -20,36 +33,28 @@ export function BakerManager({ eventId }: BakerManagerProps) {
         }
     }, [eventId, fetchBakers]);
 
-    const handleAddBaker = useCallback(async () => {
-        if (!newBakerName.trim() || isAdding) return;
+    const onSubmit = useCallback(
+        async (data: BakerNameFormData) => {
+            const sanitizedName = sanitizeInput(data.name);
 
-        const validation = validateMakerName(newBakerName);
-        if (!validation.valid) {
-            setError(validation.error || 'Invalid baker name');
-            return;
-        }
+            // Check for duplicates
+            if (bakers.some((b) => b.name.toLowerCase() === sanitizedName.toLowerCase())) {
+                setError('Baker already exists');
+                return;
+            }
 
-        const sanitizedName = sanitizeInput(newBakerName);
+            setError(null);
 
-        // Check for duplicates
-        if (bakers.some((b) => b.name.toLowerCase() === sanitizedName.toLowerCase())) {
-            setError('Baker already exists');
-            return;
-        }
-
-        setIsAdding(true);
-        setError(null);
-
-        try {
-            await addBaker(eventId, sanitizedName);
-            setNewBakerName('');
-        } catch (err) {
-            console.error('Failed to add baker:', err);
-            setError(err instanceof Error ? err.message : 'Failed to add baker');
-        } finally {
-            setIsAdding(false);
-        }
-    }, [eventId, newBakerName, bakers, addBaker, isAdding]);
+            try {
+                await addBaker(eventId, sanitizedName);
+                reset();
+            } catch (err) {
+                console.error('Failed to add baker:', err);
+                setError(err instanceof Error ? err.message : 'Failed to add baker');
+            }
+        },
+        [eventId, bakers, addBaker, reset]
+    );
 
     const handleRemoveBaker = useCallback(
         async (bakerId: string, bakerName: string) => {
@@ -71,16 +76,6 @@ export function BakerManager({ eventId }: BakerManagerProps) {
         [eventId, removeBaker]
     );
 
-    const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAddBaker();
-            }
-        },
-        [handleAddBaker]
-    );
-
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -94,36 +89,34 @@ export function BakerManager({ eventId }: BakerManagerProps) {
             </div>
 
             {/* Add form */}
-            <div className="flex gap-2">
-                <input
-                    type="text"
-                    value={newBakerName}
-                    onChange={(e) => {
-                        setNewBakerName(e.target.value);
-                        setError(null);
-                    }}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Baker name"
-                    className="flex-1 px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
-                    maxLength={50}
-                    disabled={isAdding || loading}
-                    aria-label="New baker name"
-                />
+            <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        {...register('name')}
+                        placeholder="Baker name"
+                        className="w-full px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
+                        maxLength={50}
+                        disabled={isSubmitting || loading}
+                        aria-label="New baker name"
+                    />
+                    {errors.name && (
+                        <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+                    )}
+                </div>
                 <button
-                    type="button"
-                    onClick={handleAddBaker}
-                    onMouseDown={(e) => e.preventDefault()}
-                    disabled={!newBakerName.trim() || isAdding || loading}
+                    type="submit"
+                    disabled={isSubmitting || loading}
                     className={cn(
                         'px-4 py-2 rounded-lg font-medium transition-colors',
-                        !newBakerName.trim() || isAdding || loading
+                        isSubmitting || loading
                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                             : 'bg-primary-600 hover:bg-primary-700 text-white'
                     )}
                 >
-                    {isAdding ? 'Adding...' : 'Add'}
+                    {isSubmitting ? 'Adding...' : 'Add'}
                 </button>
-            </div>
+            </form>
 
             {/* Error */}
             {error && (

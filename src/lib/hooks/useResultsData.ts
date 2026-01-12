@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getEvent, getCategories, getVotes, getAllImageDetections } from '../firestore';
+import { getEvent, getCategories, getVotes } from '../firestore';
 import type { VoteEvent, Category, CookieCoordinate, UserVote } from '../types';
 import type { DetectedCookie } from '../../components/organisms/CookieViewer/CookieViewer';
 import { CONSTANTS } from '../constants';
@@ -38,9 +38,6 @@ export const useResultsData = (eventId: string | undefined) => {
         // Calculate initial results (tally)
         const computedResults = calculateResults(catsData, votesData);
         setResults(computedResults);
-
-        // Then load detections
-        await loadDetections(computedResults, setResults);
       } catch (err) {
         console.error('Failed to load results', err);
         setError(CONSTANTS.ERROR_MESSAGES.FAILED_TO_LOAD);
@@ -85,59 +82,3 @@ function calculateResults(categories: Category[], votesData: UserVote[]): Catego
   });
 }
 
-// Helper to load detections and merge
-// Note: This logic was copied from ResultsPage.tsx and slightly adapted
-async function loadDetections(
-  currentResults: CategoryResult[],
-  setResults: React.Dispatch<React.SetStateAction<CategoryResult[]>>,
-) {
-  try {
-    const allDetections = await getAllImageDetections();
-
-    const extractFileName = (url: string): string | null => {
-      try {
-        const uuidMatch = url.match(
-          /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
-        );
-        if (uuidMatch) return uuidMatch[1];
-        const urlObj = new URL(url.split('?')[0]);
-        const pathParts = urlObj.pathname.split('/');
-        const fileName = pathParts[pathParts.length - 1];
-        return fileName || null;
-      } catch {
-        return null;
-      }
-    };
-
-    setResults((prev) =>
-      prev.map((result) => {
-        const categoryFileName = extractFileName(result.category.imageUrl);
-
-        const matchingDetection = categoryFileName
-          ? allDetections.find((d) => {
-              const detectionFileName = extractFileName(d.imageUrl);
-              return (
-                detectionFileName === categoryFileName || d.imageUrl === result.category.imageUrl
-              );
-            })
-          : allDetections.find((d) => d.imageUrl === result.category.imageUrl);
-
-        if (matchingDetection) {
-          const converted: DetectedCookie[] = matchingDetection.detectedCookies.map((d) => ({
-            x: d.x,
-            y: d.y,
-            width: d.width,
-            height: d.height,
-            polygon: d.polygon,
-            confidence: d.confidence,
-          }));
-          return { ...result, detectedCookies: converted };
-        } else {
-          return { ...result, detectedCookies: [] };
-        }
-      }),
-    );
-  } catch (error) {
-    console.error('[useResultsData] Error loading image detections:', error);
-  }
-}

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAdminAuth } from '../lib/hooks/useAdminAuth';
 import { createEvent, getAllEvents } from '../lib/firestore';
-import { validateEventName, sanitizeInput } from '../lib/validation';
+import { sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
 import { type VoteEvent } from '../lib/types';
+import { eventNameSchema, type EventNameFormData } from '../lib/schemas';
 
 /**
  * AdminHome - Event picker page for admin.
@@ -17,12 +20,23 @@ export default function AdminHome() {
     redirectIfNotAuth: '/',
   });
 
-  const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<VoteEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<EventNameFormData>({
+    resolver: zodResolver(eventNameSchema),
+    defaultValues: {
+      name: '',
+    },
+  });
 
   // Fetch events
   useEffect(() => {
@@ -42,21 +56,15 @@ export default function AdminHome() {
     fetchEvents();
   }, [authLoading, isAdmin]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validation = validateEventName(eventName);
-    if (!validation.valid) {
-      setError(validation.error || 'Invalid event name');
-      return;
-    }
-
+  const onSubmit = async (data: EventNameFormData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const sanitizedName = sanitizeInput(eventName);
+      const sanitizedName = sanitizeInput(data.name);
       const event = await createEvent(sanitizedName);
+      reset();
+      setShowCreateForm(false);
       navigate(`/admin/${event.id}/overview`);
     } catch (error) {
       console.error('Error creating event:', error);
@@ -143,43 +151,43 @@ export default function AdminHome() {
               <span className="font-medium">Create New Event</span>
             </button>
           ) : (
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <h3 className="text-xl font-semibold text-white flex items-center gap-3">
                 <span className="text-2xl">✨</span>
                 Create New Event
               </h3>
-              <input
-                type="text"
-                placeholder="Event Name (e.g. Holiday Cookie-Off)"
-                value={eventName}
-                onChange={(e) => {
-                  setEventName(e.target.value);
-                  setError(null);
-                }}
-                className="w-full px-4 py-3 bg-surface-secondary border border-surface-tertiary rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
-                disabled={loading}
-                maxLength={100}
-                required
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Event Name (e.g. Holiday Cookie-Off)"
+                  {...register('name')}
+                  className="w-full px-4 py-3 bg-surface-secondary border border-surface-tertiary rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  disabled={isSubmitting || loading}
+                  maxLength={100}
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+                )}
+              </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateForm(false);
-                    setEventName('');
+                    reset();
                     setError(null);
                   }}
                   className="px-4 py-2 bg-surface-secondary border border-surface-tertiary rounded-lg text-gray-300 hover:bg-surface-tertiary transition-colors"
-                  disabled={loading}
+                  disabled={isSubmitting || loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isSubmitting || loading}
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
                 >
-                  {loading ? 'Creating...' : 'Create Event'}
+                  {isSubmitting || loading ? 'Creating...' : 'Create Event'}
                 </button>
               </div>
             </form>
