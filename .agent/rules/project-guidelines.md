@@ -50,4 +50,11 @@ src/
 ## Design Philosophy
 - **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
 - **Mobile-First**: Design for touch targets and small screens first.
-- **Instant Interactions**: Optimistic UI updates for all data mutations.
+
+## UX Standards
+1.  **Optimistic UI Required**: All user actions (likes, edits, deletes) must update the UI *instantly*. The network request happens in the background.
+2.  **No Jarring Reloads**: 
+    - **NEVER** trigger a full-page loading spinner for a small action.
+    - **NEVER** unmount a component just to show a loader state during an update.
+    - Only use full-page loaders for initial route navigation.
+3.  **Seamless Persistence**: Data saving should be transparent (auto-save), not requiring manual "Save" buttons unless necessary for large forms.

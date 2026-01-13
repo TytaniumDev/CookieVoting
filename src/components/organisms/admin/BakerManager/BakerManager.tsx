@@ -3,8 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBakerStore } from '../../../../lib/stores/useBakerStore';
 import { sanitizeInput } from '../../../../lib/validation';
-import { cn } from '../../../../lib/cn';
 import { bakerNameSchema, type BakerNameFormData } from '../../../../lib/schemas';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { X, Plus } from 'lucide-react';
 
 export interface BakerManagerProps {
     eventId: string;
@@ -80,74 +83,70 @@ export function BakerManager({ eventId }: BakerManagerProps) {
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-white">Bakers</h3>
+                <h3 className="text-lg font-semibold">Bakers</h3>
                 {bakers.length > 0 && (
-                    <span className="px-2 py-0.5 bg-primary-600/30 text-primary-400 text-sm rounded-full">
+                    <Badge variant="secondary">
                         {bakers.length}
-                    </span>
+                    </Badge>
                 )}
             </div>
 
             {/* Add form */}
             <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
                 <div className="flex-1">
-                    <input
-                        type="text"
+                    <Input
                         {...register('name')}
                         placeholder="Baker name"
-                        className="w-full px-4 py-2 bg-surface-tertiary border border-surface-tertiary focus:border-primary-500 focus:outline-none rounded-lg text-white placeholder-gray-500"
                         maxLength={50}
                         disabled={isSubmitting || loading}
                         aria-label="New baker name"
                     />
                     {errors.name && (
-                        <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+                        <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
                     )}
                 </div>
-                <button
+                <Button
                     type="submit"
                     disabled={isSubmitting || loading}
-                    className={cn(
-                        'px-4 py-2 rounded-lg font-medium transition-colors',
-                        isSubmitting || loading
-                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                            : 'bg-primary-600 hover:bg-primary-700 text-white'
-                    )}
                 >
-                    {isSubmitting ? 'Adding...' : 'Add'}
-                </button>
+                    {isSubmitting ? 'Adding...' : <><Plus className="w-4 h-4 mr-2" /> Add</>}
+                </Button>
             </form>
 
             {/* Error */}
             {error && (
-                <div className="text-red-400 text-sm" role="alert">
+                <div className="text-destructive text-sm" role="alert">
                     {error}
                 </div>
             )}
 
             {/* Baker list */}
             {bakers.length > 0 ? (
-                <div className="flex flex-wrap gap-2" role="list" aria-label="Bakers list">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" role="list" aria-label="Bakers list">
                     {bakers.map((baker) => (
                         <div
                             key={baker.id}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-tertiary rounded-full text-gray-300"
-                            role="listitem"
+                            className="flex items-center justify-between p-3 rounded-lg border border-surface-tertiary bg-surface-secondary hover:bg-surface-tertiary transition-colors group"
                         >
-                            <span>{baker.name}</span>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-xs font-bold ring-1 ring-primary-600/40">
+                                    {baker.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-medium text-white">{baker.name}</span>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => handleRemoveBaker(baker.id, baker.name)}
-                                className="w-5 h-5 flex items-center justify-center rounded-full bg-surface-secondary hover:bg-red-600/30 hover:text-red-400 transition-colors"
+                                className="text-gray-500 hover:text-red-400 p-1 rounded-md hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                                 aria-label={`Remove ${baker.name}`}
                             >
-                                ×
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
                     ))}
                 </div>
             ) : (
-                !loading && <p className="text-gray-500 text-sm">No bakers added yet</p>
+                !loading && <p className="text-muted-foreground text-sm">No bakers added yet</p>
             )}
         </div>
     );

@@ -65,7 +65,7 @@ export default function AdminHome() {
       const event = await createEvent(sanitizedName);
       reset();
       setShowCreateForm(false);
-      navigate(`/admin/${event.id}/overview`);
+      navigate(`/admin/${event.id}`);
     } catch (error) {
       console.error('Error creating event:', error);
       let errorMessage =
@@ -88,8 +88,10 @@ export default function AdminHome() {
     }
   };
 
+
+
   const handleEventClick = (eventId: string) => {
-    navigate(`/admin/${eventId}/overview`);
+    navigate(`/admin/${eventId}`);
   };
 
   const formatDate = (timestamp: number | undefined) => {
@@ -228,8 +230,8 @@ export default function AdminHome() {
                     <div className="flex items-center gap-3">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${event.status === 'voting'
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-gray-500/20 text-gray-400'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-gray-500/20 text-gray-400'
                           }`}
                       >
                         {event.status === 'voting' ? '● Voting' : '○ Closed'}

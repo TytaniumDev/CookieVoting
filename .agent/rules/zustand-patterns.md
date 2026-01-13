@@ -57,32 +57,50 @@ function AuthStatus() {
 }
 ```
 
-## Async Actions
+## Async Actions & Optimistic Updates
 
-**Handle loading and error states:**
+**Distinguish between fetching data and mutating data:**
+
+### 1. Fetching (Global Loading)
+Use `isLoading` for initial data fetches where the page cannot render without data.
 
 ```typescript
-interface EventStore {
-  events: Event[];
-  isLoading: boolean;
-  error: string | null;
-  fetchEvents: () => Promise<void>;
-}
+fetchEvents: async () => {
+  set({ isLoading: true, error: null });
+  try {
+    const events = await eventService.getAll();
+    set({ events, isLoading: false });
+  } catch (error) {
+    set({ error: 'Failed to load events', isLoading: false });
+  }
+},
+```
 
-export const useEventStore = create<EventStore>((set) => ({
-  events: [],
-  isLoading: false,
-  error: null,
-  fetchEvents: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const events = await eventService.getAll();
-      set({ events, isLoading: false });
-    } catch (error) {
-      set({ error: 'Failed to load events', isLoading: false });
-    }
-  },
-}));
+### 2. Mutating (Optimistic Updates)
+**NEVER** trigger a global loading state for small user actions (like toggling a vote or editing a name). It causes jarring UI flashes.
+Instead, update the local state **immediately**, then sync with the backend.
+
+```typescript
+toggleVote: async (eventId: string) => {
+  // 1. Snapshot previous state (optional, for rollback)
+  const previousEvents = get().events;
+
+  // 2. Optimistic Update (Instant feedback)
+  set((state) => ({
+    events: state.events.map(e => 
+      e.id === eventId ? { ...e, voted: !e.voted } : e
+    )
+  }));
+
+  // 3. Sync with Backend
+  try {
+    await api.toggleVote(eventId);
+  } catch (error) {
+    // 4. Rollback on error
+    console.error('Vote failed:', error);
+    set({ events: previousEvents, error: 'Failed to vote' });
+  }
+},
 ```
 
 ## Store Organization

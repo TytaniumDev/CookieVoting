@@ -30,14 +30,26 @@ Separate data fetching/logic from rendering.
 ```tsx
 // Container: Handles logic & data
 const UserProfile = ({ id }) => {
-  const { user, loading } = useUser(id);
-  if (loading) return <Spinner />;
-  return <UserProfileView user={user} />;
+  const { user, isLoading } = useUser(id);
+  // ✅ Good - Pass loading state down, don't unmount the view
+  return <UserProfileView user={user} isLoading={isLoading} />;
 };
 
 // Presenter: Pure UI
-const UserProfileView = ({ user }) => <h1>{user.name}</h1>;
+const UserProfileView = ({ user, isLoading }) => {
+  if (isLoading && !user) return <SkeletonLoader />; // Only full loader on initial mount
+  return (
+    <div className={isLoading ? 'opacity-50' : ''}>
+      <h1>{user?.name}</h1>
+    </div>
+  );
+};
 ```
+
+### Seamless UX Principles
+1.  **Preserve Context**: Never hide content the user is interacting with during a background update.
+2.  **Inline Feedback**: Use button loading states or small indicators instead of full-page spinners for actions.
+3.  **Skeleton Loading**: Use skeletons instead of spinners for initial loads to reduce layout shift.
 
 ### Compound Components
 For components that work together (e.g., Tabs, Card).

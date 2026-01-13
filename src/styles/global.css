@@ -1,287 +1,98 @@
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
-@import './variables.css';
+/* 
+  Ideally in TW4 we use @theme but checking legacy config support first.
+  If this fails, we might need to migrate theme to CSS variables entirely.
+*/
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer base {
+  :root {
+    /* Cozy Christmas Night Theme */
+    --background: 224 71% 4%;
+    /* Deepest Midnight Blue */
+    --foreground: 45 30% 96%;
+    /* Warm Starlight Cream */
 
-html,
-body,
-#root {
-  height: 100%;
-}
+    --card: 222 47% 11%;
+    /* Dark Winter Sky */
+    --card-foreground: 45 30% 96%;
 
-img {
-  max-width: 100%;
-  display: block;
-}
+    --popover: 222 47% 11%;
+    --popover-foreground: 45 30% 96%;
 
-#root {
-  display: flex;
-  flex-direction: column;
-}
+    --primary: 346 84% 61%;
+    /* Berry Red */
+    --primary-foreground: 0 0% 100%;
 
-/* Custom animations */
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
+    --secondary: 142 76% 36%;
+    /* Deep Pine Green */
+    --secondary-foreground: 0 0% 100%;
 
-@keyframes sway {
-  0%,
-  100% {
-    transform: rotate(-3deg);
-  }
-  50% {
-    transform: rotate(3deg);
-  }
-}
+    --muted: 217 33% 20%;
+    /* Muted Night */
+    --muted-foreground: 215 20% 70%;
 
-/* Voting component animations */
-@keyframes zoomOutUp {
-  0% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-    filter: brightness(1);
-  }
-  40% {
-    transform: scale(0.9) translateY(5%);
-    opacity: 0.8;
-    filter: brightness(0.8);
-  }
-  100% {
-    transform: scale(0.9) translateY(-100%);
-    opacity: 0;
-    filter: brightness(0.5);
-  }
-}
+    --accent: 45 93% 47%;
+    /* Christmas Gold */
+    --accent-foreground: 0 0% 100%;
 
-@keyframes slideInUpExpand {
-  0% {
-    transform: translateY(100%) scale(0.85);
-    opacity: 0;
-  }
-  40% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-@keyframes zoomOutDown {
-  0% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 346 84% 61%;
+
+    --radius: 0.75rem;
   }
-  100% {
-    transform: scale(0.9) translateY(100%);
-    opacity: 0;
+
+  .dark {
+    /* Modern Holiday - Dark (Midnight Winter) */
+    --background: 224 71% 4%;
+    /* Midnight Blue */
+    --foreground: 210 40% 98%;
+    /* Ice White */
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 346 84% 61%;
+    /* Berry Red */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 142 76% 36%;
+    /* Holly Green */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 45 93% 47%;
+    /* Gold */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 346 84% 61%;
   }
 }
 
-@keyframes slideInDownExpand {
-  0% {
-    transform: translateY(-100%) scale(0.85);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutLeft {
-  0% {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-100%) scale(0.95);
-    opacity: 0;
-  }
-}
-
-@keyframes slideInRight {
-  0% {
-    transform: translateX(100%) scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  0% {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(100%) scale(0.95);
-    opacity: 0;
-  }
-}
-
-@keyframes slideInLeft {
-  0% {
-    transform: translateX(-100%) scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes bounce {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes bounce-button {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes snowflakes-fall {
-  0% {
-    top: -10%;
-  }
-  100% {
-    top: 110%;
-  }
-}
-
-@keyframes snowflakes-shake {
-  0% {
-    transform: translateX(0px);
-  }
-  50% {
-    transform: translateX(80px);
-  }
-  100% {
-    transform: translateX(0px);
-  }
-}
-
-@keyframes pulseGlow {
-  from {
-    transform: scale(0.9);
-    opacity: 0.4;
-  }
-  to {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-@keyframes fall {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  100% {
-    transform: translateY(100vh) rotate(360deg);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes medalPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.15);
-  }
-}
-
-@keyframes sparkle {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
-}
-
-@keyframes sparkleRing {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.2);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Mobile improvements */
-@media (max-width: 768px) {
-
-  /* Improve touch targets */
-  button,
-  a {
-    min-height: 44px;
-    min-width: 44px;
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    border-style: solid;
+    border-width: 0;
   }
 
-  /* Prevent text size adjustment on iOS */
-  input,
-  textarea,
-  select {
-    font-size: 16px;
-  }
-
-  /* Improve scrolling */
   body {
-    -webkit-overflow-scrolling: touch;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }

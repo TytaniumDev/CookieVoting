@@ -15,6 +15,7 @@ import { reprocessCategory } from '../../../../lib/firestore';
 import { ConfirmationModal } from '../../../atoms/ConfirmationModal/ConfirmationModal';
 import type { Category } from '../../../../lib/types';
 import { cn } from '../../../../lib/cn';
+import { Button } from '@/components/ui/button';
 import { categoryCreateSchema, categoryNameSchema, type CategoryCreateFormData } from '../../../../lib/schemas';
 
 export interface CategoryManagerProps {
@@ -329,13 +330,19 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
                 !loading && (
                     <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                         <span className="text-4xl mb-4">🍪</span>
-                        <p>No categories yet. Add your first category below!</p>
+                        <p className="mb-4">No categories yet. Add your first category below!</p>
+                        <Button
+                            variant="default"
+                            onClick={() => document.getElementById('add-category-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                            Create Category
+                        </Button>
                     </div>
                 )
             )}
 
             {/* Add Category Form */}
-            <div className="border-t border-surface-tertiary pt-6">
+            <div id="add-category-form" className="border-t border-surface-tertiary pt-6">
                 <h4 className="text-md font-semibold text-white mb-4">Add Category</h4>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {!watchedImage ? (

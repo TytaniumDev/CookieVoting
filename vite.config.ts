@@ -27,6 +27,11 @@ export default defineConfig({
       port: 443,
     },
   },
+  resolve: {
+    alias: {
+      '@': path.resolve(dirname, './src'),
+    },
+  },
   build: {
     rollupOptions: {
       output: {

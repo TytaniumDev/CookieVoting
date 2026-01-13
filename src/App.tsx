@@ -1,8 +1,8 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { useAuthStore } from './lib/stores/useAuthStore';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
-import { AdminLayout } from './components/layout/AdminLayout';
+// import { AdminLayout } from './components/layout/AdminLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load pages for code splitting
@@ -10,14 +10,16 @@ const Home = lazy(() => import('./pages/Home'));
 const AdminHome = lazy(() => import('./pages/AdminHome'));
 const VotingPage = lazy(() => import('./pages/VotingPage'));
 const ResultsPage = lazy(() => import('./pages/ResultsPage'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 
+// Admin sub-pages (Keeping for now if referenced by AdminDashboard, but normally imports handle it)
 // Admin sub-pages
-const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
-const AdminBakers = lazy(() => import('./pages/admin/AdminBakers'));
-const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
-const CookieAssignmentPage = lazy(() => import('./pages/admin/CookieAssignmentPage'));
-const ReviewProcessingPage = lazy(() => import('./pages/admin/ReviewProcessingPage').then(module => ({ default: module.ReviewProcessingPage })));
+// const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
+// const AdminBakers = lazy(() => import('./pages/admin/AdminBakers'));
+// const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+// const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+// const CookieAssignmentPage = lazy(() => import('./pages/admin/CookieAssignmentPage'));
+// const ReviewProcessingPage = lazy(() => import('./pages/admin/ReviewProcessingPage').then(module => ({ default: module.ReviewProcessingPage })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -87,60 +89,10 @@ function App() {
             path="admin/:eventId"
             element={
               <Suspense fallback={<PageLoader />}>
-                <AdminLayout />
+                <AdminDashboard />
               </Suspense>
             }
-          >
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route
-              path="overview"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <AdminOverview />
-                </Suspense>
-              }
-            />
-            <Route
-              path="bakers"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <AdminBakers />
-                </Suspense>
-              }
-            />
-            <Route
-              path="categories"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <AdminCategories />
-                </Suspense>
-              }
-            />
-            <Route
-              path="categories/:categoryId/assign"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <CookieAssignmentPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="categories/:categoryId/review"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <ReviewProcessingPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="settings"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <AdminSettings />
-                </Suspense>
-              }
-            />
-          </Route>
+          />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>

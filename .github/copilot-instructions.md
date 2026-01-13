@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** January 11, 2026 at 22:17:11 PST · Checksum: `f447fd985432`
+> **Last synced:** January 12, 2026 at 20:28:45 PST · Checksum: `98f93fdbfd80`
 
 ## 🤖 Instructions for AI Agents
 
@@ -484,7 +484,14 @@ src/
 ## Design Philosophy
 - **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
 - **Mobile-First**: Design for touch targets and small screens first.
-- **Instant Interactions**: Optimistic UI updates for all data mutations.
+
+## UX Standards
+1.  **Optimistic UI Required**: All user actions (likes, edits, deletes) must update the UI *instantly*. The network request happens in the background.
+2.  **No Jarring Reloads**: 
+    - **NEVER** trigger a full-page loading spinner for a small action.
+    - **NEVER** unmount a component just to show a loader state during an update.
+    - Only use full-page loaders for initial route navigation.
+3.  **Seamless Persistence**: Data saving should be transparent (auto-save), not requiring manual "Save" buttons unless necessary for large forms.
 
 ---
 
@@ -520,14 +527,26 @@ Separate data fetching/logic from rendering.
 ```tsx
 // Container: Handles logic & data
 const UserProfile = ({ id }) => {
-  const { user, loading } = useUser(id);
-  if (loading) return <Spinner />;
-  return <UserProfileView user={user} />;
+  const { user, isLoading } = useUser(id);
+  // ✅ Good - Pass loading state down, don't unmount the view
+  return <UserProfileView user={user} isLoading={isLoading} />;
 };
 
 // Presenter: Pure UI
-const UserProfileView = ({ user }) => <h1>{user.name}</h1>;
+const UserProfileView = ({ user, isLoading }) => {
+  if (isLoading && !user) return <SkeletonLoader />; // Only full loader on initial mount
+  return (
+    <div className={isLoading ? 'opacity-50' : ''}>
+      <h1>{user?.name}</h1>
+    </div>
+  );
+};
 ```
+
+### Seamless UX Principles
+1.  **Preserve Context**: Never hide content the user is interacting with during a background update.
+2.  **Inline Feedback**: Use button loading states or small indicators instead of full-page spinners for actions.
+3.  **Skeleton Loading**: Use skeletons instead of spinners for initial loads to reduce layout shift.
 
 ### Compound Components
 For components that work together (e.g., Tabs, Card).
@@ -562,6 +581,84 @@ For components that work together (e.g., Tabs, Card).
 - [ ] State is lifted to the lowest common ancestor
 - [ ] Expensive calculations are memoized
 - [ ] No direct Firebase calls in components (use hooks)
+
+---
+
+---
+trigger: always
+description: Best practices for using Shadcn/UI components, styling with Tailwind, and ensuring consistent design.
+---
+
+# Shadcn/UI & Design System
+
+## Core Philosophy
+We use **Shadcn/UI** (Radix UI + Tailwind) as our foundation. The goal is to build a **premium, accessible, and consistent** application.
+
+1.  **Prefer Composition**: Use existing components (`<Button>`, `<Card>`) before writing custom `<div className="...">`.
+2.  **Accessibility First**: Shadcn components are accessible by default. Preserve this (e.g., proper labels, focus states).
+3.  **Consistent Polish**: Use the defined variants (`default`, `secondary`, `destructive`, `ghost`) instead of random colors.
+
+## Usage Guidelines
+
+### 1. Imports
+**Always import from `@/components/ui/...`**
+
+```tsx
+// ✅ Correct
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+
+// ❌ Incorrect - do not import from raw Radix or local relative paths if generic
+import * as RadixPop from "@radix-ui/react-popover";
+import { Button } from "../../components/ui/button";
+```
+
+### 2. Class Merging (`cn`)
+**Always use `cn()`** to merge classes when creating manageable components or passing `className` props.
+
+```tsx
+import { cn } from "@/lib/utils";
+
+export function CustomCard({ className, children }: { className?: string, children: React.ReactNode }) {
+  // Allows the parent to override 'bg-white' with 'bg-gray-100' safely
+  return <div className={cn("bg-white p-4 rounded-lg", className)}>{children}</div>;
+}
+```
+
+### 3. Component Library
+The following components are available in `src/components/ui/`. **Use them!**
+
+| Component | Usage |
+| :--- | :--- |
+| **Button** | Primary actions. Use `variant="ghost"` for icon-only buttons. |
+| **Input** | Text inputs. |
+| **Label** | Form labels. Always associate with inputs. |
+| **Card** | Content containers. Use `CardHeader`, `CardTitle`, `CardContent`. |
+| **Tabs** | Switch between views (e.g., Admin Dashboard). |
+| **Dialog** | Modals. Use `DialogTrigger` and `DialogContent`. |
+| **Select** | Dropdowns. Prefer over native `<select>`. |
+| **Toast** | Notifications via `useToast`. |
+
+### 4. Icons
+**Use `lucide-react`** for all icons.
+- Import standard named icons (e.g., `Trash2`, `Plus`, `Settings`).
+- Size them consistently (usually `w-4 h-4` or `w-5 h-5`).
+
+```tsx
+import { Plus } from "lucide-react";
+<Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
+```
+
+## Anti-Patterns
+- **❌ Arbitrary Colors**: Avoid `bg-[#123456]`. Use `bg-primary`, `bg-muted`, etc.
+- **❌ Reinventing the Wheel**: Don't build a custom modal using a standard div; use `<Dialog>`.
+- **❌ Inconsistent Spacing**: Use standard Tailwind spacings (`gap-2`, `p-4`, `p-6`).
+
+## Checklist for UI Changes
+- [ ] Did I use a Shadcn component if it exists?
+- [ ] Are interactions accessible (keyboard navigable)?
+- [ ] Did I use `lucide-react` icons?
+- [ ] Did I handle mobile responsiveness?
 
 ---
 
@@ -849,32 +946,50 @@ function AuthStatus() {
 }
 ```
 
-## Async Actions
+## Async Actions & Optimistic Updates
 
-**Handle loading and error states:**
+**Distinguish between fetching data and mutating data:**
+
+### 1. Fetching (Global Loading)
+Use `isLoading` for initial data fetches where the page cannot render without data.
 
 ```typescript
-interface EventStore {
-  events: Event[];
-  isLoading: boolean;
-  error: string | null;
-  fetchEvents: () => Promise<void>;
-}
+fetchEvents: async () => {
+  set({ isLoading: true, error: null });
+  try {
+    const events = await eventService.getAll();
+    set({ events, isLoading: false });
+  } catch (error) {
+    set({ error: 'Failed to load events', isLoading: false });
+  }
+},
+```
 
-export const useEventStore = create<EventStore>((set) => ({
-  events: [],
-  isLoading: false,
-  error: null,
-  fetchEvents: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const events = await eventService.getAll();
-      set({ events, isLoading: false });
-    } catch (error) {
-      set({ error: 'Failed to load events', isLoading: false });
-    }
-  },
-}));
+### 2. Mutating (Optimistic Updates)
+**NEVER** trigger a global loading state for small user actions (like toggling a vote or editing a name). It causes jarring UI flashes.
+Instead, update the local state **immediately**, then sync with the backend.
+
+```typescript
+toggleVote: async (eventId: string) => {
+  // 1. Snapshot previous state (optional, for rollback)
+  const previousEvents = get().events;
+
+  // 2. Optimistic Update (Instant feedback)
+  set((state) => ({
+    events: state.events.map(e => 
+      e.id === eventId ? { ...e, voted: !e.voted } : e
+    )
+  }));
+
+  // 3. Sync with Backend
+  try {
+    await api.toggleVote(eventId);
+  } catch (error) {
+    // 4. Rollback on error
+    console.error('Vote failed:', error);
+    set({ events: previousEvents, error: 'Failed to vote' });
+  }
+},
 ```
 
 ## Store Organization

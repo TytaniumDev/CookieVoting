@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ProcessingStatus } from '../../../lib/firestore';
 import { AlertModal } from '../../atoms/AlertModal/AlertModal';
+import { Button } from '@/components/ui/button';
 
 export interface CategoryCardProps {
     /** Unique identifier for the category */
@@ -196,57 +197,67 @@ export function CategoryCard({
                     </div>
                 )}
 
-                {/* Actions */}
-                {processingStatus === 'review_required' && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            // If eventId is provided, use it. Otherwise fall back to ID parsing or similar logic
-                            const eId = eventId || id.split('_')[0]; // Fallback might still be brittle if ID is random
-                            window.location.href = `/admin/${eId}/categories/${id}/review`;
-                        }}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1 rounded shadow-sm"
-                    >
-                        Review & Crop
-                    </button>
-                )}
-                {processingStatus === 'not_processed' && onProcess && (
-                    <button
-                        type="button"
-                        onClick={onProcess}
-                        className="text-primary-400 hover:text-primary-300 text-sm"
-                    >
-                        Process
-                    </button>
-                )}
-                {/* Show Reprocess if processed, error, or not_processed (and onProcess is missing) */}
-                {(processingStatus === 'processed' || processingStatus === 'error' || (processingStatus === 'not_processed' && !onProcess)) && onReprocess && (
-                    <button
-                        type="button"
-                        onClick={onReprocess}
-                        className="text-primary-400 hover:text-primary-300 text-sm"
-                    >
-                        Reprocess
-                    </button>
-                )}
-                <button
-                    type="button"
-                    onClick={onDelete}
-                    className="text-red-400 hover:text-red-300 text-sm"
-                >
-                    Delete
-                </button>
-            </div>
+                <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-2">
+                    <div className="flex gap-1">
+                        {processingStatus === 'review_required' && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="default"
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white h-7 px-2 text-xs"
+                                onClick={() => {
+                                    const eId = eventId || id.split('_')[0];
+                                    window.location.href = `/admin/${eId}/categories/${id}/review`;
+                                }}
+                            >
+                                Review
+                            </Button>
+                        )}
+                        {processingStatus === 'not_processed' && onProcess && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-xs text-primary-400 hover:text-primary-300 hover:bg-primary-400/10"
+                                onClick={onProcess}
+                            >
+                                Process
+                            </Button>
+                        )}
+                        {(processingStatus === 'processed' || processingStatus === 'error' || (processingStatus === 'not_processed' && !onProcess)) && onReprocess && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-xs text-primary-400 hover:text-primary-300 hover:bg-primary-400/10"
+                                onClick={onReprocess}
+                            >
+                                Reprocess
+                            </Button>
+                        )}
+                    </div>
 
-            {/* Error Modal */}
-            {showErrorModal && processingError && (
-                <AlertModal
-                    message={processingError}
-                    type="error"
-                    title="Processing Error"
-                    onClose={() => setShowErrorModal(false)}
-                />
-            )}
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                        onClick={onDelete}
+                    >
+                        Delete
+                    </Button>
+                </div>
+
+                {/* Error Modal */}
+                {showErrorModal && processingError && (
+                    <AlertModal
+                        message={processingError}
+                        type="error"
+                        title="Processing Error"
+                        onClose={() => setShowErrorModal(false)}
+                    />
+                )}
+            </div>
         </div>
     );
 }
