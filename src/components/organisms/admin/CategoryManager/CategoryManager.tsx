@@ -84,6 +84,13 @@ export function CategoryManager({ eventId, onCategoryClick }: CategoryManagerPro
 
     const watchedImage = watch('image');
 
+    // Fetch categories on mount
+    useEffect(() => {
+        if (eventId) {
+            fetchCategories(eventId);
+        }
+    }, [eventId, fetchCategories]);
+
 
 
     // Update preview when image changes
