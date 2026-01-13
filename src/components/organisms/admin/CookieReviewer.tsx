@@ -87,12 +87,17 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
 
                 // Load detected objects
                 if (batchData.detectedObjects) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const initialCrops = (batchData.detectedObjects || []).map((obj: any) => {
                         // Convert vertices to box
                         const vs = obj.normalizedVertices || [];
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const minX = Math.min(...vs.map((v: any) => v.x || 0));
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const minY = Math.min(...vs.map((v: any) => v.y || 0));
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const maxX = Math.max(...vs.map((v: any) => v.x || 1));
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const maxY = Math.max(...vs.map((v: any) => v.y || 1));
                         return {
                             id: uuidv4(),
@@ -191,13 +196,14 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
 
             <main className="flex-1 p-4 overflow-hidden flex flex-col items-center justify-center bg-zinc-950 relative">
                 {/* Canvas Container */}
-                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions */}
+                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
                 <div
                     className="relative flex shadow-2xl border border-zinc-800 bg-black max-w-full max-h-full"
                     ref={containerRef}
                     onClick={handleImageClick}
                 >
                     {imageUrl && (
+                        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                         <img
                             ref={imageRef}
                             src={imageUrl}
