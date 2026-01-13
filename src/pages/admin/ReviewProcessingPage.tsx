@@ -4,6 +4,9 @@ import { useEventStore } from '../../lib/stores/useEventStore';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { type CropData, type Category } from '../../lib/types';
+import { v4 as uuidv4 } from 'uuid';
+
+type CropWithId = CropData & { id: string };
 // import Button from '../../components/atoms/Button/Button'; 
 // Replaced valid Button usage with standard standard HTML button due to missing component
 
@@ -16,7 +19,7 @@ export const ReviewProcessingPage: React.FC = () => {
 
     const [category, setCategory] = useState<Category | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [crops, setCrops] = useState<CropData[]>([]);
+    const [crops, setCrops] = useState<CropWithId[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedCropIndex, setSelectedCropIndex] = useState<number | null>(null);
@@ -89,7 +92,7 @@ export const ReviewProcessingPage: React.FC = () => {
 
                 // Load detected objects
                 if (batchData.detectedObjects) {
-                    const initialCrops: CropData[] = batchData.detectedObjects.map((obj: any) => {
+                    const initialCrops: CropWithId[] = batchData.detectedObjects.map((obj: any) => {
                         // Convert vertices to box
                         const vs = obj.normalizedVertices || [];
                         const minX = Math.min(...vs.map((v: any) => v.x || 0));
@@ -97,6 +100,7 @@ export const ReviewProcessingPage: React.FC = () => {
                         const maxX = Math.max(...vs.map((v: any) => v.x || 1));
                         const maxY = Math.max(...vs.map((v: any) => v.y || 1));
                         return {
+                            id: uuidv4(),
                             x: minX,
                             y: minY,
                             width: maxX - minX,
@@ -118,7 +122,8 @@ export const ReviewProcessingPage: React.FC = () => {
     const handleConfirm = async () => {
         if (!category?.batchId) return;
         try {
-            await confirmCrops(category.batchId, crops);
+            const cropsWithoutIds: CropData[] = crops.map(({ id: _id, ...rest }) => rest);
+            await confirmCrops(category.batchId, cropsWithoutIds);
             // Navigate back to assignment page or categories
             navigate(`/admin/${eventId}/categories/${categoryId}/assign`);
         } catch (e) {
@@ -137,7 +142,8 @@ export const ReviewProcessingPage: React.FC = () => {
         const yFn = (e.clientY - rect.top) / rect.height;
 
         // Default 15% size
-        const newCrop: CropData = {
+        const newCrop: CropWithId = {
+            id: uuidv4(),
             x: Math.max(0, xFn - 0.075),
             y: Math.max(0, yFn - 0.075),
             width: 0.15,
@@ -186,6 +192,7 @@ export const ReviewProcessingPage: React.FC = () => {
 
             <main className="flex-1 p-4 overflow-hidden flex flex-col items-center justify-center bg-gray-900">
                 {/* Canvas Container */}
+                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions */}
                 <div
                     className="relative flex shadow-2xl border border-gray-700 bg-black"
                     ref={containerRef}
@@ -204,7 +211,7 @@ export const ReviewProcessingPage: React.FC = () => {
                     {/* Overlay with Rnd */}
                     {containerSize.width > 0 && crops.map((crop, i) => (
                         <Rnd
-                            key={i}
+                            key={crop.id}
                             size={{
                                 width: crop.width * containerSize.width,
                                 height: crop.height * containerSize.height,

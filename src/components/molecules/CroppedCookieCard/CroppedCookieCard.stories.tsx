@@ -35,52 +35,54 @@ const meta: Meta<typeof CroppedCookieCard> = {
 export default meta;
 type Story = StoryObj<typeof CroppedCookieCard>;
 
-/** Default untagged cookie card */
+const mockBakers = [
+    { id: '1', name: 'Ryan' },
+    { id: '2', name: 'Kelly' },
+    { id: '3', name: 'Mike' },
+    { id: '4', name: 'Sarah' },
+    { id: '5', name: 'Christopher Alexander' },
+];
+
 export const Untagged: Story = {
     args: {
         imageUrl: 'https://picsum.photos/seed/cookie1/200/200',
-        bakerName: undefined,
-        isSelected: false,
+        assignedBakerId: undefined,
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
 };
 
-/** Cookie card with baker assigned */
 export const Tagged: Story = {
     args: {
         imageUrl: 'https://picsum.photos/seed/cookie2/200/200',
-        bakerName: 'Ryan',
-        isSelected: false,
+        assignedBakerId: '1',
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
 };
 
-/** Selected state (dropdown open) */
-export const Selected: Story = {
-    args: {
-        imageUrl: 'https://picsum.photos/seed/cookie3/200/200',
-        bakerName: undefined,
-        isSelected: true,
-    },
-};
-
-/** Long baker name handling */
 export const LongBakerName: Story = {
     args: {
         imageUrl: 'https://picsum.photos/seed/cookie4/200/200',
-        bakerName: 'Christopher Alexander',
-        isSelected: false,
+        assignedBakerId: '5',
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
 };
 
-/** Image load error state */
 export const ImageError: Story = {
     args: {
         imageUrl: 'https://invalid-url-that-will-fail.com/image.png',
-        bakerName: undefined,
-        isSelected: false,
+        assignedBakerId: undefined,
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
 };
 
-/** Multiple cards in a row (grid context) */
 export const GridContext: Story = {
     decorators: [
         () => (
@@ -92,40 +94,51 @@ export const GridContext: Story = {
             }}>
                 <CroppedCookieCard
                     imageUrl="https://picsum.photos/seed/c1/200"
-                    bakerName="Ryan"
-                    onClick={() => { }}
+                    assignedBakerId="1"
+                    bakers={mockBakers}
+                    onAssign={fn()}
+                    onRemove={fn()}
                 />
                 <CroppedCookieCard
                     imageUrl="https://picsum.photos/seed/c2/200"
-                    bakerName="Kelly"
-                    onClick={() => { }}
+                    assignedBakerId="2"
+                    bakers={mockBakers}
+                    onAssign={fn()}
+                    onRemove={fn()}
                 />
                 <CroppedCookieCard
                     imageUrl="https://picsum.photos/seed/c3/200"
-                    bakerName={undefined}
-                    onClick={() => { }}
+                    assignedBakerId={undefined}
+                    bakers={mockBakers}
+                    onAssign={fn()}
+                    onRemove={fn()}
                 />
                 <CroppedCookieCard
                     imageUrl="https://picsum.photos/seed/c4/200"
-                    bakerName="Mike"
-                    onClick={() => { }}
+                    assignedBakerId="3"
+                    bakers={mockBakers}
+                    onAssign={fn()}
+                    onRemove={fn()}
                 />
             </div>
         ),
     ],
     args: {
         imageUrl: 'https://picsum.photos/seed/c1/200/200',
-        bakerName: 'Ryan',
-        isSelected: false,
+        assignedBakerId: '1',
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
 };
 
-/** Hover state demonstration */
 export const HoverDemo: Story = {
     args: {
         imageUrl: 'https://picsum.photos/seed/cookie5/200/200',
-        bakerName: 'Sarah',
-        isSelected: false,
+        assignedBakerId: '4',
+        bakers: mockBakers,
+        onAssign: fn(),
+        onRemove: fn(),
     },
     parameters: {
         pseudo: { hover: true },

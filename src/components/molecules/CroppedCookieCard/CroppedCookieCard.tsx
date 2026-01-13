@@ -70,8 +70,9 @@ export const CroppedCookieCard = memo(function CroppedCookieCard({
             data-testid="cookie-card"
         >
             {/* Image Container */}
-            <div
-                className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-[#252542] cursor-pointer ring-2 ring-transparent group-hover:ring-[#a78bfa]/30 transition-all"
+            <button
+                type="button"
+                className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-[#252542] cursor-pointer ring-2 ring-transparent group-hover:ring-[#a78bfa]/30 transition-all border-none p-0"
                 onClick={() => setShowDropdown(true)}
             >
                 {!imageLoaded && !imageError && (
@@ -102,7 +103,7 @@ export const CroppedCookieCard = memo(function CroppedCookieCard({
                         loading="lazy"
                     />
                 )}
-            </div>
+            </button>
 
             {/* Assignment Trigger Area */}
             <div className="relative bg-[#1a1a2e] rounded-b-xl border-t border-white/5">

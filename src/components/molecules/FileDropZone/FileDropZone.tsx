@@ -88,6 +88,7 @@ export function FileDropZone({
     }, []);
 
     return (
+
         <div
             className={cn(
                 'flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors',

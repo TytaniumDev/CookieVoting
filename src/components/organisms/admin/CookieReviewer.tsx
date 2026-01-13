@@ -3,9 +3,10 @@ import { useEventStore } from '@/lib/stores/useEventStore';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { type CropData, type Category } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Rnd } from 'react-rnd';
-import { ArrowLeft, Check, Trash2, Maximize2 } from 'lucide-react';
+import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 interface CookieReviewerProps {
     eventId: string;
@@ -18,7 +19,7 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
 
     const [category, setCategory] = useState<Category | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [crops, setCrops] = useState<CropData[]>([]);
+    const [crops, setCrops] = useState<(CropData & { id: string })[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedCropIndex, setSelectedCropIndex] = useState<number | null>(null);
@@ -86,7 +87,7 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
 
                 // Load detected objects
                 if (batchData.detectedObjects) {
-                    const initialCrops: CropData[] = batchData.detectedObjects.map((obj: any) => {
+                    const initialCrops = (batchData.detectedObjects || []).map((obj: any) => {
                         // Convert vertices to box
                         const vs = obj.normalizedVertices || [];
                         const minX = Math.min(...vs.map((v: any) => v.x || 0));
@@ -94,6 +95,7 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
                         const maxX = Math.max(...vs.map((v: any) => v.x || 1));
                         const maxY = Math.max(...vs.map((v: any) => v.y || 1));
                         return {
+                            id: uuidv4(),
                             x: minX,
                             y: minY,
                             width: maxX - minX,
@@ -115,7 +117,8 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
     const handleConfirm = async () => {
         if (!category?.batchId) return;
         try {
-            await confirmCrops(category.batchId, crops);
+            const cropsWithoutIds = crops.map(({ id: _id, ...rest }) => rest);
+            await confirmCrops(category.batchId, cropsWithoutIds);
             onBack();
         } catch (e) {
             console.error(e);
@@ -133,7 +136,8 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
         const yFn = (e.clientY - rect.top) / rect.height;
 
         // Default 15% size
-        const newCrop: CropData = {
+        const newCrop = {
+            id: uuidv4(),
             x: Math.max(0, xFn - 0.075),
             y: Math.max(0, yFn - 0.075),
             width: 0.15,
@@ -187,6 +191,7 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
 
             <main className="flex-1 p-4 overflow-hidden flex flex-col items-center justify-center bg-zinc-950 relative">
                 {/* Canvas Container */}
+                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions */}
                 <div
                     className="relative flex shadow-2xl border border-zinc-800 bg-black max-w-full max-h-full"
                     ref={containerRef}
@@ -205,7 +210,7 @@ export function CookieReviewer({ eventId, categoryId, onBack }: CookieReviewerPr
                     {/* Overlay with Rnd */}
                     {containerSize.width > 0 && crops.map((crop, i) => (
                         <Rnd
-                            key={i}
+                            key={crop.id}
                             size={{
                                 width: crop.width * containerSize.width,
                                 height: crop.height * containerSize.height,
