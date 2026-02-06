@@ -1,6 +1,12 @@
 # Gemini Cookie Detection Setup
 
-This project uses Google's Gemini AI to detect cookies in images. The detection runs through Firebase Functions for security and reliability.
+> **⚠️ NOTE: EXPERIMENTAL SCRIPT ONLY**
+>
+> This document applies **only** to the experimental utility script `scripts/detect-all-images.js`.
+> The production application uses **Google Cloud Vision API** for cookie detection.
+> See [`docs/VisionAPI.md`](./VisionAPI.md) for the production architecture.
+
+This experimental script uses Google's Gemini AI to detect cookies in images. The detection runs through Firebase Functions for security and reliability.
 
 ## Setup Instructions
 

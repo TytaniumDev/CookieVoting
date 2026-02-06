@@ -4,11 +4,11 @@ A modern web application for managing and voting on cookie competitions. This ap
 
 ## 🎯 Overview
 
-Cookie Voting is a full-stack application designed to facilitate cookie competition events. Event administrators can upload images of cookies, and the system automatically detects individual cookies using Google's Gemini AI. Voters can then vote on their favorite cookies in different categories, and results are tallied and displayed in real-time.
+Cookie Voting is a full-stack application designed to facilitate cookie competition events. Event administrators can upload images of cookies, and the system automatically detects individual cookies using Google Cloud Vision API. Voters can then vote on their favorite cookies in different categories, and results are tallied and displayed in real-time.
 
 ### Key Features
 
-- **AI-Powered Cookie Detection**: Automatically detects cookies in images using Google Gemini AI vision models
+- **AI-Powered Cookie Detection**: Automatically detects cookies in images using Google Cloud Vision API
 - **Interactive Voting System**: Users can vote on cookies across multiple categories
 - **Real-time Results**: View voting results and statistics as votes are cast
 - **Admin Dashboard**: Create and manage voting events, upload images, and tag cookies
@@ -21,7 +21,7 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 
 - Node.js 20+ and npm
 - Firebase CLI (for deployment)
-- Google Gemini API key (for cookie detection)
+- Google Cloud Vision API enabled (for cookie detection)
 
 ### Installation
 
@@ -75,7 +75,7 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 
 - **[Storybook Component Library](https://tytaniumdev.github.io/CookieVoting/)** - Browse and interact with all UI components
 - [Product Requirements Document (PRD)](./docs/PRD.md) - Source of truth for functionality
-- [GEMINI_SETUP.md](./docs/GEMINI_SETUP.md) - Setup guide for Gemini AI cookie detection
+- [GEMINI_SCRIPT_SETUP.md](./docs/GEMINI_SCRIPT_SETUP.md) - Setup guide for experimental Gemini AI cookie detection script
 - [EMULATOR_SETUP.md](./docs/EMULATOR_SETUP.md) - Local Firebase emulator setup
 - [STORYBOOK_SETUP.md](./docs/STORYBOOK_SETUP.md) - Storybook development guide
 - [.github/DEPLOYMENT_SETUP.md](./.github/DEPLOYMENT_SETUP.md) - Deployment configuration
@@ -84,7 +84,7 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Backend**: Firebase (Auth, Firestore, Storage, Functions)
-- **AI Detection**: Google Gemini API
+- **AI Detection**: Google Cloud Vision API
 - **UI Components**: Custom components with Storybook documentation
 - **Testing**: Vitest, Playwright, Storybook
 - **CI/CD**: GitHub Actions
