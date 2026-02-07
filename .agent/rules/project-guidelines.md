@@ -5,6 +5,13 @@ description: Core project guidelines, architecture, and development standards.
 
 # Project Guidelines & Standards
 
+## Tech Stack (Enforced)
+- **Framework**: React 19 (Do not use legacy React patterns).
+- **Styling**: Tailwind CSS 4 (Use new utility-first engine).
+- **Runtime**: Node.js 20+.
+- **Backend**: Firebase 12 (Firestore, Auth, Storage, Functions).
+- **Language**: TypeScript 5.9+.
+
 ## Architecture Principles
 
 ### Separation of Concerns

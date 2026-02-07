@@ -1,12 +1,13 @@
-# [Cookie Voting 🍪](https://cookie-voting.web.app/)
+<div align="center">
 
-A modern web application for managing and voting on cookie competitions. This application uses AI-powered cookie detection, Firebase for backend services, and React for the frontend.
+# Cookie Voting 🍪
 
-## 🎯 Overview
+[🚀 Launch App](https://cookie-voting.web.app/) • [📖 Documentation](#documentation) • [🐞 Report Bug](https://github.com/TytaniumDev/CookieVoting/issues)
 
 Cookie Voting is a full-stack application designed to facilitate cookie competition events. Event administrators can upload images of cookies, and the system automatically detects individual cookies using Google Cloud Vision API. Voters can then vote on their favorite cookies in different categories, and results are tallied and displayed in real-time.
+</div>
 
-### Key Features
+<br>
 
 - **AI-Powered Cookie Detection**: Automatically detects cookies in images using Google Cloud Vision API
 - **Interactive Voting System**: Users can vote on cookies across multiple categories
@@ -14,6 +15,10 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - **Admin Dashboard**: Create and manage voting events, upload images, and tag cookies
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Component Documentation**: Comprehensive Storybook documentation for all UI components
+> A modern web application for managing and voting on cookie competitions. Powered by AI cookie detection, Firebase, and React.
+
+<!-- TODO: Add Hero Image (Screenshot of the dashboard) -->
+<!-- <img src="./public/hero.png" alt="Cookie Voting Dashboard" width="100%" /> -->
 
 ## 🚀 Quick Start
 
@@ -22,56 +27,52 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - Node.js 20+ and npm
 - Firebase CLI (for deployment)
 - Google Cloud Vision API enabled (for cookie detection)
+- **Node.js 20+**
+- **Firebase CLI**
 
 ### Installation
 
-1. **Clone the repository**
+**Option 1: Fast Track (Mac/Linux)**
+```bash
+./scripts/setup.sh
+```
 
-   ```bash
-   git clone https://github.com/TytaniumDev/CookieVoting.git
-   cd CookieVoting
-   ```
+**Option 2: Manual Setup**
+```bash
+# Install dependencies
+npm install && cd functions && npm install && cd ..
 
-2. **Run the setup script** (recommended for new machines)
+# Setup Environment
+cp .env.example .env
+# (Update .env with your Firebase credentials)
+```
 
-   ```bash
-   ./scripts/setup.sh
-   ```
+### Run
+```bash
+npm run dev
+```
 
-   This script will:
-   - **Install Node.js 20 via Homebrew** (macOS only, if not already installed)
-   - Verify Node.js 20+ and npm are available
-   - Install all npm dependencies (root + functions)
-   - Create a `.env` file from the template
-   - Install Playwright browsers for E2E tests
-   - Set up the `cookies` command shortcut
+## ✨ Key Features
 
-   **Or manually install:**
+- 🤖 **AI-Powered Detection**: Automatically detects individual cookies in tray images using Google Gemini AI.
+- 🗳️ **Interactive Voting**: Real-time voting system with multiple categories.
+- 📊 **Live Results**: Instant tallying and leaderboard updates.
+- 🛡️ **Admin Dashboard**: Comprehensive tools for event management and image tagging.
+- 📱 **Responsive Design**: Seamless experience across desktop and mobile.
 
-   ```bash
-   npm install
-   cd functions && npm install && cd ..
-   cp .env.example .env
-   ```
-
-3. **Configure environment variables**
-
-   Update `.env` with your Firebase credentials, or keep `VITE_USE_EMULATOR=true` for local development.
-
-4. **Start the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-   Or use the convenience script:
-
-   ```bash
-   cookies          # Production Firebase mode
-   cookies -test    # Emulator mode for local testing
-   ```
+<a id="documentation"></a>
 
 ## 📚 Documentation
+
+Detailed documentation is available for developers and contributors:
+
+- **[Product Requirements (PRD)](./docs/PRD.md)**: Feature specs and user stories.
+- **[Architecture & Tech Stack](#tech-stack)**: Overview of the system.
+- **[Gemini AI Setup](./docs/GEMINI_SETUP.md)**: Configuring the vision API.
+- **[Emulator Setup](./docs/EMULATOR_SETUP.md)**: Running Firebase locally.
+- **[Testing Guide](./docs/TESTING_GUIDE.md)**: Strategy for Unit, E2E, and Visual tests.
+- **[Storybook Library](https://tytaniumdev.github.io/CookieVoting/)**: Component documentation.
+- **[Deployment](./.github/DEPLOYMENT_SETUP.md)**: CI/CD configuration.
 
 - **[Storybook Component Library](https://tytaniumdev.github.io/CookieVoting/)** - Browse and interact with all UI components
 - [Product Requirements Document (PRD)](./docs/PRD.md) - Source of truth for functionality
@@ -79,65 +80,23 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - [EMULATOR_SETUP.md](./docs/EMULATOR_SETUP.md) - Local Firebase emulator setup
 - [STORYBOOK_SETUP.md](./docs/STORYBOOK_SETUP.md) - Storybook development guide
 - [.github/DEPLOYMENT_SETUP.md](./.github/DEPLOYMENT_SETUP.md) - Deployment configuration
+<a id="tech-stack"></a>
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite
+- **Frontend**: React 19, TypeScript, Vite, TailwindCSS
 - **Backend**: Firebase (Auth, Firestore, Storage, Functions)
 - **AI Detection**: Google Cloud Vision API
 - **UI Components**: Custom components with Storybook documentation
 - **Testing**: Vitest, Playwright, Storybook
+- **AI**: Google Gemini API
+- **Testing**: Vitest, Playwright
 - **CI/CD**: GitHub Actions
-
-## 📦 Available Scripts
-
-### Development
-
-- `npm run dev` - Start development server
-- `npm run storybook` - Start Storybook development server
-- `npm run emulators:start` - Start Firebase emulators
-
-### Testing
-
-- `npm test` - Run unit tests
-- `npm run test:integration` - Run integration tests
-- `npm run test:e2e` - Run end-to-end tests with Playwright
-
-### Building
-
-- `npm run build` - Build for production
-- `npm run build-storybook` - Build Storybook static site
-
-### Deployment
-
-- `npm run deploy` - Build and deploy to Firebase Hosting
-- `npm run firebase:deploy:all` - Deploy everything (hosting, functions, rules)
-
-## 🏗️ Project Structure
-
-```
-CookieVoting/
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── pages/          # Page components
-│   ├── lib/            # Utilities and Firebase config
-│   └── styles/         # Global styles
-├── functions/          # Firebase Cloud Functions
-├── public/             # Static assets
-├── tests/              # Test files
-├── scripts/            # Utility scripts
-└── .storybook/         # Storybook configuration
-```
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please check out the [Issues](https://github.com/TytaniumDev/CookieVoting/issues) to get started.
 
 ## 📄 License
 
 This project is private and proprietary.
-
-## 🔗 Links
-
-- **Repository**: [https://github.com/TytaniumDev/CookieVoting](https://github.com/TytaniumDev/CookieVoting)
-- **Storybook**: [https://tytaniumdev.github.io/CookieVoting/](https://tytaniumdev.github.io/CookieVoting/)
