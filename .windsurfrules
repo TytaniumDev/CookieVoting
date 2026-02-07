@@ -4,7 +4,7 @@
 >
 > **Source:** `ai/rules/` — All edits must be made there, not here.
 >
-> **Last synced:** January 12, 2026 at 22:50:16 PST · Checksum: `6a8fa8edd2f3`
+> **Last synced:** February 06, 2026 at 10:33:59 UTC · Checksum: `55561eaac6f1`
 
 ## 🤖 Instructions for AI Agents
 
@@ -438,6 +438,13 @@ description: Core project guidelines, architecture, and development standards.
 ---
 
 # Project Guidelines & Standards
+
+## Tech Stack (Enforced)
+- **Framework**: React 19 (Do not use legacy React patterns).
+- **Styling**: Tailwind CSS 4 (Use new utility-first engine).
+- **Runtime**: Node.js 20+.
+- **Backend**: Firebase 12 (Firestore, Auth, Storage, Functions).
+- **Language**: TypeScript 5.9+.
 
 ## Architecture Principles
 
