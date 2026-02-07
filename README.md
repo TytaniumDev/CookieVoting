@@ -15,6 +15,7 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - **Admin Dashboard**: Create and manage voting events, upload images, and tag cookies
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Component Documentation**: Comprehensive Storybook documentation for all UI components
+
 > A modern web application for managing and voting on cookie competitions. Powered by AI cookie detection, Firebase, and React.
 
 <!-- TODO: Add Hero Image (Screenshot of the dashboard) -->
@@ -27,8 +28,6 @@ Cookie Voting is a full-stack application designed to facilitate cookie competit
 - Node.js 20+ and npm
 - Firebase CLI (for deployment)
 - Google Cloud Vision API enabled (for cookie detection)
-- **Node.js 20+**
-- **Firebase CLI**
 
 ### Installation
 
@@ -54,7 +53,7 @@ npm run dev
 
 ## ✨ Key Features
 
-- 🤖 **AI-Powered Detection**: Automatically detects individual cookies in tray images using Google Gemini AI.
+- 🤖 **AI-Powered Detection**: Automatically detects individual cookies in tray images using **Google Cloud Vision API**.
 - 🗳️ **Interactive Voting**: Real-time voting system with multiple categories.
 - 📊 **Live Results**: Instant tallying and leaderboard updates.
 - 🛡️ **Admin Dashboard**: Comprehensive tools for event management and image tagging.
@@ -67,30 +66,23 @@ npm run dev
 Detailed documentation is available for developers and contributors:
 
 - **[Product Requirements (PRD)](./docs/PRD.md)**: Feature specs and user stories.
-- **[Architecture & Tech Stack](#tech-stack)**: Overview of the system.
-- **[Gemini AI Setup](./docs/GEMINI_SETUP.md)**: Configuring the vision API.
+- **[Technical Architecture](./docs/ARCHITECTURE_TECHNICAL.md)**: Deep dive into the stack and core workflows.
+- **[Vision API Pipeline](./docs/VisionAPI.md)**: Details on the AI detection and cropping system.
 - **[Emulator Setup](./docs/EMULATOR_SETUP.md)**: Running Firebase locally.
 - **[Testing Guide](./docs/TESTING_GUIDE.md)**: Strategy for Unit, E2E, and Visual tests.
 - **[Storybook Library](https://tytaniumdev.github.io/CookieVoting/)**: Component documentation.
 - **[Deployment](./.github/DEPLOYMENT_SETUP.md)**: CI/CD configuration.
+- **[Gemini Script Setup](./docs/GEMINI_SCRIPT_SETUP.md)**: (Experimental) Setup for the Gemini utility script.
 
-- **[Storybook Component Library](https://tytaniumdev.github.io/CookieVoting/)** - Browse and interact with all UI components
-- [Product Requirements Document (PRD)](./docs/PRD.md) - Source of truth for functionality
-- [GEMINI_SCRIPT_SETUP.md](./docs/GEMINI_SCRIPT_SETUP.md) - Setup guide for experimental Gemini AI cookie detection script
-- [EMULATOR_SETUP.md](./docs/EMULATOR_SETUP.md) - Local Firebase emulator setup
-- [STORYBOOK_SETUP.md](./docs/STORYBOOK_SETUP.md) - Storybook development guide
-- [.github/DEPLOYMENT_SETUP.md](./.github/DEPLOYMENT_SETUP.md) - Deployment configuration
 <a id="tech-stack"></a>
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite, TailwindCSS
 - **Backend**: Firebase (Auth, Firestore, Storage, Functions)
-- **AI Detection**: Google Cloud Vision API
+- **AI Detection**: Google Cloud Vision API (Production), Google Gemini (Experimental Script)
 - **UI Components**: Custom components with Storybook documentation
 - **Testing**: Vitest, Playwright, Storybook
-- **AI**: Google Gemini API
-- **Testing**: Vitest, Playwright
 - **CI/CD**: GitHub Actions
 
 ## 🤝 Contributing
