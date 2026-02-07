@@ -41,8 +41,8 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-      - name: Run integration tests
-        run: npm run test:integration
+      - name: Run unit & integration tests
+        run: npm test
 
       - name: Run Storybook tests
         run: npm run test-storybook

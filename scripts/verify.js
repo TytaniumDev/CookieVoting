@@ -4,10 +4,9 @@ import process from 'process';
 const steps = [
   { name: 'Lint', command: 'npm', args: ['run', 'lint'] },
   {
-    name: 'Integration Tests',
+    name: 'Unit & Integration Tests',
     command: 'npm',
-    args: ['run', 'test:integration'],
-    continueOnError: true,
+    args: ['test'],
   },
   { name: 'Storybook Tests', command: 'npm', args: ['run', 'test-storybook'] },
   { name: 'Build', command: 'npm', args: ['run', 'build'] },

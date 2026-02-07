@@ -2,4 +2,5 @@
 
 ## Critical Learnings
 
-- **Agent Context Location**: Agent Context Files are located in `ai/rules/`, not `.jules/`. The prompt instructions were slightly drifted from the repo structure. The `.jules` directory is used for this journal and possibly other artifacts, but the source of truth for Agent Prompts is `ai/rules/*.md`.
+- **Testing Strategy Consolidation**: `npm test` runs both unit and integration tests (via Vitest project `unit` including `tests/` and `src/`). CI previously only ran `test:integration`, skipping unit tests. This gap has been closed.
+- **Documentation Organization**: Moved `TESTING_STRATEGY.md` to `docs/` to reduce root clutter. `AGENTS.md` established as SSOT for intent.
