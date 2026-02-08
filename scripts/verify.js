@@ -1,19 +1,27 @@
 import { spawnSync } from 'child_process';
 import process from 'process';
 
+const args = process.argv.slice(2);
+const skipBuild = args.includes('--skip-build');
+
 const steps = [
   { name: 'Lint', command: 'npm', args: ['run', 'lint'] },
   {
-    name: 'Integration Tests',
+    name: 'Unit & Integration Tests',
     command: 'npm',
-    args: ['run', 'test:integration'],
-    continueOnError: true,
+    args: ['run', 'test'],
   },
   { name: 'Storybook Tests', command: 'npm', args: ['run', 'test-storybook'] },
-  { name: 'Build', command: 'npm', args: ['run', 'build'] },
 ];
 
+if (!skipBuild) {
+  steps.push({ name: 'Build', command: 'npm', args: ['run', 'build'] });
+}
+
 console.log('🚀 Starting Presubmit Verification...');
+if (skipBuild) {
+  console.log('⏩ Skipping Build step...');
+}
 console.log('=====================================');
 
 for (const step of steps) {
