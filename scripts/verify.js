@@ -1,22 +1,31 @@
 import { spawnSync } from 'child_process';
 import process from 'process';
 
+const args = process.argv.slice(2);
+const skipBuild = args.includes('--skip-build');
+
 const steps = [
   { name: 'Lint', command: 'npm', args: ['run', 'lint'] },
   {
     name: 'Integration Tests',
     command: 'npm',
     args: ['run', 'test:integration'],
-    continueOnError: true,
   },
   { name: 'Storybook Tests', command: 'npm', args: ['run', 'test-storybook'] },
   { name: 'Build', command: 'npm', args: ['run', 'build'] },
 ];
 
 console.log('🚀 Starting Presubmit Verification...');
+if (skipBuild) {
+  console.log('⏩ Skipping build step...');
+}
 console.log('=====================================');
 
 for (const step of steps) {
+  if (skipBuild && step.name === 'Build') {
+    continue;
+  }
+
   console.log(`\n📦 Running ${step.name}...`);
   const start = Date.now();
   // On Windows, npm needs shell: true or to be npm.cmd, but shell: true is safer generally for scripts
