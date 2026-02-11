@@ -1,7 +1,7 @@
 ---
 trigger: always
 description: TDD workflow and testing strategy - tests before code, verification requirements.
-generatedAt: "2026-02-06T10:33:59Z"
+generatedAt: "2026-02-11T10:47:09Z"
 sourceChecksum: "55561eaac6f1"
 ---
 

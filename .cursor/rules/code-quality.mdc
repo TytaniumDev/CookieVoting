@@ -1,7 +1,7 @@
 ---
 trigger: always
 description: Code quality standards for TypeScript, error handling, and maintainable code.
-generatedAt: "2026-02-06T10:33:59Z"
+generatedAt: "2026-02-11T10:47:09Z"
 sourceChecksum: "55561eaac6f1"
 ---
 
