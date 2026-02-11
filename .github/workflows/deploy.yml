@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check agent rules sync
+        run: npm run sync-agent-rules:check
+
       - name: Run linter
         run: npm run lint
 
