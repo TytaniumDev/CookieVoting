@@ -60,7 +60,7 @@ fi
 
 # Calculate checksum of all source files
 calculate_checksum() {
-    find "$RULES_DIR" -name "*.md" -type f -exec cat {} \; 2>/dev/null | sha256sum | cut -d' ' -f1
+    find "$RULES_DIR" -name "*.md" -type f | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1
 }
 
 # Get current checksum
