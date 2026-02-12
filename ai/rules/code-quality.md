@@ -139,6 +139,7 @@ if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
 ## Code Review Checklist
 
 ### General
+
 - [ ] TypeScript compiles with no errors
 - [ ] No `any` types (or justified with comment)
 - [ ] Error cases are handled
@@ -147,5 +148,6 @@ if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
 - [ ] No commented-out code
 
 ### Testing
+
 - [ ] Tests added for new functionality
 - [ ] Storybook stories for new components

@@ -28,7 +28,7 @@ export function useDetectionJob(options: UseDetectionJobOptions = {}): UseDetect
         setIsDetecting(false);
       }
     },
-    [options]
+    [options],
   );
 
   return {

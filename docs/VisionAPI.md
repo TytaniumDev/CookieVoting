@@ -63,8 +63,8 @@ Ensure you have the Firebase CLI installed and initialized:
 npm install -g firebase-tools
 firebase login
 firebase init functions
-# Select JavaScript (or TypeScript if preferred, this guide uses JS)
 
+# Select JavaScript (or TypeScript if preferred, this guide uses JS)
 
 4. Data Modeling
 
@@ -107,7 +107,6 @@ Navigate to your functions folder and install the required packages.
 cd functions
 npm install firebase-admin firebase-functions @google-cloud/vision sharp fs-extra
 
-
 Step 2: The Cloud Function Code (functions/index.js)
 
 const functions = require("firebase-functions");
@@ -129,36 +128,36 @@ const visionClient = new vision.ImageAnnotatorClient();
 const TARGET_COLLECTION = "cookie_batches";
 // Padding adds "breathing room" around the cookie so it isn't cropped too tightly.
 // 0.1 = 10% extra width/height added to the crop.
-const PADDING_PERCENTAGE = 0.1; 
+const PADDING_PERCENTAGE = 0.1;
 
 exports.processCookieImage = functions.storage.object().onFinalize(async (object) => {
-  const fileBucket = object.bucket; 
-  const filePath = object.name; 
-  const contentType = object.contentType;
+const fileBucket = object.bucket;
+const filePath = object.name;
+const contentType = object.contentType;
 
-  // --- 1. Validation ---
-  if (!contentType.startsWith("image/")) return console.log("Not an image.");
-  if (!filePath.startsWith("uploads/")) return console.log("Not in uploads folder.");
-  if (filePath.includes("processed_cookies")) return console.log("Already processed.");
+// --- 1. Validation ---
+if (!contentType.startsWith("image/")) return console.log("Not an image.");
+if (!filePath.startsWith("uploads/")) return console.log("Not in uploads folder.");
+if (filePath.includes("processed_cookies")) return console.log("Already processed.");
 
-  const fileName = path.basename(filePath);
-  // Assumes path format: uploads/{batchId}/original.jpg
-  const batchId = path.dirname(filePath).split(path.sep).pop(); 
-  
-  const bucket = storage.bucket(fileBucket);
-  const tempFilePath = path.join(os.tmpdir(), fileName);
+const fileName = path.basename(filePath);
+// Assumes path format: uploads/{batchId}/original.jpg
+const batchId = path.dirname(filePath).split(path.sep).pop();
 
-  // Initialize Batch Status in Firestore
-  const batchRef = db.collection(TARGET_COLLECTION).doc(batchId);
-  await batchRef.set({
-    status: "processing",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    originalImage: filePath
-  }, { merge: true });
+const bucket = storage.bucket(fileBucket);
+const tempFilePath = path.join(os.tmpdir(), fileName);
 
-  try {
-    // --- 2. Download ---
-    await bucket.file(filePath).download({ destination: tempFilePath });
+// Initialize Batch Status in Firestore
+const batchRef = db.collection(TARGET_COLLECTION).doc(batchId);
+await batchRef.set({
+status: "processing",
+createdAt: admin.firestore.FieldValue.serverTimestamp(),
+originalImage: filePath
+}, { merge: true });
+
+try {
+// --- 2. Download ---
+await bucket.file(filePath).download({ destination: tempFilePath });
 
     // --- 3. Vision API (Object Localization) ---
     const [result] = await visionClient.objectLocalization(tempFilePath);
@@ -185,7 +184,7 @@ exports.processCookieImage = functions.storage.object().onFinalize(async (object
 
       // Calculate Bounding Box
       const vertices = object.boundingPoly.normalizedVertices;
-      
+
       // Find min/max (0-1 range)
       let minX = 1, maxX = 0, minY = 1, maxY = 0;
       vertices.forEach(v => {
@@ -220,7 +219,7 @@ exports.processCookieImage = functions.storage.object().onFinalize(async (object
 
       // --- 6. Upload Crop ---
       const destination = `processed_cookies/${batchId}/${outputFileName}`;
-      
+
       const uploadTask = bucket.upload(outputTempPath, {
         destination: destination,
         metadata: {
@@ -244,15 +243,14 @@ exports.processCookieImage = functions.storage.object().onFinalize(async (object
 
     await Promise.all(uploadPromises);
     await batchRef.update({ status: "ready", totalCandidates: cookieCounter });
-    
-  } catch (err) {
-    console.error(err);
-    await batchRef.update({ status: "error", error: err.message });
-  } finally {
-    await fs.remove(tempFilePath); // Cleanup original temp
-  }
-});
 
+} catch (err) {
+console.error(err);
+await batchRef.update({ status: "error", error: err.message });
+} finally {
+await fs.remove(tempFilePath); // Cleanup original temp
+}
+});
 
 6. Frontend Integration Guide
 
@@ -265,24 +263,24 @@ import { getFirestore, doc, collection, onSnapshot, setDoc } from "firebase/fire
 
 // 1. Upload Function
 async function uploadTray(file) {
-  const batchId = Date.now().toString(); // Or a UUID
-  
-  // Create the batch doc first so UI can transition to loading state
-  await setDoc(doc(db, "cookie_batches", batchId), { status: "uploading" });
+const batchId = Date.now().toString(); // Or a UUID
 
-  const storageRef = ref(storage, `uploads/${batchId}/original.jpg`);
-  await uploadBytes(storageRef, file);
-  
-  return batchId;
+// Create the batch doc first so UI can transition to loading state
+await setDoc(doc(db, "cookie_batches", batchId), { status: "uploading" });
+
+const storageRef = ref(storage, `uploads/${batchId}/original.jpg`);
+await uploadBytes(storageRef, file);
+
+return batchId;
 }
 
 // 2. Listening Function (React Hook Example)
 function useCookieCandidates(batchId) {
-  const [cookies, setCookies] = useState([]);
-  const [status, setStatus] = useState("loading");
+const [cookies, setCookies] = useState([]);
+const [status, setStatus] = useState("loading");
 
-  useEffect(() => {
-    if(!batchId) return;
+useEffect(() => {
+if(!batchId) return;
 
     // Listen to the batch status
     const batchUnsub = onSnapshot(doc(db, "cookie_batches", batchId), (doc) => {
@@ -296,11 +294,11 @@ function useCookieCandidates(batchId) {
     });
 
     return () => { batchUnsub(); candidatesUnsub(); };
-  }, [batchId]);
 
-  return { cookies, status };
+}, [batchId]);
+
+return { cookies, status };
 }
-
 
 7. Cost & Limits Analysis
 

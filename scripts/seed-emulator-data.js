@@ -129,11 +129,11 @@ async function seedData() {
       // Create Bakers
       await db.collection('events').doc(eventId).collection('bakers').doc(bakerId1).set({
         name: 'Ryan',
-        id: bakerId1
+        id: bakerId1,
       });
       await db.collection('events').doc(eventId).collection('bakers').doc(bakerId2).set({
         name: 'Kelly',
-        id: bakerId2
+        id: bakerId2,
       });
 
       const sampleCookies = [
@@ -148,7 +148,7 @@ async function seedData() {
         {
           id: cookie3Id,
           imageUrl: 'https://placehold.co/400x400/green/white?text=Cookie+3',
-        }
+        },
       ];
 
       await db.collection('events').doc(eventId).collection('categories').doc(categoryId).set({

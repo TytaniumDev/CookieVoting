@@ -27,23 +27,23 @@ For each CSS Module file, follow these steps:
 
 #### Basic Conversions
 
-| CSS Property | Tailwind v4 Class |
-|--------------|-------------------|
-| `display: flex` | `flex` |
-| `display: grid` | `grid` |
-| `flex-direction: column` | `flex-col` |
-| `justify-content: center` | `justify-center` |
-| `align-items: center` | `items-center` |
-| `padding: 1rem` | `p-4` |
-| `margin: 1rem` | `m-4` |
-| `width: 100%` | `w-full` |
-| `height: 100%` | `h-full` |
-| `background-color: #fff` | `bg-white` |
-| `color: #333` | `text-gray-800` |
-| `border-radius: 0.5rem` | `rounded-lg` |
-| `font-size: 1.25rem` | `text-xl` |
-| `font-weight: 700` | `font-bold` |
-| `box-shadow: ...` | `shadow-md` |
+| CSS Property              | Tailwind v4 Class |
+| ------------------------- | ----------------- |
+| `display: flex`           | `flex`            |
+| `display: grid`           | `grid`            |
+| `flex-direction: column`  | `flex-col`        |
+| `justify-content: center` | `justify-center`  |
+| `align-items: center`     | `items-center`    |
+| `padding: 1rem`           | `p-4`             |
+| `margin: 1rem`            | `m-4`             |
+| `width: 100%`             | `w-full`          |
+| `height: 100%`            | `h-full`          |
+| `background-color: #fff`  | `bg-white`        |
+| `color: #333`             | `text-gray-800`   |
+| `border-radius: 0.5rem`   | `rounded-lg`      |
+| `font-size: 1.25rem`      | `text-xl`         |
+| `font-weight: 700`        | `font-bold`       |
+| `box-shadow: ...`         | `shadow-md`       |
 
 #### Custom Colors (from tailwind.config.js)
 
@@ -59,13 +59,13 @@ For each CSS Module file, follow these steps:
 
 #### Spacing (from variables.css)
 
-| CSS Variable | Tailwind Class |
-|--------------|----------------|
+| CSS Variable            | Tailwind Class     |
+| ----------------------- | ------------------ |
 | `--spacing-1` (0.25rem) | `space-1` or `p-1` |
-| `--spacing-2` (0.5rem) | `space-2` or `p-2` |
-| `--spacing-4` (1rem) | `space-4` or `p-4` |
-| `--spacing-6` (1.5rem) | `space-6` or `p-6` |
-| `--spacing-8` (2rem) | `space-8` or `p-8` |
+| `--spacing-2` (0.5rem)  | `space-2` or `p-2` |
+| `--spacing-4` (1rem)    | `space-4` or `p-4` |
+| `--spacing-6` (1.5rem)  | `space-6` or `p-6` |
+| `--spacing-8` (2rem)    | `space-8` or `p-8` |
 
 #### Responsive Design
 
@@ -84,6 +84,7 @@ For each CSS Module file, follow these steps:
 ```
 
 Mobile-first approach:
+
 - Base classes apply to mobile
 - Use `md:`, `lg:`, `xl:` prefixes for larger screens
 
@@ -106,10 +107,12 @@ Mobile-first approach:
 #### Animations
 
 If the component uses `@keyframes` animations from `global.css`, keep using CSS Modules OR:
+
 - Use Tailwind's built-in animations (`animate-spin`, `animate-pulse`, etc.)
 - For custom animations, keep them in `global.css` and reference by name
 
 **Example:**
+
 ```css
 /* In global.css - keep this */
 @keyframes shimmer {
@@ -124,36 +127,41 @@ If the component uses `@keyframes` animations from `global.css`, keep using CSS 
 #### Complex Selectors
 
 For nested selectors that don't translate well to Tailwind:
+
 1. Use Tailwind's arbitrary variants: `[&>button]:text-red-500`
 2. Or keep minimal CSS in a separate CSS file (non-module)
 
 #### CSS Variables
 
 If using CSS variables from `variables.css`:
+
 - Convert to Tailwind custom colors (already in config)
 - Or use arbitrary values: `bg-[var(--color-bg-primary)]`
 
 ### 4. Update Component
 
 1. Remove CSS Module import:
+
    ```tsx
    // Before
    import styles from './Component.module.css';
    ```
 
 2. Replace `styles.className` with Tailwind classes:
+
    ```tsx
    // Before
    <div className={styles.container}>
-   
+
    // After
    <div className="flex flex-col p-4 bg-surface rounded-lg">
    ```
 
 3. Use `cn()` utility for conditional classes:
+
    ```tsx
    import { cn } from '../../lib/cn';
-   
+
    <div className={cn(
      "base-classes",
      isActive && "active-classes",
@@ -162,10 +170,11 @@ If using CSS variables from `variables.css`:
    ```
 
 4. Handle dynamic classes:
+
    ```tsx
    // Good
    className={error ? 'text-red-500' : 'text-green-500'}
-   
+
    // Bad - Tailwind can't detect dynamic class names
    className={`text-${error ? 'red' : 'green'}-500`}
    ```
@@ -192,6 +201,7 @@ After migration, verify:
 ### 7. Common Patterns
 
 #### Modal/Overlay
+
 ```css
 /* Before */
 .modalOverlay {
@@ -214,6 +224,7 @@ After migration, verify:
 ```
 
 #### Card Component
+
 ```css
 /* Before */
 .card {
@@ -230,6 +241,7 @@ After migration, verify:
 ```
 
 #### Button with States
+
 ```css
 /* Before */
 .button {
@@ -264,6 +276,7 @@ Tailwind v4 uses CSS-first configuration. The `tailwind.config.js` is still supp
 ### Theme Customization
 
 Custom colors and spacing are defined in `tailwind.config.js` and available as:
+
 - `bg-surface`, `bg-surface-secondary`, `bg-surface-tertiary`
 - `bg-background`, `bg-background-secondary`
 - `text-primary-{50-950}`, `text-accent`, `text-success`, `text-danger`

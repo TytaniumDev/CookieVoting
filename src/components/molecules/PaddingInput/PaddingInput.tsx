@@ -29,7 +29,10 @@ export function PaddingInput({ value, onChange, className, disabled }: PaddingIn
   const inputId = `padding-input-${Math.random().toString(36).substring(7)}`;
   return (
     <div className={cn('space-y-2', className)}>
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label
+        htmlFor={inputId}
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Padding Percentage
       </label>
       <div className="flex items-center gap-4">

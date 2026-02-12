@@ -36,7 +36,19 @@ export async function uploadTray(
   }
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'uploadTray.ts:39',message:'uploadTray entry',data:{batchId,eventId,categoryId,fileSize:file.size,paddingPercentage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'uploadTray.ts:39',
+      message: 'uploadTray entry',
+      data: { batchId, eventId, categoryId, fileSize: file.size, paddingPercentage },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      runId: 'run1',
+      hypothesisId: 'C',
+    }),
+  }).catch(() => {});
   // #endregion
 
   // Create batch document first with status "uploading"
@@ -51,7 +63,19 @@ export async function uploadTray(
   });
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'uploadTray.ts:52',message:'after setDoc batch',data:{batchId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'uploadTray.ts:52',
+      message: 'after setDoc batch',
+      data: { batchId },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      runId: 'run1',
+      hypothesisId: 'C',
+    }),
+  }).catch(() => {});
   // #endregion
 
   // Upload image to Storage
@@ -60,7 +84,19 @@ export async function uploadTray(
   await uploadBytes(storageRef, file);
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'uploadTray.ts:58',message:'after uploadBytes',data:{batchId,storagePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'uploadTray.ts:58',
+      message: 'after uploadBytes',
+      data: { batchId, storagePath },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      runId: 'run1',
+      hypothesisId: 'C',
+    }),
+  }).catch(() => {});
   // #endregion
 
   // The Cloud Function will automatically trigger when the file is uploaded

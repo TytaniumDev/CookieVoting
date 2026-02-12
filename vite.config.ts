@@ -14,10 +14,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   optimizeDeps: {
     include: ['react-draggable', 'react-rnd', 'react-modal-sheet'],
   },

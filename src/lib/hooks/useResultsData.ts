@@ -78,4 +78,3 @@ function calculateResults(categories: Category[], votesData: UserVote[]): Catego
     };
   });
 }
-

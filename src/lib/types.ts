@@ -27,7 +27,7 @@ export interface ImageEntity {
   eventId?: string;
   /** Timestamp when the image was uploaded */
   createdAt: number;
-  /** 
+  /**
    * Image type to distinguish between tray images and individual cropped cookies
    * - 'tray_image': Full tray/plate image uploaded to a category
    * - 'cropped_cookie': Individual cookie image created by the Cookie Cropper

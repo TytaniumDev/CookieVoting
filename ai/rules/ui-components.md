@@ -6,6 +6,7 @@ description: Standards for building UI components with React, TypeScript, and St
 # UI Component Standards
 
 ## Design Principles
+
 1. **Single Responsibility**: One thing well. Split if >150 lines.
 2. **Props-Based**: No internal data fetching. Use callbacks for actions.
 3. **Type Safety**: strict interfaces for Props. Export them.
@@ -19,13 +20,16 @@ interface ButtonProps {
 ```
 
 ## Storybook Development
+
 **Workflow:**
+
 1. **Build in Storybook**: Don't integrate until the component works in isolation.
 2. **Variations**: Create stories for Primary, Disabled, Loading, Error, Empty.
 3. **Interaction**: Use `play` functions to test behavior.
 4. **Accessibility**: Check the a11y addon tab.
 
 **Story Example:**
+
 ```tsx
 const meta: Meta<typeof Button> = { component: Button };
 export default meta;
@@ -34,16 +38,18 @@ export const Primary: Story = { args: { variant: 'primary' } };
 export const Interaction: Story = {
   play: async ({ canvas }) => {
     await canvas.getByRole('button').click();
-  }
+  },
 };
 ```
 
 ## Styling (CSS Modules)
+
 - Use `.module.css` files.
 - CamelCase class names: `styles.buttonPrimary`.
 - Scope styles strictly to the component.
 
 ## Accessibility Checklist
+
 - [ ] Semantic HTML (`<button>` not `<div>`)
 - [ ] Visible focus states
 - [ ] Keyboard navigation support

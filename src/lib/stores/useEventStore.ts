@@ -199,14 +199,12 @@ export const useEventStore = create<EventState>((set, get) => ({
   updateCategoryCookies: async (eventId: string, categoryId: string, cookies: Cookie[]) => {
     // Optimistic update immediately
     set((state) => ({
-      categories: state.categories.map((c) =>
-        c.id === categoryId ? { ...c, cookies } : c
-      ),
+      categories: state.categories.map((c) => (c.id === categoryId ? { ...c, cookies } : c)),
     }));
 
     try {
       const docRef = doc(db, 'events', eventId, 'categories', categoryId);
-      const sanitizedCookies = cookies.map(c => {
+      const sanitizedCookies = cookies.map((c) => {
         const cookie = { ...c };
         if (cookie.bakerId === undefined) {
           delete cookie.bakerId;

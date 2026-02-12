@@ -340,7 +340,6 @@ export async function deleteCategory(
   }
 }
 
-
 export async function updateCategory(
   eventId: string,
   categoryId: string,
@@ -357,10 +356,7 @@ export async function updateCategory(
   await updateDoc(ref, updateData);
 }
 
-export async function getCategory(
-  eventId: string,
-  categoryId: string,
-): Promise<Category | null> {
+export async function getCategory(eventId: string, categoryId: string): Promise<Category | null> {
   const categoryRef = doc(db, 'events', eventId, 'categories', categoryId);
   const categorySnap = await getDoc(categoryRef);
   if (categorySnap.exists()) {
@@ -404,7 +400,12 @@ export async function deleteEvent(eventId: string): Promise<void> {
 }
 
 // Processing status type
-export type ProcessingStatus = 'not_processed' | 'in_progress' | 'processed' | 'error' | 'review_required';
+export type ProcessingStatus =
+  | 'not_processed'
+  | 'in_progress'
+  | 'processed'
+  | 'error'
+  | 'review_required';
 
 /**
  * Get processing status for a category based on its batch
@@ -437,10 +438,7 @@ export async function getCategoryProcessingStatus(
 /**
  * Clear cookies from a category
  */
-export async function clearCategoryCookies(
-  eventId: string,
-  categoryId: string,
-): Promise<void> {
+export async function clearCategoryCookies(eventId: string, categoryId: string): Promise<void> {
   const categoryRef = doc(db, 'events', eventId, 'categories', categoryId);
   await updateDoc(categoryRef, { cookies: [] });
 }
@@ -455,10 +453,7 @@ import { uploadTray } from './uploadTray';
  * Reprocess a category by clearing cookies and restarting the pipeline
  * This fetches the existing image, creates a new batch, and triggers the Cloud Function
  */
-export async function reprocessCategory(
-  eventId: string,
-  categoryId: string,
-): Promise<void> {
+export async function reprocessCategory(eventId: string, categoryId: string): Promise<void> {
   const category = await getCategory(eventId, categoryId);
   if (!category) {
     throw new Error('Category not found');
@@ -488,7 +483,7 @@ export async function reprocessCategory(
     throw new Error('Failed to fetch original image for reprocessing');
   }
   const blob = await response.blob();
-  const file = new File([blob], "reprocess_original.jpg", { type: blob.type });
+  const file = new File([blob], 'reprocess_original.jpg', { type: blob.type });
 
   // 4. Generate new batch ID and start pipeline
   const newBatchId = uuidv4();
@@ -501,4 +496,3 @@ export async function reprocessCategory(
     batchId: newBatchId,
   });
 }
-

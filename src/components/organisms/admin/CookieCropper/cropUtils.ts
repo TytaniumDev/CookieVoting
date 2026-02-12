@@ -18,7 +18,12 @@ export function sliceImage(_image: HTMLImageElement, _regions: SliceRegion[]): P
   return Promise.resolve([]);
 }
 
-export function generateGrid(_rows: number, _cols: number, _width: number, _height: number): SliceRegion[] {
+export function generateGrid(
+  _rows: number,
+  _cols: number,
+  _width: number,
+  _height: number,
+): SliceRegion[] {
   return [];
 }
 
@@ -29,4 +34,3 @@ export function clampRegion(region: SliceRegion, _width: number, _height: number
 export function validateRegion(_region: SliceRegion, _width: number, _height: number): boolean {
   return true;
 }
-

@@ -62,6 +62,7 @@ function AuthStatus() {
 **Distinguish between fetching data and mutating data:**
 
 ### 1. Fetching (Global Loading)
+
 Use `isLoading` for initial data fetches where the page cannot render without data.
 
 ```typescript
@@ -77,6 +78,7 @@ fetchEvents: async () => {
 ```
 
 ### 2. Mutating (Optimistic Updates)
+
 **NEVER** trigger a global loading state for small user actions (like toggling a vote or editing a name). It causes jarring UI flashes.
 Instead, update the local state **immediately**, then sync with the backend.
 
@@ -87,7 +89,7 @@ toggleVote: async (eventId: string) => {
 
   // 2. Optimistic Update (Instant feedback)
   set((state) => ({
-    events: state.events.map(e => 
+    events: state.events.map(e =>
       e.id === eventId ? { ...e, voted: !e.voted } : e
     )
   }));
@@ -115,13 +117,13 @@ src/lib/stores/
 
 ## When to Use Zustand vs Local State
 
-| Use Case | Solution |
-|----------|----------|
-| Form input values | `useState` |
-| Modal open/closed | `useState` |
-| Current user | Zustand |
-| Shared data across routes | Zustand |
-| Server cache | Zustand or React Query |
+| Use Case                  | Solution               |
+| ------------------------- | ---------------------- |
+| Form input values         | `useState`             |
+| Modal open/closed         | `useState`             |
+| Current user              | Zustand                |
+| Shared data across routes | Zustand                |
+| Server cache              | Zustand or React Query |
 
 ## Zustand Checklist
 

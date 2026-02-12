@@ -1,6 +1,6 @@
 /**
  * Template for testing forms with React Hook Form + Zod
- * 
+ *
  * Copy this template and adapt it for your form component.
  */
 

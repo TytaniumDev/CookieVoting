@@ -46,7 +46,9 @@ import { useYourStore } from '../useYourStore';
 describe('YourStore', () => {
   beforeEach(() => {
     // Reset state
-    useYourStore.setState({ /* initial state */ });
+    useYourStore.setState({
+      /* initial state */
+    });
   });
 
   it('should handle actions', () => {
@@ -68,7 +70,7 @@ it('should validate required fields', async () => {
   render(<YourForm />);
   const submitButton = screen.getByRole('button', { name: /submit/i });
   await userEvent.click(submitButton);
-  
+
   await waitFor(() => {
     expect(screen.getByText(/required/i)).toBeInTheDocument();
   });
@@ -83,7 +85,7 @@ Test user interactions:
 it('should handle clicks', async () => {
   const handleClick = vi.fn();
   render(<Button onClick={handleClick} />);
-  
+
   await userEvent.click(screen.getByRole('button'));
   expect(handleClick).toHaveBeenCalled();
 });
@@ -118,6 +120,7 @@ npm run test:coverage
 ## Critical Paths to Test
 
 ### High Priority
+
 - [ ] Voting flow (submit votes, view results)
 - [ ] Admin event creation
 - [ ] Admin category/baker management
@@ -125,6 +128,7 @@ npm run test:coverage
 - [ ] Error boundaries
 
 ### Medium Priority
+
 - [ ] Image upload
 - [ ] Cookie detection
 - [ ] Store actions

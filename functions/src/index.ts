@@ -82,7 +82,9 @@ export const processCookieImage = onObjectFinalized(
 
       // Validate eventId and categoryId
       if (!eventId || !categoryId) {
-        console.error(`Missing eventId or categoryId in batch ${batchId}. Cannot write to Category.`);
+        console.error(
+          `Missing eventId or categoryId in batch ${batchId}. Cannot write to Category.`,
+        );
         await batchRef.update({
           status: 'error',
           error: 'Missing eventId or categoryId',
@@ -91,7 +93,11 @@ export const processCookieImage = onObjectFinalized(
       }
 
       // Validate padding is within range
-      if (typeof paddingPercentage !== 'number' || paddingPercentage < MIN_PADDING || paddingPercentage > MAX_PADDING) {
+      if (
+        typeof paddingPercentage !== 'number' ||
+        paddingPercentage < MIN_PADDING ||
+        paddingPercentage > MAX_PADDING
+      ) {
         console.warn(
           `Invalid paddingPercentage ${paddingPercentage}, using default ${DEFAULT_PADDING_PERCENTAGE}`,
         );
@@ -120,7 +126,9 @@ export const processCookieImage = onObjectFinalized(
       const [result] = await visionClient.objectLocalization(enhancedTempFilePath);
 
       // Clean up enhanced image immediately
-      await fs.remove(enhancedTempFilePath).catch(e => console.warn('Failed to cleanup enhanced image:', e));
+      await fs
+        .remove(enhancedTempFilePath)
+        .catch((e) => console.warn('Failed to cleanup enhanced image:', e));
 
       const objects = result.localizedObjectAnnotations || [];
       console.log(`Vision API detected ${objects.length} objects`);
@@ -137,7 +145,11 @@ export const processCookieImage = onObjectFinalized(
       }> = [];
 
       for (const obj of objects) {
-        if (!obj.boundingPoly || !obj.boundingPoly.normalizedVertices || obj.boundingPoly.normalizedVertices.length < 2) {
+        if (
+          !obj.boundingPoly ||
+          !obj.boundingPoly.normalizedVertices ||
+          obj.boundingPoly.normalizedVertices.length < 2
+        ) {
           continue;
         }
         detectedObjects.push({
@@ -154,10 +166,12 @@ export const processCookieImage = onObjectFinalized(
         // We don't save cookies to Category yet
       });
 
-      console.log(`Batch ${batchId} set to review_required with ${detectedObjects.length} detected objects`);
+      console.log(
+        `Batch ${batchId} set to review_required with ${detectedObjects.length} detected objects`,
+      );
 
       // Clean up temp files
-      await fs.remove(tempFilePath).catch(e => console.warn('Failed to cleanup temp file:', e));
+      await fs.remove(tempFilePath).catch((e) => console.warn('Failed to cleanup temp file:', e));
     } catch (error) {
       console.error(`Error processing cookie image ${filePath}:`, error);
       await batchRef.update({
@@ -282,15 +296,15 @@ export const removeAdminRole = functionsV2.https.onCall(
 export const autoGrantAdmin =
   process.env.FUNCTIONS_EMULATOR === 'true'
     ? beforeUserCreated({ region: 'us-west1' }, async (event) => {
-      console.log(
-        `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
-      );
-      return {
-        customClaims: {
-          admin: true,
-        },
-      };
-    })
+        console.log(
+          `[Emulator] Auto-granting admin to new user: ${event.data?.email || 'no-email'} (${event.data?.uid})`,
+        );
+        return {
+          customClaims: {
+            admin: true,
+          },
+        };
+      })
     : undefined;
 
 /**
@@ -306,16 +320,16 @@ export const confirmCookieCrops = functionsV2.https.onCall(
   async (request) => {
     // Check authentication (admin only)
     if (!request.auth || request.auth.token.admin !== true) {
-      throw new functionsV2.https.HttpsError(
-        'permission-denied',
-        'Only admins can confirm crops.',
-      );
+      throw new functionsV2.https.HttpsError('permission-denied', 'Only admins can confirm crops.');
     }
 
     const { batchId, crops } = request.data;
 
     if (!batchId || !Array.isArray(crops)) {
-      throw new functionsV2.https.HttpsError('invalid-argument', 'BatchId and crops array required.');
+      throw new functionsV2.https.HttpsError(
+        'invalid-argument',
+        'BatchId and crops array required.',
+      );
     }
 
     console.log(`Confirming crops for batch ${batchId} with ${crops.length} crops`);
@@ -402,7 +416,11 @@ export const confirmCookieCrops = functionsV2.https.onCall(
       }
 
       // Update Category
-      const categoryRef = db.collection('events').doc(eventId).collection('categories').doc(categoryId);
+      const categoryRef = db
+        .collection('events')
+        .doc(eventId)
+        .collection('categories')
+        .doc(categoryId);
       await categoryRef.update({ cookies });
 
       // Update Batch
@@ -412,12 +430,14 @@ export const confirmCookieCrops = functionsV2.https.onCall(
       });
 
       return { success: true, count: cookies.length };
-
     } catch (error) {
       console.error('Error confirming crops:', error);
-      throw new functionsV2.https.HttpsError('internal', error instanceof Error ? error.message : 'Unknown error');
+      throw new functionsV2.https.HttpsError(
+        'internal',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     } finally {
-      await fs.remove(tempFilePath).catch(() => { });
+      await fs.remove(tempFilePath).catch(() => {});
     }
-  }
+  },
 );

@@ -118,7 +118,9 @@ export function AuthButton({ user, loading, onSignIn, onSignOut }: AuthButtonPro
         {showMenu && (
           <div className="absolute top-[calc(100%+8px)] right-0 bg-[#0a1628] border border-white/10 rounded-lg shadow-lg min-w-[200px] z-[1000] overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10">
-              <div className="font-semibold text-[#f8fafc] mb-1 text-sm">{user.displayName || 'User'}</div>
+              <div className="font-semibold text-[#f8fafc] mb-1 text-sm">
+                {user.displayName || 'User'}
+              </div>
               <div className="text-xs text-[#cbd5e1] break-all">{user.email}</div>
             </div>
             <button

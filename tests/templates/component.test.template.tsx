@@ -1,6 +1,6 @@
 /**
  * Template for testing React components
- * 
+ *
  * Copy this template and adapt it for your component.
  */
 

@@ -19,13 +19,13 @@ function useEvent(eventId: string) {
     const unsubscribe = onSnapshot(
       doc(db, 'events', eventId),
       (snapshot) => {
-        setEvent(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Event : null);
+        setEvent(snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as Event) : null);
         setIsLoading(false);
       },
       (err) => {
         setError(err);
         setIsLoading(false);
-      }
+      },
     );
     return unsubscribe;
   }, [eventId]);
@@ -43,7 +43,7 @@ useEffect(() => {
   const unsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
     // handle data
   });
-  
+
   return () => unsubscribe(); // Clean up!
 }, []);
 ```
@@ -55,15 +55,15 @@ useEffect(() => {
 ```typescript
 async function updateEventWithBakers(eventId: string, bakerIds: string[]) {
   const batch = writeBatch(db);
-  
-  batch.update(doc(db, 'events', eventId), { 
-    updatedAt: serverTimestamp() 
+
+  batch.update(doc(db, 'events', eventId), {
+    updatedAt: serverTimestamp(),
   });
-  
+
   bakerIds.forEach((bakerId) => {
     batch.update(doc(db, 'bakers', bakerId), { eventId });
   });
-  
+
   await batch.commit();
 }
 ```

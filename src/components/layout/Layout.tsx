@@ -56,7 +56,9 @@ export function Layout() {
       )}
       <main
         className={
-          isVotingPage ? 'flex-1 w-full mx-0 p-0' : 'flex-1 w-full max-w-[1200px] mx-auto p-6 md:p-2'
+          isVotingPage
+            ? 'flex-1 w-full mx-0 p-0'
+            : 'flex-1 w-full max-w-[1200px] mx-auto p-6 md:p-2'
         }
       >
         <Outlet />

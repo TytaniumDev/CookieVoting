@@ -8,6 +8,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 ## Deployment Safety
 
 **Never deploy without verification.** Always:
+
 1. Run `npm run verify` to ensure code quality
 2. Test changes locally first
 3. Confirm the deployment is intentional
@@ -17,6 +18,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 ### Cloud Functions (`functions/src/`)
 
 Deploy after modifying:
+
 - TypeScript files in `functions/src/`
 - Function dependencies in `functions/package.json`
 - TypeScript config in `functions/tsconfig.json`
@@ -26,6 +28,7 @@ Deploy after modifying:
 ### Security Rules
 
 Deploy after modifying:
+
 - `firebase/firestore.rules` → `npm run firebase:deploy:firestore`
 - `firebase/storage.rules` → `npm run firebase:deploy:storage`
 - Both → `npm run firebase:deploy:rules`
@@ -33,6 +36,7 @@ Deploy after modifying:
 ## When NOT to Deploy
 
 Do not trigger deployment for:
+
 - Documentation changes (`.md` files)
 - Frontend-only changes (`src/` except functions)
 - Test file changes (unless they reveal function bugs)
@@ -41,12 +45,14 @@ Do not trigger deployment for:
 ## Pre-Deployment Checklist
 
 ### For Functions:
+
 - [ ] TypeScript compiles without errors: `npm run build --prefix functions`
 - [ ] Related unit tests pass
 - [ ] Tested against local dev environment
 - [ ] Changes reviewed for security implications
 
 ### For Security Rules:
+
 - [ ] Rules syntax is valid (no `if`, `const`, `let`)
 - [ ] Tested read/write scenarios
 - [ ] No unintended permission changes
@@ -71,19 +77,19 @@ let userId = request.auth.uid;
 allow write: if request.auth.uid == resource.data.ownerId;
 
 // ✅ Use && and || for complex conditions
-allow update: if request.auth != null 
+allow update: if request.auth != null
               && request.auth.uid == resource.data.ownerId
               && request.resource.data.status in ['draft', 'published'];
 ```
 
 ## Available Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `npm run firebase:deploy:functions` | Build and deploy Cloud Functions |
-| `npm run firebase:deploy:firestore` | Deploy Firestore security rules |
-| `npm run firebase:deploy:storage` | Deploy Storage security rules |
-| `npm run firebase:deploy:rules` | Deploy both Firestore and Storage rules |
+| Script                              | Purpose                                 |
+| ----------------------------------- | --------------------------------------- |
+| `npm run firebase:deploy:functions` | Build and deploy Cloud Functions        |
+| `npm run firebase:deploy:firestore` | Deploy Firestore security rules         |
+| `npm run firebase:deploy:storage`   | Deploy Storage security rules           |
+| `npm run firebase:deploy:rules`     | Deploy both Firestore and Storage rules |
 
 ## Troubleshooting Deployments
 
@@ -103,6 +109,7 @@ allow update: if request.auth != null
 ## Post-Deployment
 
 After successful deployment:
+
 1. Verify the deployment in Firebase Console
 2. Test critical functionality in production
 3. Monitor for errors in Firebase Functions logs

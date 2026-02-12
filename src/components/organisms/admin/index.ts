@@ -5,4 +5,3 @@ export { BakerManager } from './BakerManager';
 export { CategoryManager } from './CategoryManager';
 export { VotingControls } from './VotingControls';
 export { ResultsTimeManager } from './ResultsTimeManager';
-

@@ -6,18 +6,21 @@ description: React patterns including hooks, component design, and performance o
 # React Patterns & Best Practices
 
 ## Core Principles
+
 1. **Unidirectional Data Flow**: Data flows down, actions flow up.
 2. **Composition over Inheritance**: Use `children` prop and composition to build complex UIs.
 3. **Immutable State**: Never mutate state directly; use setters.
 4. **Separation of Concerns**: Logic in hooks, UI in components.
 
 ## Hooks Rules
+
 1. **Top Level Only**: Never call hooks in loops, conditions, or nested functions.
 2. **React Functions Only**: Call from components or custom hooks.
 3. **Dependencies**: `useEffect`, `useCallback`, `useMemo` dependency arrays must be exhaustive.
 4. **Naming**: Custom hooks must start with `use`.
 
 ### Common Hooks Usage
+
 - **useState**: For local UI state. Use functional updates `setCount(c => c + 1)` for state dependent on previous value.
 - **useEffect**: For side effects (subscriptions, DOM). **Always return a cleanup function**.
 - **useContext**: To avoid prop drilling global data (auth, theme).
@@ -26,7 +29,9 @@ description: React patterns including hooks, component design, and performance o
 ## Component Patterns
 
 ### Container/Presenter
+
 Separate data fetching/logic from rendering.
+
 ```tsx
 // Container: Handles logic & data
 const UserProfile = ({ id }) => {
@@ -47,12 +52,15 @@ const UserProfileView = ({ user, isLoading }) => {
 ```
 
 ### Seamless UX Principles
+
 1.  **Preserve Context**: Never hide content the user is interacting with during a background update.
 2.  **Inline Feedback**: Use button loading states or small indicators instead of full-page spinners for actions.
 3.  **Skeleton Loading**: Use skeletons instead of spinners for initial loads to reduce layout shift.
 
 ### Compound Components
+
 For components that work together (e.g., Tabs, Card).
+
 ```tsx
 <Card>
   <Card.Header>Title</Card.Header>
@@ -63,22 +71,26 @@ For components that work together (e.g., Tabs, Card).
 ## Performance Optimization
 
 ### Rendering
+
 - **Minimize State**: Derive values during render where possible.
 - **React.memo**: Wrap pure functional components to prevent re-renders when props haven't changed.
 - **Stable Props**: Use `useCallback` for event handlers passed to child components.
 - **Virtualization**: Use `react-window` for long lists.
 
 ### Code Splitting
+
 - **Lazy Loading**: Use `React.lazy` and `Suspense` for route-based splitting.
 - **Dynamic Imports**: Import heavy libraries on demand.
 
 ## Anti-Patterns to Avoid
+
 - **Prop Drilling**: Passing props through >2 layers (use Composition or Context).
 - **Large Components**: Split components >150 lines.
 - **Logic in JSX**: Move complex conditionals/maps to variables or sub-components.
 - **Derived State in State**: Don't store `fullName` if you have `firstName` and `lastName`.
 
 ## React Checklist
+
 - [ ] Hooks follow strict ordering and dependency rules
 - [ ] Components are small (<150 lines) and focused
 - [ ] State is lifted to the lowest common ancestor

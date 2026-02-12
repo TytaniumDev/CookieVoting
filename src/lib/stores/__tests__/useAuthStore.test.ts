@@ -35,10 +35,10 @@ describe('useAuthStore', () => {
     it('should handle initialize', () => {
       const unsubscribe = vi.fn();
       vi.mocked(firebaseAuth.onAuthStateChanged).mockReturnValue(unsubscribe);
-      
+
       const { initialize } = useAuthStore.getState();
       const result = initialize();
-      
+
       expect(result).toBe(unsubscribe);
       expect(firebaseAuth.onAuthStateChanged).toHaveBeenCalled();
     });
