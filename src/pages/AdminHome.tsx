@@ -8,12 +8,27 @@ import { sanitizeInput } from '../lib/validation';
 import { CONSTANTS } from '../lib/constants';
 import { type VoteEvent } from '../lib/types';
 import { eventNameSchema, type EventNameFormData } from '../lib/schemas';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2, ArrowRight, Cookie } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Plus, Trash2, Loader2, ArrowRight, Cookie } from 'lucide-react';
 import { format } from 'date-fns';
 
 /**
@@ -23,7 +38,12 @@ import { format } from 'date-fns';
 export default function AdminHome() {
   const navigate = useNavigate();
 
-  const { user, isAdmin, isLoading: authLoading, error: authError } = useAdminAuth({
+  const {
+    user,
+    isAdmin,
+    isLoading: authLoading,
+    error: authError,
+  } = useAdminAuth({
     redirectIfNotAuth: '/',
   });
 
@@ -88,7 +108,8 @@ export default function AdminHome() {
         if (user) {
           errorMessage = `Permission denied: Your account (${user.email || user.uid}) is not a global admin.`;
         } else {
-          errorMessage = 'Permission denied: You must be signed in as a global admin to create events.';
+          errorMessage =
+            'Permission denied: You must be signed in as a global admin to create events.';
         }
       }
 
@@ -104,8 +125,8 @@ export default function AdminHome() {
       setEventToDelete(null);
       fetchEvents(); // Refresh list
     } catch (error) {
-      console.error("Failed to delete event:", error);
-      setError("Failed to delete event. Please check your permissions.");
+      console.error('Failed to delete event:', error);
+      setError('Failed to delete event. Please check your permissions.');
     }
   };
 
@@ -127,7 +148,9 @@ export default function AdminHome() {
           <CardHeader>
             <CardTitle className="text-destructive">Access Denied</CardTitle>
             <CardDescription>
-              {authError || error || 'You do not have admin access. Please contact a site administrator.'}
+              {authError ||
+                error ||
+                'You do not have admin access. Please contact a site administrator.'}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -148,7 +171,9 @@ export default function AdminHome() {
             <Cookie className="h-8 w-8 text-primary" />
             Cookie Voting Admin
           </h1>
-          <p className="text-muted-foreground mt-1">Select an event to manage or create a new one.</p>
+          <p className="text-muted-foreground mt-1">
+            Select an event to manage or create a new one.
+          </p>
         </div>
 
         <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
@@ -161,7 +186,8 @@ export default function AdminHome() {
             <DialogHeader>
               <DialogTitle>Create New Event</DialogTitle>
               <DialogDescription>
-                Give your voting event a name to get started. You can add categories and bakers later.
+                Give your voting event a name to get started. You can add categories and bakers
+                later.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
@@ -173,9 +199,7 @@ export default function AdminHome() {
                   {...register('name')}
                   disabled={isSubmitting || loading}
                 />
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
-                )}
+                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpenCreateDialog(false)}>
@@ -198,9 +222,7 @@ export default function AdminHome() {
 
       {error && (
         <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="pt-6 text-destructive font-medium">
-            {error}
-          </CardContent>
+          <CardContent className="pt-6 text-destructive font-medium">{error}</CardContent>
         </Card>
       )}
 
@@ -217,29 +239,34 @@ export default function AdminHome() {
             ))}
           </div>
         ) : events.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                <p className="mb-2 text-lg font-medium">No events yet</p>
-                <p className="mb-4">Create your first event to get started!</p>
-                <Button variant="outline" onClick={() => setOpenCreateDialog(true)}>
-                  Create Event
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event) => (
-              <Card key={event.id} className="group hover:shadow-lg transition-all duration-200 border-muted-foreground/20 hover:border-primary/50 cursor-pointer overflow-hidden flex flex-col" onClick={() => navigate(`/admin/${event.id}`)}>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+              <p className="mb-2 text-lg font-medium">No events yet</p>
+              <p className="mb-4">Create your first event to get started!</p>
+              <Button variant="outline" onClick={() => setOpenCreateDialog(true)}>
+                Create Event
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event) => (
+              <Card
+                key={event.id}
+                className="group hover:shadow-lg transition-all duration-200 border-muted-foreground/20 hover:border-primary/50 cursor-pointer overflow-hidden flex flex-col"
+                onClick={() => navigate(`/admin/${event.id}`)}
+              >
                 <CardHeader className="bg-muted/30 pb-4">
                   <div className="flex justify-between items-start">
                     <CardTitle className="line-clamp-2 text-lg group-hover:text-primary transition-colors">
                       {event.name}
                     </CardTitle>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium border ${event.status === 'voting'
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                        event.status === 'voting'
                           ? 'bg-green-500/10 text-green-600 border-green-500/20'
                           : 'bg-muted text-muted-foreground border-transparent'
-                        }`}
+                      }`}
                     >
                       {event.status === 'voting' ? 'Voting Active' : 'Closed'}
                     </span>
@@ -255,8 +282,14 @@ export default function AdminHome() {
                     </span>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-0 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                  <Dialog open={eventToDelete === event.id} onOpenChange={(open) => setEventToDelete(open ? event.id : null)}>
+                <CardFooter
+                  className="pt-0 flex justify-end gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Dialog
+                    open={eventToDelete === event.id}
+                    onOpenChange={(open) => setEventToDelete(open ? event.id : null)}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="ghost"
@@ -271,12 +304,17 @@ export default function AdminHome() {
                       <DialogHeader>
                         <DialogTitle>Delete Event: {event.name}?</DialogTitle>
                         <DialogDescription>
-                          This action cannot be undone. This will permanently delete the event, all voting data, and baker assignments.
+                          This action cannot be undone. This will permanently delete the event, all
+                          voting data, and baker assignments.
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setEventToDelete(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={() => handleDeleteEvent(event.id)}>Delete Event</Button>
+                        <Button variant="outline" onClick={() => setEventToDelete(null)}>
+                          Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={() => handleDeleteEvent(event.id)}>
+                          Delete Event
+                        </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>

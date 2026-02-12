@@ -21,4 +21,3 @@ export function EmptyState({ onFileSelect, isUploading }: EmptyStateProps) {
     </div>
   );
 }
-

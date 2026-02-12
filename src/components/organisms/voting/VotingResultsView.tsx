@@ -32,7 +32,7 @@ const IntroTile = ({ eventName, className }: { eventName: string; className?: st
       className={cn(
         'absolute inset-0 w-full h-full flex flex-col bg-black will-change-[transform,opacity] flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]',
         className?.includes('exitNext') || className?.includes('exitPrev') ? 'z-[1]' : '',
-        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : ''
+        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : '',
       )}
       style={getAnimationStyle()}
     >
@@ -73,7 +73,7 @@ const OutroTile = ({ className }: { className?: string }) => {
       className={cn(
         'absolute inset-0 w-full h-full flex flex-col bg-black will-change-[transform,opacity] flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]',
         className?.includes('exitNext') || className?.includes('exitPrev') ? 'z-[1]' : '',
-        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : ''
+        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : '',
       )}
       style={getAnimationStyle()}
     >
@@ -81,7 +81,9 @@ const OutroTile = ({ className }: { className?: string }) => {
         <h1 className="text-5xl font-extrabold m-0 mb-4 bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] bg-clip-text text-transparent">
           🎉 Congratulations! 🎉
         </h1>
-        <p className="text-[1.8rem] font-semibold text-white m-0 mb-6">Thank you for participating!</p>
+        <p className="text-[1.8rem] font-semibold text-white m-0 mb-6">
+          Thank you for participating!
+        </p>
         <p className="text-xl text-[#94a3b8] m-0 leading-relaxed">
           We hope you enjoyed the competition!
         </p>
@@ -147,7 +149,7 @@ const ResultSlide = ({
       className={cn(
         'absolute inset-0 w-full h-full flex flex-col bg-black will-change-[transform,opacity]',
         className?.includes('exitNext') || className?.includes('exitPrev') ? 'z-[1]' : '',
-        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : ''
+        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : '',
       )}
       style={getAnimationStyle()}
     >
@@ -176,10 +178,14 @@ const ResultSlide = ({
                 key={score.cookieId}
                 className={cn(
                   'flex items-center gap-4 bg-black/80 backdrop-blur-sm py-3 px-4 rounded-xl border',
-                  isWinner ? 'border-[#ffd700] border-2' : 'border-white/20'
+                  isWinner ? 'border-[#ffd700] border-2' : 'border-white/20',
                 )}
               >
-                {medal && <div className="text-3xl leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{medal}</div>}
+                {medal && (
+                  <div className="text-3xl leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                    {medal}
+                  </div>
+                )}
                 <div className="flex-1">
                   <div className="font-bold text-sm text-white">
                     {score.votes} vote{score.votes !== 1 ? 's' : ''}
@@ -264,11 +270,11 @@ export const VotingResultsView = ({ eventName, results }: VotingResultsViewProps
         <>
           {renderSlide(
             animatingState.from,
-            animatingState.direction === 'next' ? 'exitNext' : 'exitPrev'
+            animatingState.direction === 'next' ? 'exitNext' : 'exitPrev',
           )}
           {renderSlide(
             animatingState.to,
-            animatingState.direction === 'next' ? 'enterNext' : 'enterPrev'
+            animatingState.direction === 'next' ? 'enterNext' : 'enterPrev',
           )}
         </>
       )}

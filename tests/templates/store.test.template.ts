@@ -1,8 +1,8 @@
 /**
  * Template for testing Zustand stores
- * 
+ *
  * Copy this template and adapt it for your store.
- * 
+ *
  * Example usage:
  * - Test store initialization
  * - Test actions

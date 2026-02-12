@@ -38,11 +38,7 @@ interface UseAdminAuthOptions {
  * ```
  */
 export function useAdminAuth(options: UseAdminAuthOptions = {}) {
-  const {
-    redirectIfNotAuth = '/',
-    redirectIfNotAdmin = null,
-    requireAdmin = true,
-  } = options;
+  const { redirectIfNotAuth = '/', redirectIfNotAdmin = null, requireAdmin = true } = options;
 
   const navigate = useNavigate();
   const [state, setState] = useState<AdminAuthState>({
@@ -52,57 +48,63 @@ export function useAdminAuth(options: UseAdminAuthOptions = {}) {
     error: null,
   });
 
-  const checkAccess = useCallback(async (user: User | null) => {
-    // Check if user is signed in
-    const isSignedIn = user && (user.email || (user.providerData && user.providerData.length > 0));
+  const checkAccess = useCallback(
+    async (user: User | null) => {
+      // Check if user is signed in
+      const isSignedIn =
+        user && (user.email || (user.providerData && user.providerData.length > 0));
 
-    if (!isSignedIn) {
-      if (redirectIfNotAuth) {
-        navigate(redirectIfNotAuth, { replace: true });
-      }
-      setState({
-        user: null,
-        isAdmin: false,
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
-
-    // If we don't require admin, just confirm user is authenticated
-    if (!requireAdmin) {
-      setState({
-        user,
-        isAdmin: false,
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
-
-    // Check admin status
-    try {
-      const adminStatus = await isGlobalAdmin(user.uid);
-      
-      if (!adminStatus && redirectIfNotAdmin) {
-        navigate(redirectIfNotAdmin, { replace: true });
+      if (!isSignedIn) {
+        if (redirectIfNotAuth) {
+          navigate(redirectIfNotAuth, { replace: true });
+        }
+        setState({
+          user: null,
+          isAdmin: false,
+          isLoading: false,
+          error: null,
+        });
+        return;
       }
 
-      setState({
-        user,
-        isAdmin: adminStatus,
-        isLoading: false,
-        error: adminStatus ? null : 'You do not have admin access. Please contact a site administrator.',
-      });
-    } catch {
-      setState({
-        user,
-        isAdmin: false,
-        isLoading: false,
-        error: 'Failed to verify admin permissions',
-      });
-    }
-  }, [navigate, redirectIfNotAuth, redirectIfNotAdmin, requireAdmin]);
+      // If we don't require admin, just confirm user is authenticated
+      if (!requireAdmin) {
+        setState({
+          user,
+          isAdmin: false,
+          isLoading: false,
+          error: null,
+        });
+        return;
+      }
+
+      // Check admin status
+      try {
+        const adminStatus = await isGlobalAdmin(user.uid);
+
+        if (!adminStatus && redirectIfNotAdmin) {
+          navigate(redirectIfNotAdmin, { replace: true });
+        }
+
+        setState({
+          user,
+          isAdmin: adminStatus,
+          isLoading: false,
+          error: adminStatus
+            ? null
+            : 'You do not have admin access. Please contact a site administrator.',
+        });
+      } catch {
+        setState({
+          user,
+          isAdmin: false,
+          isLoading: false,
+          error: 'Failed to verify admin permissions',
+        });
+      }
+    },
+    [navigate, redirectIfNotAuth, redirectIfNotAdmin, requireAdmin],
+  );
 
   useEffect(() => {
     // Check immediately with current user

@@ -40,9 +40,21 @@ export const Ties: Story = {
       {
         category: testCategories[0],
         scores: [
-          { cookieId: testCategories[0].cookies[0].id, votes: 5, cookie: testCategories[0].cookies[0] },
-          { cookieId: testCategories[0].cookies[1].id, votes: 5, cookie: testCategories[0].cookies[1] },
-          { cookieId: testCategories[0].cookies[2].id, votes: 3, cookie: testCategories[0].cookies[2] },
+          {
+            cookieId: testCategories[0].cookies[0].id,
+            votes: 5,
+            cookie: testCategories[0].cookies[0],
+          },
+          {
+            cookieId: testCategories[0].cookies[1].id,
+            votes: 5,
+            cookie: testCategories[0].cookies[1],
+          },
+          {
+            cookieId: testCategories[0].cookies[2].id,
+            votes: 3,
+            cookie: testCategories[0].cookies[2],
+          },
         ],
       },
     ],

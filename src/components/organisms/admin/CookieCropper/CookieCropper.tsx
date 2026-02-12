@@ -2,4 +2,3 @@
 export function CookieCropper() {
   return <div data-testid="cookie-cropper" />;
 }
-

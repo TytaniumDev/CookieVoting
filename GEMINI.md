@@ -17,6 +17,7 @@
 **Source files:** All `.md` files in `ai/rules/` directory.
 
 **When to update the rules:**
+
 - You keep making the same mistake → Add a rule to prevent it
 - A rule is unclear or incomplete → Clarify it
 - You discover a new best practice → Document it
@@ -25,8 +26,10 @@
 ---
 
 ---
+
 trigger: always
 description: Code quality standards for TypeScript, error handling, and maintainable code.
+
 ---
 
 # Code Quality Standards
@@ -165,6 +168,7 @@ if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
 ## Code Review Checklist
 
 ### General
+
 - [ ] TypeScript compiles with no errors
 - [ ] No `any` types (or justified with comment)
 - [ ] Error cases are handled
@@ -173,14 +177,17 @@ if (cookies.length > MAX_COOKIES_PER_BAKER) { ... }
 - [ ] No commented-out code
 
 ### Testing
+
 - [ ] Tests added for new functionality
 - [ ] Storybook stories for new components
 
 ---
 
 ---
+
 trigger: model_decision
 description: Guidelines for Firebase deployments - when and how to deploy functions and security rules.
+
 ---
 
 # Firebase Deployment Guidelines
@@ -188,6 +195,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 ## Deployment Safety
 
 **Never deploy without verification.** Always:
+
 1. Run `npm run verify` to ensure code quality
 2. Test changes locally first
 3. Confirm the deployment is intentional
@@ -197,6 +205,7 @@ description: Guidelines for Firebase deployments - when and how to deploy functi
 ### Cloud Functions (`functions/src/`)
 
 Deploy after modifying:
+
 - TypeScript files in `functions/src/`
 - Function dependencies in `functions/package.json`
 - TypeScript config in `functions/tsconfig.json`
@@ -206,6 +215,7 @@ Deploy after modifying:
 ### Security Rules
 
 Deploy after modifying:
+
 - `firebase/firestore.rules` → `npm run firebase:deploy:firestore`
 - `firebase/storage.rules` → `npm run firebase:deploy:storage`
 - Both → `npm run firebase:deploy:rules`
@@ -213,6 +223,7 @@ Deploy after modifying:
 ## When NOT to Deploy
 
 Do not trigger deployment for:
+
 - Documentation changes (`.md` files)
 - Frontend-only changes (`src/` except functions)
 - Test file changes (unless they reveal function bugs)
@@ -221,12 +232,14 @@ Do not trigger deployment for:
 ## Pre-Deployment Checklist
 
 ### For Functions:
+
 - [ ] TypeScript compiles without errors: `npm run build --prefix functions`
 - [ ] Related unit tests pass
 - [ ] Tested against local dev environment
 - [ ] Changes reviewed for security implications
 
 ### For Security Rules:
+
 - [ ] Rules syntax is valid (no `if`, `const`, `let`)
 - [ ] Tested read/write scenarios
 - [ ] No unintended permission changes
@@ -251,19 +264,19 @@ let userId = request.auth.uid;
 allow write: if request.auth.uid == resource.data.ownerId;
 
 // ✅ Use && and || for complex conditions
-allow update: if request.auth != null 
+allow update: if request.auth != null
               && request.auth.uid == resource.data.ownerId
               && request.resource.data.status in ['draft', 'published'];
 ```
 
 ## Available Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `npm run firebase:deploy:functions` | Build and deploy Cloud Functions |
-| `npm run firebase:deploy:firestore` | Deploy Firestore security rules |
-| `npm run firebase:deploy:storage` | Deploy Storage security rules |
-| `npm run firebase:deploy:rules` | Deploy both Firestore and Storage rules |
+| Script                              | Purpose                                 |
+| ----------------------------------- | --------------------------------------- |
+| `npm run firebase:deploy:functions` | Build and deploy Cloud Functions        |
+| `npm run firebase:deploy:firestore` | Deploy Firestore security rules         |
+| `npm run firebase:deploy:storage`   | Deploy Storage security rules           |
+| `npm run firebase:deploy:rules`     | Deploy both Firestore and Storage rules |
 
 ## Troubleshooting Deployments
 
@@ -283,6 +296,7 @@ allow update: if request.auth != null
 ## Post-Deployment
 
 After successful deployment:
+
 1. Verify the deployment in Firebase Console
 2. Test critical functionality in production
 3. Monitor for errors in Firebase Functions logs
@@ -290,8 +304,10 @@ After successful deployment:
 ---
 
 ---
+
 trigger: model_decision
 description: Firebase/Firestore coding patterns and best practices.
+
 ---
 
 # Firebase Patterns
@@ -310,13 +326,13 @@ function useEvent(eventId: string) {
     const unsubscribe = onSnapshot(
       doc(db, 'events', eventId),
       (snapshot) => {
-        setEvent(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Event : null);
+        setEvent(snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as Event) : null);
         setIsLoading(false);
       },
       (err) => {
         setError(err);
         setIsLoading(false);
-      }
+      },
     );
     return unsubscribe;
   }, [eventId]);
@@ -334,7 +350,7 @@ useEffect(() => {
   const unsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
     // handle data
   });
-  
+
   return () => unsubscribe(); // Clean up!
 }, []);
 ```
@@ -346,15 +362,15 @@ useEffect(() => {
 ```typescript
 async function updateEventWithBakers(eventId: string, bakerIds: string[]) {
   const batch = writeBatch(db);
-  
-  batch.update(doc(db, 'events', eventId), { 
-    updatedAt: serverTimestamp() 
+
+  batch.update(doc(db, 'events', eventId), {
+    updatedAt: serverTimestamp(),
   });
-  
+
   bakerIds.forEach((bakerId) => {
     batch.update(doc(db, 'bakers', bakerId), { eventId });
   });
-  
+
   await batch.commit();
 }
 ```
@@ -433,13 +449,16 @@ async function createEvent(data: EventData) {
 ---
 
 ---
+
 trigger: always
 description: Core project guidelines, architecture, and development standards.
+
 ---
 
 # Project Guidelines & Standards
 
 ## Tech Stack (Enforced)
+
 - **Framework**: React 19 (Do not use legacy React patterns).
 - **Styling**: Tailwind CSS 4 (Use new utility-first engine).
 - **Runtime**: Node.js 20+.
@@ -449,12 +468,14 @@ description: Core project guidelines, architecture, and development standards.
 ## Architecture Principles
 
 ### Separation of Concerns
+
 - **UI (components/)**: Presentational only. Receive data via props.
 - **Logic (lib/hooks/)**: Data fetching, state management, side effects.
 - **Utils (lib/)**: Pure functions (formatting, calculations).
 - **No Firebase in UI**: Components must NEVER import Firebase directly.
 
 ### Project Structure
+
 ```
 src/
 ├── components/       # Atoms, Molecules, Organisms
@@ -468,33 +489,39 @@ src/
 ## Code Standards
 
 ### Naming Conventions
+
 - **Components**: PascalCase (`CookieViewer.tsx`)
 - **Hooks**: camelCase + use (`useAuth.ts`)
 - **Utilities**: camelCase (`formatDate.ts`)
 - **Constants**: SCREAMING_SNAKE_CASE (`MAX_ITEMS`)
 
 ### Files
+
 - **One component per file**.
 - **Co-locate**: Styles, stories, and tests next to the component.
 - **Index exports**: Use `index.ts` for clean directory imports.
 
 ## Development Workflow
+
 1. **Understand** the code patterns and finding similar implementations.
 2. **Storybook First**: Build UI components in isolation before integration.
 3. **Verify**: Always run `npm run verify` before committing.
 
 ## Universal Requirements
+
 - **Accessibility**: All UI must be accessible (semantic HTML, ARIA, keyboard nav).
 - **Responsiveness**: Mobile-first design. All UIs must be fully functional and aesthetic on mobile devices, while adapting gracefully to larger screens.
 - **Error Handling**: Graceful degradation, user-friendly errors.
 
 ## Design Philosophy
+
 - **Modern & Premium**: Use rich aesthetics, glassmorphism, smooth animations, and curated color palettes.
 - **Mobile-First**: Design for touch targets and small screens first.
 
 ## UX Standards
-1.  **Optimistic UI Required**: All user actions (likes, edits, deletes) must update the UI *instantly*. The network request happens in the background.
-2.  **No Jarring Reloads**: 
+
+1.  **Optimistic UI Required**: All user actions (likes, edits, deletes) must update the UI _instantly_. The network request happens in the background.
+2.  **No Jarring Reloads**:
     - **NEVER** trigger a full-page loading spinner for a small action.
     - **NEVER** unmount a component just to show a loader state during an update.
     - Only use full-page loaders for initial route navigation.
@@ -503,25 +530,30 @@ src/
 ---
 
 ---
+
 trigger: model_decision
 description: React patterns including hooks, component design, and performance optimization.
+
 ---
 
 # React Patterns & Best Practices
 
 ## Core Principles
+
 1. **Unidirectional Data Flow**: Data flows down, actions flow up.
 2. **Composition over Inheritance**: Use `children` prop and composition to build complex UIs.
 3. **Immutable State**: Never mutate state directly; use setters.
 4. **Separation of Concerns**: Logic in hooks, UI in components.
 
 ## Hooks Rules
+
 1. **Top Level Only**: Never call hooks in loops, conditions, or nested functions.
 2. **React Functions Only**: Call from components or custom hooks.
 3. **Dependencies**: `useEffect`, `useCallback`, `useMemo` dependency arrays must be exhaustive.
 4. **Naming**: Custom hooks must start with `use`.
 
 ### Common Hooks Usage
+
 - **useState**: For local UI state. Use functional updates `setCount(c => c + 1)` for state dependent on previous value.
 - **useEffect**: For side effects (subscriptions, DOM). **Always return a cleanup function**.
 - **useContext**: To avoid prop drilling global data (auth, theme).
@@ -530,7 +562,9 @@ description: React patterns including hooks, component design, and performance o
 ## Component Patterns
 
 ### Container/Presenter
+
 Separate data fetching/logic from rendering.
+
 ```tsx
 // Container: Handles logic & data
 const UserProfile = ({ id }) => {
@@ -551,12 +585,15 @@ const UserProfileView = ({ user, isLoading }) => {
 ```
 
 ### Seamless UX Principles
+
 1.  **Preserve Context**: Never hide content the user is interacting with during a background update.
 2.  **Inline Feedback**: Use button loading states or small indicators instead of full-page spinners for actions.
 3.  **Skeleton Loading**: Use skeletons instead of spinners for initial loads to reduce layout shift.
 
 ### Compound Components
+
 For components that work together (e.g., Tabs, Card).
+
 ```tsx
 <Card>
   <Card.Header>Title</Card.Header>
@@ -567,22 +604,26 @@ For components that work together (e.g., Tabs, Card).
 ## Performance Optimization
 
 ### Rendering
+
 - **Minimize State**: Derive values during render where possible.
 - **React.memo**: Wrap pure functional components to prevent re-renders when props haven't changed.
 - **Stable Props**: Use `useCallback` for event handlers passed to child components.
 - **Virtualization**: Use `react-window` for long lists.
 
 ### Code Splitting
+
 - **Lazy Loading**: Use `React.lazy` and `Suspense` for route-based splitting.
 - **Dynamic Imports**: Import heavy libraries on demand.
 
 ## Anti-Patterns to Avoid
+
 - **Prop Drilling**: Passing props through >2 layers (use Composition or Context).
 - **Large Components**: Split components >150 lines.
 - **Logic in JSX**: Move complex conditionals/maps to variables or sub-components.
 - **Derived State in State**: Don't store `fullName` if you have `firstName` and `lastName`.
 
 ## React Checklist
+
 - [ ] Hooks follow strict ordering and dependency rules
 - [ ] Components are small (<150 lines) and focused
 - [ ] State is lifted to the lowest common ancestor
@@ -592,13 +633,16 @@ For components that work together (e.g., Tabs, Card).
 ---
 
 ---
+
 trigger: always
 description: Best practices for using Shadcn/UI components, styling with Tailwind, and ensuring consistent design.
+
 ---
 
 # Shadcn/UI & Design System
 
 ## Core Philosophy
+
 We use **Shadcn/UI** (Radix UI + Tailwind) as our foundation. The goal is to build a **premium, accessible, and consistent** application.
 
 1.  **Prefer Composition**: Use existing components (`<Button>`, `<Card>`) before writing custom `<div className="...">`.
@@ -608,60 +652,75 @@ We use **Shadcn/UI** (Radix UI + Tailwind) as our foundation. The goal is to bui
 ## Usage Guidelines
 
 ### 1. Imports
+
 **Always import from `@/components/ui/...`**
 
 ```tsx
 // ✅ Correct
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 // ❌ Incorrect - do not import from raw Radix or local relative paths if generic
-import * as RadixPop from "@radix-ui/react-popover";
-import { Button } from "../../components/ui/button";
+import * as RadixPop from '@radix-ui/react-popover';
+import { Button } from '../../components/ui/button';
 ```
 
 ### 2. Class Merging (`cn`)
+
 **Always use `cn()`** to merge classes when creating manageable components or passing `className` props.
 
 ```tsx
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-export function CustomCard({ className, children }: { className?: string, children: React.ReactNode }) {
+export function CustomCard({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   // Allows the parent to override 'bg-white' with 'bg-gray-100' safely
-  return <div className={cn("bg-white p-4 rounded-lg", className)}>{children}</div>;
+  return <div className={cn('bg-white p-4 rounded-lg', className)}>{children}</div>;
 }
 ```
 
 ### 3. Component Library
+
 The following components are available in `src/components/ui/`. **Use them!**
 
-| Component | Usage |
-| :--- | :--- |
-| **Button** | Primary actions. Use `variant="ghost"` for icon-only buttons. |
-| **Input** | Text inputs. |
-| **Label** | Form labels. Always associate with inputs. |
-| **Card** | Content containers. Use `CardHeader`, `CardTitle`, `CardContent`. |
-| **Tabs** | Switch between views (e.g., Admin Dashboard). |
-| **Dialog** | Modals. Use `DialogTrigger` and `DialogContent`. |
-| **Select** | Dropdowns. Prefer over native `<select>`. |
-| **Toast** | Notifications via `useToast`. |
+| Component  | Usage                                                             |
+| :--------- | :---------------------------------------------------------------- |
+| **Button** | Primary actions. Use `variant="ghost"` for icon-only buttons.     |
+| **Input**  | Text inputs.                                                      |
+| **Label**  | Form labels. Always associate with inputs.                        |
+| **Card**   | Content containers. Use `CardHeader`, `CardTitle`, `CardContent`. |
+| **Tabs**   | Switch between views (e.g., Admin Dashboard).                     |
+| **Dialog** | Modals. Use `DialogTrigger` and `DialogContent`.                  |
+| **Select** | Dropdowns. Prefer over native `<select>`.                         |
+| **Toast**  | Notifications via `useToast`.                                     |
 
 ### 4. Icons
+
 **Use `lucide-react`** for all icons.
+
 - Import standard named icons (e.g., `Trash2`, `Plus`, `Settings`).
 - Size them consistently (usually `w-4 h-4` or `w-5 h-5`).
 
 ```tsx
-import { Plus } from "lucide-react";
-<Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
+import { Plus } from 'lucide-react';
+<Button>
+  <Plus className="w-4 h-4 mr-2" /> Add Item
+</Button>;
 ```
 
 ## Anti-Patterns
+
 - **❌ Arbitrary Colors**: Avoid `bg-[#123456]`. Use `bg-primary`, `bg-muted`, etc.
 - **❌ Reinventing the Wheel**: Don't build a custom modal using a standard div; use `<Dialog>`.
 - **❌ Inconsistent Spacing**: Use standard Tailwind spacings (`gap-2`, `p-4`, `p-6`).
 
 ## Checklist for UI Changes
+
 - [ ] Did I use a Shadcn component if it exists?
 - [ ] Are interactions accessible (keyboard navigable)?
 - [ ] Did I use `lucide-react` icons?
@@ -670,8 +729,10 @@ import { Plus } from "lucide-react";
 ---
 
 ---
+
 trigger: model_decision
 description: Best practices for using Tailwind CSS - utility-first, responsiveness, and class merging.
+
 ---
 
 # Tailwind CSS Best Practices
@@ -679,6 +740,7 @@ description: Best practices for using Tailwind CSS - utility-first, responsivene
 ## Core Principles
 
 ### 1. Utility-First, Avoid `@apply`
+
 **Avoid using `@apply` in CSS files.** It re-introduces the problems of traditional CSS (naming things, file jumping) that Tailwind solves.
 
 ```css
@@ -694,9 +756,11 @@ function Button({ children }) {
   return <button className="bg-blue-500 text-white px-4 py-2 rounded">{children}</button>;
 }
 ```
-*Exception: Overriding styles of third-party libraries where you cannot control the markup.*
+
+_Exception: Overriding styles of third-party libraries where you cannot control the markup._
 
 ### 2. Mobile-First Responsiveness
+
 **Write styles for mobile first**, then "add" styles for larger screens.
 
 ```tsx
@@ -710,6 +774,7 @@ function Button({ children }) {
 ```
 
 ### 3. Use `tailwind-merge` with `clsx`
+
 When building reusable components that accept `className` props, **ALWAYS** use `tailwind-merge` (`twMerge`) combined with `clsx` (or `cn` helper) to safely merge classes.
 
 ```tsx
@@ -723,13 +788,14 @@ export function cn(...inputs: ClassValue[]) {
 // Usage
 export function Card({ className, children }: Props) {
   // If className has 'p-0', it will correctly override 'p-6'
-  return <div className={cn("bg-white p-6 rounded-lg", className)}>{children}</div>;
+  return <div className={cn('bg-white p-6 rounded-lg', className)}>{children}</div>;
 }
 ```
 
 ## Styling Patterns
 
 ### 1. Design Tokens over Arbitrary Values
+
 Avoid square bracket notation for colors or spacing unless absolutely unique.
 
 ```tsx
@@ -741,7 +807,9 @@ Avoid square bracket notation for colors or spacing unless absolutely unique.
 ```
 
 ### 2. Logical Grouping
+
 Group classes in a consistent order to improve readability.
+
 1. **Layout**: `flex`, `grid`, `absolute`, `relative`
 2. **Box Model**: `w-`, `h-`, `p-`, `m-`
 3. **Typography**: `text-`, `font-`
@@ -749,6 +817,7 @@ Group classes in a consistent order to improve readability.
 5. **Interactive**: `hover:`, `focus:`
 
 ### 3. Handle Dynamic Classes Safely
+
 Do not construct class strings dynamically in a way that breaks the Tailwind compiler/scanner.
 
 ```tsx
@@ -760,6 +829,7 @@ Do not construct class strings dynamically in a way that breaks the Tailwind com
 ```
 
 ## Checklist before PR
+
 - [ ] No new `.css` files created (unless for global reset).
 - [ ] No `@apply` used in components.
 - [ ] All reusable components accept a `className` prop.
@@ -769,13 +839,16 @@ Do not construct class strings dynamically in a way that breaks the Tailwind com
 ---
 
 ---
+
 trigger: always
 description: TDD workflow and testing strategy - tests before code, verification requirements.
+
 ---
 
 # Testing Strategy & TDD Workflow
 
 ## 1. TDD Workflow (Required)
+
 **Follow strict Test-Driven Development:**
 
 1. **Propose Test Cases**: Before coding, outline what you will test.
@@ -786,27 +859,34 @@ description: TDD workflow and testing strategy - tests before code, verification
 6. **Refactor**: improve code while keeping tests passing.
 
 ### Test Plan Template
+
 Use this to propose tests to the user:
+
 ```markdown
 ## Proposed Test Cases for [Feature]
+
 ### Happy Path
+
 - [ ] [Description]
+
 ### Edge/Error Cases
+
 - [ ] Empty/Null inputs
 - [ ] Network failures / Permission denied
 ```
 
 ## 2. Testing Pyramid & Tools
 
-| Layer | Tool | Scope | Command |
-|-------|------|-------|---------|
-| **E2E** | Playwright | Critical user flows | `npm run test:e2e` |
-| **Integration** | Vitest + Emulators | Firestore rules, Functions | `npm run test:integration` |
-| **Component** | Storybook | UI interactions (`play` functions) | `npm run test-storybook` |
-| **Unit** | Vitest | Logic, Hooks, Utils | `npm run test` |
-| **Static** | ESLint/TSC | Code quality, Types | `npm run verify` |
+| Layer           | Tool               | Scope                              | Command                    |
+| --------------- | ------------------ | ---------------------------------- | -------------------------- |
+| **E2E**         | Playwright         | Critical user flows                | `npm run test:e2e`         |
+| **Integration** | Vitest + Emulators | Firestore rules, Functions         | `npm run test:integration` |
+| **Component**   | Storybook          | UI interactions (`play` functions) | `npm run test-storybook`   |
+| **Unit**        | Vitest             | Logic, Hooks, Utils                | `npm run test`             |
+| **Static**      | ESLint/TSC         | Code quality, Types                | `npm run verify`           |
 
 ## 3. What to Test
+
 - **Unit**: Complex logic, custom hooks, utils. Mock dependencies with `vi.mock()`.
 - **Component**: User interactions (clicks, forms). Don't test style details.
 - **Integration**: Security rules, backend triggers (use Emulators).
@@ -815,6 +895,7 @@ Use this to propose tests to the user:
 ## 4. Vitest Best Practices
 
 ### Mocking
+
 ```typescript
 import { vi, type Mock } from 'vitest';
 
@@ -824,6 +905,7 @@ mockedFn.mockResolvedValue({ id: '123' });
 ```
 
 ### Cleanup
+
 ```typescript
 afterEach(() => {
   vi.clearAllMocks();
@@ -831,9 +913,11 @@ afterEach(() => {
 ```
 
 ## 5. Verification
-Run `npm run verify` before *every* commit. It runs lint, types, tests, and build checks.
+
+Run `npm run verify` before _every_ commit. It runs lint, types, tests, and build checks.
 
 ### Debugging
+
 - Check error message -> Check recent changes -> Run in isolation.
 - Use `npm run test:watch` for interactive development.
 - Ensure the development environment is ready.
@@ -841,13 +925,16 @@ Run `npm run verify` before *every* commit. It runs lint, types, tests, and buil
 ---
 
 ---
+
 trigger: model_decision
 description: Standards for building UI components with React, TypeScript, and Storybook.
+
 ---
 
 # UI Component Standards
 
 ## Design Principles
+
 1. **Single Responsibility**: One thing well. Split if >150 lines.
 2. **Props-Based**: No internal data fetching. Use callbacks for actions.
 3. **Type Safety**: strict interfaces for Props. Export them.
@@ -861,13 +948,16 @@ interface ButtonProps {
 ```
 
 ## Storybook Development
+
 **Workflow:**
+
 1. **Build in Storybook**: Don't integrate until the component works in isolation.
 2. **Variations**: Create stories for Primary, Disabled, Loading, Error, Empty.
 3. **Interaction**: Use `play` functions to test behavior.
 4. **Accessibility**: Check the a11y addon tab.
 
 **Story Example:**
+
 ```tsx
 const meta: Meta<typeof Button> = { component: Button };
 export default meta;
@@ -876,16 +966,18 @@ export const Primary: Story = { args: { variant: 'primary' } };
 export const Interaction: Story = {
   play: async ({ canvas }) => {
     await canvas.getByRole('button').click();
-  }
+  },
 };
 ```
 
 ## Styling (CSS Modules)
+
 - Use `.module.css` files.
 - CamelCase class names: `styles.buttonPrimary`.
 - Scope styles strictly to the component.
 
 ## Accessibility Checklist
+
 - [ ] Semantic HTML (`<button>` not `<div>`)
 - [ ] Visible focus states
 - [ ] Keyboard navigation support
@@ -895,8 +987,10 @@ export const Interaction: Story = {
 ---
 
 ---
+
 trigger: model_decision
 description: Zustand state management patterns and best practices.
+
 ---
 
 # Zustand Patterns
@@ -958,6 +1052,7 @@ function AuthStatus() {
 **Distinguish between fetching data and mutating data:**
 
 ### 1. Fetching (Global Loading)
+
 Use `isLoading` for initial data fetches where the page cannot render without data.
 
 ```typescript
@@ -973,6 +1068,7 @@ fetchEvents: async () => {
 ```
 
 ### 2. Mutating (Optimistic Updates)
+
 **NEVER** trigger a global loading state for small user actions (like toggling a vote or editing a name). It causes jarring UI flashes.
 Instead, update the local state **immediately**, then sync with the backend.
 
@@ -983,7 +1079,7 @@ toggleVote: async (eventId: string) => {
 
   // 2. Optimistic Update (Instant feedback)
   set((state) => ({
-    events: state.events.map(e => 
+    events: state.events.map(e =>
       e.id === eventId ? { ...e, voted: !e.voted } : e
     )
   }));
@@ -1011,13 +1107,13 @@ src/lib/stores/
 
 ## When to Use Zustand vs Local State
 
-| Use Case | Solution |
-|----------|----------|
-| Form input values | `useState` |
-| Modal open/closed | `useState` |
-| Current user | Zustand |
-| Shared data across routes | Zustand |
-| Server cache | Zustand or React Query |
+| Use Case                  | Solution               |
+| ------------------------- | ---------------------- |
+| Form input values         | `useState`             |
+| Modal open/closed         | `useState`             |
+| Current user              | Zustand                |
+| Shared data across routes | Zustand                |
+| Server cache              | Zustand or React Query |
 
 ## Zustand Checklist
 
@@ -1027,4 +1123,3 @@ src/lib/stores/
 - [ ] Store actions handle their own errors
 
 ---
-

@@ -30,7 +30,6 @@ const CategorySlide = ({
   isLast: boolean;
   className?: string;
 }) => {
-
   const getAnimationStyle = () => {
     if (!className) return {};
     if (className.includes('exitNext')) {
@@ -53,7 +52,7 @@ const CategorySlide = ({
       className={cn(
         'absolute inset-0 w-full h-full flex flex-col bg-black will-change-[transform,opacity]',
         className?.includes('exitNext') || className?.includes('enterPrev') ? 'z-[1]' : '',
-        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : ''
+        className?.includes('enterNext') || className?.includes('enterPrev') ? 'z-[2]' : '',
       )}
       style={getAnimationStyle()}
     >
@@ -79,7 +78,7 @@ const CategorySlide = ({
       <div
         className={cn(
           'fixed bottom-0 left-0 w-full p-6 bg-black flex justify-center z-20 transition-transform duration-300 ease-out',
-          currentVote ? 'translate-y-0' : 'translate-y-full'
+          currentVote ? 'translate-y-0' : 'translate-y-full',
         )}
       >
         <button
@@ -183,11 +182,11 @@ export const VotingSessionView = ({
         <>
           {renderSlide(
             animatingState.from,
-            animatingState.direction === 'next' ? 'exitNext' : 'exitPrev'
+            animatingState.direction === 'next' ? 'exitNext' : 'exitPrev',
           )}
           {renderSlide(
             animatingState.to,
-            animatingState.direction === 'next' ? 'enterNext' : 'enterPrev'
+            animatingState.direction === 'next' ? 'enterNext' : 'enterPrev',
           )}
         </>
       )}

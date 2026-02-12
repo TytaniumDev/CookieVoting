@@ -1,13 +1,22 @@
 import { create } from 'zustand';
 import { db, storage } from '../firebase';
-import { collection, addDoc, query, where, getDocs, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { ImageEntity, DetectedCookie } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 /** Options for uploading an image */
 export interface UploadImageOptions {
-  /** 
+  /**
    * Type of image being uploaded
    * - 'tray_image': Full tray/plate image (default)
    * - 'cropped_cookie': Individual cookie cropped from a tray
@@ -162,7 +171,7 @@ export const useImageStore = create<ImageState>((set, get) => ({
 
   subscribeToCroppedCookies: (eventId: string, categoryId: string) => {
     const { unsubscribers } = get();
-    
+
     // If already subscribed, do nothing
     if (unsubscribers[categoryId]) return;
 
@@ -172,37 +181,41 @@ export const useImageStore = create<ImageState>((set, get) => ({
       collection(db, 'images'),
       where('eventId', '==', eventId),
       where('categoryId', '==', categoryId),
-      where('type', '==', 'cropped_cookie')
+      where('type', '==', 'cropped_cookie'),
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const croppedCookies = snapshot.docs.reduce(
-        (acc, docSnap) => {
-          // Merge with existing image data to preserve local state if any (though typically Firestore is source of truth)
-          acc[docSnap.id] = { id: docSnap.id, ...docSnap.data() } as ImageEntity;
-          return acc;
-        },
-        {} as Record<string, ImageEntity>,
-      );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const croppedCookies = snapshot.docs.reduce(
+          (acc, docSnap) => {
+            // Merge with existing image data to preserve local state if any (though typically Firestore is source of truth)
+            acc[docSnap.id] = { id: docSnap.id, ...docSnap.data() } as ImageEntity;
+            return acc;
+          },
+          {} as Record<string, ImageEntity>,
+        );
 
-      set((state) => ({
-        images: { ...state.images, ...croppedCookies },
-        loading: false,
-      }));
-    }, (error) => {
-      console.error('Error in cropped cookies subscription:', error);
-      set({ loading: false });
-    });
+        set((state) => ({
+          images: { ...state.images, ...croppedCookies },
+          loading: false,
+        }));
+      },
+      (error) => {
+        console.error('Error in cropped cookies subscription:', error);
+        set({ loading: false });
+      },
+    );
 
     set((state) => ({
-      unsubscribers: { ...state.unsubscribers, [categoryId]: unsubscribe }
+      unsubscribers: { ...state.unsubscribers, [categoryId]: unsubscribe },
     }));
   },
 
   unsubscribeFromCroppedCookies: (categoryId: string) => {
     const { unsubscribers } = get();
     const unsubscribe = unsubscribers[categoryId];
-    
+
     if (unsubscribe) {
       unsubscribe();
       set((state) => {
@@ -242,7 +255,7 @@ export const useImageStore = create<ImageState>((set, get) => ({
   getCroppedCookiesForCategory: (categoryId: string) => {
     const allImages = get().images;
     return Object.values(allImages).filter(
-      (img) => img.type === 'cropped_cookie' && img.categoryId === categoryId
+      (img) => img.type === 'cropped_cookie' && img.categoryId === categoryId,
     );
   },
 

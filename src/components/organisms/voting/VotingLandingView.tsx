@@ -36,9 +36,7 @@ export const VotingLandingView = ({ eventName, categories, onStart }: VotingLand
         </button>
       </div>
 
-      <div className="hidden">
-        {/* Add some festive/cookie decorations if desired */}
-      </div>
+      <div className="hidden">{/* Add some festive/cookie decorations if desired */}</div>
     </div>
   );
 };

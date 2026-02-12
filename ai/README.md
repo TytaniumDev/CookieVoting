@@ -18,14 +18,14 @@ npm run sync-agent-rules:check
 
 Different AI coding assistants expect their instructions in different locations:
 
-| Agent/IDE | Expected Location |
-|-----------|------------------|
-| **Claude Code** | `CLAUDE.md` |
-| **Gemini** | `GEMINI.md` |
-| **Cursor** | `.cursor/rules/*.mdc` |
-| **Antigravity** | `.antigravity/rules.md` |
-| **Cline** | `.clinerules` |
-| **Windsurf** | `.windsurfrules` |
+| Agent/IDE          | Expected Location                 |
+| ------------------ | --------------------------------- |
+| **Claude Code**    | `CLAUDE.md`                       |
+| **Gemini**         | `GEMINI.md`                       |
+| **Cursor**         | `.cursor/rules/*.mdc`             |
+| **Antigravity**    | `.antigravity/rules.md`           |
+| **Cline**          | `.clinerules`                     |
+| **Windsurf**       | `.windsurfrules`                  |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
 
 Instead of maintaining 7+ duplicate files, we maintain one source and generate the rest.
@@ -47,6 +47,7 @@ ai/
 ## Change Detection
 
 Each generated file includes:
+
 - **Timestamp**: When the file was generated
 - **Checksum**: SHA256 hash of all source files (first 12 chars)
 - **Agent Instructions**: Tells the AI to re-run sync if sources change
@@ -90,15 +91,15 @@ If a file grows beyond 200 lines, split it into focused sub-topics (e.g., `code-
 
 The sync script generates these files (all auto-generated, do not edit directly):
 
-| File | Agent/IDE | Notes |
-|------|-----------|-------|
-| `CLAUDE.md` | Claude Code | Concatenated rules |
-| `GEMINI.md` | Gemini | Concatenated rules |
-| `.cursor/rules/*.mdc` | Cursor | Individual files with frontmatter |
-| `.antigravity/rules.md` | Antigravity | Concatenated rules |
-| `.clinerules` | Cline | Concatenated rules |
-| `.windsurfrules` | Windsurf | Concatenated rules |
-| `.github/copilot-instructions.md` | GitHub Copilot | Concatenated rules |
+| File                              | Agent/IDE      | Notes                             |
+| --------------------------------- | -------------- | --------------------------------- |
+| `CLAUDE.md`                       | Claude Code    | Concatenated rules                |
+| `GEMINI.md`                       | Gemini         | Concatenated rules                |
+| `.cursor/rules/*.mdc`             | Cursor         | Individual files with frontmatter |
+| `.antigravity/rules.md`           | Antigravity    | Concatenated rules                |
+| `.clinerules`                     | Cline          | Concatenated rules                |
+| `.windsurfrules`                  | Windsurf       | Concatenated rules                |
+| `.github/copilot-instructions.md` | GitHub Copilot | Concatenated rules                |
 
 ## Best Practices
 
@@ -120,6 +121,7 @@ The sync script generates these files (all auto-generated, do not edit directly)
 ### Built-in Hooks (Already Configured!)
 
 The sync script runs automatically before:
+
 - `npm run dev` (via `predev` hook)
 - `npm run build` (via `prebuild` hook)
 
@@ -128,6 +130,7 @@ It uses `--auto` mode which only syncs if the source checksum has changed, so it
 ### Pre-commit Hook (Optional)
 
 Add to `.husky/pre-commit` (if using Husky):
+
 ```bash
 npm run sync-agent-rules
 git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rules/ .github/copilot-instructions.md ai/.rules-checksum
@@ -136,6 +139,7 @@ git add CLAUDE.md GEMINI.md .clinerules .windsurfrules .antigravity/ .cursor/rul
 ### CI/CD Check
 
 Add to your CI pipeline to ensure generated files are up-to-date:
+
 ```yaml
 - name: Check agent rules are synced
   run: npm run sync-agent-rules:check
@@ -146,7 +150,7 @@ Add to your CI pipeline to ensure generated files are up-to-date:
 ### Fully Supported (Priority)
 
 - ✅ **Claude Code** - `CLAUDE.md` at project root
-- ✅ **Gemini** - `GEMINI.md` at project root  
+- ✅ **Gemini** - `GEMINI.md` at project root
 - ✅ **Cursor** - `.cursor/rules/*.mdc` with frontmatter
 - ✅ **Antigravity** - `.antigravity/rules.md`
 
@@ -178,6 +182,7 @@ If you have existing rules scattered across the repo:
 ## Troubleshooting
 
 ### Generated files not updating
+
 ```bash
 # Clean and regenerate
 npm run sync-agent-rules -- --clean
@@ -185,12 +190,14 @@ npm run sync-agent-rules
 ```
 
 ### Agent not reading rules
+
 - Verify the file exists in the expected location
 - Check file permissions
 - Restart your IDE/agent
 - Some agents cache rules - may need to start a new session
 
 ### Cursor not loading .mdc files
+
 - Ensure files have proper frontmatter with `description` and `alwaysApply`
 - Check `.cursor/rules/` directory exists
 - Restart Cursor

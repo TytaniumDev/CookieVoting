@@ -55,13 +55,11 @@ export const categoryCreateSchema = z.object({
     .trim(),
   image: z
     .instanceof(File, { message: 'Image file is required' })
+    .refine((file) => file.size <= 5 * 1024 * 1024, 'Image size must be 5MB or less')
     .refine(
-      (file) => file.size <= 5 * 1024 * 1024,
-      'Image size must be 5MB or less'
-    )
-    .refine(
-      (file) => ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'].includes(file.type),
-      'Invalid image type. Please use JPEG, PNG, WebP, or GIF.'
+      (file) =>
+        ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'].includes(file.type),
+      'Invalid image type. Please use JPEG, PNG, WebP, or GIF.',
     ),
 });
 

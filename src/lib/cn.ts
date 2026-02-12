@@ -10,5 +10,5 @@ import { clsx, type ClassValue } from 'clsx';
  * cn('p-4 bg-white', isActive && 'bg-blue-500', className)
  */
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }

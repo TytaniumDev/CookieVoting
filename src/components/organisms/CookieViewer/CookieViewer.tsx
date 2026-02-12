@@ -215,7 +215,6 @@ export function CookieViewer({
     });
   }, []);
 
-
   useEffect(() => {
     updateImageDimensions();
     window.addEventListener('resize', updateImageDimensions);
@@ -246,7 +245,7 @@ export function CookieViewer({
       } else {
         const syntheticEvent = {
           ...event,
-          stopPropagation: () => { },
+          stopPropagation: () => {},
         } as unknown as React.MouseEvent;
         onCookieClick?.(detected, index, syntheticEvent);
       }
@@ -265,7 +264,7 @@ export function CookieViewer({
       className={cn(
         'relative w-full h-full flex items-center justify-center overflow-hidden',
         isZoomed && 'fixed inset-0 w-screen h-screen bg-black z-[9999]',
-        className
+        className,
       )}
       style={isZoomed ? { zIndex: 9999 } : undefined}
     >
@@ -301,7 +300,10 @@ export function CookieViewer({
               ref={imageRef}
               src={imageUrl}
               alt="Cookie detection"
-              className={cn('block w-full h-full object-contain relative z-[1] pointer-events-none', imageClassName)}
+              className={cn(
+                'block w-full h-full object-contain relative z-[1] pointer-events-none',
+                imageClassName,
+              )}
               onLoad={updateImageDimensions}
               style={{
                 // Critical: width/height 100% with object-fit: contain ensures image fits within container
@@ -389,7 +391,9 @@ export function CookieViewer({
                             onKeyDown={(e) => handleCookieKeyDown(detected, index, e)}
                             role="button"
                             tabIndex={0}
-                            aria-label={hasNumber ? `Cookie ${cookieNumber}` : `Cookie ${index + 1}`}
+                            aria-label={
+                              hasNumber ? `Cookie ${cookieNumber}` : `Cookie ${index + 1}`
+                            }
                           />
                           <title>
                             {hasNumber
@@ -442,7 +446,7 @@ export function CookieViewer({
                         <button
                           className={cn(
                             'absolute -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 border-2 border-white rounded-full flex items-center justify-center cursor-pointer z-10 transition-all p-0 m-0 hover:bg-[#dc2626] hover:-translate-x-1/2 hover:-translate-y-1/2 hover:scale-120 hover:z-[11] focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.5)] md:w-12 md:h-12 md:min-w-12 md:min-h-12',
-                            selected && 'bg-[#16a34a] border-[#16a34a] shadow-[0_0_10px_#16a34a]'
+                            selected && 'bg-[#16a34a] border-[#16a34a] shadow-[0_0_10px_#16a34a]',
                           )}
                           style={{
                             left: `${detected.x}%`,
@@ -457,7 +461,9 @@ export function CookieViewer({
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
                         >
-                          <span className="text-white font-extrabold text-xl text-shadow-[0_1px_2px_black] md:text-[1.4rem]">{cookieNumber}</span>
+                          <span className="text-white font-extrabold text-xl text-shadow-[0_1px_2px_black] md:text-[1.4rem]">
+                            {cookieNumber}
+                          </span>
                         </button>
                       )}
 

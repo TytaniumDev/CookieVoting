@@ -42,12 +42,18 @@ export default function Home() {
       </div>
       <div className="relative z-[2] text-center max-w-[600px] p-8 bg-[rgba(26,43,71,0.7)] rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-[10px] border border-white/10 max-[768px]:p-6">
         <h1 className="text-[3.5rem] font-bold text-white m-0 mb-4 [text-shadow:0_4px_12px_rgba(0,0,0,0.5)] flex items-center justify-center gap-3 max-[768px]:text-[2.5rem]">
-          <span className="text-[4rem] animate-[float_3s_ease-in-out_infinite] max-[768px]:text-[3rem]">🍪</span>
+          <span className="text-[4rem] animate-[float_3s_ease-in-out_infinite] max-[768px]:text-[3rem]">
+            🍪
+          </span>
           Cookie Voting
         </h1>
-        <p className="text-xl text-[#cbd5e1] m-0 mb-8 max-[768px]:text-lg">Cast your vote for the best cookies!</p>
+        <p className="text-xl text-[#cbd5e1] m-0 mb-8 max-[768px]:text-lg">
+          Cast your vote for the best cookies!
+        </p>
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col items-center justify-center">
-          <p className="text-base text-[#cbd5e1] m-0 mb-4">Administrators, sign in to manage events:</p>
+          <p className="text-base text-[#cbd5e1] m-0 mb-4">
+            Administrators, sign in to manage events:
+          </p>
           <AuthButton user={user} loading={loading} onSignIn={signIn} onSignOut={signOut} />
         </div>
       </div>

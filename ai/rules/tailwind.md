@@ -8,6 +8,7 @@ description: Best practices for using Tailwind CSS - utility-first, responsivene
 ## Core Principles
 
 ### 1. Utility-First, Avoid `@apply`
+
 **Avoid using `@apply` in CSS files.** It re-introduces the problems of traditional CSS (naming things, file jumping) that Tailwind solves.
 
 ```css
@@ -23,9 +24,11 @@ function Button({ children }) {
   return <button className="bg-blue-500 text-white px-4 py-2 rounded">{children}</button>;
 }
 ```
-*Exception: Overriding styles of third-party libraries where you cannot control the markup.*
+
+_Exception: Overriding styles of third-party libraries where you cannot control the markup._
 
 ### 2. Mobile-First Responsiveness
+
 **Write styles for mobile first**, then "add" styles for larger screens.
 
 ```tsx
@@ -39,6 +42,7 @@ function Button({ children }) {
 ```
 
 ### 3. Use `tailwind-merge` with `clsx`
+
 When building reusable components that accept `className` props, **ALWAYS** use `tailwind-merge` (`twMerge`) combined with `clsx` (or `cn` helper) to safely merge classes.
 
 ```tsx
@@ -52,13 +56,14 @@ export function cn(...inputs: ClassValue[]) {
 // Usage
 export function Card({ className, children }: Props) {
   // If className has 'p-0', it will correctly override 'p-6'
-  return <div className={cn("bg-white p-6 rounded-lg", className)}>{children}</div>;
+  return <div className={cn('bg-white p-6 rounded-lg', className)}>{children}</div>;
 }
 ```
 
 ## Styling Patterns
 
 ### 1. Design Tokens over Arbitrary Values
+
 Avoid square bracket notation for colors or spacing unless absolutely unique.
 
 ```tsx
@@ -70,7 +75,9 @@ Avoid square bracket notation for colors or spacing unless absolutely unique.
 ```
 
 ### 2. Logical Grouping
+
 Group classes in a consistent order to improve readability.
+
 1. **Layout**: `flex`, `grid`, `absolute`, `relative`
 2. **Box Model**: `w-`, `h-`, `p-`, `m-`
 3. **Typography**: `text-`, `font-`
@@ -78,6 +85,7 @@ Group classes in a consistent order to improve readability.
 5. **Interactive**: `hover:`, `focus:`
 
 ### 3. Handle Dynamic Classes Safely
+
 Do not construct class strings dynamically in a way that breaks the Tailwind compiler/scanner.
 
 ```tsx
@@ -89,6 +97,7 @@ Do not construct class strings dynamically in a way that breaks the Tailwind com
 ```
 
 ## Checklist before PR
+
 - [ ] No new `.css` files created (unless for global reset).
 - [ ] No `@apply` used in components.
 - [ ] All reusable components accept a `className` prop.

@@ -38,7 +38,19 @@ export function useCategoryProcessing(batchId: string | null): ProcessingStatusW
         const batch = snapshot.data();
 
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'useCategoryProcessing.ts:30', message: 'batch status update', data: { batchId, batchStatus: batch.status, batchError: batch.error }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+        fetch('http://127.0.0.1:7242/ingest/46f7a595-7888-424b-9f1c-56c8a6eb8084', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'useCategoryProcessing.ts:30',
+            message: 'batch status update',
+            data: { batchId, batchStatus: batch.status, batchError: batch.error },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'E',
+          }),
+        }).catch(() => {});
         // #endregion
 
         if (batch.status === 'ready') {
@@ -67,4 +79,3 @@ export function useCategoryProcessing(batchId: string | null): ProcessingStatusW
 
   return { status, errorMessage };
 }
-

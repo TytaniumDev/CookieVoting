@@ -119,7 +119,10 @@ export const VotingWaitingView = ({
       </div>
 
       {/* Snow Mounds */}
-      <div className="absolute bottom-0 left-0 w-full h-[15vh] z-[5] pointer-events-none" aria-hidden="true">
+      <div
+        className="absolute bottom-0 left-0 w-full h-[15vh] z-[5] pointer-events-none"
+        aria-hidden="true"
+      >
         <div className="absolute -bottom-[50px] -left-[10%] w-1/2 h-[150px] bg-[#f8fafc] rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
         <div className="absolute -bottom-[50px] left-[30%] w-2/5 h-[180px] bg-[#f8fafc] rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)] z-[6]" />
         <div className="absolute -bottom-[50px] -right-[10%] w-3/5 h-[160px] bg-[#f8fafc] rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]" />

@@ -14,18 +14,18 @@ Replace `CookieCoordinate` with a simplified `Cookie` interface:
 
 ```typescript
 export interface Cookie {
-  id: string // Unique ID (used for voting)
-  imageUrl: string // Public URL to the individual cropped cookie image
-  bakerId?: string // Optional baker ID reference (bakers stored as subcollection)
+  id: string; // Unique ID (used for voting)
+  imageUrl: string; // Public URL to the individual cropped cookie image
+  bakerId?: string; // Optional baker ID reference (bakers stored as subcollection)
 }
 
 export interface Category {
-  id: string
-  name: string
-  imageUrl: string // Keep for reprocessing capability
-  cookies: Cookie[] // Array of individual cookie images
-  order?: number
-  batchId?: string // Links to cookie_batches/{batchId} if processed via Vision API
+  id: string;
+  name: string;
+  imageUrl: string; // Keep for reprocessing capability
+  cookies: Cookie[]; // Array of individual cookie images
+  order?: number;
+  batchId?: string; // Links to cookie_batches/{batchId} if processed via Vision API
 }
 ```
 
@@ -47,10 +47,10 @@ Update `UserVote` to use cookie IDs with forward-compatibility for ranked choice
 
 ```typescript
 export interface UserVote {
-  userId: string
-  votes: Record<string, string[]> // categoryId -> cookieId[] (array for ranked choice compatibility)
-  timestamp: number
-  viewedResults?: boolean
+  userId: string;
+  votes: Record<string, string[]>; // categoryId -> cookieId[] (array for ranked choice compatibility)
+  timestamp: number;
+  viewedResults?: boolean;
 }
 ```
 
@@ -113,7 +113,7 @@ export async function uploadTray(
     categoryId,
     createdAt: serverTimestamp(),
     originalImageRef: `uploads/${batchId}/original.jpg`,
-  })
+  });
 
   // ... rest of function ...
 }
@@ -143,52 +143,45 @@ export async function uploadTray(
 Add helper to determine processing status from batch:
 
 ```typescript
-export type ProcessingStatus =
-  | 'not_processed'
-  | 'in_progress'
-  | 'processed'
-  | 'error'
+export type ProcessingStatus = 'not_processed' | 'in_progress' | 'processed' | 'error';
 
 export async function getCategoryProcessingStatus(
   eventId: string,
   categoryId: string,
 ): Promise<ProcessingStatus> {
-  const category = await getCategory(eventId, categoryId)
-  if (!category?.batchId) return 'not_processed'
+  const category = await getCategory(eventId, categoryId);
+  if (!category?.batchId) return 'not_processed';
 
-  const batchDoc = await getDoc(doc(db, 'cookie_batches', category.batchId))
-  if (!batchDoc.exists()) return 'not_processed'
+  const batchDoc = await getDoc(doc(db, 'cookie_batches', category.batchId));
+  if (!batchDoc.exists()) return 'not_processed';
 
-  const batch = batchDoc.data() as CookieBatch
-  if (batch.status === 'ready') return 'processed'
-  if (batch.status === 'error') return 'error'
-  return 'in_progress'
+  const batch = batchDoc.data() as CookieBatch;
+  if (batch.status === 'ready') return 'processed';
+  if (batch.status === 'error') return 'error';
+  return 'in_progress';
 }
 ```
 
 Add function for reprocessing (cleans up cookies and batch):
 
 ```typescript
-export async function reprocessCategory(
-  eventId: string,
-  categoryId: string,
-): Promise<void> {
-  const category = await getCategory(eventId, categoryId)
-  if (!category) throw new Error('Category not found')
+export async function reprocessCategory(eventId: string, categoryId: string): Promise<void> {
+  const category = await getCategory(eventId, categoryId);
+  if (!category) throw new Error('Category not found');
 
   // Clear cookies
-  await clearCategoryCookies(eventId, categoryId)
+  await clearCategoryCookies(eventId, categoryId);
 
   // Delete batch document if exists
   if (category.batchId) {
-    await deleteDoc(doc(db, 'cookie_batches', category.batchId))
+    await deleteDoc(doc(db, 'cookie_batches', category.batchId));
     // Note: Storage files cleanup handled separately if needed
   }
 
   // Clear batchId from category
   await updateDoc(doc(db, 'events', eventId, 'categories', categoryId), {
     batchId: null,
-  })
+  });
 }
 ```
 
@@ -215,39 +208,37 @@ Add Vision API processing option:
 Hook to monitor batch status (simplified - no conversion needed, Cloud Function handles it):
 
 ```typescript
-import {useState, useEffect} from 'react'
-import {doc, onSnapshot} from 'firebase/firestore'
-import {db} from '../firebase'
-import type {ProcessingStatus} from '../firestore'
+import { useState, useEffect } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
+import type { ProcessingStatus } from '../firestore';
 
-export function useCategoryProcessing(
-  batchId: string | null,
-): ProcessingStatus {
-  const [status, setStatus] = useState<ProcessingStatus>('not_processed')
+export function useCategoryProcessing(batchId: string | null): ProcessingStatus {
+  const [status, setStatus] = useState<ProcessingStatus>('not_processed');
 
   useEffect(() => {
     if (!batchId) {
-      setStatus('not_processed')
-      return
+      setStatus('not_processed');
+      return;
     }
 
-    const batchRef = doc(db, 'cookie_batches', batchId)
+    const batchRef = doc(db, 'cookie_batches', batchId);
     const unsubscribe = onSnapshot(batchRef, (snapshot) => {
       if (!snapshot.exists()) {
-        setStatus('not_processed')
-        return
+        setStatus('not_processed');
+        return;
       }
 
-      const batch = snapshot.data()
-      if (batch.status === 'ready') setStatus('processed')
-      else if (batch.status === 'error') setStatus('error')
-      else setStatus('in_progress')
-    })
+      const batch = snapshot.data();
+      if (batch.status === 'ready') setStatus('processed');
+      else if (batch.status === 'error') setStatus('error');
+      else setStatus('in_progress');
+    });
 
-    return unsubscribe
-  }, [batchId])
+    return unsubscribe;
+  }, [batchId]);
 
-  return status
+  return status;
 }
 ```
 
@@ -270,10 +261,10 @@ Replace CookieViewer with grid layout:
 
 ```typescript
 interface CookieGridProps {
-  cookies: Cookie[]
-  selectedCookieId?: string
-  onSelectCookie: (cookieId: string) => void
-  className?: string
+  cookies: Cookie[];
+  selectedCookieId?: string;
+  onSelectCookie: (cookieId: string) => void;
+  className?: string;
 }
 
 export function CookieGrid({
@@ -320,9 +311,9 @@ export function CookieGrid({
 
 ```typescript
 export interface CookieScore {
-  cookieId: string
-  cookie: Cookie
-  votes: number
+  cookieId: string;
+  cookie: Cookie;
+  votes: number;
   // bakerId comes from cookie.bakerId (reference by ID for future extensibility)
 }
 ```

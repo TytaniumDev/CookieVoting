@@ -6,6 +6,7 @@ description: Best practices for using Shadcn/UI components, styling with Tailwin
 # Shadcn/UI & Design System
 
 ## Core Philosophy
+
 We use **Shadcn/UI** (Radix UI + Tailwind) as our foundation. The goal is to build a **premium, accessible, and consistent** application.
 
 1.  **Prefer Composition**: Use existing components (`<Button>`, `<Card>`) before writing custom `<div className="...">`.
@@ -15,60 +16,75 @@ We use **Shadcn/UI** (Radix UI + Tailwind) as our foundation. The goal is to bui
 ## Usage Guidelines
 
 ### 1. Imports
+
 **Always import from `@/components/ui/...`**
 
 ```tsx
 // ✅ Correct
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 // ❌ Incorrect - do not import from raw Radix or local relative paths if generic
-import * as RadixPop from "@radix-ui/react-popover";
-import { Button } from "../../components/ui/button";
+import * as RadixPop from '@radix-ui/react-popover';
+import { Button } from '../../components/ui/button';
 ```
 
 ### 2. Class Merging (`cn`)
+
 **Always use `cn()`** to merge classes when creating manageable components or passing `className` props.
 
 ```tsx
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-export function CustomCard({ className, children }: { className?: string, children: React.ReactNode }) {
+export function CustomCard({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   // Allows the parent to override 'bg-white' with 'bg-gray-100' safely
-  return <div className={cn("bg-white p-4 rounded-lg", className)}>{children}</div>;
+  return <div className={cn('bg-white p-4 rounded-lg', className)}>{children}</div>;
 }
 ```
 
 ### 3. Component Library
+
 The following components are available in `src/components/ui/`. **Use them!**
 
-| Component | Usage |
-| :--- | :--- |
-| **Button** | Primary actions. Use `variant="ghost"` for icon-only buttons. |
-| **Input** | Text inputs. |
-| **Label** | Form labels. Always associate with inputs. |
-| **Card** | Content containers. Use `CardHeader`, `CardTitle`, `CardContent`. |
-| **Tabs** | Switch between views (e.g., Admin Dashboard). |
-| **Dialog** | Modals. Use `DialogTrigger` and `DialogContent`. |
-| **Select** | Dropdowns. Prefer over native `<select>`. |
-| **Toast** | Notifications via `useToast`. |
+| Component  | Usage                                                             |
+| :--------- | :---------------------------------------------------------------- |
+| **Button** | Primary actions. Use `variant="ghost"` for icon-only buttons.     |
+| **Input**  | Text inputs.                                                      |
+| **Label**  | Form labels. Always associate with inputs.                        |
+| **Card**   | Content containers. Use `CardHeader`, `CardTitle`, `CardContent`. |
+| **Tabs**   | Switch between views (e.g., Admin Dashboard).                     |
+| **Dialog** | Modals. Use `DialogTrigger` and `DialogContent`.                  |
+| **Select** | Dropdowns. Prefer over native `<select>`.                         |
+| **Toast**  | Notifications via `useToast`.                                     |
 
 ### 4. Icons
+
 **Use `lucide-react`** for all icons.
+
 - Import standard named icons (e.g., `Trash2`, `Plus`, `Settings`).
 - Size them consistently (usually `w-4 h-4` or `w-5 h-5`).
 
 ```tsx
-import { Plus } from "lucide-react";
-<Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
+import { Plus } from 'lucide-react';
+<Button>
+  <Plus className="w-4 h-4 mr-2" /> Add Item
+</Button>;
 ```
 
 ## Anti-Patterns
+
 - **❌ Arbitrary Colors**: Avoid `bg-[#123456]`. Use `bg-primary`, `bg-muted`, etc.
 - **❌ Reinventing the Wheel**: Don't build a custom modal using a standard div; use `<Dialog>`.
 - **❌ Inconsistent Spacing**: Use standard Tailwind spacings (`gap-2`, `p-4`, `p-6`).
 
 ## Checklist for UI Changes
+
 - [ ] Did I use a Shadcn component if it exists?
 - [ ] Are interactions accessible (keyboard navigable)?
 - [ ] Did I use `lucide-react` icons?
