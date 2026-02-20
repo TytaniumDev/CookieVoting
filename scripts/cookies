@@ -1,6 +1,0 @@
-#!/bin/bash
-# Cookie Voting - Local Development Script Wrapper
-# This file calls cookies.sh
-
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-exec "$SCRIPT_DIR/cookies.sh" "$@"

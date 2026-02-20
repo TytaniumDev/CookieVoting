@@ -1,1 +1,0 @@
-export { CategoryManager } from './CategoryManager';

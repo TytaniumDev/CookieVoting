@@ -1,1 +1,0 @@
-export { VotingControls } from './VotingControls';
