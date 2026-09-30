@@ -168,4 +168,11 @@ until real-device testing (useful from phase 3).
   the same `events/` paths, bucket `cookie-voting.firebasestorage.app`.
   Documented the cleanup in `docs/SETUP.md`, and moved the deploy workflow from
   phase 10 into phase 2 so the owner can try each phase on a real phone.
+- Owner asked for the old project to be cleaned up. The session has no
+  Google Cloud credentials and reading production data was blocked by the
+  permission policy, so **deletion is still pending** (SETUP.md §2). Before
+  that, saved the 9 unique plate photos that weren't already fixtures from the
+  bucket's public `shared/cookies/` folder: 2048 px, metadata and GPS
+  stripped. They're catalogued in `fixtures/plates/README.md`, and the old
+  category names are useful for seed data.
 - **Next:** phase 2.

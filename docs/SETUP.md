@@ -85,9 +85,11 @@ firebase firestore:delete --all-collections --project cookie-voting
 That clears the old `events`, `images`, `test_events`, `cookie_batches` and
 `test_system` collections.
 
-**c) Delete the old photos.** Firebase console → _Storage_ → select every
-folder → _Delete_. The new app hasn't uploaded anything yet, so the bucket
-should end up empty. (With the Google Cloud CLI:
+**c) Delete the old photos.** The plate photos worth keeping (every unique
+one in `shared/cookies/`) are already saved in `fixtures/plates/`, so the
+bucket can be emptied. Firebase console → _Storage_ → select every folder →
+_Delete_. The new app hasn't uploaded anything yet, so the bucket should end
+up empty. (With the Google Cloud CLI:
 `gcloud storage rm --recursive "gs://cookie-voting.firebasestorage.app/**"`.)
 
 **d) Optional tidy-ups**
