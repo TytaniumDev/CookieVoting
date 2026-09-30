@@ -1,0 +1,14 @@
+{
+  "name": "@cookie-voting/shared",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Pure TypeScript domain logic shared by the web app and Cloud Functions.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

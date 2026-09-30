@@ -1,0 +1,9 @@
+node_modules
+dist
+storybook-static
+coverage
+playwright-report
+test-results
+package-lock.json
+fixtures
+ClaudePRD.md
