@@ -20,21 +20,21 @@ listed at the end with their reasons. The phased build plan is in
 
 ## Decisions
 
-| Area                  | Choice                                                                                                    | Why                                                                                                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend              | React 19 + TypeScript + Vite (SPA), React Router (data mode)                                              | The best free cookie-identification tools (MediaPipe, Transformers.js/ONNX) are JS/WASM, so a web-native stack. Small first load for voters on phones.          |
-| Styling               | Tailwind CSS v4, semantic design tokens in `apps/web/src/styles/theme.css`                                | Re-skinning = editing one file (PRD §14).                                                                                                                       |
-| Backend               | Firebase on the **Blaze** plan                                                                            | Never pauses (Supabase free pauses after 7 idle days), no realtime connection cap, 5 GB photo storage free. Blaze is required for Storage and Functions.        |
-| Database              | Cloud Firestore                                                                                           | Realtime listeners for waiting room, live vote count and live results.                                                                                          |
-| Auth                  | Firebase Auth: Google (admins) + Anonymous (voters)                                                       | Per PRD. Admin access = allowlist doc in `admins/{email}`.                                                                                                      |
-| Photo storage         | Cloud Storage for Firebase, US-CENTRAL1/US-EAST1/US-WEST1 bucket                                          | Those regions carry the Always Free quota (5 GB-months, 100 GB/month egress).                                                                                   |
-| Scoring               | Cloud Functions (2nd gen, Node) recompute a public results doc                                            | Server-side, trusted, ballots stay private. Shared pure logic in `packages/shared`.                                                                             |
-| Cookie identification | In-browser: tap-to-select segmentation + manual boxes                                                     | $0, no API key, works offline on the admin's phone. Optional "pre-outline all cookies" evaluated later (Gemini via Firebase AI Logic free tier, or in-browser). |
-| Cookie crops          | **Not stored.** Rendered from the plate photo + normalised box                                            | No crop pipeline, no extra files, box edits are instant, zoom uses full resolution.                                                                             |
-| Hosting               | Firebase Hosting (SPA rewrite), PR preview channels                                                       | Same platform/CLI; 360 MB/day free transfer covers thousands of voter visits (photos are served by Storage, not Hosting).                                       |
-| Component catalogue   | Storybook 10, published to GitHub Pages                                                                   | PRD §13. Every story doubles as a browser test (render + play function + axe a11y).                                                                             |
-| Tests                 | Vitest (unit, jsdom), Storybook story tests (Vitest browser/Chromium), Playwright E2E, Firebase emulators | Everything runs locally/CI without a real Firebase project.                                                                                                     |
-| Lint/format           | oxlint + Prettier                                                                                         | Vite template defaults; fast.                                                                                                                                   |
+| Area                  | Choice                                                                                                    | Why                                                                                                                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend              | React 19 + TypeScript + Vite (SPA), React Router (data mode)                                              | The best free cookie-identification tools (MediaPipe, Transformers.js/ONNX) are JS/WASM, so a web-native stack. Small first load for voters on phones.                                                                    |
+| Styling               | Tailwind CSS v4, semantic design tokens in `apps/web/src/styles/theme.css`                                | Re-skinning = editing one file (PRD §14).                                                                                                                                                                                 |
+| Backend               | Firebase on the **Blaze** plan, reusing the existing `cookie-voting` project                              | Never pauses (Supabase free pauses after 7 idle days), no realtime connection cap, 5 GB photo storage free. Blaze is required for Storage and Functions. Reuse avoids redoing project setup (see [SETUP.md](./SETUP.md)). |
+| Database              | Cloud Firestore                                                                                           | Realtime listeners for waiting room, live vote count and live results.                                                                                                                                                    |
+| Auth                  | Firebase Auth: Google (admins) + Anonymous (voters)                                                       | Per PRD. Admin access = allowlist doc in `admins/{email}`.                                                                                                                                                                |
+| Photo storage         | The project's existing bucket `cookie-voting.firebasestorage.app`                                         | Always Free quota (5 GB-months, 100 GB/month egress) applies if the bucket is in US-CENTRAL1/US-EAST1/US-WEST1; likely us-west1, to be confirmed by the owner.                                                            |
+| Scoring               | Cloud Functions (2nd gen, Node, `us-west1`) recompute a public results doc                                | Server-side, trusted, ballots stay private. Shared pure logic in `packages/shared`. Same region as the old functions and (likely) the bucket.                                                                             |
+| Cookie identification | In-browser: tap-to-select segmentation + manual boxes                                                     | $0, no API key, works offline on the admin's phone. Optional "pre-outline all cookies" evaluated later (Gemini via Firebase AI Logic free tier, or in-browser).                                                           |
+| Cookie crops          | **Not stored.** Rendered from the plate photo + normalised box                                            | No crop pipeline, no extra files, box edits are instant, zoom uses full resolution.                                                                                                                                       |
+| Hosting               | Firebase Hosting (SPA rewrite), PR preview channels                                                       | Same platform/CLI; 360 MB/day free transfer covers thousands of voter visits (photos are served by Storage, not Hosting).                                                                                                 |
+| Component catalogue   | Storybook 10, published to GitHub Pages                                                                   | PRD §13. Every story doubles as a browser test (render + play function + axe a11y).                                                                                                                                       |
+| Tests                 | Vitest (unit, jsdom), Storybook story tests (Vitest browser/Chromium), Playwright E2E, Firebase emulators | Everything runs locally/CI without a real Firebase project.                                                                                                                                                               |
+| Lint/format           | oxlint + Prettier                                                                                         | Vite template defaults; fast.                                                                                                                                                                                             |
 
 ### Alternatives considered
 
@@ -53,6 +53,27 @@ listed at the end with their reasons. The phased build plan is in
   attempt struggled with detection quality; tap-to-select keeps a human in the
   loop at zero cost. Auto pre-outlining remains an optional later phase.
 
+## Firebase project and environments
+
+| Environment      | Project ID           | Used by                                                                          |
+| ---------------- | -------------------- | -------------------------------------------------------------------------------- |
+| Production       | `cookie-voting`      | The live app at <https://cookie-voting.web.app>; deployed only by CI from `main` |
+| Local, tests, CI | `demo-cookie-voting` | Firebase emulators (the `demo-` prefix means no real project is involved)        |
+
+- **Reused project.** `cookie-voting` hosted the previous attempt, so it already
+  has Blaze billing, Firestore, the Storage bucket, Auth and Hosting. Its
+  leftovers (old functions, data in the same `events/` paths, permissive test
+  rules) must be cleared first; the owner checklist is in
+  [SETUP.md](./SETUP.md).
+- **Regions.** New Cloud Functions go in `us-west1`, alongside the old
+  functions and (probably) the bucket. The Firestore database keeps whatever
+  location it was created with; it can't be changed and doesn't matter at this
+  scale.
+- **Web config** (API key, app ID, bucket, …) is public and gets committed to the
+  repo; it's readable at <https://cookie-voting.web.app/__/firebase/init.json>.
+- **Agent sessions never touch production.** They build and test on the
+  emulators; changes reach `cookie-voting` only through the CI deploy workflow.
+
 ## Repository layout
 
 ```
@@ -66,7 +87,7 @@ packages/shared/     Pure TS domain logic: types, ballot rules, Borda scoring
 functions/           Cloud Functions (added in roadmap phase 2)
 firebase/            Firestore/Storage rules + indexes (phase 2)
 fixtures/plates/     Real plate photos for detection spikes and E2E tests
-docs/                ARCHITECTURE.md (this), ROADMAP.md
+docs/                ARCHITECTURE.md (this), ROADMAP.md, SETUP.md (owner steps)
 ```
 
 `packages/shared` exports TypeScript source directly (no build step). Vite

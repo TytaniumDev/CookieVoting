@@ -15,6 +15,9 @@ docs are the memory:
    doc drift.
 3. **[`ClaudePRD.md`](ClaudePRD.md)** — product requirements. Its _Tech Stack_
    and _Data Models_ sections are superseded by ARCHITECTURE.md.
+4. **[`docs/SETUP.md`](docs/SETUP.md)** — steps only the owner can do in the
+   Firebase project. When a phase needs a new owner step, add it there and to
+   ROADMAP.md → Owner actions.
 
 If a choice has several reasonable answers with different product trade-offs,
 ask the owner before building it. Engineering-only choices are yours: follow
@@ -35,16 +38,29 @@ npm run format           # Prettier write
 
 ### Sandboxed / cloud sessions
 
-Chromium is preinstalled at `/opt/pw-browsers/chromium` for an older Playwright
-release, and downloading browsers may be blocked. The configs read
-`CHROMIUM_PATH`:
+In Claude Code on the web, the SessionStart hook
+(`.claude/hooks/session-start.sh`) runs `npm install` and exports
+`CHROMIUM_PATH=/opt/pw-browsers/chromium`. Chromium is preinstalled there for
+an older Playwright release and browser downloads may be blocked, so the
+story-test and E2E configs launch that binary when `CHROMIUM_PATH` is set.
+Elsewhere, set it by hand if needed:
 
 ```sh
 CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:stories
 CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e
 ```
 
-CI installs its own Chromium and doesn't need this.
+When a new tool needs installing for every session (e.g. emulator downloads),
+add it to the hook and keep the hook idempotent. CI installs its own Chromium.
+
+## Firebase projects
+
+- **Production: `cookie-voting`**, an existing project reused from the previous
+  attempt (<https://cookie-voting.web.app>). Never deploy to it, write to its
+  data or run CLI commands against it from a session. Changes reach it only
+  through the CI deploy workflow on `main`.
+- **Local and tests: `demo-cookie-voting`** on the Firebase emulators. All
+  development and automated tests use this.
 
 ## Layout
 

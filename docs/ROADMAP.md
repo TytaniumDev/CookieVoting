@@ -30,19 +30,22 @@ Status: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 2 — Firebase backend foundation ⬜
 
-Everything runs against the emulators with the `demo-cookie-voting` project ID,
-so no real Firebase project is needed yet.
+Build and test everything against the emulators with the `demo-cookie-voting`
+project ID. Production is the existing `cookie-voting` project (see
+ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 
-- [ ] `firebase.json`, `.firebaserc`, emulator config (auth, firestore, storage, functions, hosting)
+- [ ] `firebase.json`, `.firebaserc` (default project `cookie-voting`), emulator config (auth, firestore, storage, functions, hosting); emulator scripts pass `--project demo-cookie-voting`
 - [ ] `firebase/firestore.rules` + `firebase/storage.rules` per ARCHITECTURE.md → Security model
 - [ ] Rules unit tests with `@firebase/rules-unit-testing` (admin vs voter vs anonymous; ballot create-once; results visibility by status)
-- [ ] `functions/` workspace: 2nd-gen triggers calling `recomputeResults(eventId)` → `tallyResults`; bundled with esbuild so `@cookie-voting/shared` is inlined
+- [ ] `functions/` workspace (region `us-west1`): 2nd-gen triggers calling `recomputeResults(eventId)` → `tallyResults`; bundled with esbuild so `@cookie-voting/shared` is inlined
 - [ ] Function integration tests on the emulator (ballot → results doc; assignment change → recompute; concurrent ballots don't regress `ballotCount`)
-- [ ] `apps/web/src/lib/firebase.ts`: typed client init from env/config, auto-connect to emulators in dev/test
+- [ ] `apps/web/src/lib/firebase.ts`: typed client init with the committed public web config for `cookie-voting` (from `https://cookie-voting.web.app/__/firebase/init.json`); auto-connect to emulators in dev/test
 - [ ] Typed Firestore converters/hooks layer (`useEvent`, `useCategories`, …) with listener cleanup
 - [ ] Seed script: an event with categories using `fixtures/plates` photos, bakers, assignments, ballots
 - [ ] CI job running rules + functions tests under `firebase emulators:exec`
-- [ ] `docs/SETUP.md`: owner checklist for the real project (see "Owner actions" below)
+- [ ] If the emulators download large files on first run, pre-fetch them in `.claude/hooks/session-start.sh` so cloud sessions stay fast
+- [ ] Deploy workflow: on `main`, deploy Firestore/Storage rules, indexes, functions (`--force`, which also removes leftover legacy functions) and hosting to `cookie-voting`; hosting preview channel per PR. Skip cleanly while the deploy secret isn't configured. If phase 2 runs long, this item can move to phase 3
+- [ ] Replace `docs/SETUP.md` section 4 with the exact deploy-credential steps (service account roles + GitHub secret)
 
 **Done when:** `npm run test:emulators` passes locally and in CI; the web app can read seeded data from the emulators.
 
@@ -113,7 +116,7 @@ so no real Firebase project is needed yet.
 
 - [ ] Festive polish: subtle snow animation (reduced-motion aware), imagery, empty states, copy
 - [ ] Accessibility and 375 px layout pass on every voter screen
-- [ ] Firebase Hosting deploy workflow on `main` + PR preview channels
+- [ ] Production check of the deploy workflow; remove the old `FIREBASE_TOKEN` / `VITE_*` GitHub secrets
 - [ ] App Check (reCAPTCHA Enterprise) on Firestore/Storage (and AI Logic if phase 11 ships)
 - [ ] Owner walkthrough in `docs/SETUP.md` verified end to end; dry-run event on real phones
 
@@ -129,17 +132,15 @@ Can start any time after phase 5 (it needs the ground truth).
 
 ## Owner actions
 
-Things only the repo owner can do. None are needed until real-device testing
-(useful from phase 3) or launch (phase 10). Phase 2 writes the detailed steps
-to `docs/SETUP.md`.
+Things only the repo owner can do, in the existing `cookie-voting` project.
+Step-by-step instructions are in [`SETUP.md`](./SETUP.md). None are needed
+until real-device testing (useful from phase 3).
 
-- [ ] Create a **new** Firebase project (the old `cookie-voting` project still has the previous attempt's functions and data), or confirm reusing it after cleanup
-- [ ] Upgrade to Blaze; add a budget alert (e.g. $1)
-- [ ] Create Firestore and a Storage bucket in a US free-tier region (us-west1, us-central1 or us-east1)
-- [ ] Enable Auth providers: Google, Anonymous
-- [ ] Add your email to `admins/`
-- [ ] Add the deploy service-account secret to GitHub (`firebase init hosting:github` does this)
-- [ ] Enable GitHub Pages with source "GitHub Actions" (for Storybook)
+- [ ] Check the basics: Blaze still active, $1 budget alert, bucket location, Google + Anonymous sign-in enabled (SETUP.md §1)
+- [ ] Clear out the previous attempt: old functions, Firestore data, photos (SETUP.md §2)
+- [ ] Add your email to `admins/` (SETUP.md §3)
+- [ ] Deploy credentials for GitHub Actions, once phase 2 documents them (SETUP.md §4)
+- [ ] GitHub Pages source set to "GitHub Actions" (SETUP.md §5)
 
 ---
 
@@ -159,4 +160,12 @@ to `docs/SETUP.md`.
   default); the Go-based TS 7 compiler can be evaluated later. An npm
   `overrides` entry in the root `package.json` works around oxlint's optional
   `vite-plus` peer pinning an old `@vitest/browser-playwright`.
+- Added a SessionStart hook (`.claude/hooks/session-start.sh`) for cloud
+  sessions: runs `npm install` and exports `CHROMIUM_PATH`.
+- The owner chose to **reuse the existing `cookie-voting` project**. Found in git
+  history and on the live site: old functions in `us-west1`
+  (`processCookieImage` calls Cloud Vision, plus three callables), old data in
+  the same `events/` paths, bucket `cookie-voting.firebasestorage.app`.
+  Documented the cleanup in `docs/SETUP.md`, and moved the deploy workflow from
+  phase 10 into phase 2 so the owner can try each phase on a real phone.
 - **Next:** phase 2.

@@ -17,6 +17,7 @@ within free tiers.
 - [Product requirements](ClaudePRD.md)
 - [Architecture & decisions](docs/ARCHITECTURE.md)
 - [Roadmap & progress](docs/ROADMAP.md)
+- [Firebase setup (owner steps)](docs/SETUP.md)
 - [Contributor / agent guide](CLAUDE.md) (commands and conventions)
 
 ## Quick start
