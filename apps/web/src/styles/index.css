@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+@layer base {
+  body {
+    @apply bg-background font-sans text-ink antialiased;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
