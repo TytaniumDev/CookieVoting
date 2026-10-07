@@ -1,15 +1,27 @@
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
 @import 'tailwindcss';
 @import './theme.css';
 
 @layer base {
+  html {
+    /* Keep the cream background behind iOS overscroll. */
+    @apply bg-background;
+  }
+
   body {
-    @apply bg-background font-sans text-ink antialiased;
+    @apply bg-background font-sans text-base/relaxed text-ink antialiased;
     min-height: 100dvh;
   }
 
   h1,
   h2,
-  h3 {
-    @apply font-display;
+  h3,
+  h4 {
+    @apply font-display font-semibold tracking-tight text-balance;
+  }
+
+  :focus-visible {
+    @apply outline-3 outline-offset-2 outline-focus;
   }
 }

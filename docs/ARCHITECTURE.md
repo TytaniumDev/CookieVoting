@@ -165,6 +165,29 @@ and cookies, duplicates and extra picks are ignored (`sanitizeRanking`).
 Anonymous auth means a determined person can vote again from a new browser,
 which the PRD accepts. App Check can be added at launch to deter scripted abuse.
 
+## Design system
+
+The look is **Classic cozy**: cranberry, pine and gold on warm cream, with
+Fredoka for headings and buttons and Nunito for body text. It lives in three
+places:
+
+- **Tokens** in `apps/web/src/styles/theme.css`: brand colours each with
+  `-hover`, `-subtle` and `on-*` partners, neutrals, status colours, rank
+  medals, a focus-ring colour, fonts, radii, warm-tinted shadows and the
+  snowfall animation. Re-skinning (PRD §14) is an edit to this file only.
+- **Contrast checks** in `apps/web/src/styles/theme.test.ts`: every
+  text/background pair components use must reach 4.5:1 and every UI pair
+  (input borders, focus ring) 3:1. A new token pair gets a line there.
+- **Components** in `apps/web/src/components/`: Alert, Badge, Button, Card,
+  ProgressBar, RankBadge, Snowfall, Spinner and TextField, each with stories.
+  Storybook's _Foundations_ page shows every colour token, the type pairing
+  and a phone-width voter screen built from the components.
+
+Fonts are self-hosted through `@fontsource-variable/*` packages (imported in
+`index.css`), so the app and Storybook get the same fonts with no third-party
+requests, and browsers only download the Latin subset they need. Motion
+respects `prefers-reduced-motion`: snow holds still and spinners stop.
+
 ## Key flows
 
 ### Photo upload (admin, phone)

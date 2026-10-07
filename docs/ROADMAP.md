@@ -176,3 +176,18 @@ until real-device testing (useful from phase 3).
   stripped. They're catalogued in `fixtures/plates/README.md`, and the old
   category names are useful for seed data.
 - **Next:** phase 2.
+
+### Session 2 — 2026-10-07 (design system)
+
+- Owner asked for a Christmas-themed design system that is easy to read and
+  modern. Offered three directions (Classic cozy, Modern Nordic, Candy cane)
+  and built on **Classic cozy**, the recommendation. Changing direction later
+  is a `theme.css` + font import swap.
+- Expanded tokens (subtle tints, `on-*` pairs, status, focus, shadows, snow
+  animation) with WCAG contrast unit tests; self-hosted Fredoka + Nunito.
+- New components with stories: Alert, Badge, Card, ProgressBar, RankBadge,
+  Snowfall, Spinner, TextField; Button gained `danger`, `loading` and
+  `fullWidth`. Storybook has a _Foundations_ page (colours, type, showcase)
+  and autodocs pages. Details in ARCHITECTURE.md → Design system.
+- Phase 2 is untouched; later phases should build on these components (e.g.
+  RankBadge for phase 8, Snowfall for phase 10) rather than new one-offs.

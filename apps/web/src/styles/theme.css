@@ -4,42 +4,96 @@
  * Components only use the semantic tokens below (bg-primary, text-ink, ...),
  * never raw hex values, so swapping the festive palette for another theme is a
  * change to this file alone. Tailwind v4 turns each --color-* / --font-* /
- * --radius-* variable into utilities (e.g. --color-primary -> bg-primary).
+ * --radius-* / --shadow-* / --animate-* variable into utilities
+ * (e.g. --color-primary -> bg-primary, text-primary, border-primary).
+ *
+ * Every text/background pair used by components is contrast-checked in
+ * theme.test.ts (WCAG AA). Add new pairs there when adding tokens.
  */
 @theme {
-  /* Palette: cranberry, pine, gold, snow, cocoa */
+  /* Palette "Classic cozy": cranberry, pine, gold, snow, cocoa */
+
+  /* Brand */
   --color-primary: #9f1d2b;
   --color-primary-hover: #7f1622;
   --color-on-primary: #fffaf3;
+  --color-primary-subtle: #fbe9e7;
+  --color-on-primary-subtle: #7f1622;
 
   --color-secondary: #1f5c3a;
   --color-secondary-hover: #174a2e;
   --color-on-secondary: #fffaf3;
+  --color-secondary-subtle: #e4f0e7;
+  --color-on-secondary-subtle: #174a2e;
 
   --color-accent: #d9ab3a;
+  --color-accent-hover: #c4952a;
   --color-on-accent: #3b2414;
+  --color-accent-subtle: #faefcf;
+  --color-on-accent-subtle: #6b4a0e;
 
+  /* Neutrals */
   --color-background: #fbf6ee;
   --color-surface: #ffffff;
   --color-surface-muted: #f3eadb;
   --color-border: #e4d6c1;
+  /* Borders that must be seen to be used (inputs): ≥ 3:1 against surfaces */
+  --color-border-strong: #8c7560;
 
   --color-ink: #2b1a10;
   --color-ink-muted: #6e5646;
 
+  /* Keyboard focus ring: ≥ 3:1 against background and surface */
+  --color-focus: #1f5c3a;
+
+  /* Decorative snow on brand-coloured areas */
+  --color-snow: #ffffff;
+
+  /* Status */
   --color-danger: #b42318;
+  --color-danger-hover: #912018;
+  --color-on-danger: #fffaf3;
+  --color-danger-subtle: #fdecea;
+  --color-on-danger-subtle: #8a1c12;
+
   --color-success: #1f7a4a;
+  --color-on-success: #fffaf3;
+  --color-success-subtle: #e3f3e9;
+  --color-on-success-subtle: #145233;
+
+  --color-warning: #b7791f;
+  --color-warning-subtle: #fdf3dc;
+  --color-on-warning-subtle: #6b4407;
 
   /* Rank badges on voting cards: gold, silver, bronze */
   --color-rank-1: #d9ab3a;
-  --color-rank-2: #a9b3bd;
+  --color-on-rank-1: #3b2414;
+  --color-rank-2: #c4ccd4;
+  --color-on-rank-2: #26313b;
   --color-rank-3: #b87333;
+  --color-on-rank-3: #2b1608;
 
-  /* Typography */
-  --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Typography: rounded, friendly display face + a highly legible body face */
+  --font-display: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+  --font-sans: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Shape */
   --radius-card: 1rem;
   --radius-control: 0.75rem;
+
+  /* Elevation: warm-tinted shadows so they read on cream, not grey */
+  --shadow-card: 0 1px 2px rgb(59 36 20 / 0.06), 0 4px 12px rgb(59 36 20 / 0.08);
+  --shadow-raised: 0 2px 4px rgb(59 36 20 / 0.08), 0 12px 28px rgb(59 36 20 / 0.14);
+
+  /* Motion */
+  --animate-snowfall: snowfall linear infinite;
+
+  @keyframes snowfall {
+    from {
+      transform: translate3d(0, -10%, 0);
+    }
+    to {
+      transform: translate3d(1.5rem, 110cqh, 0);
+    }
+  }
 }

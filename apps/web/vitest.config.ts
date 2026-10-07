@@ -19,6 +19,8 @@ export default mergeConfig(
             environment: 'jsdom',
             include: ['src/**/*.test.{ts,tsx}'],
             setupFiles: ['./src/test/setup.ts'],
+            // theme.test.ts reads the design tokens with `?raw`.
+            css: { include: [/theme\.css/] },
           },
         },
         {
