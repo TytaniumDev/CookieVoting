@@ -4,6 +4,8 @@ The build is split into phases, each sized for one agent session. Work top to
 bottom: a phase starts only when the ones before it are done, unless it says
 otherwise. Design context lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md);
 product requirements in [`../ClaudePRD.md`](../ClaudePRD.md).
+[`PRD-COVERAGE.md`](./PRD-COVERAGE.md) maps every PRD requirement to the phase
+that builds it; flip its rows to ✅ when a phase ships.
 
 **How to use this file (agents):** pick the first phase that isn't ✅, do it,
 tick its boxes, set its status, and add an entry to the session log at the
@@ -39,6 +41,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] Rules unit tests with `@firebase/rules-unit-testing` (admin vs voter vs anonymous; ballot create-once; results visibility by status)
 - [ ] `functions/` workspace (region `us-west1`): 2nd-gen triggers calling `recomputeResults(eventId)` → `tallyResults`; bundled with esbuild so `@cookie-voting/shared` is inlined
 - [ ] Function integration tests on the emulator (ballot → results doc; assignment change → recompute; concurrent ballots don't regress `ballotCount`)
+- [ ] Storage bucket CORS config (`firebase/storage-cors.json`) allowing `GET` from the app origins, so the in-browser model can read photo pixels; applied by the deploy workflow, or as an owner step in `docs/SETUP.md` if the deploy credentials can't
 - [ ] `apps/web/src/lib/firebase.ts`: typed client init with the committed public web config for `cookie-voting` (from `https://cookie-voting.web.app/__/firebase/init.json`); auto-connect to emulators in dev/test
 - [ ] Typed Firestore converters/hooks layer (`useEvent`, `useCategories`, …) with listener cleanup
 - [ ] Seed script: an event with categories using `fixtures/plates` photos, bakers, assignments, ballots
@@ -93,6 +96,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] Open voting → share panel with the voter URL, copy button and QR code
 - [ ] Live ballot count on the dashboard (from `results/live.ballotCount`)
 - [ ] Open results button
+- [ ] Dashboard rows for events in `voting`/`results` show the live count, voter URL and Open results too (PRD §10)
 
 ## Phase 8 — Voter flow ⬜
 
@@ -109,6 +113,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] `/event/:eventId/results` and in-flow results from `results/live` (live listener)
 - [ ] Per-category rankings with tied ranks, crop, baker name, points
 - [ ] Overall baker leaderboard with ties
+- [ ] Friendly "results aren't open yet" state when `/results` is visited early
 - [ ] Celebration moment (confetti or similar, respecting `prefers-reduced-motion`)
 - [ ] E2E: votes → results reflect Borda scores
 
@@ -175,4 +180,16 @@ until real-device testing (useful from phase 3).
   bucket's public `shared/cookies/` folder: 2048 px, metadata and GPS
   stripped. They're catalogued in `fixtures/plates/README.md`, and the old
   category names are useful for seed data.
+- **Next:** phase 2.
+
+### Session 2 — 2026-10-07
+
+- Planning only: checked every PRD requirement against `main` and wrote
+  [`PRD-COVERAGE.md`](./PRD-COVERAGE.md), a prioritized checklist mapping each
+  one to its phase.
+- Added the gaps it found: bucket CORS (phase 2), dashboard controls while an
+  event is live (phase 7), early-visit state for results (phase 9). Fixed the
+  placeholder pages that named the wrong phases.
+- Four product questions are open for the owner (PRD-COVERAGE.md → Open
+  questions). Until answered, build their recommended defaults.
 - **Next:** phase 2.
