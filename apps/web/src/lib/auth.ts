@@ -3,6 +3,7 @@ import {
   browserPopupRedirectResolver,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithCredential,
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -17,6 +18,25 @@ export function useAuthUser(): Subscription<User | null> {
   return useSubscription<User | null>(
     (onData, onError) => onAuthStateChanged(auth, onData, onError),
     'auth',
+  )
+}
+
+/**
+ * The voter: whoever is signed in on this device, or a new anonymous user. The account
+ * persists on the device, so "already voted" survives reloads (one ballot per user).
+ */
+export function useVoter(): Subscription<User> {
+  return useSubscription<User>(
+    (onData, onError) =>
+      onAuthStateChanged(
+        auth,
+        (user) => {
+          if (user) onData(user)
+          else signInAnonymously(auth).catch(onError)
+        },
+        onError,
+      ),
+    'voter',
   )
 }
 

@@ -1,3 +1,5 @@
+import { ORDINALS } from './ordinals.ts'
+
 export type Rank = 1 | 2 | 3
 export type RankBadgeSize = 'md' | 'lg'
 
@@ -13,8 +15,6 @@ const rankClasses: Record<Rank, string> = {
   3: 'bg-rank-3 text-on-rank-3',
 }
 
-const ordinal: Record<Rank, string> = { 1: '1st', 2: '2nd', 3: '3rd' }
-
 const sizeClasses: Record<RankBadgeSize, string> = {
   md: 'size-8 text-base',
   lg: 'size-12 text-2xl',
@@ -24,7 +24,7 @@ const sizeClasses: Record<RankBadgeSize, string> = {
 export function RankBadge({ rank, size = 'md', className = '' }: RankBadgeProps) {
   return (
     <span
-      aria-label={`${ordinal[rank]} place`}
+      aria-label={`${ORDINALS[rank]} place`}
       role="img"
       className={`inline-grid place-items-center rounded-full font-display font-bold shadow-raised ring-2 ring-surface ${rankClasses[rank]} ${sizeClasses[size]} ${className}`}
     >
