@@ -2,12 +2,15 @@ import {
   paths,
   removeBakerFromSetup,
   type BakerDoc,
+  type CategoryDoc,
   type EventDoc,
+  type PlatePhoto,
   type SetupDoc,
 } from '@cookie-voting/shared'
 import {
   arrayUnion,
   collection,
+  deleteField,
   doc,
   runTransaction,
   serverTimestamp,
@@ -16,6 +19,7 @@ import {
   type FieldValue,
 } from 'firebase/firestore'
 import { db } from './firebase.ts'
+import { deletePlatePhoto } from './storage.ts'
 
 type NewDoc<T> = { [K in keyof T]: T[K] | FieldValue }
 
@@ -59,4 +63,46 @@ export async function removeBakerFromEvent(eventId: string, bakerId: string): Pr
     if (!setup) return
     tx.set(setupRef, removeBakerFromSetup(setup, bakerId))
   })
+}
+
+/** Adds a category at the end of the list; returns its id. */
+export async function addCategory(eventId: string, name: string, order: number): Promise<string> {
+  const categoryRef = doc(collection(db, paths.categories(eventId)))
+  const category: CategoryDoc = { name: name.trim(), order, photo: null, cookies: [] }
+  const batch = writeBatch(db)
+  batch.set(categoryRef, category)
+  batch.update(doc(db, paths.event(eventId)), { updatedAt: serverTimestamp() })
+  await batch.commit()
+  return categoryRef.id
+}
+
+export async function renameCategory(
+  eventId: string,
+  categoryId: string,
+  name: string,
+): Promise<void> {
+  await updateDoc(doc(db, paths.category(eventId, categoryId)), { name: name.trim() })
+}
+
+/** Saves a new display order: each category's `order` becomes its index. */
+export async function reorderCategories(eventId: string, categoryIds: string[]): Promise<void> {
+  const batch = writeBatch(db)
+  categoryIds.forEach((id, order) => batch.update(doc(db, paths.category(eventId, id)), { order }))
+  await batch.commit()
+}
+
+/**
+ * Deletes a category, its baker assignments and its plate photo. Allowed even after
+ * votes exist (owner decision Q2); those picks simply stop counting.
+ */
+export async function deleteCategory(
+  eventId: string,
+  categoryId: string,
+  photo: PlatePhoto | null,
+): Promise<void> {
+  const batch = writeBatch(db)
+  batch.delete(doc(db, paths.category(eventId, categoryId)))
+  batch.update(doc(db, paths.setup(eventId)), { [`assignments.${categoryId}`]: deleteField() })
+  await batch.commit()
+  if (photo) await deletePlatePhoto(photo)
 }

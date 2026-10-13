@@ -222,13 +222,26 @@ baker is on the roster, so removing a baker unassigns their cookies.
 
 ### Photo upload (admin, phone)
 
-1. `<input type="file" accept="image/*">` opens the camera or gallery.
+1. `<input type="file" accept="image/jpeg,image/png">` opens the camera or
+   gallery (phones convert HEIC to JPEG for this filter).
 2. Decode with `createImageBitmap(file, { imageOrientation: 'from-image' })` so
    EXIF rotation is applied.
 3. Downscale to a 2048 px long edge, encode JPEG at quality 0.85 (~300–600 KB).
 4. Upload to `events/{eventId}/plates/{uuid}.jpg` with
    `Cache-Control: public, max-age=31536000, immutable`. Store `{path, url,
 width, height}` on the category.
+
+The work lives in `apps/web/src/lib/photo.ts` (decode, `OffscreenCanvas`
+resize, encode) and `storage.ts` (resumable upload with progress; replacing a
+photo deletes the old file after the new one is saved). Category names come
+with suggestions from past events, ranked by how often they were used
+(`suggestCategoryNames` in `packages/shared`).
+
+Categories reorder by drag handle with dnd-kit (pointer, touch and keyboard
+sensors; custom screen-reader announcements). Dragging is handle-only so the
+rest of the row scrolls normally on phones. Deleting a category always works
+(owner decision Q2: no locks); the confirm dialog warns how many ballots exist,
+and deleting removes its photo and its cookies' baker assignments.
 
 The bucket needs a CORS config allowing `GET` so the in-browser model can read
 pixels from already-uploaded photos. `firebase/storage-cors.json` allows any
@@ -321,6 +334,7 @@ Set a Google Cloud budget alert (e.g. $1) on the Blaze project as a tripwire.
 | Cropped JPEGs stored per cookie                              | Crops rendered from plate photo + box                         | Simpler, fewer files, instant edits.                  |
 | Merge two cookies                                            | Resize/move boxes                                             | Merge only compensated for AI over-segmentation.      |
 | Compress only if > 5 MB                                      | Always downscale to 2048 px long edge                         | Phone photos are 12 MP; smaller, faster everywhere.   |
+| Delete a category only while no votes exist                  | Delete any time, with a warning that names the ballot count   | Owner decision Q2: no locks, admin responsibility.    |
 | All event subcollections public                              | Ballots private; baker assignments hidden until results       | Privacy and blind voting.                             |
 | Results aggregated from `userVotes` (implicitly client-side) | Cloud Function writes `results/live`                          | Owner requirement: scoring in the cloud; fewer reads. |
 | `userVotes`, `bakerIds` on event                             | `ballots`, roster in `private/setup`                          | Naming, visibility.                                   |

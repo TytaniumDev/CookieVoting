@@ -9,7 +9,9 @@ import {
 } from '@cookie-voting/shared'
 import {
   collection,
+  collectionGroup,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -118,4 +120,22 @@ export function useResults(eventId: string): Subscription<Results | null> {
     watchDoc(refs.results(eventId) as DocumentReference<Results>),
     `results/${eventId}`,
   )
+}
+
+/**
+ * Every category name ever used, for suggestions (PRD §6.3). Read once rather than
+ * listened to: it only feeds autocomplete.
+ */
+export function usePastCategoryNames(): Subscription<string[]> {
+  return useSubscription<string[]>((onData, onError) => {
+    let active = true
+    getDocs(collectionGroup(db, 'categories'))
+      .then((snapshot) => {
+        if (active) onData(snapshot.docs.map((d) => String(d.get('name') ?? '')))
+      })
+      .catch((error: Error) => active && onError(error))
+    return () => {
+      active = false
+    }
+  }, 'pastCategoryNames')
 }

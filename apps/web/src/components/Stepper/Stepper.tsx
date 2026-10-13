@@ -25,7 +25,7 @@ export function Stepper<Id extends string>({
   className = '',
 }: StepperProps<Id>) {
   return (
-    <nav aria-label={label} className={`-mx-4 overflow-x-auto px-4 ${className}`}>
+    <nav aria-label={label} className={`relative -mx-4 overflow-x-auto px-4 ${className}`}>
       <ol className="flex min-w-max gap-2">
         {steps.map((step, index) => {
           const isSelected = step.id === selected
