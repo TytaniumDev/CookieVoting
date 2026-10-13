@@ -11,6 +11,7 @@ vi.mock('../lib/data.ts', () => ({
     data: { id: eventId, name: `Event ${eventId}`, status: 'voting' },
   }),
   useBallot: () => ({ status: 'ready', data: null }),
+  useResults: () => ({ status: 'loading' }),
   useCategories: () => ({
     status: 'ready',
     data: [

@@ -87,6 +87,7 @@
 
   /* Motion */
   --animate-snowfall: snowfall linear infinite;
+  --animate-confetti: confetti ease-in forwards;
 
   @keyframes snowfall {
     from {
@@ -94,6 +95,15 @@
     }
     to {
       transform: translate3d(1.5rem, 110cqh, 0);
+    }
+  }
+
+  @keyframes confetti {
+    from {
+      transform: translate3d(0, 0, 0) rotate(0turn);
+    }
+    to {
+      transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin));
     }
   }
 }

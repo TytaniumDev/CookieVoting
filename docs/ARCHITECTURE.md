@@ -347,6 +347,15 @@ page listens to the voter's own ballot doc: once it exists, the voter sees the
 thank-you screen, which moves to `/event/:id/results` when `status` becomes
 `results`. Voting stays open while results show, with a banner linking to them.
 
+### Results page
+
+`/event/:id/results` listens to the event and, only once its status is
+`results`, to `results/live` (`useResults(null)` until then: a read the rules
+deny would end the listener). Cookie crops come from the category docs, which
+the page already reads for the voter flow. Voters who have voted are sent here
+from `/event/:id` when results open; others keep voting with a banner linking
+here. Ties share a competition rank (`competitionRanks`) and show "Tied 2nd".
+
 ### Scoring (Cloud Functions)
 
 `recomputeResults(eventId)` (`functions/src/recomputeResults.ts`) reads the
