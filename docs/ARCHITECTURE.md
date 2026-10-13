@@ -338,10 +338,14 @@ category has cookies, per `maxPicksFor`) before the ballot can be submitted
 (owner decision, 2026-10-13). This is enforced by the voter UI; the scorer
 still accepts partial ballots.
 
-Voters sign in anonymously on page load. Selections live in React state
-(`toggleRanking` from `packages/shared`). Submit writes
-`events/{eventId}/ballots/{uid}` once. The waiting screen listens to the event
-doc and switches to results when `status` becomes `results`.
+Voters sign in anonymously on page load (`useVoter` in `lib/auth.ts`).
+Selections live in React state in `BallotFlow` (`toggleRanking` from
+`packages/shared`) and survive moving between categories, but not a reload.
+Submit writes `events/{eventId}/ballots/{uid}` once (`lib/ballots.ts`, kept
+apart from `lib/mutations.ts` so the voter chunk doesn't load Storage). The
+page listens to the voter's own ballot doc: once it exists, the voter sees the
+thank-you screen, which moves to `/event/:id/results` when `status` becomes
+`results`. Voting stays open while results show, with a banner linking to them.
 
 ### Scoring (Cloud Functions)
 

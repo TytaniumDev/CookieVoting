@@ -104,20 +104,20 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P6 — Voter flow (phase 8)
 
-| PRD  | Requirement                                                       | Status                                     |
-| ---- | ----------------------------------------------------------------- | ------------------------------------------ |
-| §4.2 | Anonymous sign-in on load; one ballot per anonymous user          | ⬜ 8 (rules in 2)                          |
-| §7.1 | Landing: event name, ordered categories, "Start Voting"           | ⬜ 8                                       |
-| §7.1 | Already voted → waiting or results by status                      | ⬜ 8                                       |
-| §7.2 | One category at a time, "Category 2 of 5", back/forward and swipe | ⬜ 8                                       |
-| §7.2 | Grid that fits all cookies on screen where possible               | ⬜ 8                                       |
-| §7.2 | 🔍 on each card opens a zoom modal                                | ⬜ 8                                       |
-| §7.2 | Tap to rank 1/2/3 with badges; tap again to unrank and renumber   | ✅ `toggleRanking` · ⬜ 8 UI               |
-| §7.2 | Fewer than 3 cookies → fewer picks                                | ✅ `maxPicksFor` · ⬜ 8 UI                 |
-| §7.2 | Selections kept in memory across categories until submit          | ⬜ 8                                       |
-| §7.3 | Review screen, then submit; duplicate submit rejected             | ✅ 2 rules · ⬜ 8 · Q3: all picks required |
-| §7.4 | Waiting screen that jumps to results when status changes          | ⬜ 8                                       |
-| §13  | E2E: voter submits a vote                                         | ⬜ 8                                       |
+| PRD  | Requirement                                                       | Status                                             |
+| ---- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| §4.2 | Anonymous sign-in on load; one ballot per anonymous user          | ✅                                                 |
+| §7.1 | Landing: event name, ordered categories, "Start Voting"           | ✅                                                 |
+| §7.1 | Already voted → waiting or results by status                      | ✅                                                 |
+| §7.2 | One category at a time, "Category 2 of 5", back/forward and swipe | ✅                                                 |
+| §7.2 | Grid that fits all cookies on screen where possible               | ✅                                                 |
+| §7.2 | 🔍 on each card opens a zoom modal                                | ✅                                                 |
+| §7.2 | Tap to rank 1/2/3 with badges; tap again to unrank and renumber   | ✅ `toggleRanking` + `CategoryBallot`              |
+| §7.2 | Fewer than 3 cookies → fewer picks                                | ✅ `maxPicksFor` + `CategoryBallot`                |
+| §7.2 | Selections kept in memory across categories until submit          | ✅                                                 |
+| §7.3 | Review screen, then submit; duplicate submit rejected             | ✅ rules + `BallotReview` · Q3: all picks required |
+| §7.4 | Waiting screen that jumps to results when status changes          | ✅                                                 |
+| §13  | E2E: voter submits a vote                                         | ✅ `e2e/voter-event.spec.ts`                       |
 
 ### P7 — Results (phase 9)
 

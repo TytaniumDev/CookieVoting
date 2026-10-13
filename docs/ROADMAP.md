@@ -98,16 +98,16 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Open results button
 - [x] Dashboard rows for events in `voting`/`results` show the live count, voter URL and Open results too (PRD §10)
 
-## Phase 8 — Voter flow ⬜
+## Phase 8 — Voter flow ✅
 
-- [ ] Anonymous sign-in on load; "already voted" detection → waiting/results
-- [ ] Landing: event name, ordered category list, "Start voting"
-- [ ] One category at a time, progress indicator, forward/back + swipe
-- [ ] Adaptive grid that fits all cookies on screen where possible; tap to rank (badges 1/2/3), tap again to unrank with renumbering (`toggleRanking`); 🔍 zoom modal
-- [ ] Every category needs all its picks before moving on to review (owner decision Q3)
-- [ ] Review screen → submit (create-once ballot) → waiting screen that follows event status live
-- [ ] Voting closed / event not found states
-- [ ] Stories + E2E: full vote on the mobile profile against the emulators, double-submit rejected
+- [x] Anonymous sign-in on load; "already voted" detection → waiting/results
+- [x] Landing: event name, ordered category list, "Start voting"
+- [x] One category at a time, progress indicator, forward/back + swipe
+- [x] Adaptive grid that fits all cookies on screen where possible; tap to rank (badges 1/2/3), tap again to unrank with renumbering (`toggleRanking`); 🔍 zoom modal
+- [x] Every category needs all its picks before moving on to review (owner decision Q3)
+- [x] Review screen → submit (create-once ballot) → waiting screen that follows event status live
+- [x] Voting closed / event not found states
+- [x] Stories + E2E: full vote on the mobile profile against the emulators, double-submit rejected
 
 ## Phase 9 — Results ⬜
 
@@ -307,3 +307,24 @@ until real-device testing (useful from phase 3).
 - E2E "an admin assigns bakers, opens voting and then results" covers the
   gate, the picker, the share panel and Open results from the dashboard.
 - **Next:** phase 8 (voter flow; Q3: every category needs all its picks).
+
+### Session 4, continued — phase 8
+
+- Shipped the voter flow at `/event/:id`: anonymous sign-in, landing, one
+  category per screen with progress, Back/Next and swipe, review, submit.
+  New components: `CookieCard`, `CookieZoom`, `CategoryBallot`, `BallotReview`.
+- Next stays disabled until a category has all its picks (Q3). The grid uses
+  2 columns up to 4 cookies, 3 up to 9 and 4 above that.
+- Ballot writes live in `lib/ballots.ts` rather than `lib/mutations.ts` so the
+  voter chunk doesn't pull in Storage.
+- After submitting, the voter sees "Thanks for voting!" (also after a reload).
+  When results open, the page moves to `/event/:id/results`. While results are
+  open, people who haven't voted can still vote, and a banner links to the
+  results.
+- A second submit is rejected by the rules (tested in phase 2). The UI shows
+  "already voted" if one gets through.
+- E2E: a full vote across 6 categories with a change from review and a reload,
+  swipe (mobile), voting not open, unknown event.
+- **Owner check:** Anonymous sign-in must be enabled in Firebase Auth for
+  production (SETUP.md §1).
+- **Next:** phase 9 (results page).
