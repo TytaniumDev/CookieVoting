@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last updated for phase 2 (Firebase backend), 2026-10-13._
+_Last updated for phase 3 (admin sign-in, dashboard, bakers), 2026-10-13._
 
 ## Snapshot
 
@@ -25,7 +25,8 @@ Pages.
 
 Phase 2 added the Firebase backend: security rules with emulator tests, the
 results Cloud Functions, the web client and live data hooks, seed data, and CI
-deploys. Not built yet: every real screen. Nothing in the PRD is unplanned; the gaps this
+deploys. Phase 3 added admin sign-in, the dashboard, event creation and the
+bakers step. Not built yet: categories onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
 review found were small and have been added to ROADMAP.md (see
 [Gaps found](#gaps-found-in-this-review)).
 
@@ -51,18 +52,18 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P2 — Admin sign-in, dashboard, events, bakers (phase 3)
 
-| PRD  | Requirement                                                  | Status                        |
-| ---- | ------------------------------------------------------------ | ----------------------------- |
-| §4.1 | Google sign-in; only allowlisted emails get admin access     | ⬜ 3                          |
-| §10  | Dashboard lists events (name, status, created date)          | ⬜ 3                          |
-| §10  | Dashboard shows each in-progress event's current step        | ⬜ 3                          |
-| §6.1 | Create event with a name, status `setup`                     | ⬜ 3                          |
-| §6   | Stepper / progress indicator for the admin flow              | ⬜ 3 · Q1: free order         |
-| §6.2 | Event baker list; search the global roster and add           | ⬜ 3                          |
-| §6.2 | Create a new baker (saved globally and added to the event)   | ⬜ 3                          |
-| §6.2 | Remove a baker from the event without deleting them globally | ⬜ 3 · Q4: allowed, unassigns |
-| §6.2 | Skip the bakers step and come back later                     | ⬜ 3                          |
-| §13  | E2E: admin creates an event                                  | ⬜ 3                          |
+| PRD  | Requirement                                                  | Status                          |
+| ---- | ------------------------------------------------------------ | ------------------------------- |
+| §4.1 | Google sign-in; only allowlisted emails get admin access     | ✅ `AdminGate`                  |
+| §10  | Dashboard lists events (name, status, created date)          | ✅                              |
+| §10  | Dashboard shows each in-progress event's current step        | ✅ `setupProgress`              |
+| §6.1 | Create event with a name, status `setup`                     | ✅                              |
+| §6   | Stepper / progress indicator for the admin flow              | ✅ free order (Q1)              |
+| §6.2 | Event baker list; search the global roster and add           | ✅ `BakerRoster`                |
+| §6.2 | Create a new baker (saved globally and added to the event)   | ✅                              |
+| §6.2 | Remove a baker from the event without deleting them globally | ✅ unassigns their cookies (Q4) |
+| §6.2 | Skip the bakers step and come back later                     | ✅                              |
+| §13  | E2E: admin creates an event                                  | ✅ `e2e/admin.spec.ts`          |
 
 ### P3 — Categories and plate photos (phase 4)
 
