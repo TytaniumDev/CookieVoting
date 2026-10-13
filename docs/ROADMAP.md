@@ -81,13 +81,13 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Geometry helpers in `packages/shared` (clamp, normalise, reading order, IoU) with unit tests
 - [x] Stories + E2E on the mobile profile (draw, resize, delete)
 
-## Phase 6 — Tap-to-select ⬜
+## Phase 6 — Tap-to-select ✅
 
-- [ ] Spike: MediaPipe Interactive Segmenter (`magic_touch`) vs SlimSAM (Transformers.js). Tap each ground-truth cookie centre in `fixtures/plates`, then measure box IoU, model download size, first-tap latency and per-tap latency. Record results in ARCHITECTURE.md
-- [ ] Watch for cookies with toppings (e.g. candies on a cookie): a tap may select only the topping. Prefer the mask that best matches a whole cookie (multi-mask output / largest plausible region)
-- [ ] Integrate the winner as a lazy-loaded, admin-only module; tap a cookie → box added; tap a box → select it
-- [ ] Graceful fallback to manual drawing if the model fails to load (old phone, offline)
-- [ ] E2E on fixture photos: tapping centres yields boxes with IoU ≥ 0.8 against ground truth
+- [x] Spike: MediaPipe Interactive Segmenter (`magic_touch`) vs SlimSAM (Transformers.js) (SlimSAM not measured: Hugging Face is unreachable from the sandbox; MediaPipe met the bar). Tap each ground-truth cookie centre in `fixtures/plates`, then measure box IoU, model download size, first-tap latency and per-tap latency. Record results in ARCHITECTURE.md
+- [x] Watch for cookies with toppings (e.g. candies on a cookie): a tap may select only the topping. Prefer the mask that best matches a whole cookie (multi-mask output / largest plausible region)
+- [x] Integrate the winner as a lazy-loaded, admin-only module; tap a cookie → box added; tap a box → select it
+- [x] Graceful fallback to manual drawing if the model fails to load (old phone, offline)
+- [x] E2E on fixture photos: tapping centres yields boxes with IoU ≥ 0.8 against ground truth
 
 ## Phase 7 — Baker assignment & opening voting ⬜
 
@@ -280,3 +280,19 @@ until real-device testing (useful from phase 3).
   MediaPipe's `magic_touch.tflite` (6.2 MB, storage.googleapis.com) downloads.
   The SlimSAM half of the spike may need to run in CI or on the owner's machine.
 - **Next:** phase 6.
+
+### Session 4, continued — phase 6
+
+- Shipped tap-to-select with MediaPipe `magic_touch`: 92 of 95 fixture cookies
+  box at IoU ≥ 0.8 when the model sees a crop of 60% of the long edge around
+  the tap (results table in ARCHITECTURE.md → Tap-to-select). The model file
+  is committed and served from Hosting; `lib/cookieFinder/` holds the lazy
+  loader, `useCookieFinder` and the tested mask-to-box logic.
+- `PlateEditor` takes a `tapToSelect` prop (loading / ready / unavailable), so
+  stories use a fake finder and the component stays model-free.
+- E2E "tapping each cookie boxes it" taps the five candy canes on the real
+  photo and checks every box against ground truth.
+- The spike harness (static server + Playwright, tapping ground-truth centres)
+  lived in the session scratchpad; rebuild it from the description in
+  ARCHITECTURE.md if the model changes.
+- **Next:** phase 7.

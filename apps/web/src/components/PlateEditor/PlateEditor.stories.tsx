@@ -183,3 +183,74 @@ export const Zoom: Story = {
     await expect(stage.style.transform).toContain('scale(1)')
   },
 }
+
+/** Stands in for the model: "finds" a 20% box centred on the tap. */
+const fakeFind = (_photo: HTMLImageElement, point: { x: number; y: number }) => ({
+  x: point.x - 0.1,
+  y: point.y - 0.1,
+  width: 0.2,
+  height: 0.2,
+})
+
+/** Waits for the photo, since tap-to-select only runs on a loaded image. */
+async function photoLoaded(canvasElement: HTMLElement) {
+  const img = canvasElement.querySelector('img')
+  await waitFor(() => expect(img?.complete && img.naturalWidth > 0).toBe(true))
+}
+
+export const TapToSelectLoading: Story = {
+  args: { cookies: [], tapToSelect: { status: 'loading' } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/getting tap-to-select ready/i)).toBeVisible()
+  },
+}
+
+export const TapToSelectUnavailable: Story = {
+  args: { cookies: [], tapToSelect: { status: 'unavailable' } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/drag across each cookie/i)).toBeVisible()
+  },
+}
+
+export const TapACookie: Story = {
+  args: { cookies: [], tapToSelect: { status: 'ready', find: fakeFind } },
+  play: async ({ args, canvas, canvasElement }) => {
+    await photoLoaded(canvasElement)
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.3, y: 0.3 }, { x: 0.3, y: 0.3 })
+    await expect(await canvas.findByRole('button', { name: 'Cookie 1' })).toBeVisible()
+    const [cookies] = (args.onChange as ReturnType<typeof fn>).mock.lastCall as [Cookie[]]
+    await expect(cookies[0]?.box.x).toBeCloseTo(0.2, 2)
+    await expect(cookies[0]?.box.width).toBeCloseTo(0.2, 2)
+  },
+}
+
+/** Tapping a cookie that's already boxed selects it rather than adding a duplicate. */
+export const TapAnExistingCookie: Story = {
+  args: {
+    cookies: [{ id: 'a', box: { x: 0.2, y: 0.2, width: 0.2, height: 0.2 } }],
+    // The model finds nearly the same box as one that's already there.
+    tapToSelect: {
+      status: 'ready',
+      find: () => ({ x: 0.21, y: 0.2, width: 0.2, height: 0.21 }),
+    },
+  },
+  play: async ({ args, canvas, canvasElement }) => {
+    await photoLoaded(canvasElement)
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.7, y: 0.7 }, { x: 0.7, y: 0.7 })
+    await expect(await canvas.findByText('1 cookie, cookie 1 selected')).toBeVisible()
+    await expect(args.onChange).not.toHaveBeenCalled()
+  },
+}
+
+export const TapFindsNothing: Story = {
+  args: { cookies: [], tapToSelect: { status: 'ready', find: () => null } },
+  play: async ({ args, canvas, canvasElement }) => {
+    await photoLoaded(canvasElement)
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 })
+    await expect(await canvas.findByText(/couldn't find a cookie there/i)).toBeVisible()
+    await expect(args.onChange).not.toHaveBeenCalled()
+  },
+}

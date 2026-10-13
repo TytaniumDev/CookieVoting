@@ -2,6 +2,7 @@ import {
   boxFromPoints,
   clamp,
   clampBox,
+  iou,
   MIN_BOX_SIZE,
   moveBox,
   readingOrder,
@@ -21,6 +22,13 @@ import {
   type PointerEvent,
 } from 'react'
 import { Button } from '../Button/Button.tsx'
+import { Spinner } from '../Spinner/Spinner.tsx'
+
+/** Tap-to-select, supplied by the page so this component stays model-free. */
+export type TapToSelect =
+  | { status: 'loading' }
+  | { status: 'ready'; find: (photo: HTMLImageElement, point: Point) => Box | null }
+  | { status: 'unavailable' }
 
 export interface PlateEditorProps {
   photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
@@ -29,6 +37,8 @@ export interface PlateEditorProps {
   onChange: (cookies: Cookie[]) => void
   /** Names the photo for screen readers, e.g. "Stars plate". */
   label: string
+  /** Tapping a cookie boxes it when this is ready; without it, boxes are drawn by hand. */
+  tapToSelect?: TapToSelect
   /** Makes ids for new cookies; tests pass a predictable one. */
   newId?: () => string
   className?: string
@@ -58,19 +68,27 @@ const MAX_SCALE = 6
 const FIT: View = { scale: 1, x: 0, y: 0 }
 /** Pointer travel, in CSS pixels, below which a press counts as a tap. */
 const TAP_SLOP = 6
+/** A tap that finds a box overlapping an existing one this much selects that one instead. */
+const SAME_COOKIE_IOU = 0.5
 /** Keyboard nudge, as a fraction of the photo; Alt nudges finer. */
 const NUDGE = 0.01
 const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se']
 
 const percent = (n: number) => `${n * 100}%`
 
+const TAP_HINTS: Record<TapToSelect['status'], string> = {
+  loading: 'Getting tap-to-select ready. You can drag to draw boxes meanwhile.',
+  ready: 'Tap a cookie to box it, or drag to draw a box.',
+  unavailable: "Tap-to-select didn't load on this device, so drag across each cookie to box it.",
+}
+
 function distance(a: Point, b: Point) {
   return Math.hypot(a.x - b.x, a.y - b.y)
 }
 
 /**
- * The plate photo with a box over each cookie. Drag on the photo to draw a box; tap a
- * box to select it, drag it to move it, and drag its corner handles to resize it.
+ * The plate photo with a box over each cookie. Tap a cookie to box it (when
+ * `tapToSelect` is ready) or drag on the photo to draw a box; tap a box to select it, drag it to move it, and drag its corner handles to resize it.
  * Pinch (or Ctrl + scroll) zooms and two fingers pan. With a keyboard, Tab to a box,
  * use the arrow keys to move it, Shift + arrows to resize it and Delete to remove it.
  * Edits are reported once each gesture ends, so a drag is one save.
@@ -80,25 +98,61 @@ export function PlateEditor({
   cookies,
   onChange,
   label,
+  tapToSelect,
   newId = () => crypto.randomUUID(),
   className = '',
 }: PlateEditorProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
   const pointers = useRef(new Map<number, Point>())
   const gesture = useRef<Gesture | null>(null)
   const [view, setView] = useState<View>(FIT)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawing, setDrawing] = useState<Box | null>(null)
+  // Where a tap is being looked at by tap-to-select, and what it last said.
+  const [finding, setFinding] = useState<Point | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   // Edits in progress, shown until the saved cookies come back as new props.
   const [draft, setDraft] = useState<{ base: readonly Cookie[]; cookies: Cookie[] } | null>(null)
   const shown = draft?.base === cookies ? draft.cookies : cookies
   const selected = shown.find((c) => c.id === selectedId) ?? null
 
-  function commit(next: Cookie[]) {
+  function commit(next: Cookie[], base: readonly Cookie[] = cookies) {
     const sorted = readingOrder(next)
-    setDraft({ base: cookies, cookies: sorted })
+    setDraft({ base, cookies: sorted })
     onChange(sorted)
+  }
+
+  async function findAt(point: Point) {
+    const image = imageRef.current
+    if (tapToSelect?.status !== 'ready' || !image?.complete) return
+    setFinding(point)
+    setNotice(null)
+    // Let the marker paint before the model blocks the main thread.
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)))
+    let box: Box | null = null
+    try {
+      box = tapToSelect.find(image, point)
+    } catch (error) {
+      console.warn('Tap-to-select failed', error)
+    }
+    setFinding(null)
+    // Props may have moved on while the model ran.
+    const { shown: now, cookies: base } = latest.current
+    if (!box || box.width < MIN_BOX_SIZE || box.height < MIN_BOX_SIZE) {
+      setNotice("Couldn't find a cookie there. Tap its middle, or drag to draw a box.")
+      return
+    }
+    const found = box
+    const existing = now.find((c) => iou(c.box, found) >= SAME_COOKIE_IOU)
+    if (existing) {
+      setSelectedId(existing.id)
+      return
+    }
+    const id = newId()
+    setSelectedId(id)
+    commit([...now, { id, box: found }], base)
   }
 
   function withBox(id: string, box: Box): Cookie[] {
@@ -264,6 +318,7 @@ export function PlateEditor({
         commit([...shown, { id, box }])
       } else {
         setSelectedId(null)
+        if (distance({ x: e.clientX, y: e.clientY }, g.startClient) < TAP_SLOP) void findAt(g.start)
       }
     } else if (g.kind === 'resize' || g.moved) {
       commit(withBox(g.id, g.box))
@@ -320,9 +375,9 @@ export function PlateEditor({
   // Ctrl + wheel (and trackpad pinch) zooms; plain wheel pans once zoomed in, and
   // scrolls the page otherwise. React's wheel listener is passive, so preventDefault
   // needs a native one, which reads the latest view and zoom through refs.
-  const latest = useRef({ view, zoom })
+  const latest = useRef({ view, zoom, shown, cookies })
   useEffect(() => {
-    latest.current = { view, zoom }
+    latest.current = { view, zoom, shown, cookies }
   })
   useEffect(() => {
     const el = viewportRef.current
@@ -354,6 +409,12 @@ export function PlateEditor({
 
   return (
     <div className={`space-y-3 ${className}`}>
+      {tapToSelect && (
+        <p className="flex items-center gap-2 text-sm text-ink-muted">
+          {tapToSelect.status === 'loading' && <Spinner size="sm" label="" />}
+          {TAP_HINTS[tapToSelect.status]}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" onClick={() => zoom(1 / 1.5)} disabled={view.scale <= 1}>
           <span aria-hidden="true" className="text-2xl">
@@ -392,8 +453,11 @@ export function PlateEditor({
       >
         <div ref={stageRef} className="absolute inset-0 origin-top-left" style={stageStyle}>
           <img
+            ref={imageRef}
             src={photo.url}
             alt=""
+            // Tap-to-select reads the pixels, so the photo must come with CORS.
+            crossOrigin="anonymous"
             draggable={false}
             className="pointer-events-none size-full object-fill"
           />
@@ -460,13 +524,24 @@ export function PlateEditor({
               }}
             />
           )}
+          {finding && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute size-6 -translate-1/2 scale-(--inv) rounded-full motion-safe:animate-ping border-4 border-snow bg-primary"
+              style={{ left: percent(finding.x), top: percent(finding.y) }}
+            />
+          )}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <p className="flex-1 text-ink-muted" aria-live="polite">
-          {shown.length === 1 ? '1 cookie' : `${shown.length} cookies`}
-          {selected && `, cookie ${shown.indexOf(selected) + 1} selected`}
+          {finding
+            ? 'Looking for a cookie…'
+            : (notice ??
+              `${shown.length === 1 ? '1 cookie' : `${shown.length} cookies`}${
+                selected ? `, cookie ${shown.indexOf(selected) + 1} selected` : ''
+              }`)}
         </p>
         {selected && (
           <Button variant="danger" onClick={() => remove(selected.id)}>
