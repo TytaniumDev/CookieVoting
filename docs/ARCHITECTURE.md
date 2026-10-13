@@ -254,10 +254,8 @@ would need. The deploy job applies it with `gcloud storage buckets update`.
 The plate editor shows the photo with cookie boxes overlaid:
 
 - **Tap-to-select (primary):** tap a cookie and a segmentation model running in
-  the browser returns a mask, which becomes a tight bounding box. Candidates are
-  MediaPipe Interactive Segmenter (`magic_touch`, built for mobile) and SlimSAM
-  via Transformers.js. Phase 6 picks one by measuring accuracy and speed on
-  `fixtures/plates`. The model is lazy-loaded on admin routes only.
+  the browser returns a mask, which becomes a tight bounding box. See
+  [Tap-to-select](#tap-to-select) for the model and how it was chosen.
 - **Manual:** drag to draw a box; drag handles to resize; drag to move; delete.
   `PlateEditor` (the Cookies step) does this with pointer events: one finger
   draws, moves or resizes, and two fingers pinch-zoom and pan (Ctrl + wheel on
@@ -274,6 +272,46 @@ The plate editor shows the photo with cookie boxes overlaid:
 
 The PRD's "merge two detections" is dropped. It existed to fix AI
 over-segmentation, and resizing a box covers it.
+
+### Tap-to-select
+
+**Model: MediaPipe Interactive Segmenter, `magic_touch`** (`@mediapipe/tasks-vision`,
+the `InteractiveSegmenterLegacy` API that takes a keypoint). Phase 6 measured it by
+tapping the centre of every ground-truth cookie in `fixtures/plates` (95 cookies,
+17 photos) in headless Chromium:
+
+| Input to the model                                 | Boxes with IoU ≥ 0.8 | Mean IoU |
+| -------------------------------------------------- | -------------------- | -------- |
+| Whole photo                                        | 87 / 95              | 0.90     |
+| Crop of 50% of the long edge around the tap        | 89 / 95              | 0.93     |
+| **Crop of 60% of the long edge around the tap** ✅ | **92 / 95**          | **0.94** |
+| Crop of 75% of the long edge around the tap        | 91 / 95              | 0.93     |
+
+- Cropping helps because the cookie fills more of the model's 512 px input and
+  there's less tray or towel for it to pick by mistake. The crop is resized to
+  512 px on its long edge; 256 and 768 px scored the same or worse.
+- The box is the connected mask region (confidence > 0.5) under the tap, or the
+  nearest one within 3% of the width. A region touching three or more sides of
+  the crop is the background, so the tap reports "couldn't find a cookie" and the
+  admin draws the box instead. Of the three misses, one was the background (now
+  rejected), and two were part of a cookie (icing split from the base); the
+  admin resizes those.
+- The candy-topped cookie (`8-cookies_PXL…`, #3) boxes correctly: the model
+  includes the toppings.
+- Speed in the sandbox's headless Chromium (CPU, no GPU): ~0.4 s to load, ~0.3 s
+  per tap. Phones with WebGL may be faster; it's the same order either way.
+- Download, admin-only and lazy (only the Cookies step imports it): the model is
+  6.2 MB and the WebAssembly runtime 3.4 MB gzipped. Both are served from
+  Hosting as hashed, immutable assets, so they download once per device. The
+  model file is committed (`apps/web/src/lib/cookieFinder/magic_touch.tflite`,
+  version 1 from Google's model bucket) so tests need no network.
+- **SlimSAM wasn't measured.** This sandbox can't reach Hugging Face, where
+  Transformers.js fetches it. MediaPipe already clears the bar (the E2E taps a
+  real plate and requires IoU ≥ 0.8 for every cookie), so the comparison isn't
+  worth a CI job unless tap accuracy disappoints on real phones.
+- If the runtime or model fails to load (old phone, blocked download), the editor
+  says so and drawing still works. A tap whose box overlaps an existing one
+  (IoU ≥ 0.5) selects that one instead of adding a duplicate.
 
 ### Rendering a cookie
 

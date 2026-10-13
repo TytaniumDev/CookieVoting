@@ -1,4 +1,6 @@
+import { iou, type Box } from '@cookie-voting/shared'
 import { expect, test, type Page } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 // Data comes from firebase/scripts/seed.ts; admin@example.com is on the admin list.
 async function signInAs(page: Page, email: string) {
@@ -158,4 +160,59 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   expect(await page.evaluate('document.documentElement.scrollWidth')).toBeLessThanOrEqual(
     page.viewportSize()?.width ?? 0,
   )
+})
+
+test('tapping each cookie boxes it', async ({ page }, testInfo) => {
+  test.slow() // Downloads and runs the segmentation model.
+  const photo = '5-cookies_candy-canes'
+  const truth = JSON.parse(
+    await readFile(new URL(`../../../fixtures/plates/${photo}.json`, import.meta.url), 'utf8'),
+  ) as { cookies: { box: Box }[] }
+
+  await signInAs(page, 'admin@example.com')
+  await page.getByRole('link', { name: 'New event' }).click()
+  await page.getByLabel('Event name').fill(`E2E Tap ${testInfo.project.name} ${Date.now()}`)
+  await page.getByRole('button', { name: 'Create event' }).click()
+  await page.getByRole('button', { name: /^categories/i }).click()
+  await page.getByLabel('Category name').fill('Candy Canes')
+  await page.getByRole('button', { name: 'Add category' }).click()
+  await page
+    .getByLabel('Add photo for Candy Canes')
+    .setInputFiles(`../../fixtures/plates/${photo}.jpg`)
+  await expect(page.getByRole('button', { name: /replace photo for candy canes/i })).toBeAttached()
+
+  await page.getByRole('button', { name: /^cookies/i }).click()
+  await expect(page.getByText('Tap a cookie to box it')).toBeVisible({ timeout: 60_000 })
+  const plate = page.getByRole('group', { name: 'Candy Canes plate' })
+  await expect(plate.locator('img')).toHaveJSProperty('complete', true)
+  await plate.scrollIntoViewIfNeeded()
+
+  // Tap the middle of each cookie, as an admin would.
+  for (const [i, { box }] of truth.cookies.entries()) {
+    const rect = (await plate.boundingBox())!
+    await page.mouse.click(
+      rect.x + (box.x + box.width / 2) * rect.width,
+      rect.y + (box.y + box.height / 2) * rect.height,
+    )
+    await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(i + 1, {
+      timeout: 15_000,
+    })
+  }
+
+  // Each found box matches the hand-labelled one (ARCHITECTURE.md → Tap-to-select).
+  const rect = (await plate.boundingBox())!
+  const found = await Promise.all(
+    (await plate.getByRole('button', { name: /^cookie \d$/i }).all()).map(async (b) => {
+      const r = (await b.boundingBox())!
+      return {
+        x: (r.x - rect.x) / rect.width,
+        y: (r.y - rect.y) / rect.height,
+        width: r.width / rect.width,
+        height: r.height / rect.height,
+      }
+    }),
+  )
+  for (const { box } of truth.cookies) {
+    expect(Math.max(...found.map((f) => iou(f, box)))).toBeGreaterThanOrEqual(0.8)
+  }
 })

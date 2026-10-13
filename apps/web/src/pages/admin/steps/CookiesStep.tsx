@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
-import { PlateEditor } from '../../../components/PlateEditor/PlateEditor.tsx'
+import { PlateEditor, type TapToSelect } from '../../../components/PlateEditor/PlateEditor.tsx'
 import { Stepper } from '../../../components/Stepper/Stepper.tsx'
+import { useCookieFinder } from '../../../lib/cookieFinder/useCookieFinder.ts'
 import type { Category } from '../../../lib/data.ts'
 import { saveCookies } from '../../../lib/mutations.ts'
 
@@ -19,6 +20,11 @@ export function CookiesStep({
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
+  const finder = useCookieFinder()
+  const tapToSelect: TapToSelect =
+    finder.status === 'ready'
+      ? { status: 'ready', find: (photo, point) => finder.finder.find(photo, point) }
+      : finder
 
   if (categories.length === 0) {
     return (
@@ -48,8 +54,8 @@ export function CookiesStep({
       <div className="space-y-1">
         <h2 className="text-2xl">Cookies</h2>
         <p className="text-ink-muted">
-          Drag across each cookie to draw a box around it. Tap a box to move it or drag its corners
-          to resize it; pinch to zoom.
+          Box every cookie on each plate. Tap a box to move it or drag its corners to resize it;
+          pinch to zoom.
         </p>
       </div>
       <Stepper
@@ -77,6 +83,7 @@ export function CookiesStep({
           photo={category.photo}
           cookies={category.cookies}
           onChange={save}
+          tapToSelect={tapToSelect}
           label={`${category.name} plate`}
         />
       ) : (
