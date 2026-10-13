@@ -9,7 +9,7 @@ previous attempt left behind.
 This file lists the steps only the owner can do. Agent sessions never touch the
 real project: they build and test against the Firebase emulators with the
 `demo-cookie-voting` project ID, and changes reach `cookie-voting` only through
-the deploy workflow (roadmap phase 2).
+the deploy job in CI (see §4).
 
 ## Known facts about the project
 
@@ -112,10 +112,46 @@ document ID = **your Google account email in lowercase** → add a field
 
 ## 4. Deploy credentials for GitHub Actions
 
-Roadmap phase 2 adds a workflow that deploys rules, functions and hosting to
-`cookie-voting` from `main`, plus preview URLs for pull requests. Phase 2
-replaces this section with the exact steps (a service account with the right
-roles, stored as a GitHub secret).
+CI (`.github/workflows/ci.yml`) deploys to `cookie-voting` on every push to
+`main` once tests pass: Firestore rules and indexes, Storage rules, Cloud
+Functions, hosting, and the photo bucket's CORS config. Pull requests get a
+hosting preview URL (valid 7 days) posted as a comment. Until the secret below
+exists, both jobs are skipped with a notice, so CI stays green.
+
+Do steps 2a–2b first: the first deploy runs with `--force`, which deletes any
+function that isn't in this repo (including the old ones).
+
+**a) Create a service account.** Google Cloud console → _IAM & Admin_ →
+_Service accounts_ (project `cookie-voting`) → _Create service account_.
+Name it `github-deploy`. Grant these roles:
+
+| Role                            | Needed for                                   |
+| ------------------------------- | -------------------------------------------- |
+| Firebase Admin                  | Rules, indexes, hosting and preview channels |
+| Cloud Functions Admin           | Deploying functions                          |
+| Cloud Run Admin                 | 2nd-gen functions run on Cloud Run           |
+| Eventarc Admin                  | Firestore triggers for 2nd-gen functions     |
+| Artifact Registry Administrator | Function images and their cleanup policy     |
+| Service Account User            | Deploying functions as the runtime account   |
+| Storage Admin                   | Applying the photo bucket's CORS config      |
+| Service Usage Consumer          | Checking that the needed APIs are enabled    |
+
+If a first deploy still fails with a permission error, the log names the
+missing permission; add the matching role and re-run the workflow.
+
+**b) Create a key.** Open the service account → _Keys_ → _Add key_ →
+_Create new key_ → JSON. A file downloads. Treat it like a password.
+
+**c) Add it to GitHub.** GitHub → repo _Settings_ → _Secrets and variables_ →
+_Actions_ → _New repository secret_. Name: **`FIREBASE_SERVICE_ACCOUNT`**.
+Value: the whole contents of the JSON file. Then delete the downloaded file.
+
+**d) Deploy.** GitHub → _Actions_ → _CI_ → _Run workflow_ on `main` (or push
+anything to `main`). The _Deploy to cookie-voting_ job should go green, and
+<https://cookie-voting.web.app> then serves the new app.
+
+**e) Tidy up.** Once that works, delete the old `FIREBASE_TOKEN` and `VITE_*`
+secrets (step 2d).
 
 ## 5. Storybook on GitHub Pages
 

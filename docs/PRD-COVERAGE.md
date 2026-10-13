@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last checked against `main` at the phase 1 baseline (PR #30), 2026-10-07._
+_Last updated for phase 2 (Firebase backend), 2026-10-13._
 
 ## Snapshot
 
@@ -23,8 +23,9 @@ tap-to-rank ballot rules in `packages/shared` (unit tested), Storybook with
 story tests, Playwright smoke tests, and CI that publishes Storybook to GitHub
 Pages.
 
-Not built yet: everything that touches Firebase (auth, data, rules, functions,
-deploys) and every real screen. Nothing in the PRD is unplanned; the gaps this
+Phase 2 added the Firebase backend: security rules with emulator tests, the
+results Cloud Functions, the web client and live data hooks, seed data, and CI
+deploys. Not built yet: every real screen. Nothing in the PRD is unplanned; the gaps this
 review found were small and have been added to ROADMAP.md (see
 [Gaps found](#gaps-found-in-this-review)).
 
@@ -34,34 +35,34 @@ review found were small and have been added to ROADMAP.md (see
 
 Everything else reads or writes Firebase, so this comes first.
 
-| PRD | Requirement                                                               | Status                                                 |
-| --- | ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| §12 | `admins` readable for the allowlist check, writable only by admins        | ⬜ 2                                                   |
-| §12 | `bakers` admin-only                                                       | ⬜ 2                                                   |
-| §12 | Events and categories public read, admin write                            | ⬜ 2                                                   |
-| §12 | Ballot create-once when `auth.uid == userId`, no update/delete            | ⬜ 2                                                   |
-| §5  | Data model (events, categories, cookies, ballots)                         | 🔁 ballots private, roster and assignments hidden      |
-| §8  | Borda 3/2/1 per category, baker totals across categories (0 where absent) | ✅ `tallyResults` · ⬜ 2 Cloud Function writes results |
-| §9  | Results update live as votes arrive                                       | ⬜ 2 (recompute on ballot) + 9 (listener)              |
-| §14 | Listeners unsubscribed on unmount                                         | ⬜ 2 (hooks layer)                                     |
-| §3  | Firebase Auth, Firestore, Storage, Functions                              | ⬜ 2 · 🔁 Firebase Hosting instead of Vercel           |
-| §14 | Free tier at <200 voters, <20 categories, <50 cookies                     | ✅ budgeted in ARCHITECTURE.md · ⬜ 10 verify          |
-| —   | Bucket CORS so the in-browser model can read uploaded photos              | ⬜ 2 (added in this review)                            |
+| PRD | Requirement                                                               | Status                                            |
+| --- | ------------------------------------------------------------------------- | ------------------------------------------------- |
+| §12 | `admins` readable for the allowlist check, writable only by admins        | ✅ `firestore.rules` + tests                      |
+| §12 | `bakers` admin-only                                                       | ✅                                                |
+| §12 | Events and categories public read, admin write                            | ✅                                                |
+| §12 | Ballot create-once when `auth.uid == userId`, no update/delete            | ✅                                                |
+| §5  | Data model (events, categories, cookies, ballots)                         | 🔁 ballots private, roster and assignments hidden |
+| §8  | Borda 3/2/1 per category, baker totals across categories (0 where absent) | ✅ `tallyResults` + `recomputeResults` function   |
+| §9  | Results update live as votes arrive                                       | ✅ 2 recompute + `useResults` · ⬜ 9 UI           |
+| §14 | Listeners unsubscribed on unmount                                         | ✅ `useSubscription` (tested)                     |
+| §3  | Firebase Auth, Firestore, Storage, Functions                              | ✅ · 🔁 Firebase Hosting instead of Vercel        |
+| §14 | Free tier at <200 voters, <20 categories, <50 cookies                     | ✅ budgeted in ARCHITECTURE.md · ⬜ 10 verify     |
+| —   | Bucket CORS so the in-browser model can read uploaded photos              | ✅ `storage-cors.json`, applied on deploy         |
 
 ### P2 — Admin sign-in, dashboard, events, bakers (phase 3)
 
-| PRD  | Requirement                                                  | Status                             |
-| ---- | ------------------------------------------------------------ | ---------------------------------- |
-| §4.1 | Google sign-in; only allowlisted emails get admin access     | ⬜ 3                               |
-| §10  | Dashboard lists events (name, status, created date)          | ⬜ 3                               |
-| §10  | Dashboard shows each in-progress event's current step        | ⬜ 3                               |
-| §6.1 | Create event with a name, status `setup`                     | ⬜ 3                               |
-| §6   | Stepper / progress indicator for the admin flow              | ⬜ 3 · ❓ Q1 (linear vs free)      |
-| §6.2 | Event baker list; search the global roster and add           | ⬜ 3                               |
-| §6.2 | Create a new baker (saved globally and added to the event)   | ⬜ 3                               |
-| §6.2 | Remove a baker from the event without deleting them globally | ⬜ 3 · ❓ Q4 (if already assigned) |
-| §6.2 | Skip the bakers step and come back later                     | ⬜ 3                               |
-| §13  | E2E: admin creates an event                                  | ⬜ 3                               |
+| PRD  | Requirement                                                  | Status                        |
+| ---- | ------------------------------------------------------------ | ----------------------------- |
+| §4.1 | Google sign-in; only allowlisted emails get admin access     | ⬜ 3                          |
+| §10  | Dashboard lists events (name, status, created date)          | ⬜ 3                          |
+| §10  | Dashboard shows each in-progress event's current step        | ⬜ 3                          |
+| §6.1 | Create event with a name, status `setup`                     | ⬜ 3                          |
+| §6   | Stepper / progress indicator for the admin flow              | ⬜ 3 · Q1: free order         |
+| §6.2 | Event baker list; search the global roster and add           | ⬜ 3                          |
+| §6.2 | Create a new baker (saved globally and added to the event)   | ⬜ 3                          |
+| §6.2 | Remove a baker from the event without deleting them globally | ⬜ 3 · Q4: allowed, unassigns |
+| §6.2 | Skip the bakers step and come back later                     | ⬜ 3                          |
+| §13  | E2E: admin creates an event                                  | ⬜ 3                          |
 
 ### P3 — Categories and plate photos (phase 4)
 
@@ -89,33 +90,33 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P5 — Baker assignment and opening voting (phase 7)
 
-| PRD  | Requirement                                                               | Status                      |
-| ---- | ------------------------------------------------------------------------- | --------------------------- |
-| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | ⬜ 7                        |
-| §6.5 | Previous baker not pre-selected                                           | ⬜ 7                        |
-| §6.5 | Every cookie must have a baker before voting opens                        | ⬜ 7                        |
-| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ⬜ 7                        |
-| §6.6 | Live count of submissions                                                 | ⬜ 7                        |
-| §6.7 | "Open Results" sets status `results`; voting continues after              | ⬜ 7 (rules allow it in 2)  |
-| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ⬜ 7 (added in this review) |
-| —    | Moving an event backwards (reopen setup, hide results)                    | ❓ Q2                       |
+| PRD  | Requirement                                                               | Status                             |
+| ---- | ------------------------------------------------------------------------- | ---------------------------------- |
+| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | ⬜ 7                               |
+| §6.5 | Previous baker not pre-selected                                           | ⬜ 7                               |
+| §6.5 | Every cookie must have a baker before voting opens                        | ⬜ 7                               |
+| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ⬜ 7                               |
+| §6.6 | Live count of submissions                                                 | ⬜ 7                               |
+| §6.7 | "Open Results" sets status `results`; voting continues after              | ⬜ 7 (rules allow it in 2)         |
+| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ⬜ 7 (added in this review)        |
+| —    | Moving an event backwards (reopen setup, hide results)                    | ✅ 2 rules allow it (Q2) · ⬜ 7 UI |
 
 ### P6 — Voter flow (phase 8)
 
-| PRD  | Requirement                                                       | Status                          |
-| ---- | ----------------------------------------------------------------- | ------------------------------- |
-| §4.2 | Anonymous sign-in on load; one ballot per anonymous user          | ⬜ 8 (rules in 2)               |
-| §7.1 | Landing: event name, ordered categories, "Start Voting"           | ⬜ 8                            |
-| §7.1 | Already voted → waiting or results by status                      | ⬜ 8                            |
-| §7.2 | One category at a time, "Category 2 of 5", back/forward and swipe | ⬜ 8                            |
-| §7.2 | Grid that fits all cookies on screen where possible               | ⬜ 8                            |
-| §7.2 | 🔍 on each card opens a zoom modal                                | ⬜ 8                            |
-| §7.2 | Tap to rank 1/2/3 with badges; tap again to unrank and renumber   | ✅ `toggleRanking` · ⬜ 8 UI    |
-| §7.2 | Fewer than 3 cookies → fewer picks                                | ✅ `maxPicksFor` · ⬜ 8 UI      |
-| §7.2 | Selections kept in memory across categories until submit          | ⬜ 8                            |
-| §7.3 | Review screen, then submit; duplicate submit rejected             | ⬜ 8 · ❓ Q3 (empty categories) |
-| §7.4 | Waiting screen that jumps to results when status changes          | ⬜ 8                            |
-| §13  | E2E: voter submits a vote                                         | ⬜ 8                            |
+| PRD  | Requirement                                                       | Status                                     |
+| ---- | ----------------------------------------------------------------- | ------------------------------------------ |
+| §4.2 | Anonymous sign-in on load; one ballot per anonymous user          | ⬜ 8 (rules in 2)                          |
+| §7.1 | Landing: event name, ordered categories, "Start Voting"           | ⬜ 8                                       |
+| §7.1 | Already voted → waiting or results by status                      | ⬜ 8                                       |
+| §7.2 | One category at a time, "Category 2 of 5", back/forward and swipe | ⬜ 8                                       |
+| §7.2 | Grid that fits all cookies on screen where possible               | ⬜ 8                                       |
+| §7.2 | 🔍 on each card opens a zoom modal                                | ⬜ 8                                       |
+| §7.2 | Tap to rank 1/2/3 with badges; tap again to unrank and renumber   | ✅ `toggleRanking` · ⬜ 8 UI               |
+| §7.2 | Fewer than 3 cookies → fewer picks                                | ✅ `maxPicksFor` · ⬜ 8 UI                 |
+| §7.2 | Selections kept in memory across categories until submit          | ⬜ 8                                       |
+| §7.3 | Review screen, then submit; duplicate submit rejected             | ✅ 2 rules · ⬜ 8 · Q3: all picks required |
+| §7.4 | Waiting screen that jumps to results when status changes          | ⬜ 8                                       |
+| §13  | E2E: voter submits a vote                                         | ⬜ 8                                       |
 
 ### P7 — Results (phase 9)
 
@@ -161,14 +162,13 @@ These weren't on the roadmap yet and have been added to ROADMAP.md:
 4. **Placeholder pages named the wrong phases.** Fixed in this change (voter
    page → 8, results → 9, event setup → 3–7).
 
-## Open questions for the owner
+## Owner decisions
 
-Each changes what people see, so per CLAUDE.md these need the owner's call.
-Until answered, the recommended default is what gets built.
+These were open product questions; the owner answered them on 2026-10-13.
 
-| #   | Question                                                                                                                       | Recommended default                                                                                                                  |
-| --- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Q1  | PRD §6 says the admin flow is strictly linear, but also lets admins skip bakers. Lock later steps until earlier ones are done? | Every step is reachable; the stepper shows which are done, and only **Open Voting** is gated (roadmap phase 3 already assumes this). |
-| Q2  | Can admins move an event backwards (voting → setup, results → voting)?                                                         | Yes, with a confirm dialog. Cookie edits stay locked once any ballot exists, because ballots reference cookie ids.                   |
-| Q3  | Must voters rank something in every category before submitting?                                                                | No. Empty categories are allowed; the review screen highlights them and asks "Submit anyway?".                                       |
-| Q4  | Removing a baker from the event when cookies are already assigned to them                                                      | Allowed; those cookies become unassigned again, and Open Voting stays blocked until they're reassigned.                              |
+| #   | Question                                                                                                                       | Decision                                                                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | PRD §6 says the admin flow is strictly linear, but also lets admins skip bakers. Lock later steps until earlier ones are done? | **Free.** Every step is reachable; the stepper shows which are done, and only **Open Voting** is gated.                                             |
+| Q2  | Can admins move an event backwards (voting → setup, results → voting)?                                                         | **Yes, with no locks.** Any status in any order, and cookies stay editable after votes exist; everything live-updates. Correctness is on the admin. |
+| Q3  | Must voters rank something in every category before submitting?                                                                | **Yes.** Every category needs a 1st, 2nd and 3rd pick (fewer only when it has fewer than 3 cookies).                                                |
+| Q4  | Removing a baker from the event when cookies are already assigned to them                                                      | **Allowed.** Those cookies become unassigned again, and Open Voting stays blocked until they're reassigned.                                         |

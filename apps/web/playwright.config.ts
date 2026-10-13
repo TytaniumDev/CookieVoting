@@ -19,8 +19,11 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
   ],
+  // Specs expect the emulators running with seed data: run them via `npm run test:e2e`
+  // at the repo root, which wraps this in `firebase emulators:exec` and seeds first.
   webServer: {
     command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+    env: { VITE_USE_EMULATORS: 'true' },
     port,
     reuseExistingServer: !process.env.CI,
   },
