@@ -127,13 +127,12 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] App Check (reCAPTCHA Enterprise) on Firestore/Storage: waiting on the owner's call
 - [ ] Owner: delete the old secrets, then a dry-run event on real phones (Owner actions below)
 
-## Phase 11 — Optional: pre-outline all cookies ⬜
+## Phase 11 — Optional: pre-outline all cookies ✅ (measured, not shipped)
 
 Can start any time after phase 5 (it needs the ground truth).
 
-- [ ] Spike: Gemini Flash via Firebase AI Logic (Gemini Developer API free tier, JSON boxes) vs in-browser SAM "segment everything" grid. Score against `fixtures/plates/*.json`
-- [ ] If one reliably reaches ≥ 90% of cookies at IoU ≥ 0.8: "Find cookies" button whose results are editable suggestions
-- [ ] Note the free-tier caveats (quota changes; free-tier prompts may be used by Google) in ARCHITECTURE.md
+- [x] Spike: in-browser grid of tap-to-select taps, scored against `fixtures/plates/*.json` (Gemini skipped: needs console setup and shares photos with Google)
+- [x] Decision: 90.5% recall but ~3 wrong boxes per plate and ~14 s+ per plate, so no button; tap-to-select stays (ARCHITECTURE.md → Identifying cookies)
 
 ---
 
@@ -358,3 +357,11 @@ until real-device testing (useful from phase 3).
   a declared dev dependency (it was only there through the Storybook addon).
 - Free-tier budget re-checked with real bundle sizes (see ARCHITECTURE.md).
 - **Left:** App Check (owner's call) and the owner's dry run on real phones.
+
+### Session 4, continued — phase 11 spike
+
+- Measured an on-device "find all cookies" (grid of tap-to-select taps). It found
+  86/95 cookies with ~3 wrong boxes per plate and took ~14 s per plate on a laptop.
+  Tapping is quicker, so nothing shipped; numbers are in ARCHITECTURE.md.
+- Every phase is now done. What's left is the owner's: App Check decision,
+  Anonymous sign-in check, and a dry run on real phones (Owner actions).

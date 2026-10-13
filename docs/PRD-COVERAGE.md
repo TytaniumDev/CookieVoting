@@ -79,15 +79,15 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P4 — Identifying cookies (phases 5, 6, optional 11)
 
-| PRD  | Requirement                                                 | Status                                                |
-| ---- | ----------------------------------------------------------- | ----------------------------------------------------- |
-| §6.4 | "Run Detection" per category via Gemini in a Cloud Function | 🔁 in-browser tap-to-select ✅; "find all" spike (11) |
-| §6.4 | `detectionStatus` pending/running/complete/error            | 🔁 not needed without server detection                |
-| §6.4 | Plate photo with boxes overlaid                             | ✅ `PlateEditor`                                      |
-| §6.4 | Delete a wrong cookie                                       | ✅                                                    |
-| §6.4 | Add a cookie by drag-selecting a rectangle                  | ✅ plus move, resize, pinch-zoom                      |
-| §6.4 | Merge two cookies                                           | 🔁 dropped; move/resize boxes instead ✅              |
-| §6.4 | Rectangles only, no polygons                                | ✅                                                    |
+| PRD  | Requirement                                                 | Status                                                                |
+| ---- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| §6.4 | "Run Detection" per category via Gemini in a Cloud Function | 🔁 in-browser tap-to-select ✅; "find all" measured, not shipped (11) |
+| §6.4 | `detectionStatus` pending/running/complete/error            | 🔁 not needed without server detection                                |
+| §6.4 | Plate photo with boxes overlaid                             | ✅ `PlateEditor`                                                      |
+| §6.4 | Delete a wrong cookie                                       | ✅                                                                    |
+| §6.4 | Add a cookie by drag-selecting a rectangle                  | ✅ plus move, resize, pinch-zoom                                      |
+| §6.4 | Merge two cookies                                           | 🔁 dropped; move/resize boxes instead ✅                              |
+| §6.4 | Rectangles only, no polygons                                | ✅                                                                    |
 
 ### P5 — Baker assignment and opening voting (phase 7)
 

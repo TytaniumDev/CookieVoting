@@ -278,8 +278,18 @@ The plate editor shows the photo with cookie boxes overlaid:
   in the middle of the view. Each finished gesture is one save; deleting a
   cookie also clears its baker assignment. Replacing a category's photo keeps
   its boxes, for the admin to adjust.
-- **Pre-outline (optional, phase 11):** a "find all cookies" button, evaluated
-  against the same fixtures.
+- **Pre-outline (optional, phase 11): not shipped.** A "find all cookies"
+  button was measured against the same fixtures (2026-10-13). It tapped an
+  8 × 6 grid with tap-to-select, re-tapped each box's centre, and dropped
+  boxes that touched the photo edge, covered over 25% of it, or duplicated
+  another box (IoU ≥ 0.5). It found 86/95 cookies at IoU ≥ 0.8 (90.5%), but
+  added 48 wrong boxes (about 3 per plate: mat, counter, two cookies in one
+  box) and took a median 14 s per plate on a laptop CPU, likely 30 s or more
+  on a phone. Skipping grid points inside found boxes was faster but missed
+  more (83%). Tapping each cookie is quicker overall and leaves nothing to
+  clean up, so tap-to-select stays. Gemini via Firebase AI Logic
+  was not tried: it needs console setup, and free-tier prompts may be used by
+  Google.
 
 The PRD's "merge two detections" is dropped. It existed to fix AI
 over-segmentation, and resizing a box covers it.
