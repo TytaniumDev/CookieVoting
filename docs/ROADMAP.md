@@ -118,13 +118,14 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Celebration moment (confetti or similar, respecting `prefers-reduced-motion`)
 - [x] E2E: votes → results reflect Borda scores
 
-## Phase 10 — Launch ⬜
+## Phase 10 — Launch 🚧
 
-- [ ] Festive polish: subtle snow animation (reduced-motion aware), imagery, empty states, copy
-- [ ] Accessibility and 375 px layout pass on every voter screen
-- [ ] Production check of the deploy workflow; remove the old `FIREBASE_TOKEN` / `VITE_*` GitHub secrets
-- [ ] App Check (reCAPTCHA Enterprise) on Firestore/Storage (and AI Logic if phase 11 ships)
-- [ ] Owner walkthrough in `docs/SETUP.md` verified end to end; dry-run event on real phones
+- [x] Festive polish: subtle snow animation (reduced-motion aware), imagery, empty states, copy
+- [x] Accessibility and 375 px layout pass on every voter screen (`e2e/voter-a11y.spec.ts`)
+- [x] Desktop: the voting grid widens so a plate fits on a laptop screen too
+- [x] Production check of the deploy workflow (every merge to `main` deploys green); no workflow uses the old `FIREBASE_TOKEN` / `VITE_*` secrets any more
+- [ ] App Check (reCAPTCHA Enterprise) on Firestore/Storage: waiting on the owner's call
+- [ ] Owner: delete the old secrets, then a dry-run event on real phones (Owner actions below)
 
 ## Phase 11 — Optional: pre-outline all cookies ⬜
 
@@ -147,6 +148,8 @@ until real-device testing (useful from phase 3).
 - [ ] Add your email to `admins/` (SETUP.md §3)
 - [ ] Deploy credentials for GitHub Actions: a service account key as the `FIREBASE_SERVICE_ACCOUNT` secret (SETUP.md §4)
 - [ ] GitHub Pages source set to "GitHub Actions" (SETUP.md §5)
+- [ ] Delete the unused `FIREBASE_TOKEN` and `VITE_*` repository secrets (GitHub → Settings → Secrets and variables → Actions)
+- [ ] Dry run: create a small event, vote from two or three real phones, open results
 
 ---
 
@@ -344,3 +347,14 @@ until real-device testing (useful from phase 3).
   live (mobile project only, since it changes shared seed data), plus the
   "not out yet" and unknown-event states.
 - **Next:** phase 10 (launch polish).
+
+### Session 4, continued — phase 10
+
+- The voting grid gets more columns from the `sm` breakpoint (4 / 5 / 6), so a
+  whole plate fits on laptops, tablets and phones held sideways.
+- The 404 page is a card with a clearer hint for mistyped voting links.
+- New `e2e/voter-a11y.spec.ts` runs axe (WCAG 2.1 AA + best practice) and a
+  no-sideways-scroll check on every voter screen at 375 px. `axe-core` is now
+  a declared dev dependency (it was only there through the Storybook addon).
+- Free-tier budget re-checked with real bundle sizes (see ARCHITECTURE.md).
+- **Left:** App Check (owner's call) and the owner's dry run on real phones.

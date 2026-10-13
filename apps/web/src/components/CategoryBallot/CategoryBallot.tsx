@@ -21,11 +21,14 @@ export interface CategoryBallotProps {
   className?: string
 }
 
-/** Columns that keep every cookie on one phone screen for typical plates. */
+/**
+ * Columns that keep every cookie on one screen for typical plates: on a phone, and on
+ * wider screens (tablets, laptops, phones held sideways), which are short for their width.
+ */
 function columnsFor(count: number): string {
-  if (count <= 4) return 'grid-cols-2'
-  if (count <= 9) return 'grid-cols-3'
-  return 'grid-cols-4'
+  if (count <= 4) return 'grid-cols-2 sm:grid-cols-4'
+  if (count <= 9) return 'grid-cols-3 sm:grid-cols-5'
+  return 'grid-cols-4 sm:grid-cols-6'
 }
 
 /**

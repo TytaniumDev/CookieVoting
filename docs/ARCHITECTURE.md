@@ -390,10 +390,16 @@ one read per update).
 | ------------------------------------- | --------- | ------------ |
 | Photo storage (15 × ~450 KB)          | ~7 MB     | 5 GB         |
 | Photo egress (200 voters × 15 photos) | ~1.4 GB   | 100 GB/month |
-| Hosting transfer (~150 KB gz × 200)   | ~30 MB    | 360 MB/day   |
+| Hosting transfer (~300 KB gz × 200)   | ~60 MB    | 360 MB/day   |
 | Firestore reads (tally + listeners)   | ~30K      | 50K/day      |
 | Firestore writes                      | < 1K      | 20K/day      |
 | Function invocations                  | ~250      | 2M/month     |
+
+The voter bundle measured at phase 10 is about 300 KB gzipped (the Firebase
+SDK is 170 KB of it). Admins also download the tap-to-select model and runtime
+(~10 MB) once per device, which is fine for a handful of admins. Once results
+open, every open results page gets one read per recompute; late ballots are
+few, so this stays small (200 viewers × 20 late ballots = 4K reads).
 
 Set a Google Cloud budget alert (e.g. $1) on the Blaze project as a tripwire.
 
