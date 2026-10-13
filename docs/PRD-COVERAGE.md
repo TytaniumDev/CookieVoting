@@ -130,12 +130,12 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P8 — Launch polish (phase 10)
 
-| PRD | Requirement                                              | Status                             |
-| --- | -------------------------------------------------------- | ---------------------------------- |
-| §14 | Christmas palette defined centrally so it can be swapped | ✅ `theme.css`                     |
-| §14 | Subtle snow animation, festive imagery                   | ⬜ 10                              |
-| §14 | Every voter screen usable at 375 px                      | ⬜ built per phase · 10 final pass |
-| §1  | Desktop responsive                                       | ⬜ 10                              |
+| PRD | Requirement                                              | Status                                   |
+| --- | -------------------------------------------------------- | ---------------------------------------- |
+| §14 | Christmas palette defined centrally so it can be swapped | ✅ `theme.css`                           |
+| §14 | Subtle snow animation, festive imagery                   | ✅ `Snowfall`, `Confetti`, festive cards |
+| §14 | Every voter screen usable at 375 px                      | ✅ `e2e/voter-a11y.spec.ts`              |
+| §1  | Desktop responsive                                       | ✅                                       |
 
 ### Already done
 
