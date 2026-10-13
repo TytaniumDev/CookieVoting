@@ -216,3 +216,63 @@ test('tapping each cookie boxes it', async ({ page }, testInfo) => {
     expect(Math.max(...found.map((f) => iou(f, box)))).toBeGreaterThanOrEqual(0.8)
   }
 })
+
+test('an admin assigns bakers, opens voting and then results', async ({ page }, testInfo) => {
+  const eventName = `E2E Voting ${testInfo.project.name} ${Date.now()}`
+  await signInAs(page, 'admin@example.com')
+  await page.getByRole('link', { name: 'New event' }).click()
+  await page.getByLabel('Event name').fill(eventName)
+  await page.getByRole('button', { name: 'Create event' }).click()
+
+  // Voting is gated until everything is ready.
+  await page.getByRole('button', { name: /^voting/i }).click()
+  await expect(page.getByRole('button', { name: 'Open voting' })).toBeDisabled()
+  await page.getByRole('link', { name: 'Add the bakers' }).click()
+  for (const name of ['ann', 'bob']) {
+    await page.getByLabel('Name').fill(name)
+    await page.getByRole('button', { name: new RegExp(`^add ${name}$`, 'i') }).click()
+  }
+  await page.getByRole('button', { name: /^categories/i }).click()
+  await page.getByLabel('Category name').fill('Stars')
+  await page.getByRole('button', { name: 'Add category' }).click()
+  await page
+    .getByLabel('Add photo for Stars')
+    .setInputFiles('../../fixtures/plates/4-cookies_stars.jpg')
+  await expect(page.getByRole('button', { name: /replace photo for stars/i })).toBeAttached()
+  await page.getByRole('button', { name: /^cookies/i }).click()
+  await page.getByRole('button', { name: 'Add cookie' }).click()
+  await page.getByRole('button', { name: 'Add cookie' }).click()
+  await expect(page.getByText(/^2 cookies/)).toBeVisible()
+
+  // Assign: each cookie starts empty; type to filter.
+  await page.getByRole('button', { name: /^assign bakers/i }).click()
+  await expect(page.getByText('0 of 2 assigned')).toBeVisible()
+  const first = page.getByRole('combobox', { name: 'Baker for Stars cookie 1' })
+  await first.fill('an')
+  await page.getByRole('option', { name: 'Ann' }).click()
+  await expect(first).toHaveValue('Ann')
+  const second = page.getByRole('combobox', { name: 'Baker for Stars cookie 2' })
+  await expect(second).toHaveValue('')
+  await second.click()
+  await page.getByRole('option', { name: 'Bob' }).click()
+  await expect(page.getByText('2 of 2 assigned')).toBeVisible()
+
+  // Open voting: the voter link and a live count.
+  await page.getByRole('button', { name: /^voting/i }).click()
+  await page.getByRole('button', { name: 'Open voting' }).click()
+  await expect(page.getByRole('heading', { name: 'Voting is open' })).toBeVisible()
+  const eventId = page.url().match(/events\/([^/?]+)/)?.[1]
+  await expect(page.getByText(`/event/${eventId}`)).toBeVisible()
+  await expect(page.getByRole('img', { name: /qr code/i })).toBeVisible()
+  await expect(page.getByText(/0\s*ballots so far/)).toBeVisible()
+
+  // The dashboard shows the live event with Open results.
+  await page.getByRole('link', { name: /all events/i }).click()
+  const row = page.getByRole('listitem').filter({ hasText: eventName })
+  await expect(row.getByText('Voting open')).toBeVisible()
+  await expect(row.getByText(`/event/${eventId}`)).toBeVisible()
+  await row.getByRole('button', { name: 'Open results' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Open results' }).click()
+  await expect(row.getByText('Results open')).toBeVisible()
+  await expect(row.getByRole('button', { name: 'Open results' })).toBeHidden()
+})

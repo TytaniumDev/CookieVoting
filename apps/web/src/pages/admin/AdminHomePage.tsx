@@ -6,7 +6,10 @@ import { buttonClasses } from '../../components/Button/buttonClasses.ts'
 import { EventCard } from '../../components/EventCard/EventCard.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { signOut } from '../../lib/auth.ts'
-import { useCategories, useEvents, useSetup, type Event } from '../../lib/data.ts'
+import { SharePanel } from '../../components/SharePanel/SharePanel.tsx'
+import { useCategories, useEvents, useResults, useSetup, type Event } from '../../lib/data.ts'
+import { voterUrl } from '../../lib/links.ts'
+import { useStatusChange } from './useStatusChange.tsx'
 
 /** One dashboard row; listens to its own categories and setup to show the next step. */
 function EventRow({ event }: { event: Event }) {
@@ -28,7 +31,38 @@ function EventRow({ event }: { event: Event }) {
       createdAt={event.createdAt.toDate()}
       to={`/admin/events/${event.id}`}
       currentStep={progress?.current ? SETUP_STEP_LABELS[progress.current] : null}
-    />
+    >
+      {event.status !== 'setup' && <LiveControls event={event} />}
+    </EventCard>
+  )
+}
+
+/** PRD §10: while an event is live, the dashboard shows its count, link and Open results. */
+function LiveControls({ event }: { event: Event }) {
+  const results = useResults(event.id)
+  const status = useStatusChange(event.id, event.status)
+  const ballotCount = results.status === 'ready' ? (results.data?.ballotCount ?? 0) : null
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p aria-live="polite">
+          <span className="font-display text-2xl font-semibold">{ballotCount ?? '…'}</span>{' '}
+          <span className="text-ink-muted">{ballotCount === 1 ? 'ballot' : 'ballots'} so far</span>
+        </p>
+        {event.status === 'voting' && (
+          <Button onClick={() => status.change('results')} loading={status.busy}>
+            Open results
+          </Button>
+        )}
+      </div>
+      <SharePanel url={voterUrl(event.id)} title={event.name} showQrCode={false} />
+      {status.error && (
+        <Alert tone="danger" title="That didn't save">
+          {status.error}
+        </Alert>
+      )}
+      {status.dialog}
+    </div>
   )
 }
 
