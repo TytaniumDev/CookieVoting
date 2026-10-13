@@ -21,6 +21,19 @@ describe('maskToBox', () => {
     })
   })
 
+  it('bridges gaps narrower than `gap`, but not wider ones', () => {
+    // Icing (top) split from the base (bottom) by a 3 px gap; another cookie 10 px away.
+    const m = mask(100, 100, [10, 10, 30, 10], [10, 23, 30, 20], [50, 10, 20, 20])
+    const tap = { x: 0.2, y: 0.15 }
+    expect(maskToBox(m, 100, 100, tap)).toEqual({ x: 0.1, y: 0.1, width: 0.3, height: 0.1 })
+    expect(maskToBox(m, 100, 100, tap, 0.5, 4)).toEqual({
+      x: 0.1,
+      y: 0.1,
+      width: 0.3,
+      height: 0.33,
+    })
+  })
+
   it('snaps to a region just beside the tap', () => {
     const m = mask(100, 100, [10, 10, 20, 20])
     expect(maskToBox(m, 100, 100, { x: 0.315, y: 0.2 })).not.toBeNull()

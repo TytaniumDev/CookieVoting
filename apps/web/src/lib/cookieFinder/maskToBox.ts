@@ -48,7 +48,8 @@ export function fromCrop(
 /**
  * Turns the segmenter's confidence mask into the tapped cookie's box: the connected
  * region above `threshold` that contains the tap (or the nearest one within 3% of the
- * width, for a tap just off an edge). Returns null when nothing was found, or when the
+ * width, for a tap just off an edge). Regions less than `gap` pixels apart count as
+ * connected. Returns null when nothing was found, or when the
  * region touches three or more sides of the window, which means the model picked the
  * table or tray rather than a cookie.
  */
@@ -58,8 +59,11 @@ export function maskToBox(
   height: number,
   tap: Point,
   threshold = 0.5,
+  gap = 0,
 ): Box | null {
   const on = (i: number) => (mask[i] ?? 0) > threshold
+  const near = gap > 0 ? dilate(mask, width, height, threshold, gap) : null
+  const passable = near ? (i: number) => near[i] === 1 : on
   const cx = Math.min(width - 1, Math.max(0, Math.floor(tap.x * width)))
   const cy = Math.min(height - 1, Math.max(0, Math.floor(tap.y * height)))
 
@@ -93,14 +97,17 @@ export function maskToBox(
     const i = stack.pop()!
     const x = i % width
     const y = (i - x) / width
-    if (x < x0) x0 = x
-    if (x > x1) x1 = x
-    if (y < y0) y0 = y
-    if (y > y1) y1 = y
+    // Pixels that only bridge a gap are walked through but aren't part of the cookie.
+    if (on(i)) {
+      if (x < x0) x0 = x
+      if (x > x1) x1 = x
+      if (y < y0) y0 = y
+      if (y > y1) y1 = y
+    }
     const next = [x > 0 ? i - 1 : -1, x < width - 1 ? i + 1 : -1, y > 0 ? i - width : -1]
     next.push(y < height - 1 ? i + width : -1)
     for (const j of next) {
-      if (j >= 0 && !seen[j] && on(j)) {
+      if (j >= 0 && !seen[j] && passable(j)) {
         seen[j] = 1
         stack.push(j)
       }
@@ -116,4 +123,44 @@ export function maskToBox(
     width: (x1 - x0 + 1) / width,
     height: (y1 - y0 + 1) / height,
   }
+}
+
+/**
+ * The mask's on pixels grown by `radius` (a square max filter, done in two passes), so a
+ * flood fill can cross thin gaps, e.g. between a cookie's icing and its base.
+ */
+function dilate(
+  mask: ArrayLike<number>,
+  width: number,
+  height: number,
+  threshold: number,
+  radius: number,
+): Uint8Array {
+  const rows = new Uint8Array(width * height)
+  for (let y = 0; y < height; y++) {
+    let last = -Infinity
+    for (let x = 0; x < width; x++) {
+      if ((mask[y * width + x] ?? 0) > threshold) last = x
+      if (x - last <= radius) rows[y * width + x] = 1
+    }
+    last = Infinity
+    for (let x = width - 1; x >= 0; x--) {
+      if ((mask[y * width + x] ?? 0) > threshold) last = x
+      if (last - x <= radius) rows[y * width + x] = 1
+    }
+  }
+  const out = new Uint8Array(width * height)
+  for (let x = 0; x < width; x++) {
+    let last = -Infinity
+    for (let y = 0; y < height; y++) {
+      if (rows[y * width + x]) last = y
+      if (y - last <= radius) out[y * width + x] = 1
+    }
+    last = Infinity
+    for (let y = height - 1; y >= 0; y--) {
+      if (rows[y * width + x]) last = y
+      if (last - y <= radius) out[y * width + x] = 1
+    }
+  }
+  return out
 }
