@@ -326,6 +326,25 @@ tapping the centre of every ground-truth cookie in `fixtures/plates` (95 cookies
   Hosting as hashed, immutable assets, so they download once per device. The
   model file is committed (`apps/web/src/lib/cookieFinder/magic_touch.tflite`,
   version 1 from Google's model bucket) so tests need no network.
+- **Off-centre taps and split icing (2026-10-13).** Real fingers rarely hit
+  the middle, so the shipped code was re-measured tapping each cookie at its
+  centre and at 8 points halfway to its box edge (855 taps). Most misses were
+  partial boxes where the model split the icing from the base. Bridging mask
+  gaps of up to 6 px (of 512) when flood-filling fixes many of them without
+  merging neighbouring cookies:
+
+  | Mask handling             | Centre taps, IoU ≥ 0.8 | Halfway taps, IoU ≥ 0.8 |
+  | ------------------------- | ---------------------- | ----------------------- |
+  | Region under the tap      | 90 / 95                | 686 / 760 (90.3%)       |
+  | **Bridge gaps ≤ 6 px** ✅ | **92 / 95**            | **692 / 760 (91.1%)**   |
+  | Bridge gaps ≤ 10 px       | 92 / 95                | 688 / 760               |
+  | Threshold 0.35 or 0.2     | 92 / 95                | 686–688 / 760           |
+
+  Re-tapping the centre of the found box and keeping the bigger result added
+  about 2 points more but doubles the time per tap, so it isn't used. At 70% of
+  the way to the edge, taps on star- or person-shaped cookies often miss the
+  cookie itself (about 80% boxed correctly).
+
 - **SlimSAM wasn't measured.** This sandbox can't reach Hugging Face, where
   Transformers.js fetches it. MediaPipe already clears the bar (the E2E taps a
   real plate and requires IoU ≥ 0.8 for every cookie), so the comparison isn't

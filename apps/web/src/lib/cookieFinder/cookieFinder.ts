@@ -15,6 +15,11 @@ import { cropAround, fromCrop, maskToBox } from './maskToBox.ts'
  */
 /** Side of the square the model sees; magic_touch works at 512 px. */
 const INPUT_SIZE = 512
+/**
+ * Mask gaps up to this many pixels (of the 512) are bridged, so a cookie whose icing the
+ * model split from its base is boxed whole (ARCHITECTURE.md → Tap-to-select).
+ */
+const GAP = 6
 
 export interface CookieFinder {
   /** The box of the cookie at `point` (normalised to the photo), or null if none. */
@@ -60,7 +65,7 @@ export async function createCookieFinder(): Promise<CookieFinder> {
       try {
         const mask = result.confidenceMasks?.at(-1)
         if (!mask) return null
-        const box = maskToBox(mask.getAsFloat32Array(), mask.width, mask.height, tap)
+        const box = maskToBox(mask.getAsFloat32Array(), mask.width, mask.height, tap, 0.5, GAP)
         return box && fromCrop(box, crop, size)
       } finally {
         for (const mask of result.confidenceMasks ?? []) mask.close()
