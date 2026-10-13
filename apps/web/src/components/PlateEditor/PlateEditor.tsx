@@ -1,0 +1,479 @@
+import {
+  boxFromPoints,
+  clamp,
+  clampBox,
+  MIN_BOX_SIZE,
+  moveBox,
+  readingOrder,
+  resizeBox,
+  type Box,
+  type Cookie,
+  type Corner,
+  type PlatePhoto,
+  type Point,
+} from '@cookie-voting/shared'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react'
+import { Button } from '../Button/Button.tsx'
+
+export interface PlateEditorProps {
+  photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
+  cookies: readonly Cookie[]
+  /** Called after each finished edit with every cookie, sorted into reading order. */
+  onChange: (cookies: Cookie[]) => void
+  /** Names the photo for screen readers, e.g. "Stars plate". */
+  label: string
+  /** Makes ids for new cookies; tests pass a predictable one. */
+  newId?: () => string
+  className?: string
+}
+
+interface View {
+  scale: number
+  x: number
+  y: number
+}
+
+type Gesture =
+  | { kind: 'draw'; start: Point; startClient: Point; current: Point }
+  | {
+      kind: 'move'
+      id: string
+      start: Point
+      startClient: Point
+      origin: Box
+      box: Box
+      moved: boolean
+    }
+  | { kind: 'resize'; id: string; corner: Corner; origin: Box; box: Box }
+  | { kind: 'pinch'; distance: number; mid: Point; view: View }
+
+const MAX_SCALE = 6
+const FIT: View = { scale: 1, x: 0, y: 0 }
+/** Pointer travel, in CSS pixels, below which a press counts as a tap. */
+const TAP_SLOP = 6
+/** Keyboard nudge, as a fraction of the photo; Alt nudges finer. */
+const NUDGE = 0.01
+const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se']
+
+const percent = (n: number) => `${n * 100}%`
+
+function distance(a: Point, b: Point) {
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+/**
+ * The plate photo with a box over each cookie. Drag on the photo to draw a box; tap a
+ * box to select it, drag it to move it, and drag its corner handles to resize it.
+ * Pinch (or Ctrl + scroll) zooms and two fingers pan. With a keyboard, Tab to a box,
+ * use the arrow keys to move it, Shift + arrows to resize it and Delete to remove it.
+ * Edits are reported once each gesture ends, so a drag is one save.
+ */
+export function PlateEditor({
+  photo,
+  cookies,
+  onChange,
+  label,
+  newId = () => crypto.randomUUID(),
+  className = '',
+}: PlateEditorProps) {
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const pointers = useRef(new Map<number, Point>())
+  const gesture = useRef<Gesture | null>(null)
+  const [view, setView] = useState<View>(FIT)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [drawing, setDrawing] = useState<Box | null>(null)
+  // Edits in progress, shown until the saved cookies come back as new props.
+  const [draft, setDraft] = useState<{ base: readonly Cookie[]; cookies: Cookie[] } | null>(null)
+  const shown = draft?.base === cookies ? draft.cookies : cookies
+  const selected = shown.find((c) => c.id === selectedId) ?? null
+
+  function commit(next: Cookie[]) {
+    const sorted = readingOrder(next)
+    setDraft({ base: cookies, cookies: sorted })
+    onChange(sorted)
+  }
+
+  function withBox(id: string, box: Box): Cookie[] {
+    return shown.map((c) => (c.id === id ? { ...c, box } : c))
+  }
+
+  function remove(id: string) {
+    setSelectedId(null)
+    commit(shown.filter((c) => c.id !== id))
+  }
+
+  /** Converts a pointer position to normalised photo coordinates. */
+  function toPhoto(client: Point): Point {
+    const rect = stageRef.current?.getBoundingClientRect()
+    if (!rect || rect.width === 0 || rect.height === 0) return { x: 0, y: 0 }
+    return { x: (client.x - rect.left) / rect.width, y: (client.y - rect.top) / rect.height }
+  }
+
+  /** Keeps the zoomed photo covering the viewport. */
+  function clampView(next: View): View {
+    const rect = viewportRef.current?.getBoundingClientRect()
+    const scale = clamp(next.scale, 1, MAX_SCALE)
+    if (!rect) return { ...next, scale }
+    return {
+      scale,
+      x: clamp(next.x, rect.width * (1 - scale), 0),
+      y: clamp(next.y, rect.height * (1 - scale), 0),
+    }
+  }
+
+  /** Zooms by `factor`, keeping the point `at` (relative to the viewport) still. */
+  function zoom(factor: number, at?: Point) {
+    const rect = viewportRef.current?.getBoundingClientRect()
+    const focus = at ?? { x: (rect?.width ?? 0) / 2, y: (rect?.height ?? 0) / 2 }
+    setView((v) => {
+      const scale = clamp(v.scale * factor, 1, MAX_SCALE)
+      const k = scale / v.scale
+      return clampView({
+        scale,
+        x: focus.x - (focus.x - v.x) * k,
+        y: focus.y - (focus.y - v.y) * k,
+      })
+    })
+  }
+
+  function startPinch() {
+    const [a, b] = [...pointers.current.values()]
+    const rect = viewportRef.current?.getBoundingClientRect()
+    if (!a || !b || !rect) return
+    // A second finger cancels whatever the first one started.
+    setDraft(null)
+    setDrawing(null)
+    gesture.current = {
+      kind: 'pinch',
+      distance: Math.max(distance(a, b), 1),
+      mid: { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top },
+      view,
+    }
+  }
+
+  function onPointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Synthetic events in tests have no real pointer to capture.
+    }
+    const client = { x: e.clientX, y: e.clientY }
+    pointers.current.set(e.pointerId, client)
+    if (pointers.current.size === 2) return startPinch()
+    if (pointers.current.size > 2) return
+
+    const target = e.target as HTMLElement
+    const handle = target.closest<HTMLElement>('[data-corner]')
+    const box = target.closest<HTMLElement>('[data-cookie-id]')
+    const point = toPhoto(client)
+    if (handle && selected) {
+      e.preventDefault()
+      gesture.current = {
+        kind: 'resize',
+        id: selected.id,
+        corner: handle.dataset.corner as Corner,
+        origin: selected.box,
+        box: selected.box,
+      }
+    } else if (box?.dataset.cookieId) {
+      const cookie = shown.find((c) => c.id === box.dataset.cookieId)
+      if (!cookie) return
+      setSelectedId(cookie.id)
+      gesture.current = {
+        kind: 'move',
+        id: cookie.id,
+        start: point,
+        startClient: client,
+        origin: cookie.box,
+        box: cookie.box,
+        moved: false,
+      }
+    } else {
+      e.preventDefault()
+      gesture.current = { kind: 'draw', start: point, startClient: client, current: point }
+    }
+  }
+
+  function onPointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (!pointers.current.has(e.pointerId)) return
+    const client = { x: e.clientX, y: e.clientY }
+    pointers.current.set(e.pointerId, client)
+    const g = gesture.current
+    if (!g) return
+
+    if (g.kind === 'pinch') {
+      const [a, b] = [...pointers.current.values()]
+      const rect = viewportRef.current?.getBoundingClientRect()
+      if (!a || !b || !rect) return
+      const mid = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top }
+      const scale = clamp((g.view.scale * distance(a, b)) / g.distance, 1, MAX_SCALE)
+      // Keep the photo point that was under the fingers' midpoint under it.
+      const px = (g.mid.x - g.view.x) / g.view.scale
+      const py = (g.mid.y - g.view.y) / g.view.scale
+      setView(clampView({ scale, x: mid.x - px * scale, y: mid.y - py * scale }))
+      return
+    }
+
+    const point = toPhoto(client)
+    if (g.kind === 'draw') {
+      g.current = point
+      if (distance(client, g.startClient) >= TAP_SLOP) setDrawing(boxFromPoints(g.start, point))
+    } else if (g.kind === 'move') {
+      if (!g.moved && distance(client, g.startClient) < TAP_SLOP) return
+      g.moved = true
+      g.box = moveBox(g.origin, point.x - g.start.x, point.y - g.start.y)
+      setDraft({ base: cookies, cookies: withBox(g.id, g.box) })
+    } else {
+      // From the box as it was, so the opposite corner stays put even after a flip.
+      g.box = resizeBox(g.origin, g.corner, point)
+      setDraft({ base: cookies, cookies: withBox(g.id, g.box) })
+    }
+  }
+
+  function onPointerEnd(e: PointerEvent<HTMLDivElement>) {
+    if (!pointers.current.delete(e.pointerId)) return
+    const g = gesture.current
+    if (!g) return
+    if (g.kind === 'pinch') {
+      // Lifting one finger ends the pinch; the other does nothing until lifted.
+      if (pointers.current.size === 0) gesture.current = null
+      return
+    }
+    gesture.current = null
+    if (e.type === 'pointercancel') {
+      setDraft(null)
+      setDrawing(null)
+      return
+    }
+
+    if (g.kind === 'draw') {
+      setDrawing(null)
+      const box = boxFromPoints(g.start, g.current)
+      if (box.width >= MIN_BOX_SIZE && box.height >= MIN_BOX_SIZE) {
+        const id = newId()
+        setSelectedId(id)
+        commit([...shown, { id, box }])
+      } else {
+        setSelectedId(null)
+      }
+    } else if (g.kind === 'resize' || g.moved) {
+      commit(withBox(g.id, g.box))
+    }
+  }
+
+  function onBoxKeyDown(e: KeyboardEvent<HTMLButtonElement>, cookie: Cookie) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault()
+      remove(cookie.id)
+      return
+    }
+    const step = e.altKey ? NUDGE / 5 : NUDGE
+    const delta: Record<string, Point> = {
+      ArrowLeft: { x: -step, y: 0 },
+      ArrowRight: { x: step, y: 0 },
+      ArrowUp: { x: 0, y: -step },
+      ArrowDown: { x: 0, y: step },
+    }
+    const d = delta[e.key]
+    if (!d) return
+    e.preventDefault()
+    setSelectedId(cookie.id)
+    const { box } = cookie
+    const next = e.shiftKey
+      ? resizeBox(box, 'se', { x: box.x + box.width + d.x, y: box.y + box.height + d.y })
+      : moveBox(box, d.x, d.y)
+    commit(withBox(cookie.id, next))
+  }
+
+  function addInView() {
+    // A box in the middle of what's on screen, for keyboard users and big fingers.
+    const rect = viewportRef.current?.getBoundingClientRect()
+    const centre = rect
+      ? toPhoto({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+      : { x: 0.5, y: 0.5 }
+    const size = 0.15 / view.scale
+    const id = newId()
+    setSelectedId(id)
+    commit([
+      ...shown,
+      {
+        id,
+        box: clampBox({
+          x: centre.x - size / 2,
+          y: centre.y - size / 2,
+          width: size,
+          height: size,
+        }),
+      },
+    ])
+  }
+
+  // Ctrl + wheel (and trackpad pinch) zooms; plain wheel pans once zoomed in, and
+  // scrolls the page otherwise. React's wheel listener is passive, so preventDefault
+  // needs a native one, which reads the latest view and zoom through refs.
+  const latest = useRef({ view, zoom })
+  useEffect(() => {
+    latest.current = { view, zoom }
+  })
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      const rect = el.getBoundingClientRect()
+      const { view: v, zoom: zoomBy } = latest.current
+      if (e.ctrlKey) {
+        e.preventDefault()
+        zoomBy(Math.exp(-e.deltaY / 200), { x: e.clientX - rect.left, y: e.clientY - rect.top })
+      } else if (v.scale > 1) {
+        e.preventDefault()
+        setView({
+          scale: v.scale,
+          x: clamp(v.x - e.deltaX, rect.width * (1 - v.scale), 0),
+          y: clamp(v.y - e.deltaY, rect.height * (1 - v.scale), 0),
+        })
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  const stageStyle = {
+    transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
+    // Handles, numbers and outlines stay the same size on screen at any zoom.
+    '--inv': 1 / view.scale,
+  } as CSSProperties
+
+  return (
+    <div className={`space-y-3 ${className}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" onClick={() => zoom(1 / 1.5)} disabled={view.scale <= 1}>
+          <span aria-hidden="true" className="text-2xl">
+            −
+          </span>
+          <span className="sr-only">Zoom out</span>
+        </Button>
+        <Button variant="ghost" onClick={() => zoom(1.5)} disabled={view.scale >= MAX_SCALE}>
+          <span aria-hidden="true" className="text-2xl">
+            +
+          </span>
+          <span className="sr-only">Zoom in</span>
+        </Button>
+        <Button variant="ghost" onClick={() => setView(FIT)} disabled={view.scale === 1}>
+          Fit
+        </Button>
+        <span className="flex-1" />
+        <Button variant="secondary" onClick={addInView}>
+          Add cookie
+        </Button>
+      </div>
+
+      <div
+        ref={viewportRef}
+        role="group"
+        aria-label={label}
+        className="relative mx-auto touch-none overflow-hidden rounded-card bg-surface-muted select-none"
+        style={{
+          aspectRatio: `${photo.width} / ${photo.height}`,
+          width: `min(100%, calc(65dvh * ${photo.width / photo.height}))`,
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
+      >
+        <div ref={stageRef} className="absolute inset-0 origin-top-left" style={stageStyle}>
+          <img
+            src={photo.url}
+            alt=""
+            draggable={false}
+            className="pointer-events-none size-full object-fill"
+          />
+          {shown.map((cookie, index) => {
+            const isSelected = cookie.id === selectedId
+            return (
+              <button
+                key={cookie.id}
+                type="button"
+                data-cookie-id={cookie.id}
+                aria-label={`Cookie ${index + 1}`}
+                aria-pressed={isSelected}
+                aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Shift+ArrowRight Shift+ArrowDown Delete"
+                onFocus={() => setSelectedId(cookie.id)}
+                onKeyDown={(e) => onBoxKeyDown(e, cookie)}
+                className={`absolute cursor-move rounded-[length:calc(4px*var(--inv))] border-[length:calc(3px*var(--inv))] outline-offset-[length:calc(2px*var(--inv))] ${
+                  isSelected ? 'z-10 border-snow' : 'border-accent'
+                }`}
+                style={{
+                  left: percent(cookie.box.x),
+                  top: percent(cookie.box.y),
+                  width: percent(cookie.box.width),
+                  height: percent(cookie.box.height),
+                  boxShadow: '0 0 0 calc(1px * var(--inv)) var(--color-ink)',
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-0 left-0 grid size-7 origin-top-left scale-(--inv) place-items-center rounded-br-control font-display text-sm font-bold ${
+                    isSelected ? 'bg-snow text-ink' : 'bg-accent text-on-accent'
+                  }`}
+                >
+                  {index + 1}
+                </span>
+              </button>
+            )
+          })}
+          {selected &&
+            CORNERS.map((corner) => (
+              <div
+                key={corner}
+                data-corner={corner}
+                aria-hidden="true"
+                className="absolute z-20 grid size-11 -translate-1/2 scale-(--inv) place-items-center"
+                style={{
+                  left: percent(selected.box.x + (corner.endsWith('e') ? selected.box.width : 0)),
+                  top: percent(selected.box.y + (corner.startsWith('s') ? selected.box.height : 0)),
+                  cursor: corner === 'ne' || corner === 'sw' ? 'nesw-resize' : 'nwse-resize',
+                }}
+              >
+                <span className="size-4 rounded-full border-2 border-primary bg-snow shadow-card" />
+              </div>
+            ))}
+          {drawing && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute rounded-[length:calc(4px*var(--inv))] border-[length:calc(3px*var(--inv))] border-dashed border-snow"
+              style={{
+                left: percent(drawing.x),
+                top: percent(drawing.y),
+                width: percent(drawing.width),
+                height: percent(drawing.height),
+                boxShadow: '0 0 0 calc(1px * var(--inv)) var(--color-ink)',
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="flex-1 text-ink-muted" aria-live="polite">
+          {shown.length === 1 ? '1 cookie' : `${shown.length} cookies`}
+          {selected && `, cookie ${shown.indexOf(selected) + 1} selected`}
+        </p>
+        {selected && (
+          <Button variant="danger" onClick={() => remove(selected.id)}>
+            Delete cookie {shown.indexOf(selected) + 1}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}

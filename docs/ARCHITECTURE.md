@@ -259,6 +259,16 @@ The plate editor shows the photo with cookie boxes overlaid:
   via Transformers.js. Phase 6 picks one by measuring accuracy and speed on
   `fixtures/plates`. The model is lazy-loaded on admin routes only.
 - **Manual:** drag to draw a box; drag handles to resize; drag to move; delete.
+  `PlateEditor` (the Cookies step) does this with pointer events: one finger
+  draws, moves or resizes, and two fingers pinch-zoom and pan (Ctrl + wheel on
+  desktop). `touch-action: none` stops the browser scrolling while drawing, so
+  the photo is capped at 65% of the screen height to leave room to scroll the
+  page. Handles, numbers and outlines are counter-scaled to stay
+  finger-sized at any zoom. Keyboard users Tab to a box: arrows move it,
+  Shift + arrows resize it, Delete removes it, and **Add cookie** places a box
+  in the middle of the view. Each finished gesture is one save; deleting a
+  cookie also clears its baker assignment. Replacing a category's photo keeps
+  its boxes, for the admin to adjust.
 - **Pre-outline (optional, phase 11):** a "find all cookies" button, evaluated
   against the same fixtures.
 

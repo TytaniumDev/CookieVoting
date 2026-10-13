@@ -105,3 +105,57 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
   await expect(headings).toHaveText(['Thumbprints'])
 })
+
+test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
+  const eventName = `E2E Cookies ${testInfo.project.name} ${Date.now()}`
+  await signInAs(page, 'admin@example.com')
+  await page.getByRole('link', { name: 'New event' }).click()
+  await page.getByLabel('Event name').fill(eventName)
+  await page.getByRole('button', { name: 'Create event' }).click()
+  await page.getByRole('button', { name: /^categories/i }).click()
+  await page.getByLabel('Category name').fill('Stars')
+  await page.getByRole('button', { name: 'Add category' }).click()
+  await page
+    .getByLabel('Add photo for Stars')
+    .setInputFiles('../../fixtures/plates/4-cookies_stars.jpg')
+  await expect(page.getByRole('button', { name: /replace photo for stars/i })).toBeAttached()
+
+  await page.getByRole('button', { name: /^cookies/i }).click()
+  const plate = page.getByRole('group', { name: 'Stars plate' })
+  await expect(plate.locator('img')).toHaveJSProperty('complete', true)
+  await plate.scrollIntoViewIfNeeded()
+  // Drags across the photo between two points given as fractions of its size.
+  async function drag(from: [number, number], to: [number, number]) {
+    const box = await plate.boundingBox()
+    if (!box) throw new Error('Plate not visible')
+    await page.mouse.move(box.x + from[0] * box.width, box.y + from[1] * box.height)
+    await page.mouse.down()
+    await page.mouse.move(box.x + to[0] * box.width, box.y + to[1] * box.height, { steps: 5 })
+    await page.mouse.up()
+  }
+
+  // Draw two boxes.
+  await drag([0.1, 0.1], [0.4, 0.45])
+  await drag([0.55, 0.55], [0.85, 0.9])
+  await expect(page.getByText('2 cookies, cookie 2 selected')).toBeVisible()
+
+  // Grow the selected box from its bottom-right corner.
+  await drag([0.85, 0.9], [0.95, 0.97])
+  const second = plate.getByRole('button', { name: 'Cookie 2' })
+  await expect
+    .poll(async () => (await second.boundingBox())?.width)
+    .toBeGreaterThan(((await plate.boundingBox())?.width ?? 0) * 0.35)
+
+  // Saved: still there after a reload, and the step is done.
+  await page.reload()
+  await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(2)
+  await expect(page.getByRole('button', { name: /^cookies.*\(done\)/i })).toBeVisible()
+
+  // Delete one.
+  await plate.getByRole('button', { name: 'Cookie 1' }).click()
+  await page.getByRole('button', { name: 'Delete cookie 1' }).click()
+  await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(1)
+  expect(await page.evaluate('document.documentElement.scrollWidth')).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0,
+  )
+})

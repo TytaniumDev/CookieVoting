@@ -3,6 +3,7 @@ import {
   removeBakerFromSetup,
   type BakerDoc,
   type CategoryDoc,
+  type Cookie,
   type EventDoc,
   type PlatePhoto,
   type SetupDoc,
@@ -105,4 +106,27 @@ export async function deleteCategory(
   batch.update(doc(db, paths.setup(eventId)), { [`assignments.${categoryId}`]: deleteField() })
   await batch.commit()
   if (photo) await deletePlatePhoto(photo)
+}
+
+/**
+ * Saves a category's cookie boxes (already in reading order). Cookies that were
+ * removed also lose their baker assignment.
+ */
+export async function saveCookies(
+  eventId: string,
+  categoryId: string,
+  cookies: readonly Cookie[],
+  removedIds: readonly string[],
+): Promise<void> {
+  const batch = writeBatch(db)
+  batch.update(doc(db, paths.category(eventId, categoryId)), { cookies })
+  if (removedIds.length > 0) {
+    batch.update(
+      doc(db, paths.setup(eventId)),
+      Object.fromEntries(
+        removedIds.map((id) => [`assignments.${categoryId}.${id}`, deleteField()]),
+      ),
+    )
+  }
+  await batch.commit()
 }
