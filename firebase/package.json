@@ -1,0 +1,17 @@
+{
+  "name": "@cookie-voting/firebase",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Firestore and Storage security rules, indexes and their emulator tests.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "seed": "node scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@types/node": "^22.20.5",
+    "firebase": "^13.0.0",
+    "firebase-admin": "^14.5.0"
+  }
+}

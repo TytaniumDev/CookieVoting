@@ -7,3 +7,4 @@ test-results
 package-lock.json
 fixtures
 ClaudePRD.md
+functions/dist

@@ -4,7 +4,9 @@
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "functions",
+    "firebase"
   ],
   "engines": {
     "node": ">=22"
@@ -18,9 +20,12 @@
     "format:check": "prettier --check .",
     "test": "npm run test --workspaces --if-present",
     "test:stories": "npm run test:stories -w @cookie-voting/web",
-    "test:e2e": "npm run test:e2e -w @cookie-voting/web",
+    "test:e2e": "npm run build -w @cookie-voting/functions && firebase emulators:exec --project demo-cookie-voting --only auth,firestore,storage,functions \"npm run seed && npm run test:e2e -w @cookie-voting/web\"",
     "storybook": "npm run storybook -w @cookie-voting/web",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "emulators": "npm run build -w @cookie-voting/functions && firebase emulators:start --project demo-cookie-voting",
+    "test:emulators": "npm run build -w @cookie-voting/functions && firebase emulators:exec --project demo-cookie-voting --only auth,firestore,storage,functions \"vitest run --config vitest.emulators.config.ts\"",
+    "seed": "npm run seed -w @cookie-voting/firebase"
   },
   "overrides": {
     "vite-plus": {
@@ -29,6 +34,7 @@
   },
   "devDependencies": {
     "@vitest/browser-playwright": "^5.0.3",
+    "firebase-tools": "^15.33.0",
     "oxlint": "^1.86.0",
     "prettier": "^3.9.9",
     "typescript": "~6.0.2",

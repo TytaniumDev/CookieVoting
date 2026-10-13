@@ -8,14 +8,26 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "warn",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
     "react/react-in-jsx-scope": "off",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "vitest/expect-expect": [
+      "error",
+      {
+        "assertFunctionNames": ["expect", "assert*"]
+      }
+    ]
   },
   "ignorePatterns": [
     "**/dist/**",
     "**/storybook-static/**",
     "**/playwright-report/**",
-    "**/test-results/**"
+    "**/test-results/**",
+    "functions/dist/**"
   ]
 }

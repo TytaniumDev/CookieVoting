@@ -1,6 +1,6 @@
 #!/bin/bash
 # SessionStart hook for Claude Code on the web: installs workspace dependencies
-# so lint, typecheck, unit, story and E2E tests work as soon as a session starts.
+# so lint, typecheck, unit, story, emulator and E2E tests work as soon as a session starts.
 set -euo pipefail
 
 # Local sessions manage their own environment.
@@ -19,3 +19,7 @@ npm install --no-audit --no-fund
 if [ -x /opt/pw-browsers/chromium ] && [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo 'export CHROMIUM_PATH=/opt/pw-browsers/chromium' >> "$CLAUDE_ENV_FILE"
 fi
+
+# Pre-fetch the Firestore and Storage emulator JARs (the CLI skips ones it already has).
+npx firebase setup:emulators:firestore > /dev/null 2>&1 || true
+npx firebase setup:emulators:storage > /dev/null 2>&1 || true

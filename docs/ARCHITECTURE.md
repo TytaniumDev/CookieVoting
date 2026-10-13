@@ -69,8 +69,13 @@ listed at the end with their reasons. The phased build plan is in
   functions and (probably) the bucket. The Firestore database keeps whatever
   location it was created with; it can't be changed and doesn't matter at this
   scale.
-- **Web config** (API key, app ID, bucket, …) is public and gets committed to the
-  repo; it's readable at <https://cookie-voting.web.app/__/firebase/init.json>.
+- **Web config** (API key, app ID, bucket, …) is public. The app doesn't commit
+  it: in production it loads Hosting's reserved `/__/firebase/init.json`, which
+  always matches the project the site is deployed to (live and preview
+  channels). Dev, test and `VITE_USE_EMULATORS=true` builds use a demo config
+  pointed at the emulators (`apps/web/src/lib/firebase.ts`). Phase 2 planned to
+  commit it, but sessions can't reach the live site to copy it, and this way
+  nothing can drift.
 - **Agent sessions never touch production.** They build and test on the
   emulators; changes reach `cookie-voting` only through the CI deploy workflow.
 
@@ -84,15 +89,23 @@ apps/web/            React SPA (voter + admin), Storybook, Playwright E2E
   src/styles/        index.css + theme.css (design tokens)
   e2e/               Playwright specs
 packages/shared/     Pure TS domain logic: types, ballot rules, Borda scoring
-functions/           Cloud Functions (added in roadmap phase 2)
-firebase/            Firestore/Storage rules + indexes (phase 2)
+functions/           Cloud Functions; `npm run build` bundles them into functions/dist
+firebase/            Rules, indexes, bucket CORS, rules tests, emulator seed script
 fixtures/plates/     Real plate photos for detection spikes and E2E tests
 docs/                ARCHITECTURE.md (this), ROADMAP.md, SETUP.md (owner steps)
 ```
 
 `packages/shared` exports TypeScript source directly (no build step). Vite
-compiles it for the web app; Cloud Functions will bundle it with esbuild so the
-deployed `functions/package.json` only lists npm-published dependencies.
+compiles it for the web app. `functions/build.mjs` bundles the functions with
+esbuild (inlining `@cookie-voting/shared`) into `functions/dist`, together with
+a generated `package.json` that lists only npm-published dependencies;
+`firebase.json` deploys that folder.
+
+Document shapes and paths live in `packages/shared/src/documents.ts`, generic
+over the timestamp type so web and functions plug in their own SDK's
+`Timestamp`. The web app reads through hooks in `apps/web/src/lib/data.ts`
+(`useEvent`, `useCategories`, `useResults`, …), built on `useSubscription`,
+which stops each listener on unmount.
 
 ## Data model (Firestore)
 
@@ -140,14 +153,17 @@ Types for ballots and results are defined in `packages/shared/src/types.ts`.
 
 ## Security model
 
-Firestore rules (to be written in phase 2, with emulator tests):
+Firestore rules (`firebase/firestore.rules`, tested in `firebase/tests/`):
 
 - `isAdmin()` means a signed-in user with a verified email that has a doc in
   `admins/`.
 - `admins/{email}`: a user may read their own doc (so the UI can check admin
   status). Admins may read and write.
 - `bakers/**`, `events/*/private/**`: admins only.
-- `events/*` and `events/*/categories/*`: public read, admin write.
+- `events/*` and `events/*/categories/*`: public read, admin write. Admins
+  may set any status in any order (owner decision, 2026-10-13: "just have
+  everything live update, it'll be the admin's responsibility"), so there are
+  no transition or edit locks once votes exist.
 - `events/*/ballots/{uid}`: **create only**, only when `request.auth.uid == uid`
   and event status is `voting` or `results`. Fields are limited to `rankings`
   and `submittedAt == request.time`. No update or delete, so there is one ballot
@@ -200,8 +216,11 @@ respects `prefers-reduced-motion`: snow holds still and spinners stop.
    `Cache-Control: public, max-age=31536000, immutable`. Store `{path, url,
 width, height}` on the category.
 
-The bucket needs a CORS config allowing `GET` from the app origin so the
-in-browser model can read pixels from already-uploaded photos (phase 2 setup).
+The bucket needs a CORS config allowing `GET` so the in-browser model can read
+pixels from already-uploaded photos. `firebase/storage-cors.json` allows any
+origin: the photos are public anyway, and Cloud Storage can't wildcard part of
+an origin, which hosting preview channels (`cookie-voting--pr12-….web.app`)
+would need. The deploy job applies it with `gcloud storage buckets update`.
 
 ### Identifying cookies (admin, phone)
 
@@ -228,6 +247,11 @@ Voters download each plate photo once (browser-cached) instead of N crop files.
 
 ### Voting
 
+Every category needs a full set of picks (1st, 2nd and 3rd, or as many as the
+category has cookies, per `maxPicksFor`) before the ballot can be submitted
+(owner decision, 2026-10-13). This is enforced by the voter UI; the scorer
+still accepts partial ballots.
+
 Voters sign in anonymously on page load. Selections live in React state
 (`toggleRanking` from `packages/shared`). Submit writes
 `events/{eventId}/ballots/{uid}` once. The waiting screen listens to the event
@@ -235,19 +259,28 @@ doc and switches to results when `status` becomes `results`.
 
 ### Scoring (Cloud Functions)
 
-`recomputeResults(eventId)` reads the categories, `private/setup`, the roster's
-baker names and all ballots. It runs `tallyResults` from `packages/shared` and
-writes `results/live`. It is triggered by:
+`recomputeResults(eventId)` (`functions/src/recomputeResults.ts`) reads the
+categories, `private/setup`, the roster's baker names and all ballots in one
+read-only transaction, which gives a consistent snapshot without locking
+voters' ballots. It runs `tallyResults` from `packages/shared` and writes
+`results/live`. It is triggered by:
 
 - ballot created
-- `private/setup` written (baker assignments changed)
+- `private/setup` written (roster or baker assignments changed)
+- a category written (added, renamed, reordered, deleted, cookies changed)
 - event `status` changed
 
 Recomputing from scratch is idempotent and self-healing. It costs about N reads
-per ballot (~20K reads for a 200-voter event, within the 50K/day free quota). A
-transaction only overwrites `results/live` if its `ballotCount` is not newer, so
-concurrent recomputes can't regress. If events grow beyond ~500 voters, switch
-to incremental per-cookie counters.
+per ballot (~20K reads for a 200-voter event, within the 50K/day free quota).
+The results doc stores the snapshot's `sourceReadTime`, and a transaction only
+overwrites it with results from a snapshot at least as new. Every trigger fires
+after its change commits, so the recompute that starts last sees everything and
+wins; concurrent recomputes can't regress. Functions run in `us-west1` with
+`maxInstances: 10`. If events grow beyond ~500 voters, switch to incremental
+per-cookie counters.
+
+A ballot pick for a cookie that has since been deleted is dropped by
+`sanitizeRanking`, and the voter's later picks in that category move up.
 
 Admins watch `results/live.ballotCount` for the live vote count (one listener,
 one read per update).

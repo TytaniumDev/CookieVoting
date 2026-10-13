@@ -33,7 +33,9 @@ npm run dev              # web app at http://localhost:5173
 npm run check            # format:check + lint + typecheck + unit tests + build (run before every commit)
 npm test                 # unit tests (all workspaces)
 npm run test:stories     # every story rendered + play fn + axe, in Chromium
-npm run test:e2e         # Playwright against a production build (mobile + desktop profiles)
+npm run test:emulators   # security rules + Cloud Functions tests on the Firebase emulators (needs Java 21)
+npm run test:e2e         # Playwright against a build on the seeded emulators (mobile + desktop profiles)
+npm run emulators        # local Firebase (UI at http://localhost:4000); then `npm run seed` in another shell
 npm run storybook        # Storybook at http://localhost:6006
 npm run format           # Prettier write
 ```
@@ -50,6 +52,15 @@ Elsewhere, set it by hand if needed:
 ```sh
 CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:stories
 CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e
+```
+
+The hook also pre-fetches the emulator JARs. In cloud sessions the egress proxy
+breaks the emulators talking to each other (the Functions emulator gets
+"request blocked" registering triggers), so run anything that starts the
+emulators with the proxy variables unset:
+
+```sh
+env -u HTTPS_PROXY -u https_proxy -u GLOBAL_AGENT_HTTPS_PROXY -u npm_config_https_proxy npm run test:emulators
 ```
 
 When a new tool needs installing for every session (e.g. emulator downloads),
@@ -69,8 +80,8 @@ add it to the hook and keep the hook idempotent. CI installs its own Chromium.
 ```
 apps/web/          React 19 + Vite SPA, Tailwind v4, React Router (data mode), Storybook, Playwright
 packages/shared/   Pure TS domain logic (types, ballot rules, Borda scoring). No dependencies.
-functions/         Cloud Functions (phase 2)
-firebase/          Rules + indexes (phase 2)
+functions/         Cloud Functions: results recompute (bundled with esbuild into functions/dist)
+firebase/          Rules, indexes, bucket CORS, rules tests, emulator seed script
 fixtures/plates/   Real plate photos for detection work and E2E
 ```
 
@@ -96,9 +107,12 @@ fixtures/plates/   Real plate photos for detection work and E2E
 - **Pages are lazy routes** in `apps/web/src/app/routes.ts`. Keep heavy admin-only
   dependencies (e.g. the segmentation model) out of voter chunks.
 - **Firestore listeners** must be unsubscribed on unmount (PRD: infrequent use,
-  minimise reads).
-- **Tests:** unit tests beside the code (`*.test.ts[x]`); E2E specs in
-  `apps/web/e2e/`. New behaviour needs a test at the cheapest level that proves
+  minimise reads). Read data through the hooks in `apps/web/src/lib/data.ts`
+  (built on `useSubscription`), which do this for you.
+- **Tests:** unit tests beside the code (`*.test.ts[x]`); rules tests in
+  `firebase/tests/`; function tests that need the emulators in
+  `functions/test/*.emulator.test.ts`; E2E specs in `apps/web/e2e/` (they run on
+  the emulators with `firebase/scripts/seed.ts` data). New behaviour needs a test at the cheapest level that proves
   it.
 - **Free tier is a requirement.** Before adding a service, dependency on a paid
   API, or a pattern that scales reads with voters², check it against the budget

@@ -40,10 +40,19 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+          restore-keys: firebase-emulators-
       - run: npx playwright install --with-deps chromium
       - name: Story tests (render + play functions + accessibility)
         run: npm run test:stories
-      - name: End-to-end tests
+      - name: End-to-end tests (against the emulators, with seed data)
         run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -52,10 +61,31 @@ jobs:
           path: apps/web/test-results
           retention-days: 7
 
+  emulator-tests:
+    name: Security rules and Cloud Functions (emulators)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+          restore-keys: firebase-emulators-
+      - run: npm run test:emulators
+
   storybook:
     name: Publish Storybook to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [check, browser-tests]
+    needs: [check, browser-tests, emulator-tests]
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -76,3 +106,77 @@ jobs:
           path: apps/web/storybook-static
       - id: deploy
         uses: actions/deploy-pages@v5
+
+  # Deploys need the FIREBASE_SERVICE_ACCOUNT secret (docs/SETUP.md §4). Until it exists,
+  # or on pull requests from forks, they're skipped with a notice instead of failing.
+  deploy-gate:
+    name: Check deploy credentials
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT isn't set, so deploys are skipped. See docs/SETUP.md §4."
+          fi
+
+  preview:
+    name: Deploy a hosting preview
+    if: github.event_name == 'pull_request' && needs.deploy-gate.outputs.configured == 'true'
+    needs: [check, deploy-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @cookie-voting/web
+      # Previews serve this PR's web app against the production project's data and rules.
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: cookie-voting
+          expires: 7d
+
+  deploy:
+    name: Deploy to cookie-voting
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-gate.outputs.configured == 'true'
+    needs: [check, browser-tests, emulator-tests, deploy-gate]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://cookie-voting.web.app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @cookie-voting/web
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      # --force deletes functions that aren't in this repo (including the previous
+      # attempt's) and indexes that aren't in firebase/firestore.indexes.json.
+      - name: Deploy rules, indexes, functions and hosting
+        run: npx firebase deploy --project cookie-voting --only firestore,storage,functions,hosting --force --non-interactive
+      - name: Apply the photo bucket's CORS config
+        run: gcloud storage buckets update gs://cookie-voting.firebasestorage.app --cors-file=firebase/storage-cors.json

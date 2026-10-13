@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Security model: docs/ARCHITECTURE.md → Security model.
+// Public documents hold only what a voter needs; ballots and baker identities stay private.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // A Google account with a verified email listed in admins/ (doc id = lowercase email).
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
+    function eventStatus(eventId) {
+      return get(/databases/$(database)/documents/events/$(eventId)).data.status;
+    }
+
+    match /admins/{email} {
+      // Anyone signed in may read their own entry, so the UI can check admin status.
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.token.email != null
+            && request.auth.token.email.lower() == email);
+      allow write: if isAdmin();
+    }
+
+    match /bakers/{bakerId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.name is string
+        && request.resource.data.status in ['setup', 'voting', 'results'];
+      allow delete: if isAdmin();
+
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+
+      match /private/{docId} {
+        allow read, write: if isAdmin();
+      }
+
+      // One ballot per (anonymous) user: create once, never update or delete.
+      // Contents are sanitised by the scorer (sanitizeRanking), not here.
+      match /ballots/{uid} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && eventStatus(eventId) in ['voting', 'results']
+          && request.resource.data.keys().hasOnly(['rankings', 'submittedAt'])
+          && request.resource.data.rankings is map
+          && request.resource.data.submittedAt == request.time;
+      }
+
+      // Written only by Cloud Functions (Admin SDK bypasses rules).
+      match /results/{docId} {
+        allow read: if isAdmin() || eventStatus(eventId) == 'results';
+      }
+    }
+
+    // Category name suggestions query every event's categories (collection group).
+    match /{path=**}/categories/{categoryId} {
+      allow read: if true;
+    }
+  }
+}

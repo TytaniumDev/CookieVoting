@@ -30,25 +30,25 @@ Status: ✅ done · 🚧 in progress · ⬜ not started
 - [x] Playwright E2E smoke tests on mobile + desktop profiles
 - [x] CI: format, lint, typecheck, unit, build, story tests, E2E; Storybook → GitHub Pages on `main`
 
-## Phase 2 — Firebase backend foundation ⬜
+## Phase 2 — Firebase backend foundation ✅
 
 Build and test everything against the emulators with the `demo-cookie-voting`
 project ID. Production is the existing `cookie-voting` project (see
 ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 
-- [ ] `firebase.json`, `.firebaserc` (default project `cookie-voting`), emulator config (auth, firestore, storage, functions, hosting); emulator scripts pass `--project demo-cookie-voting`
-- [ ] `firebase/firestore.rules` + `firebase/storage.rules` per ARCHITECTURE.md → Security model
-- [ ] Rules unit tests with `@firebase/rules-unit-testing` (admin vs voter vs anonymous; ballot create-once; results visibility by status)
-- [ ] `functions/` workspace (region `us-west1`): 2nd-gen triggers calling `recomputeResults(eventId)` → `tallyResults`; bundled with esbuild so `@cookie-voting/shared` is inlined
-- [ ] Function integration tests on the emulator (ballot → results doc; assignment change → recompute; concurrent ballots don't regress `ballotCount`)
-- [ ] Storage bucket CORS config (`firebase/storage-cors.json`) allowing `GET` from the app origins, so the in-browser model can read photo pixels; applied by the deploy workflow, or as an owner step in `docs/SETUP.md` if the deploy credentials can't
-- [ ] `apps/web/src/lib/firebase.ts`: typed client init with the committed public web config for `cookie-voting` (from `https://cookie-voting.web.app/__/firebase/init.json`); auto-connect to emulators in dev/test
-- [ ] Typed Firestore converters/hooks layer (`useEvent`, `useCategories`, …) with listener cleanup
-- [ ] Seed script: an event with categories using `fixtures/plates` photos, bakers, assignments, ballots
-- [ ] CI job running rules + functions tests under `firebase emulators:exec`
-- [ ] If the emulators download large files on first run, pre-fetch them in `.claude/hooks/session-start.sh` so cloud sessions stay fast
-- [ ] Deploy workflow: on `main`, deploy Firestore/Storage rules, indexes, functions (`--force`, which also removes leftover legacy functions) and hosting to `cookie-voting`; hosting preview channel per PR. Skip cleanly while the deploy secret isn't configured. If phase 2 runs long, this item can move to phase 3
-- [ ] Replace `docs/SETUP.md` section 4 with the exact deploy-credential steps (service account roles + GitHub secret)
+- [x] `firebase.json`, `.firebaserc` (default project `cookie-voting`), emulator config (auth, firestore, storage, functions, hosting); emulator scripts pass `--project demo-cookie-voting`
+- [x] `firebase/firestore.rules` + `firebase/storage.rules` per ARCHITECTURE.md → Security model
+- [x] Rules unit tests with `@firebase/rules-unit-testing` (admin vs voter vs anonymous; ballot create-once; results visibility by status)
+- [x] `functions/` workspace (region `us-west1`): 2nd-gen triggers calling `recomputeResults(eventId)` → `tallyResults`; bundled with esbuild so `@cookie-voting/shared` is inlined
+- [x] Function integration tests on the emulator (ballot → results doc; assignment change → recompute; concurrent ballots don't regress `ballotCount`)
+- [x] Storage bucket CORS config (`firebase/storage-cors.json`), applied by the deploy job
+- [x] `apps/web/src/lib/firebase.ts`: typed client init; production config from Hosting's `/__/firebase/init.json` instead of a committed copy (see ARCHITECTURE.md); auto-connect to emulators in dev/test
+- [x] Typed Firestore converters/hooks layer (`useEvent`, `useCategories`, …) with listener cleanup
+- [x] Seed script: an event with categories using `fixtures/plates` photos, bakers, assignments, ballots
+- [x] CI job running rules + functions tests under `firebase emulators:exec`
+- [x] Emulator JARs pre-fetched in `.claude/hooks/session-start.sh`
+- [x] Deploy jobs in CI: on `main`, deploy rules, indexes, functions (`--force`) and hosting to `cookie-voting`, then bucket CORS; hosting preview channel per PR. Skipped with a notice while the deploy secret isn't configured
+- [x] Replaced `docs/SETUP.md` section 4 with the deploy-credential steps
 
 **Done when:** `npm run test:emulators` passes locally and in CI; the web app can read seeded data from the emulators.
 
@@ -76,7 +76,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] Photo with box overlay; pinch-zoom and pan on phones
 - [ ] Draw box by dragging; select; move; resize via handles sized for fingers; delete
 - [ ] Save sorts cookies into reading order; show numbers `#1…#n`
-- [ ] Editing cookies locked once voting opens (assignments stay editable)
+- [ ] Cookies stay editable in every status (owner decision Q2: no locks; results recompute live)
 - [ ] Use the editor to label ground truth for every `fixtures/plates/*.jpg` → `fixtures/plates/*.json` (boxes), for measuring detection in phases 6 and 11
 - [ ] Geometry helpers in `packages/shared` (clamp, normalise, reading order, IoU) with unit tests
 - [ ] Stories + E2E on the mobile profile (draw, resize, delete)
@@ -104,6 +104,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [ ] Landing: event name, ordered category list, "Start voting"
 - [ ] One category at a time, progress indicator, forward/back + swipe
 - [ ] Adaptive grid that fits all cookies on screen where possible; tap to rank (badges 1/2/3), tap again to unrank with renumbering (`toggleRanking`); 🔍 zoom modal
+- [ ] Every category needs all its picks before moving on to review (owner decision Q3)
 - [ ] Review screen → submit (create-once ballot) → waiting screen that follows event status live
 - [ ] Voting closed / event not found states
 - [ ] Stories + E2E: full vote on the mobile profile against the emulators, double-submit rejected
@@ -144,7 +145,7 @@ until real-device testing (useful from phase 3).
 - [ ] Check the basics: Blaze still active, $1 budget alert, bucket location, Google + Anonymous sign-in enabled (SETUP.md §1)
 - [ ] Clear out the previous attempt: old functions, Firestore data, photos (SETUP.md §2)
 - [ ] Add your email to `admins/` (SETUP.md §3)
-- [ ] Deploy credentials for GitHub Actions, once phase 2 documents them (SETUP.md §4)
+- [ ] Deploy credentials for GitHub Actions: a service account key as the `FIREBASE_SERVICE_ACCOUNT` secret (SETUP.md §4)
 - [ ] GitHub Pages source set to "GitHub Actions" (SETUP.md §5)
 
 ---
@@ -208,3 +209,26 @@ until real-device testing (useful from phase 3).
   and autodocs pages. Details in ARCHITECTURE.md → Design system.
 - Phase 2 is untouched; later phases should build on these components (e.g.
   RankBadge for phase 8, Snowfall for phase 10) rather than new one-offs.
+
+### Session 4 — 2026-10-13 (phase 2)
+
+- Owner answered the four open questions: free stepper; no locks on status
+  changes or cookie edits after votes ("everything live updates, it's the
+  admin's responsibility"); every category needs all 3 picks; removing an
+  assigned baker is allowed. Recorded in PRD-COVERAGE.md → Owner decisions and
+  ARCHITECTURE.md; phase 5 and 8 items updated to match.
+- Shipped phase 2: rules + 20 rules tests, `recomputeResults` functions with
+  emulator tests (triggers on ballots, setup, categories and status; snapshot
+  guard so concurrent recomputes can't regress), web client + `useSubscription`
+  hooks, seed script (`npm run seed`), E2E now runs on the seeded emulators, CI
+  emulator job, and deploy/preview jobs gated on `FIREBASE_SERVICE_ACCOUNT`.
+- Deviation: the web config isn't committed. Sessions can't reach
+  cookie-voting.web.app through the egress proxy, so production loads
+  `/__/firebase/init.json` from Hosting at startup instead.
+- Seeded cookie boxes are a placeholder grid until phase 5 labels real ground
+  truth.
+- Cloud sessions must unset the proxy variables when starting emulators (see
+  CLAUDE.md → Sandboxed / cloud sessions).
+- The deploy jobs haven't run for real yet: they need the owner's secret
+  (SETUP.md §4). The role list there is best-effort; check the first run.
+- **Next:** phase 3.
