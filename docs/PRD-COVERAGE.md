@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last updated for phase 6 (tap-to-select), 2026-10-13._
+_Last updated for phase 7 (baker assignment and opening voting), 2026-10-13._
 
 ## Snapshot
 
@@ -26,7 +26,7 @@ Pages.
 Phase 2 added the Firebase backend: security rules with emulator tests, the
 results Cloud Functions, the web client and live data hooks, seed data, and CI
 deploys. Phase 3 added admin sign-in, the dashboard, event creation and the
-bakers step. Phase 4 added categories with plate photos, phase 5 the plate editor and phase 6 tap-to-select. Not built yet: baker assignment onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
+bakers step. Phase 4 added categories with plate photos, phase 5 the plate editor and phase 6 tap-to-select, and phase 7 baker assignment and the voting controls. Not built yet: the voter screens and results, and every voter screen. Nothing in the PRD is unplanned; the gaps this
 review found were small and have been added to ROADMAP.md (see
 [Gaps found](#gaps-found-in-this-review)).
 
@@ -91,16 +91,16 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P5 — Baker assignment and opening voting (phase 7)
 
-| PRD  | Requirement                                                               | Status                             |
-| ---- | ------------------------------------------------------------------------- | ---------------------------------- |
-| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | ⬜ 7                               |
-| §6.5 | Previous baker not pre-selected                                           | ⬜ 7                               |
-| §6.5 | Every cookie must have a baker before voting opens                        | ⬜ 7                               |
-| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ⬜ 7                               |
-| §6.6 | Live count of submissions                                                 | ⬜ 7                               |
-| §6.7 | "Open Results" sets status `results`; voting continues after              | ⬜ 7 (rules allow it in 2)         |
-| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ⬜ 7 (added in this review)        |
-| —    | Moving an event backwards (reopen setup, hide results)                    | ✅ 2 rules allow it (Q2) · ⬜ 7 UI |
+| PRD  | Requirement                                                               | Status                              |
+| ---- | ------------------------------------------------------------------------- | ----------------------------------- |
+| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | ✅ `BakerPicker` (combobox)         |
+| §6.5 | Previous baker not pre-selected                                           | ✅ each cookie starts empty         |
+| §6.5 | Every cookie must have a baker before voting opens                        | ✅ checklist gates Open voting      |
+| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ✅ `SharePanel` + QR code           |
+| §6.6 | Live count of submissions                                                 | ✅ `results/live.ballotCount`       |
+| §6.7 | "Open Results" sets status `results`; voting continues after              | ✅ asks first                       |
+| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ✅                                  |
+| —    | Moving an event backwards (reopen setup, hide results)                    | ✅ Close voting / Hide results (Q2) |
 
 ### P6 — Voter flow (phase 8)
 

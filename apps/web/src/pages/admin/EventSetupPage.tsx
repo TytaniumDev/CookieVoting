@@ -7,20 +7,15 @@ import {
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
-import { Card } from '../../components/Card/Card.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { Stepper } from '../../components/Stepper/Stepper.tsx'
 import { useCategories, useEvent, useSetup } from '../../lib/data.ts'
 import { BakersStep } from './steps/BakersStep.tsx'
 import { CategoriesStep } from './steps/CategoriesStep.tsx'
+import { AssignStep } from './steps/AssignStep.tsx'
 import { CookiesStep } from './steps/CookiesStep.tsx'
-
-/** Roadmap phase that builds each step still to come. */
-const COMING_IN: Partial<Record<SetupStep, number>> = {
-  assign: 7,
-  voting: 7,
-  results: 7,
-}
+import { ResultsStep } from './steps/ResultsStep.tsx'
+import { VotingStep } from './steps/VotingStep.tsx'
 
 function isStep(value: string | null): value is SetupStep {
   return SETUP_STEPS.includes(value as SetupStep)
@@ -88,13 +83,12 @@ export function EventSetupPage() {
         <CategoriesStep eventId={eventId} categories={categories.data} />
       ) : selected === 'cookies' ? (
         <CookiesStep eventId={eventId} categories={categories.data} />
+      ) : selected === 'assign' ? (
+        <AssignStep eventId={eventId} categories={categories.data} setup={setup.data} />
+      ) : selected === 'voting' ? (
+        <VotingStep event={event.data} progress={progress} />
       ) : (
-        <Card>
-          <h2 className="text-2xl">{SETUP_STEP_LABELS[selected]}</h2>
-          <p className="text-ink-muted">
-            This step arrives in roadmap phase {COMING_IN[selected]}.
-          </p>
-        </Card>
+        <ResultsStep event={event.data} />
       )}
     </section>
   )

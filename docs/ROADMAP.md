@@ -89,14 +89,14 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Graceful fallback to manual drawing if the model fails to load (old phone, offline)
 - [x] E2E on fixture photos: tapping centres yields boxes with IoU ≥ 0.8 against ground truth
 
-## Phase 7 — Baker assignment & opening voting ⬜
+## Phase 7 — Baker assignment & opening voting ✅
 
-- [ ] Per category: cookie crops with a type-to-filter baker picker (no pre-selection of the previous baker)
-- [ ] Validation gating: every category has a photo and ≥ 1 cookie, every cookie has a baker
-- [ ] Open voting → share panel with the voter URL, copy button and QR code
-- [ ] Live ballot count on the dashboard (from `results/live.ballotCount`)
-- [ ] Open results button
-- [ ] Dashboard rows for events in `voting`/`results` show the live count, voter URL and Open results too (PRD §10)
+- [x] Per category: cookie crops with a type-to-filter baker picker (no pre-selection of the previous baker)
+- [x] Validation gating: every category has a photo and ≥ 1 cookie, every cookie has a baker
+- [x] Open voting → share panel with the voter URL, copy button and QR code
+- [x] Live ballot count on the dashboard (from `results/live.ballotCount`)
+- [x] Open results button
+- [x] Dashboard rows for events in `voting`/`results` show the live count, voter URL and Open results too (PRD §10)
 
 ## Phase 8 — Voter flow ⬜
 
@@ -296,3 +296,14 @@ until real-device testing (useful from phase 3).
   lived in the session scratchpad; rebuild it from the description in
   ARCHITECTURE.md if the model changes.
 - **Next:** phase 7.
+
+### Session 4, continued — phase 7
+
+- Shipped the Assign bakers, Voting and Results steps and live dashboard rows.
+  New components: `BakerPicker`, `SharePanel`, `QrCode`. `EventCard` takes
+  children for the live controls under its link.
+- Opening results from setup is allowed (Q2: any order); only Open voting is
+  gated by the checklist.
+- E2E "an admin assigns bakers, opens voting and then results" covers the
+  gate, the picker, the share panel and Open results from the dashboard.
+- **Next:** phase 8 (voter flow; Q3: every category needs all its picks).

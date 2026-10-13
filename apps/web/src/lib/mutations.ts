@@ -5,6 +5,7 @@ import {
   type CategoryDoc,
   type Cookie,
   type EventDoc,
+  type EventStatus,
   type PlatePhoto,
   type SetupDoc,
 } from '@cookie-voting/shared'
@@ -129,4 +130,24 @@ export async function saveCookies(
     )
   }
   await batch.commit()
+}
+
+/** Assigns a cookie to a baker on the event's roster. */
+export async function assignBaker(
+  eventId: string,
+  categoryId: string,
+  cookieId: string,
+  bakerId: string,
+): Promise<void> {
+  await updateDoc(doc(db, paths.setup(eventId)), {
+    [`assignments.${categoryId}.${cookieId}`]: bakerId,
+  })
+}
+
+/**
+ * Moves the event to any status (owner decision Q2: no locks). Cloud Functions
+ * recompute the results, and voters' screens follow the status live.
+ */
+export async function setEventStatus(eventId: string, status: EventStatus): Promise<void> {
+  await updateDoc(doc(db, paths.event(eventId)), { status, updatedAt: serverTimestamp() })
 }

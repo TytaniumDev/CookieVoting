@@ -220,6 +220,17 @@ derives each step's done state from the event status, the roster, the
 categories and the assignments. A cookie only counts as assigned while its
 baker is on the roster, so removing a baker unassigns their cookies.
 
+The Assign step gives each cookie its own `BakerPicker` (an ARIA combobox over the
+event roster) that starts empty, so the last baker picked is never carried over.
+The Voting step lists what's left before **Open voting** is enabled; that's the
+only gate (owner decision Q1). Status changes go through `useStatusChange`
+(`pages/admin/useStatusChange.tsx`): any status in any order (Q2), with a
+confirm dialog for the moves voters notice (open results, hide results, close
+voting). While live, the event page and each dashboard row show the ballot
+count from `results/live`, the voter link (`lib/links.ts`) with Copy and the
+phone's Share sheet, and the event page adds a QR code (`qrcode-generator`, drawn
+as SVG in the theme's ink).
+
 ### Photo upload (admin, phone)
 
 1. `<input type="file" accept="image/jpeg,image/png">` opens the camera or
