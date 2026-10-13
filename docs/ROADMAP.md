@@ -52,15 +52,15 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 
 **Done when:** `npm run test:emulators` passes locally and in CI; the web app can read seeded data from the emulators.
 
-## Phase 3 — Admin sign-in, dashboard, events, bakers ⬜
+## Phase 3 — Admin sign-in, dashboard, events, bakers ✅
 
-- [ ] Google sign-in; allowlist check against `admins/{email}`; friendly "not an admin" state
-- [ ] Route guard for `/admin/**` and the dashboard at `/`
-- [ ] Dashboard: event list (name, status, created date, current setup step) → event page
-- [ ] Create event (`/admin/events/new`)
-- [ ] Event setup page with a stepper whose steps are **derived from data** (bakers added → categories → cookies identified → bakers assigned → voting → results), each step reachable
-- [ ] Bakers step: event roster from the global list (type-to-search), create new baker (saved globally + added), remove from event
-- [ ] Stories for every new component; E2E: admin signs in (auth emulator), creates an event, adds bakers
+- [x] Google sign-in (popup); allowlist check against `admins/{email}`; friendly "not an admin" state
+- [x] Route guard for `/admin/**` and the dashboard at `/` (`AdminGate` layout route)
+- [x] Dashboard: event list (name, status, created date, current setup step) → event page
+- [x] Create event (`/admin/events/new`)
+- [x] Event setup page with a stepper whose steps are **derived from data** (`setupProgress` in `packages/shared`), each step reachable; the opening step stays put while the admin works
+- [x] Bakers step: event roster from the global list (type-to-search), create new baker (saved globally + added), remove from event (unassigns their cookies, Q4)
+- [x] Stories for every new component (Stepper, EventCard, BakerRoster, SignInPanel); E2E: admin signs in (auth emulator), creates an event, adds and removes bakers; non-admin turned away
 
 ## Phase 4 — Categories & plate photos ⬜
 
@@ -232,3 +232,19 @@ until real-device testing (useful from phase 3).
 - The deploy jobs haven't run for real yet: they need the owner's secret
   (SETUP.md §4). The role list there is best-effort; check the first run.
 - **Next:** phase 3.
+
+### Session 4, continued — phase 3
+
+- Shipped phase 3. Admin pages sit under an `AdminGate` layout route. Auth uses
+  `initializeAuth` without the popup resolver (smaller voter bundle); Google
+  sign-in passes `browserPopupRedirectResolver` to `signInWithPopup`. Popup,
+  not redirect, because the auth domain (firebaseapp.com) differs from the
+  site (web.app).
+- E2E signs in through `window.signInForTests(email)`, defined only in
+  emulator builds, which hands the auth emulator an unsigned Google token.
+- Writes live in `apps/web/src/lib/mutations.ts`. Later steps show a
+  "coming in phase N" card until built.
+- Deploy credentials: the owner chose to have Claude set them up on his Mac via
+  Remote Control and to delete the old project's leftovers. Track whether
+  `FIREBASE_SERVICE_ACCOUNT` exists before relying on deploys.
+- **Next:** phase 4.

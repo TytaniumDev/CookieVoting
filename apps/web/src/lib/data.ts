@@ -42,7 +42,12 @@ function converter<T extends object>(): FirestoreDataConverter<WithId<T>, T> {
       const { id: _id, ...rest } = data as Record<string, unknown>
       return rest as WithFieldValue<T>
     },
-    fromFirestore: (snapshot) => ({ ...(snapshot.data() as T), id: snapshot.id }),
+    // Pending server timestamps (e.g. a just-created event's createdAt) read as the
+    // local estimate instead of null.
+    fromFirestore: (snapshot, options) => ({
+      ...(snapshot.data({ ...options, serverTimestamps: 'estimate' }) as T),
+      id: snapshot.id,
+    }),
   }
 }
 

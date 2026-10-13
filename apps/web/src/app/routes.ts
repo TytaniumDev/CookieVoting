@@ -13,22 +13,30 @@ export const routes: RouteObject[] = [
     HydrateFallback: LoadingScreen,
     children: [
       {
-        path: '/',
+        // Admin pages: sign-in and the admin allowlist check wrap all of them.
         lazy: async () => ({
-          Component: (await import('../pages/admin/AdminHomePage.tsx')).AdminHomePage,
+          Component: (await import('../pages/admin/AdminGate.tsx')).AdminGate,
         }),
-      },
-      {
-        path: '/admin/events/new',
-        lazy: async () => ({
-          Component: (await import('../pages/admin/NewEventPage.tsx')).NewEventPage,
-        }),
-      },
-      {
-        path: '/admin/events/:eventId',
-        lazy: async () => ({
-          Component: (await import('../pages/admin/EventSetupPage.tsx')).EventSetupPage,
-        }),
+        children: [
+          {
+            path: '/',
+            lazy: async () => ({
+              Component: (await import('../pages/admin/AdminHomePage.tsx')).AdminHomePage,
+            }),
+          },
+          {
+            path: '/admin/events/new',
+            lazy: async () => ({
+              Component: (await import('../pages/admin/NewEventPage.tsx')).NewEventPage,
+            }),
+          },
+          {
+            path: '/admin/events/:eventId',
+            lazy: async () => ({
+              Component: (await import('../pages/admin/EventSetupPage.tsx')).EventSetupPage,
+            }),
+          },
+        ],
       },
       {
         path: '/event/:eventId',
