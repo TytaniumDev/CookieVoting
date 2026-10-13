@@ -1,10 +1,12 @@
 import { Link, Outlet } from 'react-router'
+import { Snowfall } from '../components/Snowfall/Snowfall.tsx'
 
 export function AppLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="bg-primary px-4 py-3 text-on-primary shadow-md">
-        <Link to="/" className="font-display text-xl font-semibold">
+      <header className="relative overflow-hidden bg-primary px-4 py-3 text-on-primary shadow-card">
+        <Snowfall count={12} />
+        <Link to="/" className="relative font-display text-xl font-semibold">
           🍪 Cookie Voting
         </Link>
       </header>
