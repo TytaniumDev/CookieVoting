@@ -206,6 +206,20 @@ respects `prefers-reduced-motion`: snow holds still and spinners stop.
 
 ## Key flows
 
+### Admin sign-in and setup
+
+Admin routes (`/` and `/admin/**`) sit under the `AdminGate` layout route: a
+signed-in Google account whose lowercased email has a doc in `admins/` gets
+through; anyone else sees the sign-in panel or a "not on the admin list"
+message. Sign-in uses `signInWithPopup` (redirect breaks when the auth domain
+and the site differ under third-party storage blocking). Emulator builds add
+`window.signInForTests(email)` for E2E.
+
+The setup stepper stores nothing: `setupProgress` (`packages/shared/src/setup.ts`)
+derives each step's done state from the event status, the roster, the
+categories and the assignments. A cookie only counts as assigned while its
+baker is on the roster, so removing a baker unassigns their cookies.
+
 ### Photo upload (admin, phone)
 
 1. `<input type="file" accept="image/*">` opens the camera or gallery.
