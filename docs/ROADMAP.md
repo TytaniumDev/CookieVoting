@@ -62,14 +62,14 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Bakers step: event roster from the global list (type-to-search), create new baker (saved globally + added), remove from event (unassigns their cookies, Q4)
 - [x] Stories for every new component (Stepper, EventCard, BakerRoster, SignInPanel); E2E: admin signs in (auth emulator), creates an event, adds and removes bakers; non-admin turned away
 
-## Phase 4 — Categories & plate photos ⬜
+## Phase 4 — Categories & plate photos ✅
 
-- [ ] Add / rename / delete categories (delete blocked once ballots exist)
-- [ ] Name suggestions ranked by frequency of use across past events
-- [ ] Drag-to-reorder that works with touch (e.g. dnd-kit), persisting `order`
-- [ ] Photo capture/upload from phone camera or gallery: EXIF-aware decode, downscale to 2048 px, JPEG 0.85, upload with progress, replace photo
-- [ ] `CookieImage` component: renders a cookie from plate photo + normalised box (ARCHITECTURE.md → Rendering a cookie)
-- [ ] Stories + E2E (upload a fixture photo on the mobile profile)
+- [x] Add / rename / delete categories (owner decision Q2: delete always works, the dialog warns with the ballot count)
+- [x] Name suggestions ranked by frequency of use across past events
+- [x] Drag-to-reorder that works with touch (e.g. dnd-kit), persisting `order`
+- [x] Photo capture/upload from phone camera or gallery: EXIF-aware decode, downscale to 2048 px, JPEG 0.85, upload with progress, replace photo
+- [x] `CookieImage` component: renders a cookie from plate photo + normalised box (ARCHITECTURE.md → Rendering a cookie)
+- [x] Stories + E2E (upload a fixture photo on the mobile profile)
 
 ## Phase 5 — Plate editor (manual, mobile-first) ⬜
 
@@ -248,3 +248,17 @@ until real-device testing (useful from phase 3).
   Remote Control and to delete the old project's leftovers. Track whether
   `FIREBASE_SERVICE_ACCOUNT` exists before relying on deploys.
 - **Next:** phase 4.
+
+### Session 4, continued — phase 4
+
+- Shipped phase 4: the categories step (`pages/admin/steps/CategoriesStep.tsx`;
+  the bakers step moved to `steps/BakersStep.tsx`), `CategoryNameForm`,
+  `CategoryList` (dnd-kit, handle-only drag), `ConfirmDialog` (native
+  `<dialog>`) and `CookieImage`. Storybook serves `fixtures/plates` at `/plates`.
+- Fixed a phone bug from phase 3: screen-reader-only text inside the stepper's
+  sideways scroller escaped it (absolute position, non-positioned scroller), so
+  phones laid the setup page out 700 px wide and zoomed out. The stepper is now
+  `relative`, and the categories E2E asserts the page doesn't scroll sideways.
+- E2E reorders with the keyboard and waits on dnd-kit's live-region
+  announcements between keys; without that, keys get dropped.
+- **Next:** phase 5.

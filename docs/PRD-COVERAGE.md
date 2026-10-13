@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last updated for phase 3 (admin sign-in, dashboard, bakers), 2026-10-13._
+_Last updated for phase 4 (categories and plate photos), 2026-10-13._
 
 ## Snapshot
 
@@ -26,7 +26,7 @@ Pages.
 Phase 2 added the Firebase backend: security rules with emulator tests, the
 results Cloud Functions, the web client and live data hooks, seed data, and CI
 deploys. Phase 3 added admin sign-in, the dashboard, event creation and the
-bakers step. Not built yet: categories onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
+bakers step. Phase 4 added categories with plate photos. Not built yet: the plate editor onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
 review found were small and have been added to ROADMAP.md (see
 [Gaps found](#gaps-found-in-this-review)).
 
@@ -69,12 +69,12 @@ Everything else reads or writes Firebase, so this comes first.
 
 | PRD  | Requirement                                            | Status                                    |
 | ---- | ------------------------------------------------------ | ----------------------------------------- |
-| §6.3 | Add categories by name                                 | ⬜ 4                                      |
-| §6.3 | Name suggestions from past events, ranked by frequency | ⬜ 4                                      |
-| §6.3 | Upload a JPEG/PNG plate photo to Storage               | ⬜ 4                                      |
+| §6.3 | Add categories by name                                 | ✅ `CategoriesStep`                       |
+| §6.3 | Name suggestions from past events, ranked by frequency | ✅ `suggestCategoryNames`                 |
+| §6.3 | Upload a JPEG/PNG plate photo to Storage               | ✅ with progress and replace              |
 | §6.3 | Compress photos over 5 MB                              | 🔁 always downscale to 2048 px, JPEG 0.85 |
-| §6.3 | Drag-and-drop reorder, persisting `order`              | ⬜ 4 (touch-friendly)                     |
-| §6.3 | Delete a category only while no votes exist            | ⬜ 4                                      |
+| §6.3 | Drag-and-drop reorder, persisting `order`              | ✅ dnd-kit (touch, keyboard)              |
+| §6.3 | Delete a category only while no votes exist            | 🔁 always allowed, warns (Q2)             |
 | §14  | Cropped images stored as JPEG ~85%                     | 🔁 crops rendered from photo + box        |
 
 ### P4 — Identifying cookies (phases 5, 6, optional 11)
