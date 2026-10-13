@@ -13,10 +13,10 @@ import { Stepper } from '../../components/Stepper/Stepper.tsx'
 import { useCategories, useEvent, useSetup } from '../../lib/data.ts'
 import { BakersStep } from './steps/BakersStep.tsx'
 import { CategoriesStep } from './steps/CategoriesStep.tsx'
+import { CookiesStep } from './steps/CookiesStep.tsx'
 
 /** Roadmap phase that builds each step still to come. */
 const COMING_IN: Partial<Record<SetupStep, number>> = {
-  cookies: 5,
   assign: 7,
   voting: 7,
   results: 7,
@@ -86,6 +86,8 @@ export function EventSetupPage() {
         <BakersStep eventId={eventId} setup={setup.data} />
       ) : selected === 'categories' ? (
         <CategoriesStep eventId={eventId} categories={categories.data} />
+      ) : selected === 'cookies' ? (
+        <CookiesStep eventId={eventId} categories={categories.data} />
       ) : (
         <Card>
           <h2 className="text-2xl">{SETUP_STEP_LABELS[selected]}</h2>

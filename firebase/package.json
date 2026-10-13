@@ -6,7 +6,8 @@
   "description": "Firestore and Storage security rules, indexes and their emulator tests.",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "seed": "node scripts/seed.ts"
+    "seed": "node scripts/seed.ts",
+    "test": "vitest run --dir scripts"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",

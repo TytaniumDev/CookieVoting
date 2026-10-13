@@ -13,6 +13,7 @@ import { getFirestore, Timestamp, type Firestore } from 'firebase-admin/firestor
 import { getStorage, type Storage } from 'firebase-admin/storage'
 import { readFile } from 'node:fs/promises'
 import { jpegSize } from './jpegSize.ts'
+import { plateBoxes } from './plates.ts'
 
 export const PROJECT_ID = 'demo-cookie-voting'
 export const BUCKET = `${PROJECT_ID}.appspot.com`
@@ -26,7 +27,7 @@ const BAKERS = ['Ann', 'Bob', 'Carmen', 'Dev', 'Elif', 'Frank', 'Grace', 'Hiro']
 
 interface SeedCategory {
   name: string
-  /** File in fixtures/plates; its leading number is the cookie count. */
+  /** File in fixtures/plates; the `.json` beside it holds its cookie boxes. */
   photo: string | null
 }
 
@@ -84,21 +85,6 @@ function random(initial: number): () => number {
   }
 }
 
-/**
- * Placeholder boxes in a grid until the plate editor labels real ones (roadmap phase 5).
- * They're in reading order, as the editor saves them.
- */
-function gridBoxes(count: number) {
-  const columns = Math.ceil(Math.sqrt(count))
-  const rows = Math.ceil(count / columns)
-  return Array.from({ length: count }, (_, i) => ({
-    x: ((i % columns) + 0.1) / columns,
-    y: (Math.floor(i / columns) + 0.1) / rows,
-    width: 0.8 / columns,
-    height: 0.8 / rows,
-  }))
-}
-
 async function uploadPhoto(storage: Storage, eventId: string, fileName: string) {
   const bytes = await readFile(new URL(`../../fixtures/plates/${fileName}`, import.meta.url))
   const path = paths.platePhoto(eventId, fileName)
@@ -129,8 +115,8 @@ async function seedEvent(db: Firestore, storage: Storage, event: SeedEvent, bake
 
   for (const [order, category] of event.categories.entries()) {
     const categoryId = `cat-${order + 1}`
-    const count = category.photo ? Number.parseInt(category.photo, 10) : 0
-    const cookies = gridBoxes(count).map((box, i) => ({ id: `${categoryId}-cookie-${i + 1}`, box }))
+    const boxes = category.photo ? await plateBoxes(category.photo) : []
+    const cookies = boxes.map((box, i) => ({ id: `${categoryId}-cookie-${i + 1}`, box }))
     const doc: CategoryDoc = {
       name: category.name,
       order,

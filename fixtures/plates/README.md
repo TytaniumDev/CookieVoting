@@ -29,3 +29,14 @@ in git history. The rest were saved from the old Firebase Storage bucket
 (`shared/cookies/`) before cleanup. They were resized to a 2048 px long edge
 (the size the app stores) and **all metadata was stripped, including GPS
 location**. Strip metadata from any new photo before committing it.
+
+## Ground truth
+
+Each photo has a `.json` beside it with one box per cookie, in the app's format
+(`{ "cookies": [{ "box": { x, y, width, height } }] }`, normalised to the photo,
+in reading order). Boxes are the tightest rectangle around the whole cookie,
+toppings included and drawn letters, shadows and piping bags excluded; edges are
+within about 1% of the image size. Least certain: shadowed edges on the paper
+towel and parchment shots, the two ~1000 px photos, and touching cookies on the
+green mat. The seed script uses these boxes, and
+`firebase/scripts/plates.test.ts` checks counts, bounds and order.

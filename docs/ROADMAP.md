@@ -71,15 +71,15 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] `CookieImage` component: renders a cookie from plate photo + normalised box (ARCHITECTURE.md → Rendering a cookie)
 - [x] Stories + E2E (upload a fixture photo on the mobile profile)
 
-## Phase 5 — Plate editor (manual, mobile-first) ⬜
+## Phase 5 — Plate editor (manual, mobile-first) ✅
 
-- [ ] Photo with box overlay; pinch-zoom and pan on phones
-- [ ] Draw box by dragging; select; move; resize via handles sized for fingers; delete
-- [ ] Save sorts cookies into reading order; show numbers `#1…#n`
-- [ ] Cookies stay editable in every status (owner decision Q2: no locks; results recompute live)
-- [ ] Use the editor to label ground truth for every `fixtures/plates/*.jpg` → `fixtures/plates/*.json` (boxes), for measuring detection in phases 6 and 11
-- [ ] Geometry helpers in `packages/shared` (clamp, normalise, reading order, IoU) with unit tests
-- [ ] Stories + E2E on the mobile profile (draw, resize, delete)
+- [x] Photo with box overlay; pinch-zoom and pan on phones
+- [x] Draw box by dragging; select; move; resize via handles sized for fingers; delete
+- [x] Save sorts cookies into reading order; show numbers `#1…#n`
+- [x] Cookies stay editable in every status (owner decision Q2: no locks; results recompute live)
+- [x] Label ground truth (checked on overlays) for every `fixtures/plates/*.jpg` → `fixtures/plates/*.json` (boxes), for measuring detection in phases 6 and 11
+- [x] Geometry helpers in `packages/shared` (clamp, normalise, reading order, IoU) with unit tests
+- [x] Stories + E2E on the mobile profile (draw, resize, delete)
 
 ## Phase 6 — Tap-to-select ⬜
 
@@ -262,3 +262,21 @@ until real-device testing (useful from phase 3).
 - E2E reorders with the keyboard and waits on dnd-kit's live-region
   announcements between keys; without that, keys get dropped.
 - **Next:** phase 5.
+
+### Session 4, continued — phase 5
+
+- Shipped phase 5: `PlateEditor` (pointer events: one finger draws, moves and
+  resizes; two fingers pinch-zoom and pan; keyboard arrows, Shift + arrows,
+  Delete; **Add cookie** button) and the Cookies step, which reuses `Stepper`
+  as its category picker and keeps the open category in `?category=`. Geometry
+  helpers (`clampBox`, `moveBox`, `resizeBox`, `iou`, `readingOrder`) are in
+  `packages/shared/src/geometry.ts`.
+- Ground truth: `fixtures/plates/*.json` holds hand-checked boxes for all 17
+  photos (labelled from overlays rather than in the editor; edges within about
+  1%, soft or shadowed edges and the two ~1000 px photos are the least sure).
+  `firebase/scripts/plates.test.ts` checks counts, bounds and reading order, and
+  the seed now uses these boxes instead of a grid.
+- Phase 6 note: Hugging Face is blocked by this sandbox's egress proxy, but
+  MediaPipe's `magic_touch.tflite` (6.2 MB, storage.googleapis.com) downloads.
+  The SlimSAM half of the spike may need to run in CI or on the owner's machine.
+- **Next:** phase 6.

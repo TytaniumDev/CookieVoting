@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last updated for phase 4 (categories and plate photos), 2026-10-13._
+_Last updated for phase 5 (plate editor), 2026-10-13._
 
 ## Snapshot
 
@@ -26,7 +26,7 @@ Pages.
 Phase 2 added the Firebase backend: security rules with emulator tests, the
 results Cloud Functions, the web client and live data hooks, seed data, and CI
 deploys. Phase 3 added admin sign-in, the dashboard, event creation and the
-bakers step. Phase 4 added categories with plate photos. Not built yet: the plate editor onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
+bakers step. Phase 4 added categories with plate photos, and phase 5 the plate editor. Not built yet: tap-to-select onward, and every voter screen. Nothing in the PRD is unplanned; the gaps this
 review found were small and have been added to ROADMAP.md (see
 [Gaps found](#gaps-found-in-this-review)).
 
@@ -83,11 +83,11 @@ Everything else reads or writes Firebase, so this comes first.
 | ---- | ----------------------------------------------------------- | ------------------------------------------------------ |
 | §6.4 | "Run Detection" per category via Gemini in a Cloud Function | 🔁 in-browser tap-to-select (6); "find all" spike (11) |
 | §6.4 | `detectionStatus` pending/running/complete/error            | 🔁 not needed without server detection                 |
-| §6.4 | Plate photo with boxes overlaid                             | ⬜ 5                                                   |
-| §6.4 | Delete a wrong cookie                                       | ⬜ 5                                                   |
-| §6.4 | Add a cookie by drag-selecting a rectangle                  | ⬜ 5                                                   |
-| §6.4 | Merge two cookies                                           | 🔁 dropped; move/resize boxes instead (5)              |
-| §6.4 | Rectangles only, no polygons                                | ⬜ 5                                                   |
+| §6.4 | Plate photo with boxes overlaid                             | ✅ `PlateEditor`                                       |
+| §6.4 | Delete a wrong cookie                                       | ✅                                                     |
+| §6.4 | Add a cookie by drag-selecting a rectangle                  | ✅ plus move, resize, pinch-zoom                       |
+| §6.4 | Merge two cookies                                           | 🔁 dropped; move/resize boxes instead ✅               |
+| §6.4 | Rectangles only, no polygons                                | ✅                                                     |
 
 ### P5 — Baker assignment and opening voting (phase 7)
 
