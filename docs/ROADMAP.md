@@ -109,14 +109,14 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Voting closed / event not found states
 - [x] Stories + E2E: full vote on the mobile profile against the emulators, double-submit rejected
 
-## Phase 9 — Results ⬜
+## Phase 9 — Results ✅
 
-- [ ] `/event/:eventId/results` and in-flow results from `results/live` (live listener)
-- [ ] Per-category rankings with tied ranks, crop, baker name, points
-- [ ] Overall baker leaderboard with ties
-- [ ] Friendly "results aren't open yet" state when `/results` is visited early
-- [ ] Celebration moment (confetti or similar, respecting `prefers-reduced-motion`)
-- [ ] E2E: votes → results reflect Borda scores
+- [x] `/event/:eventId/results` and in-flow results from `results/live` (live listener)
+- [x] Per-category rankings with tied ranks, crop, baker name, points
+- [x] Overall baker leaderboard with ties
+- [x] Friendly "results aren't open yet" state when `/results` is visited early
+- [x] Celebration moment (confetti or similar, respecting `prefers-reduced-motion`)
+- [x] E2E: votes → results reflect Borda scores
 
 ## Phase 10 — Launch ⬜
 
@@ -328,3 +328,19 @@ until real-device testing (useful from phase 3).
 - **Owner check:** Anonymous sign-in must be enabled in Firebase Auth for
   production (SETUP.md §1).
 - **Next:** phase 9 (results page).
+
+### Session 4, continued — phase 9
+
+- Shipped the results page at `/event/:id/results`: the overall "Top bakers"
+  leaderboard first, then every category's cookies with crop, cookie number,
+  baker and points. Ties share a place and say "Tied 2nd". It updates live.
+- New components: `StandingRow` (shared by both tables), `CategoryResults`,
+  `BakerLeaderboard` and `Confetti` (hidden under reduced motion).
+- `useResults(null)` subscribes to nothing. The page only listens once the
+  event's status is `results`, because before that the rules deny the read and
+  a denied listener ends. Before then it shows "The results aren't out yet",
+  plus a Go vote button while voting is open, and switches over by itself.
+- E2E: a new ballot on bake-off-2024 adds 3/2/1 points to the picked cookies
+  live (mobile project only, since it changes shared seed data), plus the
+  "not out yet" and unknown-event states.
+- **Next:** phase 10 (launch polish).

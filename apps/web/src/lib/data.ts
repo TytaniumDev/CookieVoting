@@ -114,10 +114,13 @@ export function useBallot(eventId: string, uid: string | null): Subscription<Bal
   )
 }
 
-/** Live results. Readable by admins always, and by everyone once results are open. */
-export function useResults(eventId: string): Subscription<Results | null> {
+/**
+ * Live results. Readable by admins always, and by everyone once results are open: pass
+ * `null` until then, since a denied read ends the listener.
+ */
+export function useResults(eventId: string | null): Subscription<Results | null> {
   return useSubscription(
-    watchDoc(refs.results(eventId) as DocumentReference<Results>),
+    eventId === null ? null : watchDoc(refs.results(eventId) as DocumentReference<Results>),
     `results/${eventId}`,
   )
 }

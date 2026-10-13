@@ -121,12 +121,12 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P7 — Results (phase 9)
 
-| PRD | Requirement                                                                   | Status                       |
-| --- | ----------------------------------------------------------------------------- | ---------------------------- |
-| §9  | Results at `/event/:id` once status is `results`, and at `/event/:id/results` | ⬜ 9 (route placeholders ✅) |
-| §9  | Per category: rank, crop, baker name, score; ties share a rank                | ✅ ranking logic · ⬜ 9 UI   |
-| §9  | Overall baker leaderboard with ties                                           | ✅ ranking logic · ⬜ 9 UI   |
-| —   | `/results` visited before results open shows a friendly "not yet" state       | ⬜ 9 (added in this review)  |
+| PRD | Requirement                                                                   | Status                |
+| --- | ----------------------------------------------------------------------------- | --------------------- |
+| §9  | Results at `/event/:id` once status is `results`, and at `/event/:id/results` | ✅ `ResultsPage`      |
+| §9  | Per category: rank, crop, baker name, score; ties share a rank                | ✅ `CategoryResults`  |
+| §9  | Overall baker leaderboard with ties                                           | ✅ `BakerLeaderboard` |
+| —   | `/results` visited before results open shows a friendly "not yet" state       | ✅                    |
 
 ### P8 — Launch polish (phase 10)
 
