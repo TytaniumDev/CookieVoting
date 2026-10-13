@@ -15,6 +15,8 @@ docs are the memory:
    doc drift.
 3. **[`ClaudePRD.md`](ClaudePRD.md)** — product requirements. Its _Tech Stack_
    and _Data Models_ sections are superseded by ARCHITECTURE.md.
+   **[`docs/PRD-COVERAGE.md`](docs/PRD-COVERAGE.md)** maps each requirement to
+   its phase and lists open owner questions; flip rows to ✅ as phases ship.
 4. **[`docs/SETUP.md`](docs/SETUP.md)** — steps only the owner can do in the
    Firebase project. When a phase needs a new owner step, add it there and to
    ROADMAP.md → Owner actions.
