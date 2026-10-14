@@ -51,6 +51,12 @@
   /* Decorative snow on brand-coloured areas */
   --color-snow: #ffffff;
 
+  /* Illustration fills (waiting-screen scenes); never used for text */
+  --color-carrot: #e8762b;
+  --color-dough: #e9c48a;
+  --color-gingerbread: #b87333;
+  --color-gingerbread-shade: #8a5426;
+
   /* Status */
   --color-danger: #b42318;
   --color-danger-hover: #912018;
@@ -96,6 +102,21 @@
   --animate-hint: hint 3.2s ease-in-out 1s both;
   --animate-pop: pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
 
+  /* Waiting-screen scenes (WaitingScene) */
+  --animate-speech: speech 1.8s ease-out forwards;
+  --animate-snowman-walk: snowman-walk 9s ease-in-out infinite alternate;
+  --animate-snowman-dance: snowman-dance 1.1s ease-in-out infinite;
+  --animate-snowman-spin: snowman-spin 0.9s cubic-bezier(0.3, 0.7, 0.4, 1);
+  --animate-wave-left: wave-left 0.55s ease-in-out infinite alternate;
+  --animate-wave-right: wave-right 0.55s ease-in-out infinite alternate;
+  --animate-hat-bob: hat-bob 1.1s ease-in-out infinite;
+  --animate-globe-shake: globe-shake 0.7s ease-in-out;
+  --animate-oven-knock: oven-knock 0.5s ease-in-out;
+  --animate-oven-glow: oven-glow 2.4s ease-in-out infinite alternate;
+  --animate-cookie-rise: cookie-rise 3s ease-in-out infinite alternate;
+  --animate-steam: steam 3.2s ease-in infinite;
+  --animate-dial: dial 8s steps(16) infinite;
+
   @keyframes snowfall {
     from {
       transform: translate3d(0, -10%, 0);
@@ -130,6 +151,150 @@
   @keyframes pop {
     from {
       transform: scale(0.2) rotate(-30deg);
+    }
+  }
+  /* A speech bubble that pops up, stays, then fades */
+  @keyframes speech {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    12%,
+    80% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes snowman-walk {
+    from {
+      transform: translateX(-70px);
+    }
+    to {
+      transform: translateX(70px);
+    }
+  }
+
+  @keyframes snowman-dance {
+    0%,
+    50%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-9px) rotate(-7deg);
+    }
+    75% {
+      transform: translateY(-9px) rotate(7deg);
+    }
+  }
+
+  @keyframes snowman-spin {
+    30% {
+      transform: translateY(-46px) scaleX(-1);
+    }
+    60% {
+      transform: translateY(-46px) scaleX(1);
+    }
+    80% {
+      transform: translateY(0) scale(1.08, 0.92);
+    }
+  }
+
+  @keyframes wave-left {
+    from {
+      transform: rotate(-8deg);
+    }
+    to {
+      transform: rotate(28deg);
+    }
+  }
+
+  @keyframes wave-right {
+    from {
+      transform: rotate(8deg);
+    }
+    to {
+      transform: rotate(-28deg);
+    }
+  }
+
+  @keyframes hat-bob {
+    25%,
+    75% {
+      transform: translateY(-4px) rotate(-6deg);
+    }
+  }
+
+  @keyframes globe-shake {
+    15% {
+      transform: rotate(-12deg) translateX(-6px);
+    }
+    35% {
+      transform: rotate(10deg) translateX(6px);
+    }
+    55% {
+      transform: rotate(-7deg);
+    }
+    75% {
+      transform: rotate(4deg);
+    }
+  }
+
+  @keyframes oven-knock {
+    20% {
+      transform: rotate(-3deg);
+    }
+    40% {
+      transform: rotate(3deg);
+    }
+    60% {
+      transform: rotate(-2deg);
+    }
+    80% {
+      transform: rotate(1deg);
+    }
+  }
+
+  @keyframes oven-glow {
+    from {
+      opacity: 0.45;
+    }
+    to {
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes cookie-rise {
+    from {
+      transform: scale(0.88, 0.8);
+    }
+    to {
+      transform: scale(1.04, 1.06);
+    }
+  }
+
+  @keyframes steam {
+    0% {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    30% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-28px);
+    }
+  }
+
+  @keyframes dial {
+    to {
+      transform: rotate(360deg);
     }
   }
 }

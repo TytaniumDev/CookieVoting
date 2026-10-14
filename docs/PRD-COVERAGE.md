@@ -116,6 +116,7 @@ Everything else reads or writes Firebase, so this comes first.
 | §7.2 | Selections kept in memory across categories until submit          | ✅                                                 |
 | §7.3 | Review screen, then submit; duplicate submit rejected             | ✅ rules + `BallotReview` · Q3: all picks required |
 | §7.4 | Waiting screen that jumps to results when status changes          | ✅                                                 |
+| §7.4 | Festive scene (random of 3) and your picks; change a category     | ✅ `WaitingScene` + `PicksSummary` (phase 17)      |
 | §13  | E2E: voter submits a vote                                         | ✅ `e2e/voter-event.spec.ts`                       |
 
 ### P7 — Results (phase 9)

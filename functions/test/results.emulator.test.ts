@@ -84,6 +84,18 @@ describe('results triggers', () => {
     ])
   })
 
+  it('recompute when a voter changes their picks', async () => {
+    await castBallot('v1', ['c1', 'c2', 'c3'])
+    await waitForResults((r) => r.ballotCount === 1)
+    await db.doc(paths.ballot(eventId, 'v1')).update({ 'rankings.choc': ['c3', 'c2', 'c1'] })
+    const results = await waitForResults((r) => r.categories[0]?.standings[0]?.cookieId === 'c3')
+    expect(results.categories[0]?.standings.map((s) => [s.cookieId, s.points])).toEqual([
+      ['c3', 3],
+      ['c2', 2],
+      ['c1', 1],
+    ])
+  })
+
   it('recompute when baker assignments change', async () => {
     await castBallot('v1', ['c1', 'c2', 'c3'])
     await waitForResults((r) => r.ballotCount === 1)

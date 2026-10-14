@@ -246,6 +246,13 @@ Voters access the app at `[domain]/event/[eventId]`. Firebase Anonymous Auth is 
 - If a document already exists for this User ID, submission is rejected (enforced by Firestore security rules).
 
 ### Step 4: Waiting
+> **Change history (owner decision, 2026-10-14):** the waiting screen is festive: one of
+> a dancing snowman, a snow globe or an oven of cookies, picked at random on each visit,
+> each reacting when tapped (a surprise, no hint). Under it, "Your picks" shows the
+> voter's picks as small cookie photos with medals. Tapping a category opens it to
+> change the picks; saving returns to the waiting screen. Picks can be changed until
+> results open, so the "no updates" rule in Step 3 and §9 now applies only from then.
+
 - If event `status` is `"voting"` after submission, voter sees a waiting screen indicating results aren't available yet.
 - The screen uses a Firestore real-time listener on the event document. When `status` changes to `"results"`, the voter is automatically navigated to the Results screen.
 

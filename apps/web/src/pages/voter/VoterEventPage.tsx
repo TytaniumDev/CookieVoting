@@ -5,10 +5,12 @@ import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { useVoter } from '../../lib/auth.ts'
 import { useBallot, useCategories, useEvent } from '../../lib/data.ts'
 import { BallotFlow, type VotableCategory } from './BallotFlow.tsx'
+import { WaitingRoom } from './WaitingRoom.tsx'
 
 /**
  * The voter link (PRD §7). Signs the voter in anonymously, then shows the ballot, or
- * the thank-you screen once they've voted, which moves on to the results by itself.
+ * the waiting room once they've voted (where they can change a category), which moves
+ * on to the results by itself.
  */
 export function VoterEventPage() {
   const { eventId = '' } = useParams()
@@ -37,20 +39,13 @@ export function VoterEventPage() {
     return <Spinner size="lg" label="Loading the event" className="mx-auto mt-12" />
   }
   const current = event.data!
+  const votable = categories.data.filter(
+    (c): c is VotableCategory => c.photo !== null && c.cookies.length > 0,
+  )
 
   if (ballot.data) {
     if (current.status === 'results') return <Navigate to="results" replace />
-    return (
-      <Card tone="festive" className="space-y-2 text-center">
-        <p className="text-5xl" aria-hidden="true">
-          🎉
-        </p>
-        <h1 className="text-3xl">Thanks for voting!</h1>
-        <p className="text-ink-muted">
-          The results will show here as soon as they open. You can leave this page open.
-        </p>
-      </Card>
-    )
+    return <WaitingRoom event={current} categories={votable} ballot={ballot.data} uid={uid!} />
   }
 
   if (current.status === 'setup') {
@@ -64,9 +59,6 @@ export function VoterEventPage() {
     )
   }
 
-  const votable = categories.data.filter(
-    (c): c is VotableCategory => c.photo !== null && c.cookies.length > 0,
-  )
   if (votable.length === 0) {
     return (
       <Alert tone="warning" title="Nothing to vote on yet">

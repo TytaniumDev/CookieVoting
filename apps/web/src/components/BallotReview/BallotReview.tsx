@@ -1,7 +1,7 @@
 import type { CategoryRanking, Cookie, PlatePhoto } from '@cookie-voting/shared'
 import { Button } from '../Button/Button.tsx'
-import { CookieImage } from '../CookieImage/CookieImage.tsx'
-import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
+import { CookieThumb } from '../CookieThumb/CookieThumb.tsx'
+import type { Rank } from '../RankBadge/RankBadge.tsx'
 
 export interface BallotReviewCategory {
   id: string
@@ -18,7 +18,7 @@ export interface BallotReviewProps {
   submitting?: boolean
 }
 
-/** Every category's picks in one place before the ballot is sent (it can't be changed after). */
+/** Every category's picks in one place before the ballot is sent. */
 export function BallotReview({
   categories,
   rankings,
@@ -48,18 +48,14 @@ export function BallotReview({
                   const cookie = category.cookies[number - 1]
                   if (!cookie) return null
                   return (
-                    <li key={cookieId} className="relative w-20">
-                      <span className="grid aspect-square place-items-center overflow-hidden rounded-control bg-surface-muted">
-                        <CookieImage
-                          photo={category.photo}
-                          box={cookie.box}
-                          alt={`Cookie ${number}`}
-                          style={{
-                            width: `${Math.min(1, (cookie.box.width * category.photo.width) / (cookie.box.height * category.photo.height)) * 100}%`,
-                          }}
-                        />
-                      </span>
-                      <RankBadge rank={(pick + 1) as Rank} className="absolute -top-2 -left-2" />
+                    <li key={cookieId}>
+                      <CookieThumb
+                        photo={category.photo}
+                        cookie={cookie}
+                        alt={`Cookie ${number}`}
+                        rank={(pick + 1) as Rank}
+                        className="w-20"
+                      />
                     </li>
                   )
                 })}
@@ -71,7 +67,9 @@ export function BallotReview({
       <Button size="lg" fullWidth loading={submitting} onClick={onSubmit}>
         Submit my votes
       </Button>
-      <p className="text-center text-sm text-ink-muted">You can't change your votes after this.</p>
+      <p className="text-center text-sm text-ink-muted">
+        You can still change them afterwards, until the results open.
+      </p>
     </div>
   )
 }

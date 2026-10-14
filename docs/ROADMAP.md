@@ -185,6 +185,18 @@ Mockup" (three rounds on the one picked).
 - [x] Next says how many medals are left; confetti when the last is given
 - [x] The 🔍 zoom modal, the cookie grid and category swiping are gone (`CookieCard`, `CookieZoom`, `useSwipe`, `toggleRanking`)
 
+## Phase 17 — Festive waiting room ✅
+
+Owner feedback (2026-10-14): make the "waiting for results" screen fun and
+festive; the old app had a dancing snowman. From five mocks (Artifact "Waiting
+Room Mockups") the owner kept three, shown at random, plus the voter's picks
+with photos and a way to change a category.
+
+- [x] Dancing snowman, snow globe and cookie oven scenes (`WaitingScene`), one at random per visit; tapping makes them react, no hint
+- [x] "Your picks" with cookie photos and medals (`PicksSummary`, `CookieThumb`)
+- [x] Tap a category to change it, save, and come back (`WaitingRoom`, `CategoryStep`, `updateBallotCategory`)
+- [x] Rules allow a ballot update by its owner while `voting`; results recompute on any ballot write (`onBallotWritten`)
+
 ---
 
 ## Owner actions
@@ -513,3 +525,23 @@ until real-device testing (useful from phase 3).
 - Notes for next time: the carousel ignores the cookies it passes while the
   arrows or thumbnails scroll it (`target` in `CookieCarousel`); without that a
   smooth scroll reported cookies on the way and undid the move.
+
+### Session — 2026-10-14 (festive waiting room)
+
+- Five clickable mocks (snowman, snow globe, oven, gingerbread dance party,
+  catch-the-cookies game); the owner kept the first three, shown at random and
+  re-picked on refresh, and dropped the "Tap Frosty" hint so the reactions are
+  a surprise.
+- Voters can now change a category after sending their ballot, until results
+  open: rules allow an update while `voting`, keeping `submittedAt` and setting
+  `updatedAt`. `onBallotCreated` became `onBallotWritten` (the CI deploy's
+  `--force` removes the old function).
+- The category screen moved out of `BallotFlow` into `CategoryStep` so the
+  ballot and the waiting room share it. `BallotReview` now says votes can be
+  changed until results open.
+- Scene animations are theme keyframes (`--animate-snowman-*`, `globe-shake`,
+  `oven-*`, …) plus four illustration colours (`carrot`, `dough`,
+  `gingerbread`, `gingerbread-shade`). The snow globe's flakes are a small
+  requestAnimationFrame loop that stops once the snow settles.
+- Notes for next time: the voter a11y E2E can catch the carousel's swipe hint
+  mid-fade (`color-contrast: .bottom-5`); it passed on the re-run.
