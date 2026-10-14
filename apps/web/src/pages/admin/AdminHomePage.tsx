@@ -56,11 +56,6 @@ function LiveControls({ event }: { event: Event }) {
         )}
       </div>
       <SharePanel url={voterUrl(event.id)} title={event.name} showQrCode={false} />
-      {status.error && (
-        <Alert tone="danger" title="That didn't save">
-          {status.error}
-        </Alert>
-      )}
       {status.dialog}
     </div>
   )

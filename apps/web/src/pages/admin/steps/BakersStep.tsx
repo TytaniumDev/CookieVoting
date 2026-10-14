@@ -3,6 +3,7 @@ import { Alert } from '../../../components/Alert/Alert.tsx'
 import { BakerRoster } from '../../../components/BakerRoster/BakerRoster.tsx'
 import { Spinner } from '../../../components/Spinner/Spinner.tsx'
 import { useBakers, type Setup } from '../../../lib/data.ts'
+import { useShowError } from '../../../lib/errors.ts'
 import {
   addBakerToEvent,
   createBakerForEvent,
@@ -13,15 +14,14 @@ export function BakersStep({ eventId, setup }: { eventId: string; setup: Setup |
   const bakers = useBakers()
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set())
   const [creating, setCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const showError = useShowError()
 
   async function track(id: string, action: Promise<unknown>) {
-    setError(null)
     setPendingIds((ids) => new Set(ids).add(id))
     try {
       await action
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      showError("That didn't save", e)
     } finally {
       setPendingIds((ids) => {
         const next = new Set(ids)
@@ -46,11 +46,6 @@ export function BakersStep({ eventId, setup }: { eventId: string; setup: Setup |
 
   return (
     <div className="space-y-4">
-      {error && (
-        <Alert tone="danger" title="That didn't save">
-          {error}
-        </Alert>
-      )}
       <BakerRoster
         roster={roster}
         allBakers={bakers.data}
@@ -60,11 +55,10 @@ export function BakersStep({ eventId, setup }: { eventId: string; setup: Setup |
         onRemove={(id) => void track(id, removeBakerFromEvent(eventId, id))}
         onCreate={async (name) => {
           setCreating(true)
-          setError(null)
           try {
             await createBakerForEvent(eventId, name)
           } catch (e) {
-            setError(e instanceof Error ? e.message : String(e))
+            showError("That didn't save", e)
           } finally {
             setCreating(false)
           }

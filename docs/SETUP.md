@@ -150,7 +150,19 @@ Value: the whole contents of the JSON file. Then delete the downloaded file.
 anything to `main`). The _Deploy to cookie-voting_ job should go green, and
 <https://cookie-voting.web.app> then serves the new app.
 
-**e) Tidy up.** Once that works, delete the old `FIREBASE_TOKEN` and `VITE_*`
+**e) Let Storage rules read Firestore (one time).** Storage rules check the
+admin list in Firestore, which needs a role the CLI can't grant from CI. Without
+it, every photo upload fails with `storage/unauthorized`. Done on 2026-10-14;
+on a new project run:
+
+```sh
+PN=$(gcloud projects describe cookie-voting --format='value(projectNumber)')
+gcloud projects add-iam-policy-binding cookie-voting \
+  --member="serviceAccount:service-${PN}@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
+  --role="roles/firebaserules.firestoreServiceAgent" --condition=None
+```
+
+**f) Tidy up.** Once that works, delete the old `FIREBASE_TOKEN` and `VITE_*`
 secrets (step 2d).
 
 ## 5. Storybook on GitHub Pages

@@ -174,7 +174,9 @@ Firestore rules (`firebase/firestore.rules`, tested in `firebase/tests/`):
   once the event status is `results`.
 
 Storage rules: `events/{eventId}/plates/{file}` is publicly readable and
-writable only by admins (cross-service `firestore.exists` on `admins/`). Uploads
+writable only by admins (cross-service `firestore.exists` on `admins/`, which needs
+the Storage service agent to hold `roles/firebaserules.firestoreServiceAgent`;
+SETUP.md §4e). Uploads
 must be images under 10 MB.
 
 Ballot _contents_ are validated by the scorer, not by rules. Unknown categories
@@ -256,6 +258,13 @@ another admin's account, with everything kept in sync.
   the model has loaded.
 - `e2e/handoff.spec.ts` drives a phone (`admin@example.com`) and a laptop
   (`elf@example.com`, a second seeded admin) through one event.
+
+### Errors
+
+A failed action (a save, an upload, a status change) calls `useShowError()`
+(`lib/errors.ts`); `app/ErrorProvider.tsx` pins those errors to the top of the
+page until dismissed, so they're seen wherever the admin has scrolled. Errors
+loading a page stay inline, where the page would be.
 
 ### Photo upload (admin, phone)
 

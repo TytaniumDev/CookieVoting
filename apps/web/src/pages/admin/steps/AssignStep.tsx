@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router'
 import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Badge } from '../../../components/Badge/Badge.tsx'
@@ -6,6 +5,7 @@ import { BakerPicker } from '../../../components/BakerPicker/BakerPicker.tsx'
 import { CookieImage } from '../../../components/CookieImage/CookieImage.tsx'
 import { Spinner } from '../../../components/Spinner/Spinner.tsx'
 import { useBakers, type Category, type Setup } from '../../../lib/data.ts'
+import { useShowError } from '../../../lib/errors.ts'
 import { assignBaker } from '../../../lib/mutations.ts'
 
 export function AssignStep({
@@ -18,7 +18,7 @@ export function AssignStep({
   setup: Setup | null
 }) {
   const bakers = useBakers()
-  const [error, setError] = useState<string | null>(null)
+  const showError = useShowError()
 
   if (bakers.status === 'loading') return <Spinner label="Loading bakers" />
   if (bakers.status === 'error') {
@@ -52,11 +52,6 @@ export function AssignStep({
       {withCookies.length === 0 && (
         <Alert tone="warning" title="No cookies yet">
           <Link to="?step=cookies">Box the cookies on each plate</Link> first.
-        </Alert>
-      )}
-      {error && (
-        <Alert tone="danger" title="That didn't save">
-          {error}
         </Alert>
       )}
 
@@ -107,9 +102,8 @@ export function AssignStep({
                       bakers={roster}
                       value={bakerId !== undefined && rosterIds.has(bakerId) ? bakerId : null}
                       onChange={(id) => {
-                        setError(null)
                         assignBaker(eventId, category.id, cookie.id, id).catch((e: unknown) =>
-                          setError(e instanceof Error ? e.message : String(e)),
+                          showError("That didn't save", e),
                         )
                       }}
                       label={`Baker for ${category.name} cookie ${index + 1}`}

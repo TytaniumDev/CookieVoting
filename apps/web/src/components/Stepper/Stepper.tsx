@@ -15,7 +15,8 @@ export interface StepperProps<Id extends string = string> {
 
 /**
  * The admin setup steps. Every step can be opened at any time (owner decision Q1); ticks
- * show which are done. Scrolls sideways on narrow phones rather than wrapping.
+ * show which are done. Scrolls sideways on narrow phones rather than wrapping; wraps on
+ * wider screens, which have room for every step.
  */
 export function Stepper<Id extends string>({
   steps,
@@ -25,8 +26,11 @@ export function Stepper<Id extends string>({
   className = '',
 }: StepperProps<Id>) {
   return (
-    <nav aria-label={label} className={`relative -mx-4 overflow-x-auto px-4 ${className}`}>
-      <ol className="flex min-w-max gap-2">
+    <nav
+      aria-label={label}
+      className={`relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0 ${className}`}
+    >
+      <ol className="flex min-w-max gap-2 sm:min-w-0 sm:flex-wrap">
         {steps.map((step, index) => {
           const isSelected = step.id === selected
           return (

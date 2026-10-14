@@ -1,5 +1,4 @@
 import type { Cookie } from '@cookie-voting/shared'
-import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
@@ -7,9 +6,8 @@ import { PlateEditor, type TapToSelect } from '../../../components/PlateEditor/P
 import { Stepper } from '../../../components/Stepper/Stepper.tsx'
 import { useCookieFinder } from '../../../lib/cookieFinder/useCookieFinder.ts'
 import type { Category } from '../../../lib/data.ts'
+import { useShowError } from '../../../lib/errors.ts'
 import { saveCookies } from '../../../lib/mutations.ts'
-
-const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export function CookiesStep({
   eventId,
@@ -19,7 +17,7 @@ export function CookiesStep({
   categories: readonly Category[]
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [error, setError] = useState<string | null>(null)
+  const showError = useShowError()
   const finder = useCookieFinder()
   const tapToSelect: TapToSelect =
     finder.status === 'ready'
@@ -41,8 +39,9 @@ export function CookiesStep({
     requested ?? categories.find((c) => c.photo && c.cookies.length === 0) ?? categories[0]!
 
   function save(next: Cookie[], base: readonly Cookie[]) {
-    setError(null)
-    saveCookies(eventId, category.id, base, next).catch((e: unknown) => setError(errorMessage(e)))
+    saveCookies(eventId, category.id, base, next).catch((e: unknown) =>
+      showError("That didn't save", e),
+    )
   }
 
   return (
@@ -68,11 +67,6 @@ export function CookiesStep({
           )
         }
       />
-      {error && (
-        <Alert tone="danger" title="That didn't save">
-          {error}
-        </Alert>
-      )}
       {category.photo ? (
         <PlateEditor
           key={category.id}
