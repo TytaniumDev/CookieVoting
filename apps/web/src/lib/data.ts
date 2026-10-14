@@ -83,18 +83,26 @@ function watchDoc<T>(ref: DocumentReference<T>): Subscribe<T | null> {
 }
 
 /**
- * Like `watchDoc`, but a write still on its way to the server counts as not there yet,
- * so the UI only treats it as saved once Firestore has accepted it.
+ * Like `watchDoc`, but only reports what the server has accepted: while a write is on its
+ * way, it keeps reporting the last saved version. So a ballot being sent doesn't count
+ * until it's in, and a ballot being changed doesn't vanish (and flash the ballot flow)
+ * while the change is on its way.
  */
 function watchSavedDoc<T>(ref: DocumentReference<T>): Subscribe<T | null> {
-  return (onData, onError) =>
-    onSnapshot(
+  return (onData, onError) => {
+    let saved: T | null = null
+    return onSnapshot(
       ref,
       { includeMetadataChanges: true },
-      (snapshot) =>
-        onData(snapshot.exists() && !snapshot.metadata.hasPendingWrites ? snapshot.data() : null),
+      (snapshot) => {
+        if (!snapshot.metadata.hasPendingWrites) {
+          saved = snapshot.exists() ? snapshot.data() : null
+        }
+        onData(saved)
+      },
       onError,
     )
+  }
 }
 
 function watchQuery<T>(q: Query<T>): Subscribe<T[]> {

@@ -77,9 +77,20 @@ test('a voter changes a category from the waiting room', async ({ page }) => {
   // The sent picks are there to change: move 3rd place to cookie 4.
   await expect(page.getByRole('button', { name: 'Show cookie 3, your 3rd place' })).toBeVisible()
   await giveMedal(page, 4, '3rd')
+  // Saving goes straight back to the waiting room: the ballot's start page never flashes
+  // up while the change is on its way to the server.
+  await page.evaluate(`
+    new MutationObserver(() => {
+      const buttons = [...document.querySelectorAll('button')]
+      if (buttons.some((b) => b.textContent === 'Start voting')) {
+        document.body.dataset.flashedBallot = 'true'
+      }
+    }).observe(document.body, { childList: true, subtree: true })
+  `)
   await page.getByRole('button', { name: 'Save my picks' }).click()
 
   await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect(page.locator('body')).not.toHaveAttribute('data-flashed-ballot', 'true')
   await expect(
     page.getByRole('button', { name: 'Change Stars' }).getByRole('img', { name: 'Cookie 4' }),
   ).toBeVisible()
