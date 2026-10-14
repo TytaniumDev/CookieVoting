@@ -45,7 +45,7 @@ export function BakersStep({ eventId, setup }: { eventId: string; setup: Setup |
   const roster = rosterIds.flatMap((id) => byId.get(id) ?? [])
 
   return (
-    <div className="max-w-readable space-y-4">
+    <div className="space-y-4">
       <BakerRoster
         roster={roster}
         allBakers={bakers.data}

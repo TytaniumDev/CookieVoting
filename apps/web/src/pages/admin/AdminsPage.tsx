@@ -43,7 +43,7 @@ export function AdminsPage() {
     void run(email, `${email} wasn't added`, () => addAdmin(email, currentEmail))
 
   return (
-    <section className="max-w-readable space-y-6">
+    <section className="space-y-6">
       <div className="space-y-1">
         <Link to="/" className="text-sm font-bold text-primary">
           ← All events
