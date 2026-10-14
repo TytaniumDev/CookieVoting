@@ -45,6 +45,8 @@
 
   /* Keyboard focus ring: ≥ 3:1 against background and surface */
   --color-focus: #1f5c3a;
+  /* Focus ring on brand-coloured areas (the festive ballot): ≥ 3:1 against primary */
+  --color-focus-inverse: #f2cf6b;
 
   /* Decorative snow on brand-coloured areas */
   --color-snow: #ffffff;
@@ -91,6 +93,8 @@
   /* Motion */
   --animate-snowfall: snowfall linear infinite;
   --animate-confetti: confetti ease-in forwards;
+  --animate-hint: hint 3.2s ease-in-out 1s both;
+  --animate-pop: pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
 
   @keyframes snowfall {
     from {
@@ -107,6 +111,25 @@
     }
     to {
       transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin));
+    }
+  }
+
+  /* A hint that fades in, waits to be read, and fades out */
+  @keyframes hint {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    15%,
+    80% {
+      opacity: 1;
+    }
+  }
+
+  /* A medal landing on a cookie */
+  @keyframes pop {
+    from {
+      transform: scale(0.2) rotate(-30deg);
     }
   }
 }

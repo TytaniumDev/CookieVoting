@@ -28,14 +28,16 @@ test('every voter screen is accessible and fits 375 px', async ({ page }) => {
   await checkScreen(page, 'landing')
 
   await page.getByRole('button', { name: 'Start voting' }).click()
-  for (const n of [1, 2, 3]) {
-    await page.getByRole('button', { name: `Cookie ${n}`, exact: true }).click()
+  for (const [n, place] of [
+    [1, '1st'],
+    [2, '2nd'],
+    [3, '3rd'],
+  ] as const) {
+    await page.getByRole('button', { name: `Show cookie ${n}`, exact: true }).click()
+    await page.getByRole('button', { name: new RegExp(`^${place} place`) }).click()
   }
+  await page.getByRole('button', { name: 'Next category →' }).waitFor()
   await checkScreen(page, 'category')
-
-  await page.getByRole('button', { name: 'See cookie 1 up close' }).click()
-  await page.getByRole('dialog').waitFor()
-  await checkScreen(page, 'zoom')
 
   await page.goto('/event/bake-off-2024/results')
   await page.getByRole('heading', { name: 'Top bakers' }).waitFor()

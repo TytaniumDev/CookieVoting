@@ -32,8 +32,13 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   await page.getByRole('button', { name: 'Start voting' }).click()
   for (const category of ['Gingerbread', 'Mixed Shapes']) {
     await expect(page.getByRole('heading', { name: category })).toBeVisible()
-    for (const n of [1, 2, 3]) {
-      await page.getByRole('button', { name: `Cookie ${n}`, exact: true }).click()
+    for (const [n, place] of [
+      [1, '1st'],
+      [2, '2nd'],
+      [3, '3rd'],
+    ] as const) {
+      await page.getByRole('button', { name: `Show cookie ${n}`, exact: true }).click()
+      await page.getByRole('button', { name: new RegExp(`^${place} place`) }).click()
     }
     await page.getByRole('button', { name: /next category|review my votes/i }).click()
   }

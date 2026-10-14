@@ -109,10 +109,9 @@ Everything else reads or writes Firebase, so this comes first.
 | §4.2 | Anonymous sign-in on load; one ballot per anonymous user          | ✅                                                 |
 | §7.1 | Landing: event name, ordered categories, "Start Voting"           | ✅                                                 |
 | §7.1 | Already voted → waiting or results by status                      | ✅                                                 |
-| §7.2 | One category at a time, "Category 2 of 5", back/forward and swipe | ✅                                                 |
-| §7.2 | Grid that fits all cookies on screen where possible               | ✅                                                 |
-| §7.2 | 🔍 on each card opens a zoom modal                                | ✅                                                 |
-| §7.2 | Tap to rank 1/2/3 with badges; tap again to unrank and renumber   | ✅ `toggleRanking` + `CategoryBallot`              |
+| §7.2 | One category at a time, "Category 2 of 5", Back and Next          | ✅                                                 |
+| §7.2 | One cookie at a time, as big as fits; swipe or arrows (Spotlight) | ✅ `CookieCarousel` + `CookieStrip` (phase 16)     |
+| §7.2 | 1st/2nd/3rd medal buttons, any order; tap again to take back      | ✅ `awardPlace` + `MedalButtons` (phase 16)        |
 | §7.2 | Fewer than 3 cookies → fewer picks                                | ✅ `maxPicksFor` + `CategoryBallot`                |
 | §7.2 | Selections kept in memory across categories until submit          | ✅                                                 |
 | §7.3 | Review screen, then submit; duplicate submit rejected             | ✅ rules + `BallotReview` · Q3: all picks required |

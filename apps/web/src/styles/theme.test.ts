@@ -29,6 +29,7 @@ const textPairs: [string, string][] = [
   ['primary', 'surface-muted'],
   ['on-primary', 'primary'],
   ['on-primary', 'primary-hover'],
+  ['accent-subtle', 'primary'],
   ['on-primary-subtle', 'primary-subtle'],
   ['secondary', 'surface'],
   ['on-secondary', 'secondary'],
@@ -56,6 +57,8 @@ const uiPairs: [string, string][] = [
   ['focus', 'background'],
   ['focus', 'surface'],
   ['primary', 'surface-muted'],
+  ['focus-inverse', 'primary'],
+  ['accent', 'primary'],
 ]
 
 describe('theme tokens', () => {

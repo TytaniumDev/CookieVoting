@@ -1,7 +1,16 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 // Data comes from firebase/scripts/seed.ts. Each test gets a fresh browser context, so
 // a fresh anonymous voter.
+
+/** Shows `cookie` (by its thumbnail) and gives it the medal for `place` ('1st', '2nd', '3rd'). */
+async function giveMedal(page: Page, cookie: number, place: string) {
+  await page.getByRole('button', { name: new RegExp(`^Show cookie ${cookie}\\b`) }).click()
+  await page
+    .getByRole('group', { name: `Give cookie ${cookie} a medal` })
+    .getByRole('button', { name: new RegExp(`^${place} place`) })
+    .click()
+}
 
 test('a voter ranks every category and submits once', async ({ page }) => {
   await page.goto('/event/bake-off-2025')
@@ -12,22 +21,23 @@ test('a voter ranks every category and submits once', async ({ page }) => {
   for (const [i, name] of categories.entries()) {
     await expect(page.getByRole('heading', { name })).toBeVisible()
     await expect(page.getByText(`Category ${i + 1} of ${categories.length}`)).toBeVisible()
-    const next = page.getByRole('button', { name: /next category|review my votes/i })
-    // Every category needs all three picks (owner decision Q3).
-    await page.getByRole('button', { name: 'Cookie 3', exact: true }).click()
-    await page.getByRole('button', { name: 'Cookie 1', exact: true }).click()
+    const next = page.getByRole('button', { name: /next category|review my votes|to go on/i })
+    // Every category needs all three medals (owner decision Q3), in any order.
+    await giveMedal(page, 1, '2nd')
+    await giveMedal(page, 3, '1st')
     await expect(next).toBeDisabled()
-    await page.getByRole('button', { name: 'Cookie 2', exact: true }).click()
-    await expect(page.getByRole('button', { name: 'Cookie 3, your 1st pick' })).toBeVisible()
+    await expect(next).toHaveText('Give out 1 more medal to go on')
+    await giveMedal(page, 2, '3rd')
+    await expect(page.getByRole('button', { name: 'Show cookie 3, your 1st place' })).toBeVisible()
     await next.click()
   }
 
   await expect(page.getByRole('heading', { name: 'Check your votes' })).toBeVisible()
   await expect(page.getByRole('img', { name: '1st place' })).toHaveCount(categories.length)
-  // Change one: back to Stars, swap the 3rd pick.
+  // Change one: back to Stars, move the 3rd place medal to cookie 4.
   await page.getByRole('button', { name: 'Change Stars' }).click()
-  await page.getByRole('button', { name: 'Cookie 2, your 3rd pick' }).click()
-  await page.getByRole('button', { name: 'Cookie 4', exact: true }).click()
+  await giveMedal(page, 4, '3rd')
+  await expect(page.getByRole('button', { name: 'Show cookie 2', exact: true })).toBeVisible()
   for (let i = 1; i < categories.length - 1; i++) {
     await page.getByRole('button', { name: /next category/i }).click()
   }
@@ -47,36 +57,26 @@ test('voting carries on after results open', async ({ page }) => {
   await page.goto('/event/bake-off-2024')
   await expect(page.getByText('Results are open')).toBeVisible()
   await page.getByRole('button', { name: 'Start voting' }).click()
-  await expect(page.getByText('0 of 3 picked')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Give out all 3 medals to go on' })).toBeDisabled()
 })
 
-test('swiping moves between categories once the picks are in', async ({ page }) => {
-  test.skip(!test.info().project.use.hasTouch, 'Swipes are for touch screens')
+test('scrolling the photo moves between cookies', async ({ page }) => {
   await page.goto('/event/bake-off-2025')
   await page.getByRole('button', { name: 'Start voting' }).click()
-  const swipe = async (fromX: number, toX: number) => {
-    const section = page.getByRole('region', { name: /gingerbread people|stars/i })
-    const box = (await section.boundingBox())!
-    const at = (x: number) => ({
-      pointerType: 'touch',
-      pointerId: 7,
-      clientX: box.x + x,
-      clientY: box.y + 40,
-      bubbles: true,
-    })
-    await section.dispatchEvent('pointerdown', at(fromX))
-    await section.dispatchEvent('pointerup', at(toX))
-  }
-  await swipe(300, 50)
-  // Not yet: no picks.
-  await expect(page.getByRole('heading', { name: 'Gingerbread People' })).toBeVisible()
-  for (const n of [1, 2, 3]) {
-    await page.getByRole('button', { name: `Cookie ${n}`, exact: true }).click()
-  }
-  await swipe(300, 50)
-  await expect(page.getByRole('heading', { name: 'Stars' })).toBeVisible()
-  await swipe(50, 300)
-  await expect(page.getByRole('heading', { name: 'Gingerbread People' })).toBeVisible()
+  await expect(page.getByRole('group', { name: 'Give cookie 1 a medal' })).toBeVisible()
+  // The photos are a snapping row that scrolls sideways (a swipe on phones); the
+  // thumbnails and medal buttons follow it. Arrow keys scroll it the same way.
+  await page.getByRole('region', { name: 'Cookies' }).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('group', { name: 'Give cookie 2 a medal' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show cookie 2' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  )
+  await page.getByRole('button', { name: 'Next cookie' }).click()
+  await expect(page.getByRole('group', { name: 'Give cookie 3 a medal' })).toBeVisible()
+  await page.getByRole('button', { name: 'Previous cookie' }).click()
+  await expect(page.getByRole('group', { name: 'Give cookie 2 a medal' })).toBeVisible()
 })
 
 test('voting not open yet', async ({ page }) => {

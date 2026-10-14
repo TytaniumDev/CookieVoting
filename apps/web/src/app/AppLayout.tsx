@@ -10,7 +10,9 @@ const PAGE_WIDTH = 'mx-auto w-full max-w-5xl px-(--gutter)'
 export function AppLayout() {
   const [slot, setSlot] = useState<HTMLElement | null>(null)
   return (
-    <div className="flex min-h-dvh flex-col">
+    // A page that marks itself `data-festive` (the ballot) gets a cranberry backdrop with snow.
+    <div className="group/page relative flex min-h-dvh flex-col has-[[data-festive]]:bg-primary">
+      <Snowfall count={30} className="hidden group-has-[[data-festive]]/page:block" />
       <header className="relative overflow-hidden bg-primary py-3 text-on-primary shadow-card">
         <Snowfall count={12} />
         <div className={`group relative flex items-center gap-2 ${PAGE_WIDTH}`}>
@@ -22,7 +24,7 @@ export function AppLayout() {
           <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
         </div>
       </header>
-      <main className={`flex-1 py-6 ${PAGE_WIDTH}`}>
+      <main className={`relative flex-1 py-6 ${PAGE_WIDTH}`}>
         <AppBarSlotProvider value={slot}>
           <ErrorProvider>
             <Outlet />

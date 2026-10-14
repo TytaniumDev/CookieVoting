@@ -9,28 +9,42 @@ export function maxPicksFor(cookieCount: number): number {
 }
 
 /**
- * Applies a tap on a cookie card to a voter's ranking for one category.
- *
- * - Tapping a ranked cookie removes it; later picks shift up (2nd -> 1st, ...).
- * - Tapping an unranked cookie appends it as the next rank, if a slot is free.
- * - Tapping an unranked cookie when every slot is full leaves the ranking unchanged.
+ * A voter's medals in one category while they vote: index 0 holds the cookie with
+ * 1st place, index 1 2nd, and so on; null is a medal not given yet. Medals can be
+ * given in any order, so there can be gaps until every one is given.
  */
-export function toggleRanking(
-  ranking: CategoryRanking,
+export type CategoryPlaces = readonly (string | null)[]
+
+/** No medals given yet, for a category with `cookieCount` cookies. */
+export function emptyPlaces(cookieCount: number): CategoryPlaces {
+  return Array.from({ length: maxPicksFor(cookieCount) }, () => null)
+}
+
+/**
+ * Gives `cookieId` the medal for `place` (1-based), or takes it back if the cookie
+ * already has it.
+ *
+ * - A cookie holds one medal at most: giving it another moves it.
+ * - A medal is on one cookie at most: giving it to a new cookie takes it off the old one.
+ */
+export function awardPlace(
+  places: CategoryPlaces,
   cookieId: string,
-  maxPicks: number,
-): CategoryRanking {
-  if (ranking.includes(cookieId)) {
-    return ranking.filter((id) => id !== cookieId)
-  }
-  if (ranking.length >= maxPicks) {
-    return ranking
-  }
-  return [...ranking, cookieId]
+  place: number,
+): CategoryPlaces {
+  const index = place - 1
+  if (index < 0 || index >= places.length) return places
+  if (places[index] === cookieId) return places.map((id, i) => (i === index ? null : id))
+  return places.map((id, i) => (i === index ? cookieId : id === cookieId ? null : id))
+}
+
+/** True once every medal in the category is given. */
+export function allPlacesGiven(places: CategoryPlaces): places is CategoryRanking {
+  return places.every((id) => id !== null)
 }
 
 /** 1-based rank of `cookieId` in `ranking`, or null when it is not ranked. */
-export function rankOf(ranking: CategoryRanking, cookieId: string): number | null {
+export function rankOf(ranking: CategoryPlaces, cookieId: string): number | null {
   const index = ranking.indexOf(cookieId)
   return index === -1 ? null : index + 1
 }
