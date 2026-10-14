@@ -411,3 +411,13 @@ until real-device testing (useful from phase 3).
 - Phase 13: admins page and request + approve (see above).
 - CI: owner chose to keep every check blocking; story tests and E2E now run as
   separate parallel jobs.
+
+### Session 5, continued — category photo zoom (owner feedback)
+
+- Category rows: hovering a plate thumbnail with a mouse shows it big beside the
+  row (`PhotoZoom`, placement in `previewPlacement.ts`, kept inside the window);
+  clicking or tapping it opens the full photo in a dialog, which is how phones and
+  keyboards see it.
+- Owner is choosing between three Categories layouts (bigger rows, a photo-card
+  grid, or a big photo beside the name list); mocks were shared in the project
+  thread. Build the one he picks; `PhotoZoom` works with all three.

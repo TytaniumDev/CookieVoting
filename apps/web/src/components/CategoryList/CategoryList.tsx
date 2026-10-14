@@ -19,7 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Badge } from '../Badge/Badge.tsx'
-import { CookieImage } from '../CookieImage/CookieImage.tsx'
+import { PhotoZoom } from '../PhotoZoom/PhotoZoom.tsx'
 
 export interface CategoryListItem {
   id: string
@@ -37,7 +37,6 @@ export interface CategoryListProps {
   onDelete: (categoryId: string) => void
 }
 
-const WHOLE_PHOTO = { x: 0, y: 0, width: 1, height: 1 }
 /** How long typing pauses before a name saves. */
 const SAVE_DELAY_MS = 800
 
@@ -182,18 +181,16 @@ function CategoryRow({
         >
           <span aria-hidden="true">⠿</span>
         </button>
-        <div className="w-16 shrink-0 overflow-hidden rounded-control">
-          {category.photo ? (
-            <CookieImage photo={category.photo} box={WHOLE_PHOTO} alt="" />
-          ) : (
-            <div
-              className="grid aspect-4/3 place-items-center bg-surface-muted text-2xl"
-              aria-hidden="true"
-            >
-              📷
-            </div>
-          )}
-        </div>
+        {category.photo ? (
+          <PhotoZoom photo={category.photo} label={category.name} className="w-16" />
+        ) : (
+          <div
+            className="grid aspect-4/3 w-16 shrink-0 place-items-center rounded-control bg-surface-muted text-2xl"
+            aria-hidden="true"
+          >
+            📷
+          </div>
+        )}
         <div className="min-w-0 flex-1 space-y-1">
           <NameField
             name={category.name}
