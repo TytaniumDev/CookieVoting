@@ -9,20 +9,20 @@ describe('previewPlacement', () => {
   it('goes to the right of the thumbnail, centred on it, at full size', () => {
     expect(previewPlacement(thumb(100, 400), photo, laptop)).toEqual({
       left: 180,
-      top: 424 - 192,
-      width: 512,
-      height: 384,
+      top: 424 - 270,
+      width: 720,
+      height: 540,
     })
   })
 
   it('goes to the left when the right side is too narrow', () => {
     const place = previewPlacement(thumb(1200, 400), photo, laptop)
-    expect(place.left).toBe(1200 - 16 - 512)
+    expect(place.left).toBe(1200 - 16 - 720)
   })
 
   it('stays inside the window near its top and bottom edges', () => {
     expect(previewPlacement(thumb(100, 0), photo, laptop).top).toBe(16)
-    expect(previewPlacement(thumb(100, 880), photo, laptop).top).toBe(900 - 16 - 384)
+    expect(previewPlacement(thumb(100, 880), photo, laptop).top).toBe(900 - 16 - 540)
   })
 
   it('shrinks to fit a short window', () => {

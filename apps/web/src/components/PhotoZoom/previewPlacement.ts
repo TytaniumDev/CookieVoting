@@ -3,7 +3,7 @@ import type { PlatePhoto } from '@cookie-voting/shared'
 /** Space kept between the preview and the thumbnail or the window's edges, in px. */
 const MARGIN = 16
 /** The widest the hover preview gets, in px. */
-const PREVIEW_WIDTH = 512
+const PREVIEW_WIDTH = 720
 
 /**
  * Where the hover preview goes: beside the thumbnail (right if it fits, else left),

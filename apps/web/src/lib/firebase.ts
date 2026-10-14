@@ -5,7 +5,7 @@ import {
   indexedDBLocalPersistence,
   initializeAuth,
 } from 'firebase/auth'
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore, waitForPendingWrites } from 'firebase/firestore'
 
 /**
  * Firebase client for the whole app.
@@ -48,7 +48,18 @@ export const db = getFirestore(app)
 /** Same host the page came from, so a phone on the LAN can reach a laptop's emulators. */
 export const emulatorHost = window.location.hostname
 
+declare global {
+  interface Window {
+    /**
+     * Emulator builds only: resolves once every write so far has reached the server, so
+     * E2E tests can reload without losing one still in flight.
+     */
+    writesSavedForTests?: () => Promise<void>
+  }
+}
+
 if (usingEmulators) {
   connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true })
   connectFirestoreEmulator(db, emulatorHost, 8080)
+  window.writesSavedForTests = () => waitForPendingWrites(db)
 }

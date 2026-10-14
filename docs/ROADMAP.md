@@ -412,12 +412,19 @@ until real-device testing (useful from phase 3).
 - CI: owner chose to keep every check blocking; story tests and E2E now run as
   separate parallel jobs.
 
-### Session 5, continued — category photo zoom (owner feedback)
+### Session 5, continued — category photo cards (owner feedback)
 
-- Category rows: hovering a plate thumbnail with a mouse shows it big beside the
-  row (`PhotoZoom`, placement in `previewPlacement.ts`, kept inside the window);
-  clicking or tapping it opens the full photo in a dialog, which is how phones and
-  keyboards see it.
-- Owner is choosing between three Categories layouts (bigger rows, a photo-card
-  grid, or a big photo beside the name list); mocks were shared in the project
-  thread. Build the one he picks; `PhotoZoom` works with all three.
+- Owner picked the photo-card grid from three mocked layouts (bigger rows, photo
+  cards, big photo beside the name list). Each category is a card with the plate
+  photo across it and the name field below; one column on phones, two or three
+  where the list has room (container queries, so it follows the column, not the
+  window). Reordering uses dnd-kit's `rectSortingStrategy`; arrow keys move
+  spatially, so on wide screens a card moves left/right.
+- Hovering a plate photo with a mouse shows it up to 720 px wide beside the card
+  (`PhotoZoom`, placement in `previewPlacement.ts`, kept inside the window);
+  clicking or tapping opens the full photo in a dialog.
+- E2E: reloads in `admin.spec.ts` go through `reloadWhenSaved` (waits on
+  Firestore's pending writes via an emulator-only `window.writesSavedForTests`);
+  a plain reload sometimes dropped a rename or reorder still in flight.
+- Seen once locally under load, not fixed: "an admin boxes the cookies on a plate"
+  can miss the box-resize width check (admin.spec.ts, the `second.boundingBox` poll).

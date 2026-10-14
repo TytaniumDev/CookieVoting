@@ -30,8 +30,9 @@ const meta = {
   parameters: { layout: 'padded' },
   args: { categories, onReorder: fn(), onRename: fn(), onDelete: fn() },
   decorators: [
-    (Story) => (
-      <div className="max-w-[375px]">
+    // Phone width unless a story asks for the full width.
+    (Story, { parameters }) => (
+      <div className={parameters.wide ? '' : 'max-w-[375px]'}>
         <Story />
       </div>
     ),
@@ -56,6 +57,17 @@ export const NewPlates: Story = {
       { id: 'b', name: 'Plate 2', photo: plate('4-cookies_people.jpg'), cookieCount: 0 },
     ],
     suggestions: ['Stars', 'Gingerbread People', 'Candy Canes'],
+  },
+}
+
+/** A laptop-width screen fits three cards across. */
+export const Wide: Story = {
+  parameters: { wide: true },
+  args: {
+    categories: [
+      ...categories,
+      { id: 'd', name: 'Stockings', photo: plate('5-cookies_stockings.jpg'), cookieCount: 5 },
+    ],
   },
 }
 
@@ -110,10 +122,14 @@ export const DuplicateName: Story = {
 /** Keyboard reordering: focus a handle, Space to lift, arrow to move, Space to drop. */
 export const KeyboardReorder: Story = {
   render: () => <Reorderable />,
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
+    // dnd-kit announces each step; wait for it so the next key isn't pressed too soon.
+    const announcer = () => canvasElement.ownerDocument.querySelector('[id^="DndLiveRegion"]')
     canvas.getByRole('button', { name: 'Reorder Candy Canes' }).focus()
     await userEvent.keyboard(' ')
+    await waitFor(() => expect(announcer()).toHaveTextContent('moved to position 3'))
     await userEvent.keyboard('{ArrowUp}')
+    await waitFor(() => expect(announcer()).toHaveTextContent('moved to position 2'))
     await userEvent.keyboard(' ')
     await waitFor(() =>
       expect(names(canvas.getAllByLabelText('Category name'))).toEqual([

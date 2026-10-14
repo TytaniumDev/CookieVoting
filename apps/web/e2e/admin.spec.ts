@@ -2,6 +2,7 @@ import { iou, type Box } from '@cookie-voting/shared'
 import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { addCategory, expectCategoryNames, nameCategory } from './categories.ts'
+import { reloadWhenSaved } from './reload.ts'
 import { signInAs } from './signIn.ts'
 
 test('people who are not admins are turned away', async ({ page }) => {
@@ -81,7 +82,7 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   // Name them; each name saves itself and survives a reload.
   await nameCategory(page, 0, 'Thumbprints')
   await nameCategory(page, 1, 'Candy Canes')
-  await page.reload()
+  await reloadWhenSaved(page)
   await expectCategoryNames(page, ['Thumbprints', 'Candy Canes'])
 
   // Reorder with the keyboard: lift Candy Canes, move it up, drop.
@@ -90,12 +91,13 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await page.getByRole('button', { name: 'Reorder Candy Canes' }).focus()
   await page.keyboard.press('Space')
   await expect(announcer).toContainText('Candy Canes moved to position 2')
-  await page.keyboard.press('ArrowUp')
+  // Phones show one column of cards; wider screens put them side by side.
+  await page.keyboard.press(testInfo.project.name === 'mobile' ? 'ArrowUp' : 'ArrowLeft')
   await expect(announcer).toContainText('Candy Canes moved to position 1')
   await page.keyboard.press('Space')
   await expect(announcer).toContainText('Candy Canes dropped at position 1')
   await expectCategoryNames(page, ['Candy Canes', 'Thumbprints'])
-  await page.reload()
+  await reloadWhenSaved(page)
   await expectCategoryNames(page, ['Candy Canes', 'Thumbprints'])
 
   // Delete asks first.
@@ -140,7 +142,7 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
     .toBeGreaterThan(((await plate.boundingBox())?.width ?? 0) * 0.35)
 
   // Saved: still there after a reload, and the step is done.
-  await page.reload()
+  await reloadWhenSaved(page)
   await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(2)
   await expect(page.getByRole('button', { name: /^cookies.*\(done\)/i })).toBeVisible()
 
