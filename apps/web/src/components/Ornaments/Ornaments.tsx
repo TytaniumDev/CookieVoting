@@ -26,6 +26,8 @@ export interface OrnamentsProps {
   animate?: boolean
   /** Makes open ornaments buttons, e.g. to show a cookie's votes. */
   onSelect?: (id: string) => void
+  /** What tapping an ornament does, for screen readers. */
+  selectHint?: string
   className?: string
 }
 
@@ -71,6 +73,7 @@ export function Ornaments({
   reveal,
   animate = false,
   onSelect,
+  selectHint = 'See its votes',
   className = '',
 }: OrnamentsProps) {
   const [ref, { width, height }] = useSize<HTMLDivElement>()
@@ -175,7 +178,7 @@ export function Ornaments({
               {open && onSelect ? (
                 <button
                   type="button"
-                  aria-label={`${label}. See its votes`}
+                  aria-label={`${label}. ${selectHint}`}
                   onClick={() => onSelect(item.id)}
                   className={`${ballClasses} hover:scale-104`}
                   style={{ width: spot.size, height: spot.size, animationDelay: delay }}

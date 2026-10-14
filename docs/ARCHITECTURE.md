@@ -511,10 +511,16 @@ time a slide is on screen it plays a timed reveal (`reveal.ts`/`useReveal`, abou
 a drumroll before each and confetti for the winner. Leaving mid-way or Skip opens
 them all; with reduced motion they start open. Top bakers uses the same ornaments,
 each baker's picture being their best-scoring cookie. All results is one vertically
-scrolling list: every category's `CategoryResults`, then `BakerLeaderboard`. Tapping
-an open ornament or a cookie row opens `VoteBreakdown`: the cookie's 1st/2nd/3rd
-vote counts, "Not in their top 3" (category voters minus those), and the points
-each place earned.
+scrolling list: `BakerLeaderboard` ("Bakers": rank, cookie count, total) first, then
+every category's `CategoryResults`. Tapping an open ornament or a cookie row opens
+`VoteBreakdown`: the cookie's 1st/2nd/3rd vote counts, "Not in their top 3"
+(category voters minus those), and the points each place earned. Tapping a baker
+(their row, or their Top bakers ornament) opens `BakerBreakdown` (owner decision
+2026-10-14): their cookies best first (`bakerCookies` in `packages/shared`), each
+with its category, place ("2nd of 5") and points, under a points bar split per
+cookie. Hovering or tapping a piece of the bar lights up its row and names it in a
+bubble; hovering a row lights up its piece. A cookie row opens its `VoteBreakdown`
+on top, and closing that returns to the baker.
 
 ### Scoring (Cloud Functions)
 

@@ -108,3 +108,36 @@ export function tallyResults(input: TallyInput): EventResults {
 
   return { ballotCount: input.ballots.length, categories, bakers }
 }
+
+/** One of a baker's cookies in the results, with the category it was entered in. */
+export interface BakerCookie {
+  categoryId: string
+  categoryName: string
+  /** How many cookies the category has, for "2nd of 5". */
+  categorySize: number
+  standing: CookieStanding
+}
+
+/**
+ * Every cookie one baker entered, best first (ties keep category order). Their points
+ * add up to the baker's total, so this is the breakdown of a baker's score.
+ */
+export function bakerCookies(
+  categories: readonly CategoryResult[],
+  bakerId: string,
+): BakerCookie[] {
+  const cookies: BakerCookie[] = []
+  for (const category of categories) {
+    for (const standing of category.standings) {
+      if (standing.bakerId !== bakerId) continue
+      cookies.push({
+        categoryId: category.categoryId,
+        categoryName: category.name,
+        categorySize: category.standings.length,
+        standing,
+      })
+    }
+  }
+  // Array.prototype.sort is stable, so equal points stay in category order.
+  return cookies.sort((a, b) => b.standing.points - a.standing.points)
+}
