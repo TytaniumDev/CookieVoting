@@ -57,6 +57,8 @@ export interface PlateEditorProps {
   onCreate?: (cookie: Cookie) => boolean | void
   /** With this, tapping a box (or Enter on it) opens this menu next to it. */
   renderMenu?: (cookie: Cookie, actions: MenuActions) => ReactNode
+  /** A short prompt floating at the top of the photo, e.g. whose cookie to tap next. */
+  banner?: ReactNode
   /** Makes ids for new cookies; tests pass a predictable one. */
   newId?: () => string
   className?: string
@@ -97,6 +99,8 @@ const TAP_SLOP = 6
 const SAME_COOKIE_IOU = 0.5
 /** A box added by hand is this fraction of the photo's shorter side, before zoom. */
 const NEW_BOX_SIZE = 0.2
+/** Room left under the photo for the page's bottom padding, in CSS pixels. */
+const BOTTOM_GAP = 24
 /** Keyboard nudge, as a fraction of the photo; Alt nudges finer. */
 const NUDGE = 0.01
 const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se']
@@ -132,9 +136,11 @@ export function PlateEditor({
   tags,
   onCreate,
   renderMenu,
+  banner,
   newId = () => crypto.randomUUID(),
   className = '',
 }: PlateEditorProps) {
+  const frameRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -144,6 +150,7 @@ export function PlateEditor({
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [menuId, setMenuId] = useState<string | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
+  const [maxHeight, setMaxHeight] = useState<number | null>(null)
   // Where a tap is being looked at by tap-to-select, and what it last said.
   const [finding, setFinding] = useState<Point | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -455,6 +462,28 @@ export function PlateEditor({
     }
   }, [])
 
+  // The photo takes the rest of the window below it, so a laptop needn't scroll, but
+  // never less than half of it: on short screens the page scrolls instead.
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame) return
+    const update = () => {
+      const top = frame.getBoundingClientRect().top + window.scrollY
+      setMaxHeight(
+        Math.round(Math.max(window.innerHeight - top - BOTTOM_GAP, window.innerHeight / 2)),
+      )
+    }
+    update()
+    // Rows above the photo can change height (an alert appears, tabs load).
+    const observer = new ResizeObserver(update)
+    observer.observe(document.body)
+    window.addEventListener('resize', update)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [])
+
   /** Below the box, or above it when it sits in the lower half of what's on screen. */
   function menuPosition(box: Box): CSSProperties {
     const left = view.x + box.x * size.width * view.scale
@@ -479,8 +508,11 @@ export function PlateEditor({
   return (
     <div className={className}>
       <div
+        ref={frameRef}
         className="relative mx-auto"
-        style={{ width: `min(100%, calc(65dvh * ${photo.width / photo.height}))` }}
+        style={{
+          width: `min(100%, calc(${maxHeight === null ? '65dvh' : `${maxHeight}px`} * ${photo.width / photo.height}))`,
+        }}
       >
         <div
           ref={viewportRef}
@@ -591,6 +623,11 @@ export function PlateEditor({
             )}
           </div>
         </div>
+        {banner && (
+          <div className="pointer-events-none absolute inset-x-2 top-2 z-20 flex justify-center">
+            {banner}
+          </div>
+        )}
         {/* Over the photo, so hints cost no height; screen readers hear each change. */}
         <p
           aria-live="polite"

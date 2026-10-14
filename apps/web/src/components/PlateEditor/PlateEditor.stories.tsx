@@ -184,6 +184,20 @@ export const Zoom: Story = {
   },
 }
 
+/** A prompt floats at the top of the photo without blocking taps on cookies under it. */
+export const WithBanner: Story = {
+  args: {
+    banner: (
+      <p className="rounded-full bg-primary px-4 py-1.5 font-bold text-on-primary shadow-raised">
+        Tap Ben’s cookie
+      </p>
+    ),
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Tap Ben’s cookie')).toBeVisible()
+  },
+}
+
 /** Stands in for the model: "finds" a 20% box centred on the tap. */
 const fakeFind = (_photo: HTMLImageElement, point: { x: number; y: number }) => ({
   x: point.x - 0.1,

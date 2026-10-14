@@ -123,40 +123,57 @@ export function CookiesStep({
     )
   }
 
-  const prompt =
-    roster.length === 0 ? null : untagged > 0 && active === null ? (
+  // A warning needs reading, so it gets a row; the usual prompt floats on the photo.
+  const warning =
+    roster.length > 0 && untagged > 0 && active === null ? (
       <Alert
         tone="warning"
         title={`${untagged === 1 ? '1 cookie needs' : `${untagged} cookies need`} a baker`}
       >
         Tap {untagged === 1 ? 'it' : 'each one'} to choose who baked it.
       </Alert>
-    ) : active !== null ? (
-      <p className="rounded-control bg-primary-subtle px-3 py-2 font-bold text-on-primary-subtle">
+    ) : null
+  const banner =
+    roster.length === 0 || warning ? null : active !== null ? (
+      <p className="rounded-full bg-primary px-4 py-1.5 font-bold text-on-primary shadow-raised">
         <span aria-hidden="true">👆 </span>Tap {nameOf.get(active)}’s cookie
       </p>
     ) : (
-      <p className="rounded-control bg-success-subtle px-3 py-2 font-bold text-on-success-subtle">
-        <span aria-hidden="true">✓ </span>Everyone has a cookie on this plate. Tap any extra
-        cookies, then go to the next plate.
+      <p className="rounded-full bg-success px-4 py-1.5 font-bold text-on-success shadow-raised">
+        <span aria-hidden="true">✓ </span>Everyone has a cookie on this plate
       </p>
     )
+  const plateIsDone = plateDone(category)
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-2xl">Cookies</h2>
-        <p className="text-ink-muted">
-          Tap each cookie to box it for the highlighted baker. Tap a box to change its baker or drag
-          it to adjust it.
-        </p>
+      <h2 className="sr-only">Cookies</h2>
+      <div className="flex items-center gap-3">
+        <Stepper
+          label="Plates"
+          steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
+          selected={category.id}
+          onSelect={goTo}
+          // The button closes the row on the right, so the tabs stop short of the edge.
+          className="min-w-0 flex-1 me-0! pe-0!"
+        />
+        {nextCategory ? (
+          <Button
+            variant={plateIsDone ? 'primary' : 'secondary'}
+            onClick={() => goTo(nextCategory.id)}
+            aria-label={`Next plate: ${nextCategory.name}`}
+          >
+            Next<span className="hidden sm:inline"> plate: {nextCategory.name}</span> →
+          </Button>
+        ) : (
+          <Button
+            variant={plateIsDone ? 'primary' : 'secondary'}
+            onClick={() => setSearchParams({ step: 'voting' }, { replace: true })}
+          >
+            Next: Voting →
+          </Button>
+        )}
       </div>
-      <Stepper
-        label="Plates"
-        steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
-        selected={category.id}
-        onSelect={goTo}
-      />
       {roster.length === 0 ? (
         <Alert tone="warning" title="No bakers yet">
           <Link to="?step=bakers">Add the event's bakers</Link> to tag each cookie. You can box
@@ -169,7 +186,9 @@ export function CookiesStep({
           onSelect={(bakerId) => setPicked({ categoryId: category.id, bakerId })}
         />
       )}
-      <div aria-live="polite">{prompt}</div>
+      <div aria-live="polite" className="empty:hidden">
+        {warning}
+      </div>
       {category.photo ? (
         <PlateEditor
           key={category.id}
@@ -178,6 +197,7 @@ export function CookiesStep({
           onChange={save}
           tapToSelect={tapToSelect}
           label={`${category.name} plate`}
+          banner={<div aria-live="polite">{banner}</div>}
           tags={roster.length > 0 ? tags : undefined}
           onCreate={(cookie) => {
             if (roster.length === 0) return false
@@ -211,23 +231,6 @@ export function CookiesStep({
           Add one in the Categories step, then come back to box its cookies.
         </Alert>
       )}
-      <div className="flex justify-end">
-        {nextCategory ? (
-          <Button
-            variant={plateDone(category) ? 'primary' : 'secondary'}
-            onClick={() => goTo(nextCategory.id)}
-          >
-            Next plate: {nextCategory.name} →
-          </Button>
-        ) : (
-          <Button
-            variant={plateDone(category) ? 'primary' : 'secondary'}
-            onClick={() => setSearchParams({ step: 'voting' }, { replace: true })}
-          >
-            Next: Voting →
-          </Button>
-        )}
-      </div>
     </div>
   )
 }

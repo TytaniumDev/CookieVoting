@@ -354,8 +354,12 @@ The plate editor shows the photo with cookie boxes overlaid:
   around the photo (owner, 2026-10-14: no zoom buttons, count line, Add cookie
   or Delete buttons). Pinch or the scroll wheel zooms on the pointer, dragging
   the photo pans it once zoomed in, and hints float over the photo.
-  `touch-action: none` stops the browser scrolling over the photo, so it is
-  capped at 65% of the screen height to leave room to scroll the page. Handles,
+  The photo fills the window below the rows above it (at least half the window
+  height), so a 1080p laptop shows the whole step without scrolling; on short
+  screens `touch-action: none` over the photo still leaves page above and below
+  it to scroll by. The event title shares a row with the step tabs on wide
+  screens, the whose-turn prompt floats on the photo, and Next plate ends the
+  plate tabs row (owner picked mock C, 2026-10-14). Handles,
   numbers and outlines are counter-scaled to stay finger-sized at any zoom.
   Keyboard users Tab to a box: arrows move it, Shift + arrows resize it, Delete
   removes it, and an **Add cookie** button that only shows when focused places a

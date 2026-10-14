@@ -60,22 +60,32 @@ export function EventSetupPage() {
   const selected: SetupStep = isStep(requested) ? requested : openingStep
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-1">
-        <Link to="/" className="text-sm font-bold text-primary">
-          ← All events
-        </Link>
-        <h1 className="text-3xl">{event.data.name}</h1>
+    <section className="space-y-4">
+      {/* Title and step tabs share a row on wide screens, so a step's work starts higher. */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
+        <div className="flex min-w-0 items-center gap-1 lg:flex-1">
+          <Link
+            to="/"
+            aria-label="All events"
+            className="-ml-2 grid size-11 shrink-0 place-items-center rounded-control text-2xl font-bold text-primary hover:bg-surface-muted"
+          >
+            <span aria-hidden="true">←</span>
+          </Link>
+          <h1 className="truncate text-2xl" title={event.data.name}>
+            {event.data.name}
+          </h1>
+        </div>
+        <Stepper
+          steps={SETUP_STEPS.map((id) => ({
+            id,
+            label: SETUP_STEP_LABELS[id],
+            done: progress.done[id],
+          }))}
+          selected={selected}
+          onSelect={(step) => setSearchParams({ step }, { replace: true })}
+          className="lg:mx-0 lg:shrink-0 lg:px-0"
+        />
       </div>
-      <Stepper
-        steps={SETUP_STEPS.map((id) => ({
-          id,
-          label: SETUP_STEP_LABELS[id],
-          done: progress.done[id],
-        }))}
-        selected={selected}
-        onSelect={(step) => setSearchParams({ step }, { replace: true })}
-      />
       {selected === 'bakers' ? (
         <BakersStep eventId={eventId} setup={setup.data} />
       ) : selected === 'categories' ? (
