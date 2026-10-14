@@ -30,8 +30,22 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  browser-tests:
-    name: Story tests and e2e (Chromium)
+  story-tests:
+    name: Story tests (Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Story tests (render + play functions + accessibility)
+        run: npm run test:stories
+
+  e2e-tests:
+    name: End-to-end tests (Chromium)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -50,8 +64,6 @@ jobs:
           key: firebase-emulators-${{ hashFiles('package-lock.json') }}
           restore-keys: firebase-emulators-
       - run: npx playwright install --with-deps chromium
-      - name: Story tests (render + play functions + accessibility)
-        run: npm run test:stories
       - name: End-to-end tests (against the emulators, with seed data)
         run: npm run test:e2e
       - uses: actions/upload-artifact@v7
@@ -85,7 +97,7 @@ jobs:
   storybook:
     name: Publish Storybook to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [check, browser-tests, emulator-tests]
+    needs: [check, story-tests, e2e-tests, emulator-tests]
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -162,7 +174,7 @@ jobs:
   deploy:
     name: Deploy to cookie-voting
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-gate.outputs.configured == 'true'
-    needs: [check, browser-tests, emulator-tests, deploy-gate]
+    needs: [check, story-tests, e2e-tests, emulator-tests, deploy-gate]
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production

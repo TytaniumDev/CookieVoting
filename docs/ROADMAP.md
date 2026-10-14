@@ -409,5 +409,5 @@ until real-device testing (useful from phase 3).
   forms and lists stop at a readable width; tab rows never wrap and scroll only
   when they don't fit. The rule is in CLAUDE.md → Conventions.
 - Phase 13: admins page and request + approve (see above).
-- CI: owner chose to keep every check blocking; story tests and E2E to be split
-  into parallel jobs to save about a minute.
+- CI: owner chose to keep every check blocking; story tests and E2E now run as
+  separate parallel jobs.
