@@ -26,3 +26,6 @@ export const WithMedal: Story = {
 }
 
 export const Small: Story = { args: { rank: 3, badgeSize: 'sm', className: 'w-14' } }
+
+/** Round, for the festive results. */
+export const Round: Story = { args: { round: true, className: 'w-24' } }

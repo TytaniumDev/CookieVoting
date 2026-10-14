@@ -51,11 +51,21 @@ export interface CookieStanding {
   points: number
   /** Competition rank: ties share a rank and the next rank is skipped (1, 2, 2, 4). */
   rank: number
+  /**
+   * How many voters put this cookie 1st, 2nd and 3rd. Missing from results computed
+   * before vote breakdowns were added; they reappear on the next recompute.
+   */
+  votes?: PlaceVotes
 }
+
+/** Vote counts by place: [1st, 2nd, 3rd]. */
+export type PlaceVotes = readonly [number, number, number]
 
 export interface CategoryResult {
   categoryId: string
   name: string
+  /** Voters who ranked at least one cookie in this category. Missing on older results. */
+  ballotCount?: number
   /** Sorted by rank, then by display order. */
   standings: CookieStanding[]
 }

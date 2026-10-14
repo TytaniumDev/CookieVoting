@@ -126,6 +126,8 @@ Everything else reads or writes Firebase, so this comes first.
 | §9  | Results at `/event/:id` once status is `results`, and at `/event/:id/results` | ✅ `ResultsPage`      |
 | §9  | Per category: rank, crop, baker name, score; ties share a rank                | ✅ `CategoryResults`  |
 | §9  | Overall baker leaderboard with ties                                           | ✅ `BakerLeaderboard` |
+| —   | Festive ornaments with a timed reveal, swipe between categories (2026-10-14)  | ✅ `Ornaments`        |
+| —   | A cookie's 1st/2nd/3rd vote counts on tap (2026-10-14)                        | ✅ `VoteBreakdown`    |
 | —   | `/results` visited before results open shows a friendly "not yet" state       | ✅                    |
 
 ### P8 — Launch polish (phase 10)

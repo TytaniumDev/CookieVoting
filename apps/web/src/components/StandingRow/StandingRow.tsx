@@ -14,15 +14,28 @@ export interface StandingRowProps {
   points: number
   /** Shown between the place and the title, e.g. the cookie. */
   image?: ReactNode
+  /** Makes the row a button, e.g. to show the cookie's votes. */
+  onSelect?: () => void
+  /** What the button does, for screen readers, e.g. "See its votes". */
+  selectHint?: string
 }
 
 /**
  * One line of a results table: place, optional picture, name and Borda points.
  * The top three places get their medal; ties share a place (PRD §9).
  */
-export function StandingRow({ rank, tied, title, subtitle, points, image }: StandingRowProps) {
-  return (
-    <li className="flex min-h-14 items-center gap-3 py-2">
+export function StandingRow({
+  rank,
+  tied,
+  title,
+  subtitle,
+  points,
+  image,
+  onSelect,
+  selectHint,
+}: StandingRowProps) {
+  const content = (
+    <>
       {rank <= 3 ? (
         <RankBadge rank={rank as 1 | 2 | 3} className="shrink-0" />
       ) : (
@@ -53,6 +66,22 @@ export function StandingRow({ rank, tied, title, subtitle, points, image }: Stan
         </span>
         <span className="sr-only"> {points === 1 ? 'point' : 'points'}</span>
       </span>
+    </>
+  )
+  if (!onSelect) return <li className="flex min-h-14 items-center gap-3 py-2">{content}</li>
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3 rounded-control px-2 py-2 text-left hover:bg-surface-muted"
+      >
+        {content}
+        {selectHint && <span className="sr-only">. {selectHint}</span>}
+        <span aria-hidden="true" className="-ml-1 font-display text-xl font-bold text-ink-muted">
+          ›
+        </span>
+      </button>
     </li>
   )
 }

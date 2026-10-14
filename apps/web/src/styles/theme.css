@@ -50,6 +50,8 @@
 
   /* Decorative snow on brand-coloured areas */
   --color-snow: #ffffff;
+  /* The warm glow around a winner (results ornaments); never used for text */
+  --color-glow: #f2cf6b;
 
   /* Illustration fills (waiting-screen scenes); never used for text */
   --color-carrot: #e8762b;
@@ -116,6 +118,14 @@
   --animate-cookie-rise: cookie-rise 3s ease-in-out infinite alternate;
   --animate-steam: steam 3.2s ease-in infinite;
   --animate-dial: dial 8s steps(16) infinite;
+
+  /* Results ornaments (Ornaments) */
+  --animate-swing: swing 3.6s ease-in-out infinite;
+  --animate-unspool: unspool 0.9s cubic-bezier(0.3, 1.35, 0.55, 1) both;
+  --animate-appear: appear 0.25s ease-out both;
+  --animate-drumroll: drumroll 0.16s linear infinite;
+  --animate-bob: bob 2.2s ease-in-out infinite;
+  --animate-fill: fill 0.7s cubic-bezier(0.3, 1, 0.4, 1) 0.15s both;
 
   @keyframes snowfall {
     from {
@@ -295,6 +305,55 @@
   @keyframes dial {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  /* An ornament swaying on its string */
+  @keyframes swing {
+    0%,
+    100% {
+      transform: rotate(2.5deg);
+    }
+    50% {
+      transform: rotate(-2.5deg);
+    }
+  }
+
+  /* A string unrolling from the garland, lowering its ornament */
+  @keyframes unspool {
+    from {
+      height: 0;
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+
+  /* A closed ornament shaking before it opens */
+  @keyframes drumroll {
+    0%,
+    100% {
+      transform: rotate(-4deg) scale(1.02);
+    }
+    50% {
+      transform: rotate(4deg) scale(1.05);
+    }
+  }
+
+  @keyframes bob {
+    50% {
+      transform: translateY(-5px) rotate(-6deg);
+    }
+  }
+
+  /* A bar growing to its width */
+  @keyframes fill {
+    from {
+      width: 0;
     }
   }
 }

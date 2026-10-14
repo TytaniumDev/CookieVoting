@@ -575,3 +575,19 @@ until real-device testing (useful from phase 3).
   that's never been accepted, so "Thanks" still waits for the first send).
 - The waiting-room E2E watches the DOM while saving and fails if "Start voting"
   appears at all.
+
+### Session — 2026-10-14 (festive results: ornaments)
+
+- Owner picked "Ornaments" from three mocks (artifact "Ornament Results Mockup"):
+  one slide per category, top three hanging from a garland, swipe or tap a
+  category; then Top bakers; then All results, one scrolling list replacing the
+  per-category "See all" idea.
+- Timed reveal (owner: no tapping to open, about 5 s): drop on unrolling strings
+  hooked onto the garland, then 3rd, 2nd, 1st with drumrolls, confetti for the
+  winner. Plays once per slide; leaving or Skip opens it; reduced motion starts open.
+- Tapping an open ornament or a row in All results shows the cookie's votes. The
+  tally now stores `votes` per cookie and `ballotCount` per category.
+- E2E: the ornaments sway forever, so specs switch on reduced motion
+  (`page.emulateMedia`) before clicking one.
+- Deferred to its own thread ("Bakers list on results"): All results' baker card
+  listing every baker, tapping one to list their cookies and points.

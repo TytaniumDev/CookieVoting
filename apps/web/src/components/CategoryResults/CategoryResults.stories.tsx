@@ -1,6 +1,6 @@
 import type { CategoryResult } from '@cookie-voting/shared'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, within } from 'storybook/test'
+import { expect, fn, userEvent, within } from 'storybook/test'
 import { CategoryResults } from './CategoryResults.tsx'
 
 const plate = {
@@ -61,5 +61,14 @@ export const NoCookies: Story = {
   args: { result: { ...result, standings: [] } },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('No cookies in this category.')).toBeVisible()
+  },
+}
+
+/** With `onSelect`, each cookie is a button, e.g. to show its votes. */
+export const Selectable: Story = {
+  args: { onSelect: fn() },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /Dev.*See its votes/ }))
+    await expect(args.onSelect).toHaveBeenCalledWith(result.standings[2])
   },
 }

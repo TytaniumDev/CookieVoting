@@ -40,9 +40,26 @@ test('every voter screen is accessible and fits 375 px', async ({ page }) => {
   await checkScreen(page, 'category')
 
   await page.goto('/event/bake-off-2024/results')
-  await page.getByRole('heading', { name: 'Top bakers' }).waitFor()
+  // After the timed reveal, the winner's ornament is a button.
+  await page
+    .getByRole('button', { name: /1st place.*See its votes/ })
+    .first()
+    .waitFor()
   await checkScreen(page, 'results')
+  // The ornaments sway forever; with reduced motion they hold still to be clicked.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page
+    .getByRole('button', { name: /1st place.*See its votes/ })
+    .first()
+    .click()
+  await page.getByRole('dialog').waitFor()
+  await checkScreen(page, 'cookie votes')
+  await page.getByRole('button', { name: 'Close' }).click()
+  await page.getByRole('button', { name: '📜 All results' }).click()
+  await page.getByRole('heading', { name: 'Every baker' }).waitFor()
+  await checkScreen(page, 'all results')
 
+  await page.emulateMedia({ reducedMotion: null })
   await page.goto('/event/holiday-party-2026/results')
   await page.getByRole('heading', { name: "The results aren't out yet" }).waitFor()
   await checkScreen(page, 'results not out yet')

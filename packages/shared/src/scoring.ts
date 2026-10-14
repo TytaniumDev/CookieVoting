@@ -45,19 +45,30 @@ export function sanitizeRanking(ranking: unknown, validCookieIds: ReadonlySet<st
   return picks
 }
 
-function pointsByCookie(
+interface CookieTally {
+  points: number
+  votes: [number, number, number]
+}
+
+function tallyCategory(
   category: TallyCategory,
   ballots: readonly BallotRankings[],
-): Map<string, number> {
-  const points = new Map(category.cookieIds.map((id) => [id, 0]))
+): { byCookie: Map<string, CookieTally>; ballotCount: number } {
+  const byCookie = new Map(
+    category.cookieIds.map((id) => [id, { points: 0, votes: [0, 0, 0] } as CookieTally]),
+  )
   const validIds = new Set(category.cookieIds)
+  let ballotCount = 0
   for (const ballot of ballots) {
     const picks = sanitizeRanking(ballot[category.id], validIds)
+    if (picks.length > 0) ballotCount++
     picks.forEach((cookieId, position) => {
-      points.set(cookieId, (points.get(cookieId) ?? 0) + (BORDA_POINTS[position] ?? 0))
+      const tally = byCookie.get(cookieId)!
+      tally.points += BORDA_POINTS[position] ?? 0
+      tally.votes[position] = (tally.votes[position] ?? 0) + 1
     })
   }
-  return points
+  return { byCookie, ballotCount }
 }
 
 /** Computes per-category cookie rankings and the overall baker leaderboard. */
@@ -65,17 +76,17 @@ export function tallyResults(input: TallyInput): EventResults {
   const bakerPoints = new Map(Object.keys(input.bakers).map((id) => [id, 0]))
 
   const categories: CategoryResult[] = input.categories.map((category) => {
-    const points = pointsByCookie(category, input.ballots)
+    const { byCookie, ballotCount } = tallyCategory(category, input.ballots)
     const assignments = input.assignments[category.id] ?? {}
 
     const unranked = category.cookieIds.map((cookieId) => {
       const bakerId = assignments[cookieId] ?? null
       const bakerName = bakerId === null ? null : (input.bakers[bakerId] ?? null)
-      const cookiePoints = points.get(cookieId) ?? 0
+      const { points: cookiePoints, votes } = byCookie.get(cookieId)!
       if (bakerId !== null && bakerPoints.has(bakerId)) {
         bakerPoints.set(bakerId, (bakerPoints.get(bakerId) ?? 0) + cookiePoints)
       }
-      return { cookieId, bakerId, bakerName, points: cookiePoints }
+      return { cookieId, bakerId, bakerName, points: cookiePoints, votes }
     })
 
     // Array.prototype.sort is stable, so ties keep their display order.
@@ -83,7 +94,7 @@ export function tallyResults(input: TallyInput): EventResults {
     const ranks = competitionRanks(sorted, (entry) => entry.points)
     const standings: CookieStanding[] = sorted.map((entry, i) => ({ ...entry, rank: ranks[i]! }))
 
-    return { categoryId: category.id, name: category.name, standings }
+    return { categoryId: category.id, name: category.name, ballotCount, standings }
   })
 
   const sortedBakers = [...bakerPoints.entries()]

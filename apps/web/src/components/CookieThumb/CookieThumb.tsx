@@ -10,23 +10,32 @@ export interface CookieThumbProps {
   /** The voter's medal on it, shown on the top-left corner. */
   rank?: Rank
   badgeSize?: RankBadgeSize
+  /** A circle (the festive results) instead of a rounded square. */
+  round?: boolean
   /** Sets the size, e.g. `w-20`. */
   className?: string
 }
 
-/** One cookie as a small square photo, fitted inside, with an optional medal. */
+/** One cookie as a small square (or round) photo, fitted inside, with an optional medal. */
 export function CookieThumb({
   photo,
   cookie,
   alt,
   rank,
   badgeSize = 'md',
+  round = false,
   className = '',
 }: CookieThumbProps) {
   const aspect = (cookie.box.width * photo.width) / (cookie.box.height * photo.height)
   return (
     <span className={`relative block ${className}`}>
-      <span className="grid aspect-square place-items-center overflow-hidden rounded-control bg-surface-muted">
+      <span
+        className={`grid aspect-square place-items-center overflow-hidden ${
+          round
+            ? 'rounded-full bg-[radial-gradient(circle_at_50%_45%,var(--color-surface)_45%,var(--color-surface-muted))]'
+            : 'rounded-control bg-surface-muted'
+        }`}
+      >
         <CookieImage
           photo={photo}
           box={cookie.box}
