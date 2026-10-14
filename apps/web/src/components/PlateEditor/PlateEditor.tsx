@@ -57,6 +57,11 @@ export interface PlateEditorProps {
   onCreate?: (cookie: Cookie) => boolean | void
   /** With this, tapping a box (or Enter on it) opens this menu next to it. */
   renderMenu?: (cookie: Cookie, actions: MenuActions) => ReactNode
+  /**
+   * Pixels to keep free under the photo when it sizes itself to the window, for
+   * whatever the page shows below it and the page's bottom padding.
+   */
+  spaceBelow?: number
   /** A short prompt floating at the top of the photo, e.g. whose cookie to tap next. */
   banner?: ReactNode
   /** Makes ids for new cookies; tests pass a predictable one. */
@@ -99,8 +104,6 @@ const TAP_SLOP = 6
 const SAME_COOKIE_IOU = 0.5
 /** A box added by hand is this fraction of the photo's shorter side, before zoom. */
 const NEW_BOX_SIZE = 0.2
-/** Room left under the photo for the page's bottom padding, in CSS pixels. */
-const BOTTOM_GAP = 24
 /** Keyboard nudge, as a fraction of the photo; Alt nudges finer. */
 const NUDGE = 0.01
 const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se']
@@ -137,6 +140,7 @@ export function PlateEditor({
   onCreate,
   renderMenu,
   banner,
+  spaceBelow = 24,
   newId = () => crypto.randomUUID(),
   className = '',
 }: PlateEditorProps) {
@@ -470,7 +474,7 @@ export function PlateEditor({
     const update = () => {
       const top = frame.getBoundingClientRect().top + window.scrollY
       setMaxHeight(
-        Math.round(Math.max(window.innerHeight - top - BOTTOM_GAP, window.innerHeight / 2)),
+        Math.round(Math.max(window.innerHeight - top - spaceBelow, window.innerHeight / 2)),
       )
     }
     update()
@@ -482,7 +486,7 @@ export function PlateEditor({
       observer.disconnect()
       window.removeEventListener('resize', update)
     }
-  }, [])
+  }, [spaceBelow])
 
   /** Below the box, or above it when it sits in the lower half of what's on screen. */
   function menuPosition(box: Box): CSSProperties {

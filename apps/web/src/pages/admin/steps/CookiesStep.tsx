@@ -148,32 +148,12 @@ export function CookiesStep({
   return (
     <div className="space-y-4">
       <h2 className="sr-only">Cookies</h2>
-      <div className="flex items-center gap-3">
-        <Stepper
-          label="Plates"
-          steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
-          selected={category.id}
-          onSelect={goTo}
-          // The button closes the row on the right, so the tabs stop short of the edge.
-          className="min-w-0 flex-1 me-0! pe-0!"
-        />
-        {nextCategory ? (
-          <Button
-            variant={plateIsDone ? 'primary' : 'secondary'}
-            onClick={() => goTo(nextCategory.id)}
-            aria-label={`Next plate: ${nextCategory.name}`}
-          >
-            Next<span className="hidden sm:inline"> plate: {nextCategory.name}</span> →
-          </Button>
-        ) : (
-          <Button
-            variant={plateIsDone ? 'primary' : 'secondary'}
-            onClick={() => setSearchParams({ step: 'voting' }, { replace: true })}
-          >
-            Next: Voting →
-          </Button>
-        )}
-      </div>
+      <Stepper
+        label="Plates"
+        steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
+        selected={category.id}
+        onSelect={goTo}
+      />
       {roster.length === 0 ? (
         <Alert tone="warning" title="No bakers yet">
           <Link to="?step=bakers">Add the event's bakers</Link> to tag each cookie. You can box
@@ -197,6 +177,8 @@ export function CookiesStep({
           onChange={save}
           tapToSelect={tapToSelect}
           label={`${category.name} plate`}
+          // Leaves room for the Next button under the photo.
+          spaceBelow={84}
           banner={<div aria-live="polite">{banner}</div>}
           tags={roster.length > 0 ? tags : undefined}
           onCreate={(cookie) => {
@@ -231,6 +213,23 @@ export function CookiesStep({
           Add one in the Categories step, then come back to box its cookies.
         </Alert>
       )}
+      <div className="flex justify-end">
+        {nextCategory ? (
+          <Button
+            variant={plateIsDone ? 'primary' : 'secondary'}
+            onClick={() => goTo(nextCategory.id)}
+          >
+            Next plate: {nextCategory.name} →
+          </Button>
+        ) : (
+          <Button
+            variant={plateIsDone ? 'primary' : 'secondary'}
+            onClick={() => setSearchParams({ step: 'voting' }, { replace: true })}
+          >
+            Next: Voting →
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

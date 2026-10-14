@@ -6,6 +6,7 @@ import {
 } from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
+import { AppBarContent } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { Stepper } from '../../components/Stepper/Stepper.tsx'
@@ -61,31 +62,24 @@ export function EventSetupPage() {
 
   return (
     <section className="space-y-4">
-      {/* Title and step tabs share a row on wide screens, so a step's work starts higher. */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
-        <div className="flex min-w-0 items-center gap-1 lg:flex-1">
-          <Link
-            to="/"
-            aria-label="All events"
-            className="-ml-2 grid size-11 shrink-0 place-items-center rounded-control text-2xl font-bold text-primary hover:bg-surface-muted"
-          >
-            <span aria-hidden="true">←</span>
-          </Link>
-          <h1 className="truncate text-2xl" title={event.data.name}>
-            {event.data.name}
-          </h1>
-        </div>
-        <Stepper
-          steps={SETUP_STEPS.map((id) => ({
-            id,
-            label: SETUP_STEP_LABELS[id],
-            done: progress.done[id],
-          }))}
-          selected={selected}
-          onSelect={(step) => setSearchParams({ step }, { replace: true })}
-          className="lg:mx-0 lg:shrink-0 lg:px-0"
-        />
-      </div>
+      {/* The event's name sits in the red bar, where the cookie leads back to all events. */}
+      <AppBarContent>
+        <span aria-hidden="true" className="opacity-60">
+          ›
+        </span>
+        <h1 data-title className="truncate font-sans text-lg font-bold" title={event.data.name}>
+          {event.data.name}
+        </h1>
+      </AppBarContent>
+      <Stepper
+        steps={SETUP_STEPS.map((id) => ({
+          id,
+          label: SETUP_STEP_LABELS[id],
+          done: progress.done[id],
+        }))}
+        selected={selected}
+        onSelect={(step) => setSearchParams({ step }, { replace: true })}
+      />
       {selected === 'bakers' ? (
         <BakersStep eventId={eventId} setup={setup.data} />
       ) : selected === 'categories' ? (
