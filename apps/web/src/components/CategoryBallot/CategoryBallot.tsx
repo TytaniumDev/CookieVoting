@@ -13,7 +13,7 @@ import { MedalButtons } from '../MedalButtons/MedalButtons.tsx'
 
 export interface CategoryBallotProps {
   photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
-  /** In display order; numbered #1…#n. */
+  /** In display order. Screen readers number them 1…n; no number is shown. */
   cookies: readonly Cookie[]
   /** The voter's medals so far (`emptyPlaces` to start). */
   places: CategoryPlaces

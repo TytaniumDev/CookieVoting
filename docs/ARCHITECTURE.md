@@ -151,9 +151,11 @@ Types for ballots and results are defined in `packages/shared/src/types.ts`.
 
 - **Cookie order and numbers.** The `cookies` array order is the display order.
   The plate editor sorts it into reading order (top-to-bottom, left-to-right)
-  on save. Admins and the results see numbers `#1…#n` in that order. Each voter
-  sees each category's cookies in their own shuffled order, numbered `#1…#n` as
-  shown (owner request, 2026-10-14), so no cookie gains from going first.
+  on save. Only admins see numbers (`#1…#n` in that order, in the plate editor).
+  Voters and the results page show no cookie numbers; the results name the
+  baker (owner decision, 2026-10-14). Each voter sees each category's cookies in
+  their own shuffled order, so no cookie gains from going first (owner request).
+  Screen-reader labels still say "Cookie 3" by position on the voter's screen.
   `stableShuffle` (`packages/shared`) seeds it with the voter's uid and the
   category id, so it's the same on every visit, and orders by a hash of each
   cookie's id, so adding or deleting a cookie mid-vote doesn't move the others.
