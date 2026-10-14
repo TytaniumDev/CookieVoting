@@ -65,7 +65,7 @@ export function AdminHomePage() {
   const events = useEvents()
 
   return (
-    <section className="space-y-6">
+    <section className="max-w-readable space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl">Your events</h1>
         <div className="flex gap-2">

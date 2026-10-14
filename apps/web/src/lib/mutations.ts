@@ -74,7 +74,7 @@ export async function addCategory(
   eventId: string,
   name: string,
   order: number,
-  photo: PlatePhoto | null = null,
+  photo: PlatePhoto,
 ): Promise<string> {
   const categoryRef = doc(collection(db, paths.categories(eventId)))
   const category: CategoryDoc = { name: name.trim(), order, photo, cookies: [] }

@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 export interface StepperStep<Id extends string = string> {
   id: Id
   label: string
@@ -15,8 +17,8 @@ export interface StepperProps<Id extends string = string> {
 
 /**
  * The admin setup steps. Every step can be opened at any time (owner decision Q1); ticks
- * show which are done. Scrolls sideways on narrow phones rather than wrapping; wraps on
- * wider screens, which have room for every step.
+ * show which are done. One row that never wraps: it scrolls sideways, edge to edge, only
+ * when the screen is too narrow for every step, keeping the selected one in view.
  */
 export function Stepper<Id extends string>({
   steps,
@@ -25,12 +27,27 @@ export function Stepper<Id extends string>({
   label = 'Setup steps',
   className = '',
 }: StepperProps<Id>) {
+  const nav = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const row = nav.current
+    const current = row?.querySelector<HTMLElement>('[aria-current]')
+    if (!row || !current) return
+    const start = current.offsetLeft - row.scrollLeft
+    const end = start + current.offsetWidth
+    const gutter = parseFloat(getComputedStyle(row).paddingLeft)
+    if (start < gutter || end > row.clientWidth - gutter) {
+      row.scrollTo({ left: current.offsetLeft - gutter, behavior: 'smooth' })
+    }
+  }, [selected])
+
   return (
     <nav
+      ref={nav}
       aria-label={label}
-      className={`relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0 ${className}`}
+      className={`relative -mx-(--gutter) overflow-x-auto px-(--gutter) ${className}`}
     >
-      <ol className="flex min-w-max gap-2 sm:min-w-0 sm:flex-wrap">
+      <ol className="flex w-max gap-2">
         {steps.map((step, index) => {
           const isSelected = step.id === selected
           return (

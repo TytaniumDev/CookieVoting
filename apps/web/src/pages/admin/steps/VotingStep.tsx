@@ -68,7 +68,7 @@ export function VotingStep({ event, progress }: { event: Event; progress: SetupP
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-readable space-y-4">
       <Card tone="festive" className="space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-2xl">Voting is open</h2>

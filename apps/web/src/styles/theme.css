@@ -77,6 +77,9 @@
   --font-display: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
   --font-sans: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+  /* Layout: pages span the screen; text, forms and lists stop at a readable width */
+  --container-readable: 48rem;
+
   /* Shape */
   --radius-card: 1rem;
   --radius-control: 0.75rem;

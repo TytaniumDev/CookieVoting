@@ -4,6 +4,21 @@
 @import './theme.css';
 
 @layer base {
+  /*
+   * The page's side padding. Rows that scroll sideways (e.g. Stepper) pull out by the
+   * same amount so they run to the screen edge on phones.
+   */
+  :root {
+    --gutter: 1rem;
+
+    @media (width >= 40rem) {
+      --gutter: 1.5rem;
+    }
+    @media (width >= 64rem) {
+      --gutter: 2rem;
+    }
+  }
+
   html {
     /* Keep the cream background behind iOS overscroll. */
     @apply bg-background;

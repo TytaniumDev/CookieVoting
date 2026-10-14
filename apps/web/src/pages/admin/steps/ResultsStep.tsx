@@ -10,7 +10,7 @@ export function ResultsStep({ event }: { event: Event }) {
   const status = useStatusChange(event.id, event.status)
 
   return (
-    <Card className="space-y-4">
+    <Card className="max-w-readable space-y-4">
       <h2 className="text-2xl">Results</h2>
       {event.status === 'results' ? (
         <>

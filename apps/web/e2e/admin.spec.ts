@@ -1,6 +1,7 @@
 import { iou, type Box } from '@cookie-voting/shared'
 import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
+import { addCategory, expectCategoryNames, nameCategory } from './categories.ts'
 import { signInAs } from './signIn.ts'
 
 test('people who are not admins are turned away', async ({ page }) => {
@@ -56,24 +57,32 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await page.getByLabel('Event name').fill(eventName)
   await page.getByRole('button', { name: 'Create event' }).click()
   await page.getByRole('button', { name: /^categories/i }).click()
-  // The stepper scrolls sideways on phones; the page itself must not.
+  // The steps stay in one row: it fits on a desktop and scrolls sideways on phones,
+  // without the page itself scrolling.
+  const stepper = page.getByRole('navigation', { name: 'Setup steps' })
+  const first = (await stepper.getByRole('button').first().boundingBox())!
+  const last = (await stepper.getByRole('button').last().boundingBox())!
+  const row = (await stepper.boundingBox())!
+  expect(last.y).toBe(first.y)
+  expect(last.x + last.width <= row.x + row.width).toBe(testInfo.project.name === 'desktop')
   expect(await page.evaluate('document.documentElement.scrollWidth')).toBeLessThanOrEqual(
     page.viewportSize()?.width ?? 0,
   )
 
-  // A name typed by hand, and one suggested from past events (seeded).
-  await page.getByLabel('Category name').fill('Thumbprints')
-  await page.getByRole('button', { name: 'Add category' }).click()
-  await page.getByRole('button', { name: '+ Candy Canes' }).click()
-  const headings = page.getByRole('list', { name: 'Categories' }).getByRole('heading')
-  await expect(headings).toHaveText(['Thumbprints', 'Candy Canes'])
-
-  // Upload a real 12 MP phone photo; it's shrunk and stored, then shown.
+  // Upload two real 12 MP phone photos; each is shrunk, stored and becomes a plate.
   await page
-    .getByLabel('Add photo for Thumbprints')
-    .setInputFiles('../../fixtures/plates/5-cookies_PXL_20251215_000827596.jpg')
-  await expect(page.getByRole('button', { name: /replace photo for thumbprints/i })).toBeAttached()
-  await expect(page.getByText('Needs a photo', { exact: true })).toHaveCount(1)
+    .getByLabel('Upload plate photos')
+    .setInputFiles([
+      '../../fixtures/plates/5-cookies_PXL_20251215_000827596.jpg',
+      '../../fixtures/plates/5-cookies_candy-canes.jpg',
+    ])
+  await expectCategoryNames(page, ['Plate 1', 'Plate 2'])
+
+  // Name them; each name saves itself and survives a reload.
+  await nameCategory(page, 0, 'Thumbprints')
+  await nameCategory(page, 1, 'Candy Canes')
+  await page.reload()
+  await expectCategoryNames(page, ['Thumbprints', 'Candy Canes'])
 
   // Reorder with the keyboard: lift Candy Canes, move it up, drop.
   // dnd-kit announces each step in a live region; wait for it so keys aren't dropped.
@@ -85,14 +94,14 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await expect(announcer).toContainText('Candy Canes moved to position 1')
   await page.keyboard.press('Space')
   await expect(announcer).toContainText('Candy Canes dropped at position 1')
-  await expect(headings).toHaveText(['Candy Canes', 'Thumbprints'])
+  await expectCategoryNames(page, ['Candy Canes', 'Thumbprints'])
   await page.reload()
-  await expect(headings).toHaveText(['Candy Canes', 'Thumbprints'])
+  await expectCategoryNames(page, ['Candy Canes', 'Thumbprints'])
 
   // Delete asks first.
   await page.getByRole('button', { name: 'Delete Candy Canes' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
-  await expect(headings).toHaveText(['Thumbprints'])
+  await expectCategoryNames(page, ['Thumbprints'])
 })
 
 test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
@@ -102,12 +111,7 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   await page.getByLabel('Event name').fill(eventName)
   await page.getByRole('button', { name: 'Create event' }).click()
   await page.getByRole('button', { name: /^categories/i }).click()
-  await page.getByLabel('Category name').fill('Stars')
-  await page.getByRole('button', { name: 'Add category' }).click()
-  await page
-    .getByLabel('Add photo for Stars')
-    .setInputFiles('../../fixtures/plates/4-cookies_stars.jpg')
-  await expect(page.getByRole('button', { name: /replace photo for stars/i })).toBeAttached()
+  await addCategory(page, 'Stars', '4-cookies_stars.jpg')
 
   await page.getByRole('button', { name: /^cookies/i }).click()
   const plate = page.getByRole('group', { name: 'Stars plate' })
@@ -161,12 +165,7 @@ test('tapping each cookie boxes it', async ({ page }, testInfo) => {
   await page.getByLabel('Event name').fill(`E2E Tap ${testInfo.project.name} ${Date.now()}`)
   await page.getByRole('button', { name: 'Create event' }).click()
   await page.getByRole('button', { name: /^categories/i }).click()
-  await page.getByLabel('Category name').fill('Candy Canes')
-  await page.getByRole('button', { name: 'Add category' }).click()
-  await page
-    .getByLabel('Add photo for Candy Canes')
-    .setInputFiles(`../../fixtures/plates/${photo}.jpg`)
-  await expect(page.getByRole('button', { name: /replace photo for candy canes/i })).toBeAttached()
+  await addCategory(page, 'Candy Canes', `${photo}.jpg`)
 
   await page.getByRole('button', { name: /^cookies/i }).click()
   await expect(page.getByText('Tap a cookie to box it')).toBeVisible({ timeout: 60_000 })
@@ -220,12 +219,7 @@ test('an admin assigns bakers, opens voting and then results', async ({ page }, 
     await page.getByRole('button', { name: new RegExp(`^add ${name}$`, 'i') }).click()
   }
   await page.getByRole('button', { name: /^categories/i }).click()
-  await page.getByLabel('Category name').fill('Stars')
-  await page.getByRole('button', { name: 'Add category' }).click()
-  await page
-    .getByLabel('Add photo for Stars')
-    .setInputFiles('../../fixtures/plates/4-cookies_stars.jpg')
-  await expect(page.getByRole('button', { name: /replace photo for stars/i })).toBeAttached()
+  await addCategory(page, 'Stars', '4-cookies_stars.jpg')
   await page.getByRole('button', { name: /^cookies/i }).click()
   await page.getByRole('button', { name: 'Add cookie' }).click()
   await page.getByRole('button', { name: 'Add cookie' }).click()
