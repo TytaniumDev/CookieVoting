@@ -32,6 +32,12 @@ export const routes: RouteObject[] = [
             }),
           },
           {
+            path: '/admin/admins',
+            lazy: async () => ({
+              Component: (await import('../pages/admin/AdminsPage.tsx')).AdminsPage,
+            }),
+          },
+          {
             path: '/admin/events/:eventId',
             lazy: async () => ({
               Component: (await import('../pages/admin/EventSetupPage.tsx')).EventSetupPage,

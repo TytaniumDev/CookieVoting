@@ -90,7 +90,10 @@ describe('admins', () => {
 
   it('lets only admins add admins', async () => {
     await assertSucceeds(
-      setDoc(doc(admin(), 'admins/elf@example.com'), { addedAt: serverTimestamp() }),
+      setDoc(doc(admin(), 'admins/elf@example.com'), {
+        addedAt: serverTimestamp(),
+        addedBy: ADMIN_EMAIL,
+      }),
     )
     await assertFails(
       setDoc(doc(googleUser(), 'admins/grinch@example.com'), { addedAt: serverTimestamp() }),
@@ -98,6 +101,58 @@ describe('admins', () => {
     await assertFails(
       setDoc(doc(unverifiedAdmin(), 'admins/elf@example.com'), { addedAt: serverTimestamp() }),
     )
+  })
+
+  it('keeps admin ids lowercase and addedAt honest', async () => {
+    await assertFails(
+      setDoc(doc(admin(), 'admins/Elf@example.com'), { addedAt: serverTimestamp() }),
+    )
+    await assertFails(setDoc(doc(admin(), 'admins/elf@example.com'), { addedAt: Timestamp.now() }))
+  })
+
+  it('lets admins remove other admins, but not themselves', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore(), 'admins/elf@example.com'), { addedAt: Timestamp.now() }),
+    )
+    await assertFails(deleteDoc(doc(googleUser(), 'admins/elf@example.com')))
+    await assertFails(deleteDoc(doc(adminWithCapitalisedEmail(), `admins/${ADMIN_EMAIL}`)))
+    await assertSucceeds(deleteDoc(doc(admin(), 'admins/elf@example.com')))
+  })
+})
+
+describe('admin requests', () => {
+  const request = { requestedAt: serverTimestamp(), name: 'The Grinch' }
+
+  it('lets a Google user ask for themselves only', async () => {
+    await assertSucceeds(setDoc(doc(googleUser(), 'adminRequests/grinch@example.com'), request))
+    await assertFails(setDoc(doc(googleUser(), 'adminRequests/elf@example.com'), request))
+    await assertFails(setDoc(doc(voter(), 'adminRequests/grinch@example.com'), request))
+    await assertFails(
+      setDoc(doc(googleUser(), 'adminRequests/grinch@example.com'), {
+        ...request,
+        approved: true,
+      }),
+    )
+    await assertFails(
+      setDoc(doc(googleUser(), 'adminRequests/grinch@example.com'), {
+        requestedAt: Timestamp.now(),
+      }),
+    )
+  })
+
+  it('shows requests to admins and the requester, and lets either delete them', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore(), 'adminRequests/grinch@example.com'), {
+        requestedAt: Timestamp.now(),
+      }),
+    )
+    await assertSucceeds(getDoc(doc(admin(), 'adminRequests/grinch@example.com')))
+    await assertSucceeds(getDoc(doc(googleUser(), 'adminRequests/grinch@example.com')))
+    await assertFails(getDoc(doc(voter(), 'adminRequests/grinch@example.com')))
+    await assertFails(
+      updateDoc(doc(googleUser(), 'adminRequests/grinch@example.com'), { name: 'x' }),
+    )
+    await assertSucceeds(deleteDoc(doc(admin(), 'adminRequests/grinch@example.com')))
   })
 })
 

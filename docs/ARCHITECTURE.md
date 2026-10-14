@@ -116,7 +116,10 @@ and individual ballots are never public.
 
 ```
 admins/{email}                          allowlist; doc id = lowercase email
-  { addedAt }
+  { addedAt, addedBy? }
+
+adminRequests/{email}                   asking to be an admin          admin + requester
+  { requestedAt, name? }
 
 bakers/{bakerId}                        global roster                  admin only
   { name, createdAt }
@@ -159,7 +162,12 @@ Firestore rules (`firebase/firestore.rules`, tested in `firebase/tests/`):
 - `isAdmin()` means a signed-in user with a verified email that has a doc in
   `admins/`.
 - `admins/{email}`: a user may read their own doc (so the UI can check admin
-  status). Admins may read and write.
+  status). Admins may add others (lowercase id, `addedAt` = server time) and
+  remove anyone but themselves, so the list is never left empty.
+- `adminRequests/{email}`: a signed-in Google user with a verified email may
+  create only their own (`requestedAt` = server time, optional `name`); they
+  and admins may read or delete it. Approving is one batch: create
+  `admins/{email}`, delete the request.
 - `bakers/**`, `events/*/private/**`: admins only.
 - `events/*` and `events/*/categories/*`: public read, admin write. Admins
   may set any status in any order (owner decision, 2026-10-13: "just have
@@ -244,8 +252,12 @@ another admin's account, with everything kept in sync.
   hooks, so a change from any device or admin shows up on the others within about
   a second, with no reload. The URL carries the step and plate
   (`?step=cookies&category=…`), so sending the link hands over the exact place.
-- **Co-admins** are more docs in `admins/` (SETUP.md §3); there is no per-event
-  ownership, so every admin sees and edits every event.
+- **Co-admins** are more docs in `admins/`; there is no per-event ownership, so
+  every admin sees and edits every event. Owner decision (2026-10-14), request +
+  approve without email: someone signs in with Google, taps **Ask to be an
+  admin**, and every admin sees a banner on the dashboard and the request on the
+  **Admins** page, where they approve or decline it. The asker's screen lets them
+  in the moment they're approved. Admins can also add someone by email there.
 - **Edits merge rather than overwrite.** Most writes touch single fields
   (`assignments.{category}.{cookie}`, a category's name, the event status) and
   can't clash. A plate's cookies are one array, so `saveCookies` runs a

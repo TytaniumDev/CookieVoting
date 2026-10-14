@@ -1,5 +1,7 @@
 import {
   paths,
+  type AdminDoc,
+  type AdminRequestDoc,
   type BakerDoc,
   type BallotDoc,
   type CategoryDoc,
@@ -27,6 +29,10 @@ import { useSubscription, type Subscribe, type Subscription } from './useSubscri
 /** A document's data plus its id. */
 export type WithId<T> = T & { id: string }
 
+/** An admin; `id` is their lowercase email. */
+export type Admin = WithId<AdminDoc<Timestamp>>
+/** Someone asking to be an admin; `id` is their lowercase email. */
+export type AdminRequest = WithId<AdminRequestDoc<Timestamp>>
 export type Event = WithId<EventDoc<Timestamp>>
 export type Category = WithId<CategoryDoc>
 export type Baker = WithId<BakerDoc<Timestamp>>
@@ -54,6 +60,11 @@ function converter<T extends object>(): FirestoreDataConverter<WithId<T>, T> {
 }
 
 export const refs = {
+  admins: () => collection(db, paths.admins).withConverter(converter<AdminDoc<Timestamp>>()),
+  adminRequests: () =>
+    collection(db, paths.adminRequests).withConverter(converter<AdminRequestDoc<Timestamp>>()),
+  adminRequest: (email: string) =>
+    doc(db, paths.adminRequest(email)).withConverter(converter<AdminRequestDoc<Timestamp>>()),
   events: () => collection(db, paths.events).withConverter(converter<EventDoc<Timestamp>>()),
   event: (eventId: string) =>
     doc(db, paths.event(eventId)).withConverter(converter<EventDoc<Timestamp>>()),
@@ -105,6 +116,27 @@ export function useCategories(eventId: string): Subscription<Category[]> {
   return useSubscription(
     watchQuery(query(refs.categories(eventId), orderBy('order'))),
     `categories/${eventId}`,
+  )
+}
+
+/** Everyone on the admin list, by email (admin only). */
+export function useAdmins(): Subscription<Admin[]> {
+  return useSubscription(watchQuery(refs.admins()), 'admins')
+}
+
+/** Requests to become an admin, oldest first (admin only). */
+export function useAdminRequests(): Subscription<AdminRequest[]> {
+  return useSubscription(
+    watchQuery(query(refs.adminRequests(), orderBy('requestedAt'))),
+    'adminRequests',
+  )
+}
+
+/** The signed-in Google user's own request to become an admin; pass `null` until known. */
+export function useOwnAdminRequest(email: string | null): Subscription<AdminRequest | null> {
+  return useSubscription(
+    email === null ? null : watchDoc(refs.adminRequest(email)),
+    `adminRequest/${email}`,
   )
 }
 

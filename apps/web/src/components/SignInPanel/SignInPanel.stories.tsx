@@ -5,7 +5,7 @@ import { SignInPanel } from './SignInPanel.tsx'
 const meta = {
   component: SignInPanel,
   parameters: { layout: 'padded' },
-  args: { onSignIn: fn(), onSignOut: fn() },
+  args: { onSignIn: fn(), onSignOut: fn(), onRequestAccess: fn() },
 } satisfies Meta<typeof SignInPanel>
 
 export default meta
@@ -26,6 +26,22 @@ export const NotAnAdmin: Story = {
     await expect(canvas.getByText('grinch@example.com')).toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: /sign out/i }))
     await expect(args.onSignOut).toHaveBeenCalled()
+  },
+}
+
+export const AskToBeAdmin: Story = {
+  args: { notAdminEmail: 'elf@example.com' },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Ask to be an admin' }))
+    await expect(args.onRequestAccess).toHaveBeenCalled()
+  },
+}
+
+export const RequestSent: Story = {
+  args: { notAdminEmail: 'elf@example.com', requested: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Request sent')).toBeVisible()
+    await expect(canvas.queryByRole('button', { name: 'Ask to be an admin' })).toBeNull()
   },
 }
 

@@ -9,6 +9,8 @@ import type { BakerStanding, BallotRankings, CategoryResult, Cookie, EventStatus
 export const paths = {
   admins: 'admins',
   admin: (email: string) => `admins/${email.toLowerCase()}`,
+  adminRequests: 'adminRequests',
+  adminRequest: (email: string) => `adminRequests/${email.toLowerCase()}`,
   bakers: 'bakers',
   baker: (bakerId: string) => `bakers/${bakerId}`,
   events: 'events',
@@ -25,6 +27,18 @@ export const paths = {
 /** `admins/{email}`: the admin allowlist. */
 export interface AdminDoc<T> {
   addedAt: T
+  /** Email of the admin who added this one; absent for admins added in the console. */
+  addedBy?: string
+}
+
+/**
+ * `adminRequests/{email}`: a signed-in Google user asking to become an admin. An admin
+ * approves (adds them to `admins/` and deletes this) or declines (deletes this).
+ */
+export interface AdminRequestDoc<T> {
+  requestedAt: T
+  /** Their Google display name, to help admins recognise them. */
+  name?: string
 }
 
 /** `bakers/{bakerId}`: the global roster. */

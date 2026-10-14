@@ -25,7 +25,29 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (signedIn() && request.auth.token.email != null
             && request.auth.token.email.lower() == email);
-      allow write: if isAdmin();
+      // Admins add admins from the Admins page. Ids are lowercase emails; an admin can't
+      // remove themselves, so there's always at least one admin left.
+      allow create, update: if isAdmin()
+        && email == email.lower()
+        && request.resource.data.addedAt == request.time;
+      allow delete: if isAdmin() && email != request.auth.token.email.lower();
+    }
+
+    // Anyone signed in with Google may ask to become an admin, as themselves. Admins see
+    // every request and approve (adding admins/ and deleting the request) or decline.
+    match /adminRequests/{email} {
+      function isRequester() {
+        return signedIn()
+          && request.auth.token.email_verified == true
+          && request.auth.token.email != null
+          && request.auth.token.email.lower() == email;
+      }
+      allow read, delete: if isAdmin() || isRequester();
+      allow create: if isRequester()
+        && request.resource.data.keys().hasOnly(['requestedAt', 'name'])
+        && request.resource.data.requestedAt == request.time
+        && (!('name' in request.resource.data)
+            || (request.resource.data.name is string && request.resource.data.name.size() <= 100));
     }
 
     match /bakers/{bakerId} {
