@@ -169,7 +169,7 @@ four header layouts are in the Artifact "Cookies Step Header Mocks".
 
 - [x] Remove the zoom row (−, +, Fit, Add cookie), the cookie count and the Delete cookie button
 - [x] A tap adds a box where tap-to-select can't; the scroll wheel zooms and dragging pans
-- [x] Header layout C from the mocks: title and step tabs share a row, prompt on the photo, Next plate beside the plate tabs; the photo fills the rest of the window
+- [x] Event name in the red bar, steps as a progress stepper, plates as photo thumbnails, prompt on the photo, Next plate under it; the photo fills the rest of the window
 
 ---
 
@@ -469,11 +469,13 @@ until real-device testing (useful from phase 3).
   Drag-to-draw is gone: a tap adds a box to fit by hand when tap-to-select finds
   nothing, and dragging empty photo pans. Hints float over the photo. A
   focus-only Add cookie button keeps a keyboard way to add a box.
-- Built mock C (recommended; owner's pick pending at the time): `EventSetupPage`
-  puts the title (truncated, with a ← link) and step tabs on one row from `lg`;
-  `CookiesStep` drops its heading text, moves Next plate into the plate row and
-  passes the prompt to `PlateEditor`'s `banner`; `PlateEditor` sizes the photo to
-  the window below it. At 1920 × 960 the photo is 671 px tall and nothing
-  scrolls; at 1366 × 680 nothing scrolls either.
-- If the owner picks another mock, only `EventSetupPage` (A, D) or the banner
-  (B) change.
+- Two rounds of mocks ("Cookies Step Header Mocks", then "Cookies Step
+  Navigation Mocks"). The owner mixed them: event name in the red bar (D),
+  prompt on the photo (C), photo fits the window (A), steps as a progress
+  stepper (round 2, option 2) and plates as photo thumbnails (round 2, option 1).
+  He found steps, plates and bakers sharing one chip style "a big mess", and
+  didn't want Next plate in the plate row.
+- `AppBarContent` portals page content into the red bar; `Stepper` is now the
+  progress line (phones show only the current step's name); `PlateTabs` is new.
+  At 1920 × 960 the photo is 596 px tall and nothing scrolls; at 375 px the
+  whole step fits in 740 px.

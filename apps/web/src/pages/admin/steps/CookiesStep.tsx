@@ -7,8 +7,8 @@ import { BakerMenu } from '../../../components/BakerMenu/BakerMenu.tsx'
 import { Button } from '../../../components/Button/Button.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
 import { PlateEditor, type TapToSelect } from '../../../components/PlateEditor/PlateEditor.tsx'
+import { PlateTabs } from '../../../components/PlateTabs/PlateTabs.tsx'
 import { Spinner } from '../../../components/Spinner/Spinner.tsx'
-import { Stepper } from '../../../components/Stepper/Stepper.tsx'
 import { useCookieFinder } from '../../../lib/cookieFinder/useCookieFinder.ts'
 import { useBakers, type Category, type Setup } from '../../../lib/data.ts'
 import { useShowError } from '../../../lib/errors.ts'
@@ -148,9 +148,13 @@ export function CookiesStep({
   return (
     <div className="space-y-4">
       <h2 className="sr-only">Cookies</h2>
-      <Stepper
-        label="Plates"
-        steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
+      <PlateTabs
+        plates={categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          photo: c.photo,
+          done: plateDone(c),
+        }))}
         selected={category.id}
         onSelect={goTo}
       />

@@ -357,9 +357,11 @@ The plate editor shows the photo with cookie boxes overlaid:
   The photo fills the window below the rows above it (at least half the window
   height), so a 1080p laptop shows the whole step without scrolling; on short
   screens `touch-action: none` over the photo still leaves page above and below
-  it to scroll by. The event title shares a row with the step tabs on wide
-  screens, the whose-turn prompt floats on the photo, and Next plate ends the
-  plate tabs row (owner picked mock C, 2026-10-14). Handles,
+  it to scroll by. The event's name sits in the red app bar (`AppBarContent`
+  portals into `AppLayout`; the cookie and "Cookie Voting" go home), the setup
+  steps are a progress stepper (`Stepper`), plates are photo thumbnails
+  (`PlateTabs`), bakers stay round chips, the whose-turn prompt floats on the
+  photo and Next plate sits under it (owner's picks, 2026-10-14). Handles,
   numbers and outlines are counter-scaled to stay finger-sized at any zoom.
   Keyboard users Tab to a box: arrows move it, Shift + arrows resize it, Delete
   removes it, and an **Add cookie** button that only shows when focused places a
