@@ -56,8 +56,18 @@ test('every voter screen is accessible and fits 375 px', async ({ page }) => {
   await checkScreen(page, 'cookie votes')
   await page.getByRole('button', { name: 'Close' }).click()
   await page.getByRole('button', { name: '📜 All results' }).click()
-  await page.getByRole('heading', { name: 'Every baker' }).waitFor()
+  await page.getByRole('heading', { name: 'Bakers', exact: true }).waitFor()
   await checkScreen(page, 'all results')
+  await page
+    .getByRole('button', { name: /See their cookies/ })
+    .first()
+    .click()
+  await page
+    .getByRole('dialog')
+    .getByText(/of \d+ bakers/)
+    .waitFor()
+  await checkScreen(page, 'baker cookies')
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
 
   await page.emulateMedia({ reducedMotion: null })
   await page.goto('/event/holiday-party-2026/results')

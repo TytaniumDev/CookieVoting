@@ -1,8 +1,17 @@
-import type { Cookie, CookieStanding, PlatePhoto } from '@cookie-voting/shared'
+import {
+  bakerCookies,
+  type Cookie,
+  type CookieStanding,
+  type PlatePhoto,
+} from '@cookie-voting/shared'
 import { useCallback, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { AppBarContent } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
+import {
+  BakerBreakdown,
+  type BakerBreakdownProps,
+} from '../../components/BakerBreakdown/BakerBreakdown.tsx'
 import { BakerLeaderboard } from '../../components/BakerLeaderboard/BakerLeaderboard.tsx'
 import { buttonClasses } from '../../components/Button/buttonClasses.ts'
 import { Card } from '../../components/Card/Card.tsx'
@@ -40,10 +49,13 @@ function picture(plate: Plate | undefined, cookieId: string): ReactNode {
   return <CookieThumb photo={plate.photo} cookie={cookie} alt="" round className="w-full" />
 }
 
+const BAKER_HINT = { label: 'See their cookies', caption: 'Tap a baker to see their cookies' }
+
 /**
  * The results (PRD §9), festive (owner decision 2026-10-14): one slide per category with
  * its top three as ornaments on a garland, opened by a timed reveal; then the top bakers;
- * then every cookie and baker in one scrolling list. Tapping a cookie shows its votes.
+ * then every baker and every cookie in one scrolling list. Tapping a cookie shows its votes;
+ * tapping a baker lists their cookies and points, and each of those shows its votes too.
  * Updates live as late votes come in. Before results open it says so, and switches over
  * by itself when they do.
  */
@@ -58,6 +70,7 @@ export function ResultsPage() {
   // Slides whose reveal has played (or been skipped): they stay open.
   const [finished, setFinished] = useState<ReadonlySet<string>>(new Set())
   const [selected, setSelected] = useState<{ categoryId: string; cookieId: string } | null>(null)
+  const [selectedBaker, setSelectedBaker] = useState<string | null>(null)
   const finish = useCallback(
     (id: string) => setFinished((done) => (done.has(id) ? done : new Set(done).add(id))),
     [],
@@ -155,6 +168,22 @@ export function ResultsPage() {
     }
   }
   const bakerTies = tiedRanks(bakers)
+  const cookiesByBaker = new Map(
+    bakers.map((b) => [b.bakerId, bakerCookies(resultCategories, b.bakerId)]),
+  )
+  const cookiesOf = (bakerId: string) => cookiesByBaker.get(bakerId) ?? []
+  const bakerPicture = (bakerId: string) => {
+    const best = bestCookie.get(bakerId)
+    return best ? picture(plates.get(best.categoryId), best.cookieId) : picture(undefined, '')
+  }
+  const leaderboardImages = new Map(
+    bakers.map((b) => [
+      b.bakerId,
+      <span key={b.bakerId} className="block w-14 shrink-0">
+        {bakerPicture(b.bakerId)}
+      </span>,
+    ]),
+  )
   const bakerItems: OrnamentItem[] = bakers.slice(0, 3).map((baker) => {
     const best = bestCookie.get(baker.bakerId)
     return {
@@ -206,6 +235,8 @@ export function ResultsPage() {
           items={bakerItems}
           mode={modeOf('top-bakers')}
           onDone={() => finish('top-bakers')}
+          onSelect={setSelectedBaker}
+          selectHint={BAKER_HINT}
           empty="No bakers yet."
         />
       ),
@@ -219,6 +250,12 @@ export function ResultsPage() {
             All results
           </h2>
           <div className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1 pb-4 text-ink *:shrink-0">
+            <BakerLeaderboard
+              bakers={bakers}
+              cookieCount={(bakerId) => cookiesOf(bakerId).length}
+              image={(baker) => leaderboardImages.get(baker.bakerId)}
+              onSelect={(baker) => setSelectedBaker(baker.bakerId)}
+            />
             {resultCategories.map((result) => (
               <CategoryResults
                 key={result.categoryId}
@@ -229,7 +266,6 @@ export function ResultsPage() {
                 }
               />
             ))}
-            <BakerLeaderboard bakers={bakers} />
           </div>
         </section>
       ),
@@ -251,6 +287,37 @@ export function ResultsPage() {
       points: standing.points,
       votes: standing.votes,
       voters: category.ballotCount ?? ballotCount,
+    }
+  }
+
+  const bakerBreakdown = (): BakerBreakdownProps['baker'] => {
+    const baker = bakers.find((b) => b.bakerId === selectedBaker)
+    if (!baker) return null
+    return {
+      name: baker.name,
+      rank: baker.rank,
+      tied: bakerTies.has(baker.rank),
+      bakers: bakers.length,
+      points: baker.points,
+      picture: bakerPicture(baker.bakerId),
+      cookies: cookiesOf(baker.bakerId).map(
+        ({ categoryId, categoryName, categorySize, standing }) => {
+          const category = resultCategories.find((c) => c.categoryId === categoryId)
+          return {
+            id: standing.cookieId,
+            category: categoryName,
+            rank: standing.rank,
+            tied: category ? tiedRanks(category.standings).has(standing.rank) : false,
+            categorySize,
+            points: standing.points,
+            picture: picture(plates.get(categoryId), standing.cookieId),
+            // Results computed before vote counts were kept have no breakdown to show.
+            onSelect: standing.votes
+              ? () => setSelected({ categoryId, cookieId: standing.cookieId })
+              : undefined,
+          }
+        },
+      ),
     }
   }
 
@@ -277,6 +344,8 @@ export function ResultsPage() {
         onCurrentChange={go}
         className="min-h-0 flex-1"
       />
+      <BakerBreakdown baker={bakerBreakdown()} onClose={() => setSelectedBaker(null)} />
+      {/* After the baker's pop-up, so a cookie's votes open on top of it. */}
       <VoteBreakdown cookie={breakdown()} onClose={() => setSelected(null)} />
     </section>
   )

@@ -591,3 +591,20 @@ until real-device testing (useful from phase 3).
   (`page.emulateMedia`) before clicking one.
 - Deferred to its own thread ("Bakers list on results"): All results' baker card
   listing every baker, tapping one to list their cookies and points.
+
+### Session — 2026-10-14 (bakers on All results)
+
+- Owner approved the mock "Baker Results Mockup" (option B, with the points bar).
+  All results now opens with the **Bakers** card (renamed from "Every baker"): each
+  baker's best cookie, rank, cookie count and total. Tapping a baker, or their Top
+  bakers ornament, opens `BakerBreakdown`: their cookies best first with category,
+  place and points, under a points bar split per cookie.
+- The bar is interactive (owner asked for it to be delightful): hovering or tapping a
+  piece grows it, fades the rest, shows a bubble with the category, points and share,
+  and lights up the row, whose colour dot springs open into a glowing side strip.
+  Hovering a row lights up its piece.
+- A cookie row opens its `VoteBreakdown` on top of the baker's pop-up (both are native
+  modal dialogs, so they stack). Results from before vote counts were kept show the
+  rows without buttons.
+- New shared helper `bakerCookies`; `Ornaments`/`RevealSlide` take a `selectHint` so
+  the Top bakers slide says "Tap a baker to see their cookies".

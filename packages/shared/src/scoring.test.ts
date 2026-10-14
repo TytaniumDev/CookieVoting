@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { competitionRanks, sanitizeRanking, tallyResults } from './scoring.ts'
-import type { TallyInput } from './types.ts'
+import { bakerCookies, competitionRanks, sanitizeRanking, tallyResults } from './scoring.ts'
+import type { CategoryResult, TallyInput } from './types.ts'
 
 describe('competitionRanks', () => {
   it('gives tied scores the same rank and skips the next rank', () => {
@@ -142,5 +142,81 @@ describe('tallyResults', () => {
       ['s3', 1],
       ['s4', 1],
     ])
+  })
+})
+
+describe('bakerCookies', () => {
+  const standing = (cookieId: string, bakerId: string | null, points: number, rank: number) => ({
+    cookieId,
+    bakerId,
+    bakerName: bakerId,
+    points,
+    rank,
+  })
+  const categories: CategoryResult[] = [
+    {
+      categoryId: 'trees',
+      name: 'Trees',
+      standings: [
+        standing('t1', 'bob', 9, 1),
+        standing('t2', 'ann', 4, 2),
+        standing('t3', null, 1, 3),
+      ],
+    },
+    {
+      categoryId: 'stars',
+      name: 'Stars',
+      standings: [standing('s1', 'ann', 7, 1), standing('s2', 'bob', 2, 2)],
+    },
+    { categoryId: 'cats', name: 'Cats', standings: [standing('c1', 'ann', 4, 1)] },
+  ]
+
+  it("lists a baker's cookies best first, with their category and its size", () => {
+    expect(bakerCookies(categories, 'ann')).toEqual([
+      {
+        categoryId: 'stars',
+        categoryName: 'Stars',
+        categorySize: 2,
+        standing: categories[1]!.standings[0],
+      },
+      {
+        categoryId: 'trees',
+        categoryName: 'Trees',
+        categorySize: 3,
+        standing: categories[0]!.standings[1],
+      },
+      {
+        categoryId: 'cats',
+        categoryName: 'Cats',
+        categorySize: 1,
+        standing: categories[2]!.standings[0],
+      },
+    ])
+  })
+
+  it("adds up to the baker's total from tallyResults", () => {
+    const results = tallyResults({
+      categories: [
+        { id: 'a', name: 'A', cookieIds: ['a1', 'a2'] },
+        { id: 'b', name: 'B', cookieIds: ['b1', 'b2'] },
+      ],
+      assignments: { a: { a1: 'ann', a2: 'bob' }, b: { b1: 'bob', b2: 'ann' } },
+      bakers: { ann: 'Ann', bob: 'Bob' },
+      ballots: [
+        { a: ['a1', 'a2'], b: ['b2', 'b1'] },
+        { a: ['a2'], b: ['b1'] },
+      ],
+    })
+    for (const baker of results.bakers) {
+      const sum = bakerCookies(results.categories, baker.bakerId).reduce(
+        (total, c) => total + c.standing.points,
+        0,
+      )
+      expect(sum).toBe(baker.points)
+    }
+  })
+
+  it('is empty for a baker with no cookies', () => {
+    expect(bakerCookies(categories, 'nobody')).toEqual([])
   })
 })

@@ -33,7 +33,7 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   await page.goto('/event/bake-off-2024/results')
   await expect(page.getByRole('heading', { name: /The results are in/ })).toBeVisible()
   await openAllResults(page)
-  await expect(page.getByRole('heading', { name: 'Every baker' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Bakers', exact: true })).toBeVisible()
   await expect(cookieRows(page, 'Gingerbread')).toHaveCount(6)
   const before = await totalPoints(page, 'Gingerbread')
 
@@ -84,6 +84,46 @@ test('the winners are revealed as ornaments, and tapping one shows its votes', a
     .first()
     .click()
   await expect(page.getByRole('dialog').getByText('1st place', { exact: true })).toBeVisible()
+})
+
+test('tapping a baker lists their cookies, and each cookie shows its votes', async ({ page }) => {
+  await page.goto('/event/bake-off-2024/results')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const all = await openAllResults(page)
+  const bakers = all.getByRole('region', { name: 'Bakers', exact: true })
+  // The Bakers card comes first on All results.
+  await expect(all.getByRole('heading').nth(1)).toHaveText('Bakers')
+  const top = bakers.getByRole('listitem').first()
+  const total = await pointsOf(top)
+  await top.getByRole('button', { name: /See their cookies/ }).click()
+
+  const baker = page.getByRole('dialog').filter({ hasText: /of \d+ bakers/ })
+  await expect(baker.getByText(`${total} ${total === 1 ? 'pt' : 'pts'} in all`)).toBeVisible()
+  // The baker's cookies add up to their total.
+  const rows = await baker.getByRole('listitem').all()
+  expect(rows.length).toBeGreaterThan(0)
+  const points = await Promise.all(rows.map(pointsOf))
+  expect(points.reduce((sum, p) => sum + p, 0)).toBe(total)
+
+  // A piece of the points bar names its cookie.
+  const piece = baker.getByRole('group').getByRole('button').first()
+  await piece.click()
+  await expect(baker.getByRole('listitem').first().getByRole('button')).toHaveClass(
+    /bg-accent-subtle/,
+  )
+
+  // A cookie's votes open on top of the baker's list; closing them goes back to it.
+  await baker
+    .getByRole('button', { name: /See its votes/ })
+    .first()
+    .click()
+  const votes = page.getByRole('dialog').filter({ hasText: 'Not in their top 3' })
+  await expect(votes).toBeVisible()
+  await votes.getByRole('button', { name: 'Close' }).click()
+  await expect(votes).toBeHidden()
+  await expect(baker).toBeVisible()
+  await baker.getByRole('button', { name: 'Close' }).click()
+  await expect(baker).toBeHidden()
 })
 
 test('results say when they are not out yet', async ({ page }) => {

@@ -14,6 +14,8 @@ export interface RevealSlideProps {
   onDone: () => void
   /** Makes open ornaments buttons, e.g. to show a cookie's votes. */
   onSelect?: (id: string) => void
+  /** What tapping an ornament does, e.g. "See its votes"; the caption says it too. */
+  selectHint?: { label: string; caption: string }
   /** Instead of ornaments when there are no items. */
   empty: string
 }
@@ -23,9 +25,9 @@ function caption(
   items: readonly OrnamentItem[],
   reveal: RevealState,
   mode: RevealMode,
-  tappable: boolean,
+  tapHint: string | null,
 ) {
-  if (mode === 'done') return tappable && items.length > 0 ? 'Tap an ornament to see its votes' : ''
+  if (mode === 'done') return tapHint && items.length > 0 ? tapHint : ''
   const drumming = reveal.drum === null ? undefined : items[reveal.drum]
   if (drumming) {
     if (reveal.drum === 0) return 'And the winner is…'
@@ -44,10 +46,20 @@ function caption(
  * One slide of the results: a title and its top three as ornaments, opened by the timed
  * reveal the first time the slide is on screen, with confetti for the winner.
  */
-export function RevealSlide({ title, items, mode, onDone, onSelect, empty }: RevealSlideProps) {
+const VOTES_HINT = { label: 'See its votes', caption: 'Tap an ornament to see its votes' }
+
+export function RevealSlide({
+  title,
+  items,
+  mode,
+  onDone,
+  onSelect,
+  selectHint = VOTES_HINT,
+  empty,
+}: RevealSlideProps) {
   const headingId = useId()
   const reveal = useReveal(items.length, mode, onDone)
-  const line = caption(items, reveal, mode, onSelect !== undefined)
+  const line = caption(items, reveal, mode, onSelect ? selectHint.caption : null)
   const celebrating = mode === 'play' && items.length > 0 && reveal.opened === items.length
   return (
     <section aria-labelledby={headingId} className="relative flex min-h-0 flex-1 flex-col">
@@ -68,6 +80,7 @@ export function RevealSlide({ title, items, mode, onDone, onSelect, empty }: Rev
           reveal={reveal}
           animate={mode === 'play'}
           onSelect={onSelect}
+          selectHint={selectHint.label}
           className="min-h-0 flex-1"
         />
       )}

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect } from 'storybook/test'
+import { expect, fn, userEvent } from 'storybook/test'
 import { BakerLeaderboard } from './BakerLeaderboard.tsx'
 
 const meta = {
@@ -28,9 +28,23 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Every baker' })).toBeVisible()
+    await expect(canvas.getByRole('heading', { name: 'Bakers' })).toBeVisible()
     await expect(canvas.getAllByRole('listitem')).toHaveLength(6)
     await expect(canvas.getAllByText(/Tied 3rd/)).toHaveLength(2)
+  },
+}
+
+/** On the results page: how many cookies each baker entered, and tapping one lists them. */
+export const Tappable: Story = {
+  args: {
+    cookieCount: (bakerId) => (bakerId === 'hiro' ? 1 : 3),
+    onSelect: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await expect(canvas.getAllByText(/^3 cookies/)).toHaveLength(5)
+    await expect(canvas.getByText('1 cookie')).toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: /Ann.*See their cookies/ }))
+    await expect(args.onSelect).toHaveBeenCalledWith(expect.objectContaining({ bakerId: 'ann' }))
   },
 }
 
