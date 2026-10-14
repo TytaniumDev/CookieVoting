@@ -6,14 +6,13 @@ import {
 } from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { AppBarContent } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { BallotReview } from '../../components/BallotReview/BallotReview.tsx'
 import { Button } from '../../components/Button/Button.tsx'
 import { Card } from '../../components/Card/Card.tsx'
-import { CategoryBallot } from '../../components/CategoryBallot/CategoryBallot.tsx'
 import { submitBallot } from '../../lib/ballots.ts'
 import type { Category, Event } from '../../lib/data.ts'
+import { CategoryStep } from './CategoryStep.tsx'
 
 /** A category voters can vote in: it has a photo and cookies. */
 export type VotableCategory = Category & { photo: NonNullable<Category['photo']> }
@@ -121,63 +120,16 @@ export function BallotFlow({
     )
   }
 
-  const places = placesFor(category)
-  const left = places.filter((id) => id === null).length
-  const isLast = screen === categories.length - 1
   return (
-    // `data-festive` turns the page cranberry, with snow (AppLayout).
-    <section
-      data-festive
-      className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
-      aria-labelledby="category-heading"
-    >
-      <AppBarContent>
-        <span className="truncate text-sm font-bold opacity-90 max-sm:hidden">{event.name}</span>
-      </AppBarContent>
-      <div className="flex items-end gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-extrabold tracking-wider text-accent-subtle uppercase">
-            Category {screen + 1} of {categories.length}
-          </p>
-          <h1 id="category-heading" className="text-3xl sm:text-4xl">
-            {category.name}
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setScreen(screen - 1)}
-          className="ml-auto min-h-11 min-w-11 shrink-0 rounded-control px-3 font-display font-semibold hover:bg-primary-hover"
-        >
-          <span aria-hidden="true">←</span>
-          {/* Phones need the room for the category's name. */}
-          <span className="max-sm:sr-only"> Back</span>
-        </button>
-      </div>
-      <CategoryBallot
-        // A fresh ballot (first cookie on screen) for each category.
-        key={category.id}
-        photo={category.photo}
-        cookies={category.cookies}
-        places={places}
-        onChange={(next) => setMedals({ ...medals, [category.id]: next })}
-        className="min-h-0 flex-1"
-        footer={
-          <Button
-            variant="secondary"
-            size="lg"
-            fullWidth
-            disabled={left > 0}
-            onClick={() => setScreen(screen + 1)}
-            className="disabled:bg-transparent disabled:opacity-100 disabled:shadow-none disabled:ring-2 disabled:ring-primary-hover"
-          >
-            {left > 0
-              ? `Give out ${left === 1 ? '1 more medal' : left === places.length ? `all ${left} medals` : `${left} more medals`} to go on`
-              : isLast
-                ? 'Review my votes'
-                : 'Next category →'}
-          </Button>
-        }
-      />
-    </section>
+    <CategoryStep
+      eventName={event.name}
+      eyebrow={`Category ${screen + 1} of ${categories.length}`}
+      category={category}
+      places={placesFor(category)}
+      onChange={(next) => setMedals({ ...medals, [category.id]: next })}
+      onBack={() => setScreen(screen - 1)}
+      doneLabel={screen === categories.length - 1 ? 'Review my votes' : 'Next category →'}
+      onDone={() => setScreen(screen + 1)}
+    />
   )
 }

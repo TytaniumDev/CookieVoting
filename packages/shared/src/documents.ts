@@ -84,6 +84,8 @@ export interface SetupDoc {
 export interface BallotDoc<T> {
   rankings: BallotRankings
   submittedAt: T
+  /** Set when the voter changes a category from the waiting screen. */
+  updatedAt?: T
 }
 
 /** `events/{eventId}/results/live`: written by Cloud Functions only. */

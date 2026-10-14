@@ -137,7 +137,7 @@ events/{eventId}/private/setup                                         admin onl
   { bakerIds: string[],                                 // event roster
     assignments: { [categoryId]: { [cookieId]: bakerId } } }
 
-events/{eventId}/ballots/{uid}          one per voter   create: owner; read: owner/admin
+events/{eventId}/ballots/{uid}          one per voter   create, update while voting: owner; read: owner/admin
   { rankings: { [categoryId]: cookieId[] },             // [1st, 2nd, 3rd]
     submittedAt }
 
@@ -173,11 +173,13 @@ Firestore rules (`firebase/firestore.rules`, tested in `firebase/tests/`):
   may set any status in any order (owner decision, 2026-10-13: "just have
   everything live update, it'll be the admin's responsibility"), so there are
   no transition or edit locks once votes exist.
-- `events/*/ballots/{uid}`: **create only**, only when `request.auth.uid == uid`
-  and event status is `voting` or `results`. Fields are limited to `rankings`
-  and `submittedAt == request.time`. No update or delete, so there is one ballot
-  per anonymous user. Readable by its owner (to detect "already voted") and by
-  admins.
+- `events/*/ballots/{uid}`: created only when `request.auth.uid == uid` and
+  event status is `voting` or `results`. Fields are limited to `rankings` and
+  `submittedAt == request.time`. The owner may **update** it only while the
+  status is `voting` (owner decision, 2026-10-14: change a category from the
+  waiting screen), keeping `submittedAt` and setting `updatedAt == request.time`.
+  No delete, so there is one ballot per anonymous user. Readable by its owner
+  (to detect "already voted") and by admins.
 - `events/*/results/*`: no client writes. Readable by admins, and by everyone
   once the event status is `results`.
 
@@ -458,13 +460,25 @@ category has cookies, per `maxPicksFor`) before the ballot can be submitted
 still accepts partial ballots.
 
 Voters sign in anonymously on page load (`useVoter` in `lib/auth.ts`).
-Selections live in React state in `BallotFlow` (`toggleRanking` from
+Selections live in React state in `BallotFlow` (`awardPlace` from
 `packages/shared`) and survive moving between categories, but not a reload.
 Submit writes `events/{eventId}/ballots/{uid}` once (`lib/ballots.ts`, kept
 apart from `lib/mutations.ts` so the voter chunk doesn't load Storage). The
 page listens to the voter's own ballot doc: once it exists, the voter sees the
-thank-you screen, which moves to `/event/:id/results` when `status` becomes
-`results`. Voting stays open while results show, with a banner linking to them.
+waiting room (`WaitingRoom`), which moves to `/event/:id/results` when `status`
+becomes `results`. Voting stays open while results show, with a banner linking
+to them.
+
+The waiting room (owner decision, 2026-10-14) shows one of three festive scenes
+(`WaitingScene`: dancing snowman, snow globe, oven), picked at random on each
+visit; tapping the scene makes the character react, with no hint. Under it,
+`PicksSummary` lists the sent picks as cookie photos with medals. Tapping a
+category opens it (`?edit=<categoryId>`, so the phone's back button closes it)
+in the same `CategoryStep` the ballot uses, starting from the sent picks;
+"Save my picks" writes just that category (`updateBallotCategory`) and comes
+back. A category added after the voter sent their ballot shows "No votes here
+yet" and can be voted in the same way. Changes are only possible while the
+event is `voting`; once results open the voter is on the results page.
 
 ### Results page
 
@@ -483,7 +497,7 @@ read-only transaction, which gives a consistent snapshot without locking
 voters' ballots. It runs `tallyResults` from `packages/shared` and writes
 `results/live`. It is triggered by:
 
-- ballot created
+- ballot written (sent, or a category changed from the waiting room)
 - `private/setup` written (roster or baker assignments changed)
 - a category written (added, renamed, reordered, deleted, cookies changed)
 - event `status` changed

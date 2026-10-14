@@ -2,11 +2,7 @@ import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { setGlobalOptions } from 'firebase-functions/v2'
 import { logger } from 'firebase-functions'
-import {
-  onDocumentCreated,
-  onDocumentUpdated,
-  onDocumentWritten,
-} from 'firebase-functions/v2/firestore'
+import { onDocumentUpdated, onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { recomputeResults } from './recomputeResults.ts'
 
 initializeApp()
@@ -17,8 +13,8 @@ async function recompute(eventId: string, reason: string): Promise<void> {
   logger.info('recomputeResults', { eventId, reason, outcome })
 }
 
-/** A voter submitted a ballot. */
-export const onBallotCreated = onDocumentCreated('events/{eventId}/ballots/{uid}', (event) =>
+/** A voter submitted a ballot or changed a category on it. */
+export const onBallotWritten = onDocumentWritten('events/{eventId}/ballots/{uid}', (event) =>
   recompute(event.params.eventId, 'ballot'),
 )
 

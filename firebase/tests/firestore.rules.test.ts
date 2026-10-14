@@ -203,8 +203,28 @@ describe('ballots', () => {
     const db = voter()
     await assertSucceeds(setDoc(doc(db, 'events/voting-event/ballots/voter-1'), ballot))
     await assertFails(setDoc(doc(db, 'events/voting-event/ballots/voter-1'), ballot))
-    await assertFails(updateDoc(doc(db, 'events/voting-event/ballots/voter-1'), { rankings: {} }))
     await assertFails(deleteDoc(doc(db, 'events/voting-event/ballots/voter-1')))
+  })
+
+  it('can be changed by their owner while voting, keeping submittedAt', async () => {
+    const path = 'events/voting-event/ballots/voter-1'
+    await assertSucceeds(setDoc(doc(voter(), path), ballot))
+    const change = { 'rankings.choc': ['c3', 'c2', 'c1'], updatedAt: serverTimestamp() }
+    await assertSucceeds(updateDoc(doc(voter(), path), change))
+    await assertFails(updateDoc(doc(voter('voter-2'), path), change))
+    await assertFails(updateDoc(doc(voter(), path), { ...change, updatedAt: Timestamp.now() }))
+    await assertFails(updateDoc(doc(voter(), path), { 'rankings.choc': ['c1'] }))
+    await assertFails(updateDoc(doc(voter(), path), { ...change, submittedAt: serverTimestamp() }))
+    await assertFails(updateDoc(doc(voter(), path), { ...change, extra: true }))
+    await assertFails(updateDoc(doc(voter(), path), { ...change, rankings: ['c1'] }))
+  })
+
+  it("can't be changed once results are open", async () => {
+    const path = 'events/results-event/ballots/voter-1'
+    await assertSucceeds(setDoc(doc(voter(), path), ballot))
+    await assertFails(
+      updateDoc(doc(voter(), path), { 'rankings.choc': ['c3'], updatedAt: serverTimestamp() }),
+    )
   })
 
   it('are still accepted once results are open', async () => {

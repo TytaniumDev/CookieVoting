@@ -44,12 +44,55 @@ test('a voter ranks every category and submits once', async ({ page }) => {
   await page.getByRole('button', { name: 'Review my votes' }).click()
 
   await page.getByRole('button', { name: 'Submit my votes' }).click()
-  await expect(page.getByRole('heading', { name: 'Thanks for voting!' })).toBeVisible()
+  // The waiting room: one of three scenes at random, then the voter's picks.
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect(page.getByRole('img', { name: '1st place' })).toHaveCount(categories.length)
 
   // Same device later: still voted, no second ballot.
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Thanks for voting!' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start voting' })).toBeHidden()
+})
+
+test('a voter changes a category from the waiting room', async ({ page }) => {
+  await page.goto('/event/bake-off-2025')
+  await page.getByRole('button', { name: 'Start voting' }).click()
+  const categories = ['Gingerbread People', 'Stars', 'Candy Canes', 'Stockings', 'Trees', 'Cats']
+  for (const name of categories) {
+    await expect(page.getByRole('heading', { name })).toBeVisible()
+    await giveMedal(page, 1, '1st')
+    await giveMedal(page, 2, '2nd')
+    await giveMedal(page, 3, '3rd')
+    await page.getByRole('button', { name: /next category|review my votes/i }).click()
+  }
+  await page.getByRole('button', { name: 'Submit my votes' }).click()
+  // The review screen has a "Change Stars" too; wait for the waiting room.
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+
+  const stars = page.getByRole('button', { name: 'Change Stars' })
+  await expect(stars.getByRole('img', { name: 'Cookie 4' })).toBeHidden()
+  await stars.click()
+  await expect(page.getByText('Change your picks')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Stars' })).toBeVisible()
+  // The sent picks are there to change: move 3rd place to cookie 4.
+  await expect(page.getByRole('button', { name: 'Show cookie 3, your 3rd place' })).toBeVisible()
+  await giveMedal(page, 4, '3rd')
+  await page.getByRole('button', { name: 'Save my picks' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Change Stars' }).getByRole('img', { name: 'Cookie 4' }),
+  ).toBeVisible()
+  // Saved on the server, not just on screen.
+  await page.reload()
+  await expect(
+    page.getByRole('button', { name: 'Change Stars' }).getByRole('img', { name: 'Cookie 4' }),
+  ).toBeVisible()
+
+  // Back leaves a category unchanged.
+  await page.getByRole('button', { name: 'Change Trees' }).click()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
 })
 
 test('voting carries on after results open', async ({ page }) => {

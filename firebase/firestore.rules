@@ -80,6 +80,14 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['rankings', 'submittedAt'])
           && request.resource.data.rankings is map
           && request.resource.data.submittedAt == request.time;
+        // Voters can change their picks from the waiting screen until results open.
+        allow update: if signedIn()
+          && request.auth.uid == uid
+          && eventStatus(eventId) == 'voting'
+          && request.resource.data.keys().hasOnly(['rankings', 'submittedAt', 'updatedAt'])
+          && request.resource.data.rankings is map
+          && request.resource.data.submittedAt == resource.data.submittedAt
+          && request.resource.data.updatedAt == request.time;
       }
 
       // Written only by Cloud Functions (Admin SDK bypasses rules).
