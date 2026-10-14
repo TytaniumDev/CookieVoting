@@ -45,8 +45,12 @@ jobs:
         run: npm run test:stories
 
   e2e-tests:
-    name: End-to-end tests (Chromium)
+    name: End-to-end tests (Chromium, ${{ matrix.project }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [mobile, desktop]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -66,10 +70,12 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: End-to-end tests (against the emulators, with seed data)
         run: npm run test:e2e
+        env:
+          E2E_PROJECT: ${{ matrix.project }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: apps/web/test-results
           retention-days: 7
 

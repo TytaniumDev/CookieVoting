@@ -14,11 +14,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
     launchOptions: { executablePath },
   },
+  // Voters are on phones; admins will be too (see docs/ARCHITECTURE.md). CI runs each
+  // project on its own runner by setting E2E_PROJECT.
   projects: [
-    // Voters are on phones; admins will be too (see docs/ARCHITECTURE.md).
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-  ],
+  ].filter((p) => !process.env.E2E_PROJECT || p.name === process.env.E2E_PROJECT),
   // Specs expect the emulators running with seed data: run them via `npm run test:e2e`
   // at the repo root, which wraps this in `firebase emulators:exec` and seeds first.
   webServer: {
