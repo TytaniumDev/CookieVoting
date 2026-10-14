@@ -266,6 +266,14 @@ A failed action (a save, an upload, a status change) calls `useShowError()`
 page until dismissed, so they're seen wherever the admin has scrolled. Errors
 loading a page stay inline, where the page would be.
 
+Errors go to **Sentry** (owner decision, 2026-10-14; `lib/monitoring.ts`): every
+error shown through `useShowError`, plus anything React catches or can't recover
+from (`createRoot` error hooks). Router navigations are traced at 10%. It's only on
+in deploy builds with `SENTRY_DSN` (SETUP.md §6), never in dev, tests or emulator
+builds. No user details or cookies are sent. With an auth token, the deploy build
+uploads hidden source maps and deletes them, so they're never served. It costs
+about 10 KB gzipped on every page and fits Sentry's free plan.
+
 ### Photo upload (admin, phone)
 
 **Bulk (owner decision, 2026-10-13):** the Categories step opens with **Upload

@@ -170,3 +170,21 @@ secrets (step 2d).
 GitHub → repo _Settings_ → _Pages_ → _Build and deployment_ → Source:
 **GitHub Actions**. The old attempt published Storybook here too, so this may
 already be set.
+
+## 6. Error reporting with Sentry
+
+The web app reports errors (crashes, failed saves and uploads) to Sentry. It's
+off until these GitHub Actions secrets exist; the owner keeps them in Doppler
+and syncs them to the repo.
+
+| Secret              | Where it comes from                                                  | Needed for            |
+| ------------------- | -------------------------------------------------------------------- | --------------------- |
+| `SENTRY_DSN`        | Sentry → the React project → _Settings_ → _Client Keys (DSN)_        | Sending errors at all |
+| `SENTRY_ORG`        | The organization slug in the Sentry URL (`https://<org>.sentry.io`)  | Readable stack traces |
+| `SENTRY_PROJECT`    | The project's slug (_Settings_ → _General_)                          | Readable stack traces |
+| `SENTRY_AUTH_TOKEN` | _Settings_ → _Developer Settings_ → _Organization Tokens_ → _Create_ | Uploading source maps |
+
+**Doppler:** put the four in a `cookie-voting` project, then _Integrations_ →
+_GitHub_ → sync that config to `TytaniumDev/CookieVoting` (Actions secrets).
+The next deploy picks them up. Production errors are tagged `production`,
+PR previews `preview`, and each with the deployed commit as the release.

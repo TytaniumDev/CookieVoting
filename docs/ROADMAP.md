@@ -157,6 +157,8 @@ until real-device testing (useful from phase 3).
 - [ ] Deploy credentials for GitHub Actions: a service account key as the `FIREBASE_SERVICE_ACCOUNT` secret (SETUP.md §4)
 - [ ] GitHub Pages source set to "GitHub Actions" (SETUP.md §5)
 - [ ] Delete the unused `FIREBASE_TOKEN` and `VITE_*` repository secrets (GitHub → Settings → Secrets and variables → Actions)
+- [x] Storage service agent may read Firestore (SETUP.md §4e), done 2026-10-14
+- [ ] Sentry secrets in Doppler, synced to GitHub (SETUP.md §6)
 - [ ] Dry run: create a small event, vote from two or three real phones, open results
 
 ---
