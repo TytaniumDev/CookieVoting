@@ -45,7 +45,7 @@ test('an admin creates an event and manages its bakers', async ({ page }, testIn
   await expect(page.getByRole('button', { name: 'Remove Ann' })).toBeHidden()
 
   // The dashboard shows the next step.
-  await page.getByRole('link', { name: /all events/i }).click()
+  await page.getByRole('link', { name: 'Cookie Voting' }).click()
   await expect(page.getByRole('link', { name: new RegExp(eventName) })).toContainText(
     'Next: Categories',
   )
@@ -272,7 +272,7 @@ test('an admin tags cookies with bakers, opens voting and then results', async (
   await expect(page.getByText(/0\s*ballots so far/)).toBeVisible()
 
   // The dashboard shows the live event with Open results.
-  await page.getByRole('link', { name: /all events/i }).click()
+  await page.getByRole('link', { name: 'Cookie Voting' }).click()
   const row = page.getByRole('listitem').filter({ hasText: eventName })
   await expect(row.getByText('Voting open')).toBeVisible()
   await expect(row.getByText(`/event/${eventId}`)).toBeVisible()
