@@ -11,15 +11,15 @@ import {
 } from '@dnd-kit/core'
 import {
   arrayMove,
+  rectSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Badge } from '../Badge/Badge.tsx'
-import { CookieImage } from '../CookieImage/CookieImage.tsx'
+import { PhotoZoom } from '../PhotoZoom/PhotoZoom.tsx'
 
 export interface CategoryListItem {
   id: string
@@ -37,7 +37,6 @@ export interface CategoryListProps {
   onDelete: (categoryId: string) => void
 }
 
-const WHOLE_PHOTO = { x: 0, y: 0, width: 1, height: 1 }
 /** How long typing pauses before a name saves. */
 const SAVE_DELAY_MS = 800
 
@@ -169,8 +168,18 @@ function CategoryRow({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`rounded-card border border-border bg-surface p-2 shadow-card ${isDragging ? 'relative z-10 shadow-raised' : ''}`}
+      className={`flex flex-col gap-2 rounded-card border border-border bg-surface p-2 shadow-card ${isDragging ? 'relative z-10 shadow-raised' : ''}`}
     >
+      {category.photo ? (
+        <PhotoZoom photo={category.photo} label={category.name} className="w-full" />
+      ) : (
+        <div
+          className="grid aspect-4/3 w-full place-items-center rounded-control bg-surface-muted text-5xl"
+          aria-hidden="true"
+        >
+          📷
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <button
           ref={setActivatorNodeRef}
@@ -182,18 +191,6 @@ function CategoryRow({
         >
           <span aria-hidden="true">⠿</span>
         </button>
-        <div className="w-16 shrink-0 overflow-hidden rounded-control">
-          {category.photo ? (
-            <CookieImage photo={category.photo} box={WHOLE_PHOTO} alt="" />
-          ) : (
-            <div
-              className="grid aspect-4/3 place-items-center bg-surface-muted text-2xl"
-              aria-hidden="true"
-            >
-              📷
-            </div>
-          )}
-        </div>
         <div className="min-w-0 flex-1 space-y-1">
           <NameField
             name={category.name}
@@ -223,9 +220,9 @@ function CategoryRow({
 }
 
 /**
- * The event's categories in display order. Drag the handle (or focus it and use the
- * arrow keys) to reorder; only the handle starts a drag, so the list still scrolls on
- * phones.
+ * The event's categories in display order, as photo cards: one column on phones, more
+ * where the list has room. Drag the handle (or focus it and use the arrow keys) to reorder;
+ * only the handle starts a drag, so the list still scrolls on phones.
  */
 export function CategoryList({
   categories,
@@ -269,19 +266,24 @@ export function CategoryList({
       onDragEnd={handleDragEnd}
       accessibility={{ announcements }}
     >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <ol aria-label="Categories" className="space-y-3">
-          {categories.map((category) => (
-            <CategoryRow
-              key={category.id}
-              category={category}
-              otherNames={categories.filter((c) => c !== category).map((c) => c.name)}
-              suggestionsId={suggestions.length > 0 ? suggestionsId : undefined}
-              onRename={onRename}
-              onDelete={onDelete}
-            />
-          ))}
-        </ol>
+      <SortableContext items={ids} strategy={rectSortingStrategy}>
+        <div className="@container">
+          <ol
+            aria-label="Categories"
+            className="grid grid-cols-1 gap-3 @xl:grid-cols-2 @3xl:grid-cols-3"
+          >
+            {categories.map((category) => (
+              <CategoryRow
+                key={category.id}
+                category={category}
+                otherNames={categories.filter((c) => c !== category).map((c) => c.name)}
+                suggestionsId={suggestions.length > 0 ? suggestionsId : undefined}
+                onRename={onRename}
+                onDelete={onDelete}
+              />
+            ))}
+          </ol>
+        </div>
         {suggestions.length > 0 && (
           <datalist id={suggestionsId}>
             {suggestions.map((name) => (
