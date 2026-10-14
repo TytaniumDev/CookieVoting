@@ -69,7 +69,7 @@ export function CategoriesStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-readable space-y-6">
       <PlatePhotoUpload
         progress={bulk}
         onFiles={(files) => void run(() => uploadPlates(files)).finally(() => setBulk(null))}

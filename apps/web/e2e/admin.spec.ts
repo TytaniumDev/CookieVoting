@@ -57,7 +57,14 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await page.getByLabel('Event name').fill(eventName)
   await page.getByRole('button', { name: 'Create event' }).click()
   await page.getByRole('button', { name: /^categories/i }).click()
-  // The stepper scrolls sideways on phones; the page itself must not.
+  // The steps stay in one row: it fits on a desktop and scrolls sideways on phones,
+  // without the page itself scrolling.
+  const stepper = page.getByRole('navigation', { name: 'Setup steps' })
+  const first = (await stepper.getByRole('button').first().boundingBox())!
+  const last = (await stepper.getByRole('button').last().boundingBox())!
+  const row = (await stepper.boundingBox())!
+  expect(last.y).toBe(first.y)
+  expect(last.x + last.width <= row.x + row.width).toBe(testInfo.project.name === 'desktop')
   expect(await page.evaluate('document.documentElement.scrollWidth')).toBeLessThanOrEqual(
     page.viewportSize()?.width ?? 0,
   )

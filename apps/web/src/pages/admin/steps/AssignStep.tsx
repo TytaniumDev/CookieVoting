@@ -76,7 +76,7 @@ export function AssignStep({
                 {assigned} of {category.cookies.length} assigned
               </Badge>
             </div>
-            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {category.cookies.map((cookie, index) => {
                 const bakerId = assignments[cookie.id]
                 return (

@@ -397,4 +397,7 @@ until real-device testing (useful from phase 3).
   icon deletes, and "Add a category", "Rename" and "Replace photo" are gone.
   Categories come only from uploaded photos. `CategoryNameForm` was removed; the
   E2E helpers for this live in `e2e/categories.ts`.
+- Wide screens (owner feedback): pages span the screen with side padding; text,
+  forms and lists stop at a readable width; tab rows never wrap and scroll only
+  when they don't fit. The rule is in CLAUDE.md → Conventions.
 - Next: admin access requests (owner chose request + approve, no email).

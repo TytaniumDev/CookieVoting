@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router'
 import { NotFoundPage } from '../pages/NotFoundPage.tsx'
 import { AppLayout } from './AppLayout.tsx'
 import { LoadingScreen } from './LoadingScreen.tsx'
+import { ReadableLayout } from './ReadableLayout.tsx'
 
 /**
  * URL structure from the PRD. Pages are lazy-loaded so voters on phones never
@@ -39,18 +40,23 @@ export const routes: RouteObject[] = [
         ],
       },
       {
-        path: '/event/:eventId',
-        lazy: async () => ({
-          Component: (await import('../pages/voter/VoterEventPage.tsx')).VoterEventPage,
-        }),
+        Component: ReadableLayout,
+        children: [
+          {
+            path: '/event/:eventId',
+            lazy: async () => ({
+              Component: (await import('../pages/voter/VoterEventPage.tsx')).VoterEventPage,
+            }),
+          },
+          {
+            path: '/event/:eventId/results',
+            lazy: async () => ({
+              Component: (await import('../pages/voter/ResultsPage.tsx')).ResultsPage,
+            }),
+          },
+          { path: '*', Component: NotFoundPage },
+        ],
       },
-      {
-        path: '/event/:eventId/results',
-        lazy: async () => ({
-          Component: (await import('../pages/voter/ResultsPage.tsx')).ResultsPage,
-        }),
-      },
-      { path: '*', Component: NotFoundPage },
     ],
   },
 ]
