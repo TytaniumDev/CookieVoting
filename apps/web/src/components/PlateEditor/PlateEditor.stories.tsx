@@ -2,6 +2,7 @@ import type { Cookie } from '@cookie-voting/shared'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test'
+import { BakerMenu } from '../BakerMenu/BakerMenu.tsx'
 import { PlateEditor, type PlateEditorProps } from './PlateEditor.tsx'
 
 const photo = { url: '/plates/4-cookies_stars.jpg', width: 2048, height: 1536 }
@@ -252,5 +253,110 @@ export const TapFindsNothing: Story = {
     drag(plate, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 })
     await expect(await canvas.findByText(/couldn't find a cookie there/i)).toBeVisible()
     await expect(args.onChange).not.toHaveBeenCalled()
+  },
+}
+
+const roster = ['Alice', 'Ben', 'Carmen', 'Dev'].map((name) => ({ id: name.toLowerCase(), name }))
+
+/** Tags each box with its baker, like the Cookies step does; one still needs a baker. */
+function Tagging(props: PlateEditorProps & { initialTags: Record<string, string> }) {
+  const [cookies, setCookies] = useState(props.cookies)
+  const [tags, setTags] = useState(props.initialTags)
+  const name = (id: string | undefined) => roster.find((b) => b.id === id)?.name ?? null
+  const next = roster.find((b) => !cookies.some((c) => tags[c.id] === b.id))
+  return (
+    <PlateEditor
+      {...props}
+      cookies={cookies}
+      tags={Object.fromEntries(cookies.map((c) => [c.id, name(tags[c.id])]))}
+      onChange={(nextCookies, base) => {
+        props.onChange(nextCookies, base)
+        setCookies(nextCookies)
+      }}
+      onCreate={(cookie) => {
+        if (!next) return true
+        setTags((t) => ({ ...t, [cookie.id]: next.id }))
+      }}
+      renderMenu={(cookie, { number, close, remove }) => (
+        <BakerMenu
+          title={`Cookie ${number}`}
+          bakers={roster}
+          value={tags[cookie.id] ?? null}
+          onChange={(id) => {
+            setTags((t) => ({ ...t, [cookie.id]: id }))
+            close()
+          }}
+          onDelete={remove}
+          onClose={close}
+        />
+      )}
+    />
+  )
+}
+
+export const Tagged: Story = {
+  render: (args) => <Tagging {...args} initialTags={{ a: 'alice', b: 'ben', c: 'carmen' }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Cookie 1, Alice' })).toBeVisible()
+    await expect(canvas.getByRole('button', { name: 'Cookie 4, needs a baker' })).toBeVisible()
+  },
+}
+
+/** Drawing a box tags it with whoever is next. */
+export const NewCookieIsTagged: Story = {
+  args: { cookies: [] },
+  render: (args) => <Tagging {...args} initialTags={{}} />,
+  play: async ({ canvas }) => {
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.1, y: 0.1 }, { x: 0.4, y: 0.45 })
+    await expect(await canvas.findByRole('button', { name: 'Cookie 1, Alice' })).toBeVisible()
+  },
+}
+
+/** Tapping a tagged box opens the baker menu with its baker marked; picking another retags it. */
+export const Reassign: Story = {
+  render: (args) => <Tagging {...args} initialTags={{ a: 'alice', b: 'ben', c: 'carmen' }} />,
+  play: async ({ canvas }) => {
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(
+      plate,
+      { x: 0.7, y: 0.25 },
+      { x: 0.7, y: 0.25 },
+      canvas.getByRole('button', { name: 'Cookie 2, Ben' }),
+    )
+    const menu = await canvas.findByRole('dialog', { name: 'Who baked cookie 2?' })
+    await expect(within(menu).getByRole('button', { name: 'Ben' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await userEvent.click(within(menu).getByRole('button', { name: 'Dev' }))
+    await expect(canvas.getByRole('button', { name: 'Cookie 2, Dev' })).toBeVisible()
+    await expect(canvas.queryByRole('dialog')).toBeNull()
+  },
+}
+
+/** With everyone tagged, a new cookie opens the menu so the admin picks its baker. */
+export const ExtraCookieAsks: Story = {
+  render: (args) => (
+    <Tagging {...args} initialTags={{ a: 'alice', b: 'ben', c: 'carmen', d: 'dev' }} />
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Add cookie' }))
+    const menu = await canvas.findByRole('dialog', { name: /^who baked cookie \d\?$/i })
+    await expect(within(menu).getByRole('button', { name: 'Alice' })).toHaveFocus()
+    await userEvent.click(within(menu).getByRole('button', { name: /^delete cookie \d$/i }))
+    await expect(canvas.getAllByRole('button', { name: /^cookie \d/i })).toHaveLength(4)
+  },
+}
+
+/** Enter on a focused box opens its menu too. */
+export const MenuFromKeyboard: Story = {
+  render: (args) => <Tagging {...args} initialTags={{ a: 'alice' }} />,
+  play: async ({ canvas }) => {
+    canvas.getByRole('button', { name: 'Cookie 1, Alice' }).focus()
+    await userEvent.keyboard('{Enter}')
+    await expect(await canvas.findByRole('dialog', { name: 'Who baked cookie 1?' })).toBeVisible()
+    await userEvent.keyboard('{Escape}')
+    await expect(canvas.queryByRole('dialog')).toBeNull()
   },
 }

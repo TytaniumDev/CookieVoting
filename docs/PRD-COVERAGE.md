@@ -91,16 +91,16 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P5 — Baker assignment and opening voting (phase 7)
 
-| PRD  | Requirement                                                               | Status                              |
-| ---- | ------------------------------------------------------------------------- | ----------------------------------- |
-| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | ✅ `BakerPicker` (combobox)         |
-| §6.5 | Previous baker not pre-selected                                           | ✅ each cookie starts empty         |
-| §6.5 | Every cookie must have a baker before voting opens                        | ✅ checklist gates Open voting      |
-| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ✅ `SharePanel` + QR code           |
-| §6.6 | Live count of submissions                                                 | ✅ `results/live.ballotCount`       |
-| §6.7 | "Open Results" sets status `results`; voting continues after              | ✅ asks first                       |
-| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ✅                                  |
-| —    | Moving an event backwards (reopen setup, hide results)                    | ✅ Close voting / Hide results (Q2) |
+| PRD  | Requirement                                                               | Status                                                                         |
+| ---- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| §6.5 | Each cookie crop gets a type-to-filter baker picker from the event roster | 🔁 tap-to-tag with the highlighted baker; `BakerMenu` to reassign (2026-10-14) |
+| §6.5 | Previous baker not pre-selected                                           | 🔁 the next untagged baker is highlighted instead (owner, 2026-10-14)          |
+| §6.5 | Every cookie must have a baker before voting opens                        | ✅ checklist gates Open voting                                                 |
+| §6.6 | "Open Voting" sets status `voting` and shows the voter URL                | ✅ `SharePanel` + QR code                                                      |
+| §6.6 | Live count of submissions                                                 | ✅ `results/live.ballotCount`                                                  |
+| §6.7 | "Open Results" sets status `results`; voting continues after              | ✅ asks first                                                                  |
+| §10  | The **dashboard** itself shows count, URL and "Open Results" while live   | ✅                                                                             |
+| —    | Moving an event backwards (reopen setup, hide results)                    | ✅ Close voting / Hide results (Q2)                                            |
 
 ### P6 — Voter flow (phase 8)
 
@@ -139,12 +139,13 @@ Everything else reads or writes Firebase, so this comes first.
 
 ### P9 — Phone-to-laptop handoff (phase 12, owner requirement 2026-10-13)
 
-| Source | Requirement                                                    | Status                                        |
-| ------ | -------------------------------------------------------------- | --------------------------------------------- |
-| Owner  | Upload many plate photos at once from the admin's phone        | ✅ `PlatePhotoUpload`, "Plate N" categories   |
-| Owner  | Carry on any admin step on a laptop or another device, in sync | ✅ live listeners; URL carries step and plate |
-| Owner  | Several admins on one event at once without losing edits       | ✅ `mergeCookieEdits`, `e2e/handoff.spec.ts`  |
-| §1     | Admin flow works fully on a phone                              | ✅ phases 3–7, 375 px                         |
+| Source | Requirement                                                               | Status                                        |
+| ------ | ------------------------------------------------------------------------- | --------------------------------------------- |
+| Owner  | Upload many plate photos at once from the admin's phone                   | ✅ `PlatePhotoUpload`, "Plate N" categories   |
+| Owner  | Carry on any admin step on a laptop or another device, in sync            | ✅ live listeners; URL carries step and plate |
+| Owner  | Several admins on one event at once without losing edits                  | ✅ `mergeCookieEdits`, `e2e/handoff.spec.ts`  |
+| Owner  | Box and tag cookies in one step; Next plate, no auto-advance (2026-10-14) | ✅ `CookiesStep`, `BakerChips`, `BakerMenu`   |
+| §1     | Admin flow works fully on a phone                                         | ✅ phases 3–7, 375 px                         |
 
 ### Already done
 

@@ -7,7 +7,6 @@ const steps: StepperStep[] = [
   { id: 'bakers', label: 'Bakers', done: true },
   { id: 'categories', label: 'Categories', done: true },
   { id: 'cookies', label: 'Cookies', done: false },
-  { id: 'assign', label: 'Assign bakers', done: false },
   { id: 'voting', label: 'Voting', done: false },
   { id: 'results', label: 'Results', done: false },
 ]

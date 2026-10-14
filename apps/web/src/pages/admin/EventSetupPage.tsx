@@ -12,7 +12,6 @@ import { Stepper } from '../../components/Stepper/Stepper.tsx'
 import { useCategories, useEvent, useSetup } from '../../lib/data.ts'
 import { BakersStep } from './steps/BakersStep.tsx'
 import { CategoriesStep } from './steps/CategoriesStep.tsx'
-import { AssignStep } from './steps/AssignStep.tsx'
 import { CookiesStep } from './steps/CookiesStep.tsx'
 import { ResultsStep } from './steps/ResultsStep.tsx'
 import { VotingStep } from './steps/VotingStep.tsx'
@@ -82,9 +81,7 @@ export function EventSetupPage() {
       ) : selected === 'categories' ? (
         <CategoriesStep eventId={eventId} categories={categories.data} />
       ) : selected === 'cookies' ? (
-        <CookiesStep eventId={eventId} categories={categories.data} />
-      ) : selected === 'assign' ? (
-        <AssignStep eventId={eventId} categories={categories.data} setup={setup.data} />
+        <CookiesStep eventId={eventId} categories={categories.data} setup={setup.data} />
       ) : selected === 'voting' ? (
         <VotingStep event={event.data} progress={progress} />
       ) : (

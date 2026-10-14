@@ -119,6 +119,21 @@ Persists across events. This is the global baker roster.
 
 ## 6. Admin Flow (Linear, Guided)
 
+> **Change history (owner decisions; ARCHITECTURE.md has the details):**
+> - **2026-10-13: bulk photo upload.** Plate photos are uploaded many at once, usually
+>   from the admin's phone. Each photo becomes a category named "Plate N", renamed later
+>   on any device; work carries on across phones, laptops and co-admins, kept in sync.
+> - **2026-10-14: categories are photo cards.** Uploading photos is the only way to add a
+>   category. Each is a card with its plate photo and an auto-saving name field; a wrong
+>   photo is fixed by deleting the category and uploading again (no "Replace photo").
+>   Hovering a photo enlarges it; tapping opens it full size.
+> - **2026-10-13: no automatic detection.** Cookies are boxed by tapping them
+>   (in-browser tap-to-select) or dragging a box; Step 4's Gemini detection is not built.
+> - **2026-10-14: boxing and baker assignment are one step.** Steps 4 and 5 below are
+>   merged into one **Cookies** step: tapping a cookie boxes it and tags it with the
+>   highlighted baker (see Step 4–5 below). The admin stepper is now Bakers, Categories,
+>   Cookies, Voting, Results; every step is reachable at any time (owner decision Q1).
+
 The admin flow is strictly linear. Each step must be completed before proceeding to the next. A stepper/progress indicator in the UI reflects the current stage.
 
 ```
@@ -128,9 +143,7 @@ Manage Bakers (for this event)
     ↓
 Add Categories (one or more; upload plate images)
     ↓
-Run Detection & Correct Results (per category)
-    ↓
-Assign Bakers (per category)
+Box cookies and tag each with its baker (per plate; was "Run Detection" + "Assign Bakers")
     ↓
 Open Voting
     ↓
@@ -169,7 +182,26 @@ Open Results
   - Admin can **merge** two cookies by selecting both and confirming; the merged result uses the bounding union of both and regenerates the crop.
   - No drawing of arbitrary polygons is required; rectangles are sufficient for all correction operations.
 
-### Step 5: Assign Bakers (per category)
+### Step 4–5: Box and tag cookies (per plate), as built since 2026-10-14
+Replaces the two steps around it; kept above for history.
+- The plate photo sits under a row of the event's bakers, with one baker highlighted.
+- Tapping a cookie boxes it and tags it with the highlighted baker; the highlight then
+  moves to the next baker (in roster order) without a cookie on this plate.
+- Once every baker has a cookie on the plate, nothing is highlighted and nothing
+  advances. The admin can tap extra cookies (a baker with more than one entry); each one
+  opens the baker list so they pick who baked it.
+- Tapping an existing box opens a list of bakers with its current baker marked; picking
+  another reassigns it. The highlight follows: a baker left without a cookie on this
+  plate becomes next again.
+- Tapping a baker in the row makes them next, e.g. to skip someone who didn't enter
+  this category.
+- The plate never changes by itself. A **Next plate** button moves on; on the last plate
+  it reads **Next: Voting**.
+- Boxes can still be dragged, resized and deleted; a box with no baker (drawn before
+  bakers were added, or whose baker left the event) is marked "Who baked this?".
+- Every cookie must have a baker before voting opens.
+
+### Step 5: Assign Bakers (per category) — superseded 2026-10-14, see Step 4–5
 - For each category, admin sees all detected cookie crops.
 - Each cookie has a baker assignment dropdown populated with the bakers on the event's baker list.
 - The dropdown supports type-to-filter.
