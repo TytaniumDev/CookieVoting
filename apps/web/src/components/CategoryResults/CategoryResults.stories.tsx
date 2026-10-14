@@ -44,7 +44,7 @@ export const WithTies: Story = {
     const rows = canvas.getAllByRole('listitem')
     await expect(rows).toHaveLength(4)
     await expect(within(rows[0]!).getByText('Carmen')).toBeVisible()
-    await expect(within(rows[0]!).getByText('Cookie #3')).toBeVisible()
+    await expect(within(rows[0]!).queryByText(/Cookie #/)).toBeNull()
     await expect(canvas.getAllByText(/Tied 2nd/)).toHaveLength(2)
     await expect(canvas.getAllByRole('img', { name: '2nd place' })).toHaveLength(2)
     await expect(canvas.getByRole('img', { name: '4th place' })).toBeVisible()

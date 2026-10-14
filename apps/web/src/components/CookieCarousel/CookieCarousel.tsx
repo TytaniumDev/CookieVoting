@@ -5,7 +5,7 @@ import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
 
 export interface CookieCarouselProps {
   photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
-  /** In display order; numbered #1…#n. */
+  /** In display order. Screen readers number them 1…n; no number is shown. */
   cookies: readonly Cookie[]
   places: CategoryPlaces
   /** Index of the cookie on screen. */
@@ -114,12 +114,6 @@ export function CookieCarousel({
                     style={{ width: `min(100cqw, ${aspect} * 100cqh)` }}
                   />
                 </div>
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-4 left-4 rounded-full bg-primary px-3 font-display text-lg font-bold text-on-primary shadow-card"
-                >
-                  #{number}
-                </span>
                 {rank && (
                   <span key={rank} className="absolute top-4 right-4 motion-safe:animate-pop">
                     <RankBadge rank={rank} size="lg" />

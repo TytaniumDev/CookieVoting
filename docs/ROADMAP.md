@@ -556,3 +556,12 @@ until real-device testing (useful from phase 3).
 - Voter numbers `#1…#n` follow the shuffled order, so they don't match the
   results page's plate numbers. The results E2E now checks a category's total
   points (+6) instead of specific cookies.
+
+### Session — 2026-10-14 (no cookie numbers for voters or results)
+
+- Owner: "not even bother numbering the cookies". The big photo's `#n` badge
+  and the results' "Cookie #n" subtitle are gone; medal buttons say "On another
+  cookie" instead of "Now on #2" (owner picked this over a tiny photo).
+- Screen-reader labels ("Show cookie 3", "Cookie 3") stay, by position on the
+  voter's screen, so E2E selectors are unchanged. Admin plate editor keeps its
+  numbers.

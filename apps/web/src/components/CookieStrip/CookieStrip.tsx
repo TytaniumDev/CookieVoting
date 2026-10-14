@@ -6,7 +6,7 @@ import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
 
 export interface CookieStripProps {
   photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
-  /** In display order; numbered #1…#n. */
+  /** In display order. Screen readers number them 1…n; no number is shown. */
   cookies: readonly Cookie[]
   places: CategoryPlaces
   /** Index of the cookie on screen. */

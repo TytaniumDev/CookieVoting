@@ -26,8 +26,7 @@ export function CategoryResults({ result, plate }: CategoryResultsProps) {
         ) : (
           <ol className="divide-y divide-border">
             {result.standings.map((standing) => {
-              const index = plate?.cookies.findIndex((c) => c.id === standing.cookieId) ?? -1
-              const cookie = plate?.cookies[index]
+              const cookie = plate?.cookies.find((c) => c.id === standing.cookieId)
               const photo = plate?.photo
               return (
                 <StandingRow
@@ -35,7 +34,6 @@ export function CategoryResults({ result, plate }: CategoryResultsProps) {
                   rank={standing.rank}
                   tied={tied.has(standing.rank)}
                   title={standing.bakerName ?? 'No baker'}
-                  subtitle={cookie ? `Cookie #${index + 1}` : undefined}
                   points={standing.points}
                   image={
                     cookie &&

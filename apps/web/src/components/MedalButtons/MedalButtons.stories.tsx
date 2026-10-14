@@ -30,10 +30,9 @@ export const NoneGiven: Story = {
 export const SomeGiven: Story = {
   args: { holders: [1, 3, null] },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: /1st place now on #1/i })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
+    await expect(
+      canvas.getByRole('button', { name: /1st place on another cookie/i }),
+    ).toHaveAttribute('aria-pressed', 'false')
     await expect(
       canvas.getByRole('button', { name: /2nd place tap to take back/i }),
     ).toHaveAttribute('aria-pressed', 'true')

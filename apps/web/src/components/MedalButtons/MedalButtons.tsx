@@ -2,7 +2,7 @@ import { ORDINALS } from '../RankBadge/ordinals.ts'
 import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
 
 export interface MedalButtonsProps {
-  /** The number (#1…#n) of the cookie on screen. */
+  /** The position (1…n) of the cookie on screen, for screen readers and to match `holders`. */
   current: number
   /** For each medal (1st, 2nd, 3rd), the number of the cookie that has it, or null. */
   holders: readonly (number | null)[]
@@ -48,7 +48,7 @@ export function MedalButtons({ current, holders, onAward, className = '' }: Meda
             <span className="grid justify-items-center leading-tight sm:justify-items-start">
               <span className="font-display text-base font-semibold">{ORDINALS[place]} place</span>
               <span className={`text-xs font-bold ${on ? '' : 'text-ink-muted'}`}>
-                {on ? 'Tap to take back' : holder === null ? 'Not given yet' : `Now on #${holder}`}
+                {on ? 'Tap to take back' : holder === null ? 'Not given yet' : 'On another cookie'}
               </span>
             </span>
           </button>

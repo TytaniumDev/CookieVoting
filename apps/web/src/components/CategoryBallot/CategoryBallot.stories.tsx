@@ -64,7 +64,7 @@ export const GiveMedals: Story = {
       expect(canvas.getByRole('group', { name: 'Give cookie 2 a medal' })).toBeVisible(),
     )
     // 2nd moves from cookie 1 to cookie 2.
-    await userEvent.click(canvas.getByRole('button', { name: /2nd place now on #1/i }))
+    await userEvent.click(canvas.getByRole('button', { name: /2nd place on another cookie/i }))
     await expect(args.onChange).toHaveBeenLastCalledWith([null, 't2', null])
 
     await userEvent.click(canvas.getByRole('button', { name: 'Show cookie 5' }))
