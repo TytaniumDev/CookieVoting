@@ -17,16 +17,14 @@ export const storage = getStorage(app)
 if (usingEmulators) connectStorageEmulator(storage, emulatorHost, 9199)
 
 /**
- * Shrinks a photo, uploads it as the category's plate photo and deletes the one it
- * replaces. `onProgress` gets 0..1 while the upload runs.
+ * Shrinks a photo and uploads it as a plate photo for the event, without attaching it
+ * to a category. `onProgress` gets 0..1 while the upload runs.
  */
-export async function uploadPlatePhoto(
+export async function storePlatePhoto(
   eventId: string,
-  categoryId: string,
   file: Blob,
-  previous: PlatePhoto | null,
   onProgress: (fraction: number) => void,
-): Promise<void> {
+): Promise<PlatePhoto> {
   const prepared = await preparePlatePhoto(file)
   const path = paths.platePhoto(eventId, `${crypto.randomUUID()}.jpg`)
   const photoRef = ref(storage, path)
@@ -39,13 +37,23 @@ export async function uploadPlatePhoto(
     onProgress(snapshot.totalBytes ? snapshot.bytesTransferred / snapshot.totalBytes : 0),
   )
   await task
-
-  const photo: PlatePhoto = {
+  return {
     path,
     url: await getDownloadURL(photoRef),
     width: prepared.width,
     height: prepared.height,
   }
+}
+
+/** Uploads a category's plate photo and deletes the one it replaces. */
+export async function uploadPlatePhoto(
+  eventId: string,
+  categoryId: string,
+  file: Blob,
+  previous: PlatePhoto | null,
+  onProgress: (fraction: number) => void,
+): Promise<void> {
+  const photo = await storePlatePhoto(eventId, file, onProgress)
   await updateDoc(doc(db, paths.category(eventId, categoryId)), { photo })
   if (previous) await deletePlatePhoto(previous)
 }

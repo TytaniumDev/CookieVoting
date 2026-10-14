@@ -1,6 +1,8 @@
 import {
+  mergeCookieEdits,
   paths,
   removeBakerFromSetup,
+  removedCookieIds,
   type BakerDoc,
   type CategoryDoc,
   type Cookie,
@@ -67,10 +69,15 @@ export async function removeBakerFromEvent(eventId: string, bakerId: string): Pr
   })
 }
 
-/** Adds a category at the end of the list; returns its id. */
-export async function addCategory(eventId: string, name: string, order: number): Promise<string> {
+/** Adds a category at the end of the list, optionally with its plate photo; returns its id. */
+export async function addCategory(
+  eventId: string,
+  name: string,
+  order: number,
+  photo: PlatePhoto | null = null,
+): Promise<string> {
   const categoryRef = doc(collection(db, paths.categories(eventId)))
-  const category: CategoryDoc = { name: name.trim(), order, photo: null, cookies: [] }
+  const category: CategoryDoc = { name: name.trim(), order, photo, cookies: [] }
   const batch = writeBatch(db)
   batch.set(categoryRef, category)
   batch.update(doc(db, paths.event(eventId)), { updatedAt: serverTimestamp() })
@@ -110,26 +117,31 @@ export async function deleteCategory(
 }
 
 /**
- * Saves a category's cookie boxes (already in reading order). Cookies that were
+ * Saves one plate-editor change (`base` → `next`). It's replayed onto the plate as
+ * stored now, so another device's edits made meanwhile survive. Cookies the change
  * removed also lose their baker assignment.
  */
 export async function saveCookies(
   eventId: string,
   categoryId: string,
-  cookies: readonly Cookie[],
-  removedIds: readonly string[],
+  base: readonly Cookie[],
+  next: readonly Cookie[],
 ): Promise<void> {
-  const batch = writeBatch(db)
-  batch.update(doc(db, paths.category(eventId, categoryId)), { cookies })
-  if (removedIds.length > 0) {
-    batch.update(
-      doc(db, paths.setup(eventId)),
-      Object.fromEntries(
-        removedIds.map((id) => [`assignments.${categoryId}.${id}`, deleteField()]),
-      ),
-    )
-  }
-  await batch.commit()
+  const categoryRef = doc(db, paths.category(eventId, categoryId))
+  const removedIds = removedCookieIds(base, next)
+  await runTransaction(db, async (tx) => {
+    const category = (await tx.get(categoryRef)).data() as CategoryDoc | undefined
+    if (!category) return
+    tx.update(categoryRef, { cookies: mergeCookieEdits(base, next, category.cookies) })
+    if (removedIds.length > 0) {
+      tx.update(
+        doc(db, paths.setup(eventId)),
+        Object.fromEntries(
+          removedIds.map((id) => [`assignments.${categoryId}.${id}`, deleteField()]),
+        ),
+      )
+    }
+  })
 }
 
 /** Assigns a cookie to a baker on the event's roster. */

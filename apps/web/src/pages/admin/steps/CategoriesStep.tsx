@@ -1,9 +1,14 @@
+import { plateNames } from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
 import { CategoryList } from '../../../components/CategoryList/CategoryList.tsx'
 import { CategoryNameForm } from '../../../components/CategoryNameForm/CategoryNameForm.tsx'
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog.tsx'
+import {
+  PlatePhotoUpload,
+  type PlatePhotoUploadProps,
+} from '../../../components/PlatePhotoUpload/PlatePhotoUpload.tsx'
 import { usePastCategoryNames, useResults, type Category } from '../../../lib/data.ts'
 import {
   addCategory,
@@ -11,7 +16,7 @@ import {
   renameCategory,
   reorderCategories,
 } from '../../../lib/mutations.ts'
-import { uploadPlatePhoto } from '../../../lib/storage.ts'
+import { storePlatePhoto, uploadPlatePhoto } from '../../../lib/storage.ts'
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
@@ -26,6 +31,7 @@ export function CategoriesStep({
   const results = useResults(eventId)
   const [adding, setAdding] = useState(false)
   const [uploads, setUploads] = useState<Record<string, number>>({})
+  const [bulk, setBulk] = useState<PlatePhotoUploadProps['progress']>(null)
   const [deleting, setDeleting] = useState<Category | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,8 +52,30 @@ export function CategoriesStep({
     }
   }
 
+  // One at a time, so a phone on slow Wi-Fi finishes each photo before starting the
+  // next. A category is only created once its photo is stored, so an upload cut short
+  // leaves no empty categories behind.
+  async function uploadPlates(files: File[]) {
+    const names = plateNames(
+      categories.map((c) => c.name),
+      files.length,
+    )
+    for (const [i, file] of files.entries()) {
+      setBulk({ current: i + 1, total: files.length, fraction: 0 })
+      const photo = await storePlatePhoto(eventId, file, (fraction) =>
+        setBulk({ current: i + 1, total: files.length, fraction }),
+      )
+      await addCategory(eventId, names[i]!, categories.length + i, photo)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      <PlatePhotoUpload
+        progress={bulk}
+        onFiles={(files) => void run(() => uploadPlates(files)).finally(() => setBulk(null))}
+      />
+
       <Card className="space-y-3">
         <h2 className="text-2xl">Add a category</h2>
         <CategoryNameForm

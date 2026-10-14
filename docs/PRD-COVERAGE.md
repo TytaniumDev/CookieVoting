@@ -13,7 +13,7 @@ is the phase order in [`ROADMAP.md`](./ROADMAP.md).
 
 Status: ✅ built on `main` · ⬜ planned (roadmap phase) · 🔁 changed by ARCHITECTURE.md · ❓ needs an owner decision
 
-_Last updated for phase 7 (baker assignment and opening voting), 2026-10-13._
+_Last updated for phase 12 (phone-to-laptop handoff), 2026-10-14._
 
 ## Snapshot
 
@@ -137,6 +137,15 @@ Everything else reads or writes Firebase, so this comes first.
 | §14 | Every voter screen usable at 375 px                      | ✅ `e2e/voter-a11y.spec.ts`              |
 | §1  | Desktop responsive                                       | ✅                                       |
 
+### P9 — Phone-to-laptop handoff (phase 12, owner requirement 2026-10-13)
+
+| Source | Requirement                                                    | Status                                        |
+| ------ | -------------------------------------------------------------- | --------------------------------------------- |
+| Owner  | Upload many plate photos at once from the admin's phone        | ✅ `PlatePhotoUpload`, "Plate N" categories   |
+| Owner  | Carry on any admin step on a laptop or another device, in sync | ✅ live listeners; URL carries step and plate |
+| Owner  | Several admins on one event at once without losing edits       | ✅ `mergeCookieEdits`, `e2e/handoff.spec.ts`  |
+| §1     | Admin flow works fully on a phone                              | ✅ phases 3–7, 375 px                         |
+
 ### Already done
 
 | PRD | Requirement                                                                                       | Status                                     |
@@ -173,3 +182,4 @@ These were open product questions; the owner answered them on 2026-10-13.
 | Q2  | Can admins move an event backwards (voting → setup, results → voting)?                                                         | **Yes, with no locks.** Any status in any order, and cookies stay editable after votes exist; everything live-updates. Correctness is on the admin. |
 | Q3  | Must voters rank something in every category before submitting?                                                                | **Yes.** Every category needs a 1st, 2nd and 3rd pick (fewer only when it has fewer than 3 cookies).                                                |
 | Q4  | Removing a baker from the event when cookies are already assigned to them                                                      | **Allowed.** Those cookies become unassigned again, and Open Voting stays blocked until they're reassigned.                                         |
+| Q5  | (2026-10-13) How do plate photos taken on a phone get in: one per category, a photo tray, or many at once?                     | **Bulk upload.** Pick them all at once; each becomes "Plate N", renamed later on any device.                                                        |

@@ -13,7 +13,8 @@ listed at the end with their reasons. The phased build plan is in
 2. **Used about once a year.** Nothing may pause, expire or need babysitting
    between events.
 3. **Phones first, for everyone.** Voters _and_ admins use phones, including for
-   identifying cookies on plate photos.
+   identifying cookies on plate photos. An admin can start on a phone and carry
+   on from a laptop or another admin's device, with every screen kept in sync.
 4. **Scoring runs in the cloud**, not in voters' browsers.
 5. **Cookie identification without paid AI.** Admins tap cookies (an in-browser
    model outlines them) or draw boxes by hand.
@@ -231,7 +232,42 @@ count from `results/live`, the voter link (`lib/links.ts`) with Copy and the
 phone's Share sheet, and the event page adds a QR code (`qrcode-generator`, drawn
 as SVG in the theme's ink).
 
+### Working across devices and admins
+
+Owner requirement (2026-10-13): take the plate photos on a phone, upload them from
+the phone's admin page, then carry on with any step on a laptop, another phone or
+another admin's account, with everything kept in sync.
+
+- **Live everywhere.** Every admin screen reads through the `lib/data.ts` listener
+  hooks, so a change from any device or admin shows up on the others within about
+  a second, with no reload. The URL carries the step and plate
+  (`?step=cookies&category=…`), so sending the link hands over the exact place.
+- **Co-admins** are more docs in `admins/` (SETUP.md §3); there is no per-event
+  ownership, so every admin sees and edits every event.
+- **Edits merge rather than overwrite.** Most writes touch single fields
+  (`assignments.{category}.{cookie}`, a category's name, the event status) and
+  can't clash. A plate's cookies are one array, so `saveCookies` runs a
+  transaction that replays this editor's change (`base` → `next`) onto the array
+  as stored now (`mergeCookieEdits` in `packages/shared`): two admins boxing the
+  same plate both keep their cookies, and a delete from one device isn't undone
+  by a move on another.
+- **No offline cache.** Firestore's persistent cache is off; the cookie
+  transaction needs a connection. Tap-to-select itself still works offline once
+  the model has loaded.
+- `e2e/handoff.spec.ts` drives a phone (`admin@example.com`) and a laptop
+  (`elf@example.com`, a second seeded admin) through one event.
+
 ### Photo upload (admin, phone)
+
+**Bulk (owner decision, 2026-10-13):** the Categories step opens with **Upload
+plate photos**, a multi-select picker. Each photo uploads in turn (progress shows
+"Uploading photo 2 of 5") and only then becomes a category named "Plate N",
+numbered on from the highest existing one (`plateNames`), so an interrupted
+upload leaves no empty categories. Admins rename plates on any device. "Plate N"
+names are never offered as suggestions for later events. Categories can still be
+added by name first and given a photo with **Add photo** / **Replace photo**.
+
+Each photo:
 
 1. `<input type="file" accept="image/jpeg,image/png">` opens the camera or
    gallery (phones convert HEIC to JPEG for this filter).

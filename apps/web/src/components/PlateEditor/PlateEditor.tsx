@@ -33,8 +33,11 @@ export type TapToSelect =
 export interface PlateEditorProps {
   photo: Pick<PlatePhoto, 'url' | 'width' | 'height'>
   cookies: readonly Cookie[]
-  /** Called after each finished edit with every cookie, sorted into reading order. */
-  onChange: (cookies: Cookie[]) => void
+  /**
+   * Called after each finished edit with every cookie, sorted into reading order, and
+   * the `cookies` the edit started from, so the save can merge with others' edits.
+   */
+  onChange: (cookies: Cookie[], base: readonly Cookie[]) => void
   /** Names the photo for screen readers, e.g. "Stars plate". */
   label: string
   /** Tapping a cookie boxes it when this is ready; without it, boxes are drawn by hand. */
@@ -121,7 +124,7 @@ export function PlateEditor({
   function commit(next: Cookie[], base: readonly Cookie[] = cookies) {
     const sorted = readingOrder(next)
     setDraft({ base, cookies: sorted })
-    onChange(sorted)
+    onChange(sorted, base)
   }
 
   async function findAt(point: Point) {

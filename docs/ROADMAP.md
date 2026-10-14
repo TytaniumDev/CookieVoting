@@ -134,6 +134,15 @@ Can start any time after phase 5 (it needs the ground truth).
 - [x] Spike: in-browser grid of tap-to-select taps, scored against `fixtures/plates/*.json` (Gemini skipped: needs console setup and shares photos with Google)
 - [x] Decision: 90.5% recall but ~3 wrong boxes per plate and ~14 s+ per plate, so no button; tap-to-select stays (ARCHITECTURE.md → Identifying cookies)
 
+## Phase 12 — Phone-to-laptop handoff ✅
+
+Owner requirement (2026-10-13): photograph and upload plates from a phone, then
+carry on with any admin step on a laptop or another admin's device, kept in sync.
+
+- [x] Bulk upload: pick every plate photo at once; each becomes "Plate N" to rename anywhere (owner chose this over a photo tray)
+- [x] Plate edits from two devices or admins merge instead of overwriting (`mergeCookieEdits`, transactional `saveCookies`)
+- [x] E2E: phone and laptop, two admins, one event (`e2e/handoff.spec.ts`)
+
 ---
 
 ## Owner actions
@@ -365,3 +374,13 @@ until real-device testing (useful from phase 3).
   Tapping is quicker, so nothing shipped; numbers are in ARCHITECTURE.md.
 - Every phase is now done. What's left is the owner's: App Check decision,
   Anonymous sign-in check, and a dry run on real phones (Owner actions).
+
+### Session 4, continued — phase 12
+
+- New owner requirement: phone-to-laptop handoff across devices and admins. Live
+  sync already held (every admin screen listens to Firestore, and the URL carries
+  the step and plate). Two gaps fixed: plate edits now merge in a transaction, and
+  bulk upload turns each photo into a "Plate N" category.
+- Seed data has a second admin, `elf@example.com`, for two-admin tests.
+- The E2E can't make two saves truly race on the emulators; the merge itself is
+  unit tested in `packages/shared/src/cookies.test.ts`.
