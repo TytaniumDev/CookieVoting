@@ -104,11 +104,13 @@ fixtures/plates/   Real plate photos for detection work and E2E
   hard-code colours in components; add a token instead.
 - **Phones first:** design at 375 px wide; touch targets ≥ 44 px; admins use
   phones too, including in the plate editor.
-- **Wide screens:** pages span the screen inside `AppLayout` (side padding
-  `--gutter`, up to `max-w-7xl`). Text, forms and lists stop at
-  `max-w-readable`; grids add columns instead. Rows of tabs or chips never
-  wrap: one row that scrolls sideways, edge to edge, only when it doesn't fit
-  (see `Stepper`: `-mx-(--gutter) px-(--gutter) overflow-x-auto`, `w-max`).
+- **Wide screens:** every page is one centred column inside `AppLayout`
+  (`mx-auto max-w-5xl`, side padding `--gutter`), never left-aligned with empty
+  space on the right. Voter pages are a narrower centred column
+  (`ReadableLayout`, `max-w-readable`). Inside the column, content fills the
+  width; grids add columns. Rows of tabs or chips never wrap: one row that
+  scrolls sideways, edge to edge, only when it doesn't fit (see `Stepper`:
+  `-mx-(--gutter) px-(--gutter) overflow-x-auto`, `w-max`).
 - **Pages are lazy routes** in `apps/web/src/app/routes.ts`. Keep heavy admin-only
   dependencies (e.g. the segmentation model) out of voter chunks.
 - **Firestore listeners** must be unsubscribed on unmount (PRD: infrequent use,

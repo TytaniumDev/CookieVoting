@@ -2,8 +2,8 @@ import { Link, Outlet } from 'react-router'
 import { Snowfall } from '../components/Snowfall/Snowfall.tsx'
 import { ErrorProvider } from './ErrorProvider.tsx'
 
-/** Pages use the screen's width, with side padding, up to a comfortable maximum. */
-const PAGE_WIDTH = 'mx-auto w-full max-w-7xl px-(--gutter)'
+/** One centred column with side padding, wide enough for the admin step tabs on one row. */
+const PAGE_WIDTH = 'mx-auto w-full max-w-5xl px-(--gutter)'
 
 export function AppLayout() {
   return (
