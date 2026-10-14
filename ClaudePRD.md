@@ -232,11 +232,10 @@ Voters access the app at `[domain]/event/[eventId]`. Firebase Anonymous Auth is 
 - If the voter has already submitted for this event (User ID found in `userVotes`), they are directed to the Waiting or Results screen depending on event status.
 
 ### Step 2: Voting Session
-- One category is shown at a time. The voter navigates between categories using forward/back buttons (or swipe on mobile). A progress indicator shows which category they are on (e.g. "Category 2 of 5").
-- Within each category, cookies are displayed in a scrollable grid of cropped images. The layout should aim to fit all cookies on screen without scrolling where possible (grid density adapts to cookie count).
-- Each cookie card has a small magnifying glass 🔍 icon in the corner. Tapping this icon enlarges the image in a modal for inspection.
-- Voters tap the cookie card itself to select their top 3 (1st, 2nd, 3rd) in order. Each selected cookie is visually labelled with its rank (e.g. a badge showing "1", "2", "3").
-- Tapping an already-ranked cookie deselects it. The remaining selections auto-renumber intuitively (e.g., if the 2nd choice is deselected, the 3rd choice shifts up to become the new 2nd choice).
+- One category is shown at a time, on a festive cranberry backdrop with falling snow. The voter moves between categories with Back and Next. A progress indicator shows which category they are on (e.g. "Category 2 of 5").
+- Within each category, cookies are shown one at a time and as large as the screen allows ("Spotlight", owner decision 2026-10-14). Under the category name is a row of small photos of every cookie; tapping one shows it. The voter can also swipe the big photo sideways on a phone, or use the arrow buttons beside it, to move between cookies.
+- Under the photo are three medal buttons: 1st, 2nd and 3rd place. Tapping one gives that medal to the cookie on screen, in any order. Each button says where its medal is: "Not given yet", "Now on #2" (tapping moves it to this cookie) or "Tap to take back". The cookie's medal shows in the corner of its photo and on its small photo.
+- The Next button says how many medals are still to give ("Give out 1 more medal to go on") until every medal in the category is given. Confetti falls when the last one is.
 - If a category has fewer than 3 cookies, the maximum selections adjusts to the number of cookies available.
 - Votes are stored locally (React state) until final submission. Navigating between categories does not lose selections.
 - A voter can go back and change their selections for any category before submitting.

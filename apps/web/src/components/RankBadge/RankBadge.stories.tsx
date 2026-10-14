@@ -20,6 +20,8 @@ export const Silver: Story = { args: { rank: 2 } }
 
 export const Bronze: Story = { args: { rank: 3 } }
 
+export const Small: Story = { args: { size: 'sm' } }
+
 export const Large: Story = { args: { size: 'lg' } }
 
 export const Podium: Story = {

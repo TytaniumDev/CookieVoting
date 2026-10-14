@@ -171,6 +171,20 @@ four header layouts are in the Artifact "Cookies Step Header Mocks".
 - [x] A tap adds a box where tap-to-select can't; the scroll wheel zooms and dragging pans
 - [x] Event name in the red bar, steps as a progress stepper, plates as photo thumbnails, prompt on the photo, Next plate under it; the photo fills the rest of the window
 
+## Phase 16 — Festive Spotlight ballot ✅
+
+Owner feedback (2026-10-14): the voting page was "really bland"; make it
+festive, with the cookie photos as large as the screen allows. Mocks are in the
+Artifacts "Festive Voting Mockups" (four directions) and "Spotlight Voting
+Mockup" (three rounds on the one picked).
+
+- [x] Cranberry page with snow while voting (`data-festive` on the page; `AppLayout` does the rest)
+- [x] Cookie thumbnails under the category name (`CookieStrip`), centred, scrolling sideways only when they don't fit
+- [x] One cookie at a time, as big as fits, swiped or stepped with arrows (`CookieCarousel`, CSS scroll snap)
+- [x] 1st/2nd/3rd medal buttons that say where each medal is (`MedalButtons`); medals in any order (`awardPlace`)
+- [x] Next says how many medals are left; confetti when the last is given
+- [x] The 🔍 zoom modal, the cookie grid and category swiping are gone (`CookieCard`, `CookieZoom`, `useSwipe`, `toggleRanking`)
+
 ---
 
 ## Owner actions
@@ -479,3 +493,23 @@ until real-device testing (useful from phase 3).
   progress line (phones show only the current step's name); `PlateTabs` is new.
   At 1920 × 960 the photo is 596 px tall and nothing scrolls; at 375 px the
   whole step fits in 740 px.
+
+### Session — 2026-10-14 (festive Spotlight ballot)
+
+- Four mock directions (gallery, spotlight, tap-the-plate, feed); the owner
+  picked Spotlight for its photo size and found the first version's voting
+  "clunky". Round two moved the thumbnails above the photo, added finger
+  swiping, and tried two kinds of vote buttons; the owner chose three medal buttons
+  whose text updates ("Not given yet", "Now on #2", "Tap to take back").
+  Round three dropped the line under the photo and kept medals from being
+  clipped; round four centred the laptop thumbnails on their own row.
+- Medals are now places, not an ordered list: `CategoryPlaces` has a slot per
+  medal with gaps until all are given (`awardPlace`, `allPlacesGiven`). The
+  ballot sent is unchanged.
+- The page fills the window: at 375 × 740, 1366 × 680 and 1920 × 960 nothing
+  scrolls (screenshots in the project's `screenshots/spotlight-ballot`).
+- Swiping now moves between cookies, so swiping between categories is gone;
+  Back and Next do that. Phones show an icon-only Back so long category names fit.
+- Notes for next time: the carousel ignores the cookies it passes while the
+  arrows or thumbnails scroll it (`target` in `CookieCarousel`); without that a
+  smooth scroll reported cookies on the way and undid the move.

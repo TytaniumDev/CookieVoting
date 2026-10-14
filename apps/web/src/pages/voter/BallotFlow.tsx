@@ -1,15 +1,19 @@
-import { maxPicksFor, type BallotRankings, type CategoryRanking } from '@cookie-voting/shared'
+import {
+  maxPicksFor,
+  type BallotRankings,
+  type CategoryPlaces,
+  type CategoryRanking,
+} from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { AppBarContent } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { BallotReview } from '../../components/BallotReview/BallotReview.tsx'
 import { Button } from '../../components/Button/Button.tsx'
 import { Card } from '../../components/Card/Card.tsx'
 import { CategoryBallot } from '../../components/CategoryBallot/CategoryBallot.tsx'
-import { ProgressBar } from '../../components/ProgressBar/ProgressBar.tsx'
 import { submitBallot } from '../../lib/ballots.ts'
 import type { Category, Event } from '../../lib/data.ts'
-import { useSwipe } from '../../lib/useSwipe.ts'
 
 /** A category voters can vote in: it has a photo and cookies. */
 export type VotableCategory = Category & { photo: NonNullable<Category['photo']> }
@@ -30,16 +34,20 @@ export function BallotFlow({
   uid: string
 }) {
   const [screen, setScreenState] = useState(LANDING)
-  const [rankings, setRankings] = useState<Record<string, CategoryRanking>>({})
+  const [medals, setMedals] = useState<Record<string, CategoryPlaces>>({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const reviewing = screen >= categories.length
 
-  // Admins can edit cookies while people vote; drop picks of cookies that are gone.
+  // Admins can edit cookies while people vote; drop medals of cookies that are gone.
+  const placesFor = (category: VotableCategory): CategoryPlaces =>
+    Array.from({ length: maxPicksFor(category.cookies.length) }, (_, i) => {
+      const id = medals[category.id]?.[i] ?? null
+      return category.cookies.some((c) => c.id === id) ? id : null
+    })
+  // Only read once every category is complete (review and submit), so there are no gaps.
   const rankingFor = (category: VotableCategory): CategoryRanking =>
-    (rankings[category.id] ?? []).filter((id) => category.cookies.some((c) => c.id === id))
-  const isComplete = (category: VotableCategory) =>
-    rankingFor(category).length >= maxPicksFor(category.cookies.length)
+    placesFor(category).filter((id) => id !== null)
 
   function setScreen(next: number) {
     setScreenState(next)
@@ -47,11 +55,6 @@ export function BallotFlow({
   }
 
   const category = categories[screen]
-  const canGoOn = category ? isComplete(category) : false
-  const swipe = useSwipe({
-    onSwipeLeft: () => canGoOn && setScreen(screen + 1),
-    onSwipeRight: () => setScreen(Math.max(LANDING, screen - 1)),
-  })
 
   async function submit() {
     setSubmitting(true)
@@ -118,38 +121,63 @@ export function BallotFlow({
     )
   }
 
-  const picks = maxPicksFor(category.cookies.length)
+  const places = placesFor(category)
+  const left = places.filter((id) => id === null).length
   const isLast = screen === categories.length - 1
   return (
-    <section className="touch-pan-y space-y-4" aria-labelledby="category-heading" {...swipe}>
-      <ProgressBar
-        label={event.name}
-        value={screen + 1}
-        max={categories.length}
-        valueText={`Category ${screen + 1} of ${categories.length}`}
-      />
-      <h1 id="category-heading" className="text-3xl">
-        {category.name}
-      </h1>
+    // `data-festive` turns the page cranberry, with snow (AppLayout).
+    <section
+      data-festive
+      className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
+      aria-labelledby="category-heading"
+    >
+      <AppBarContent>
+        <span className="truncate text-sm font-bold opacity-90 max-sm:hidden">{event.name}</span>
+      </AppBarContent>
+      <div className="flex items-end gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold tracking-wider text-accent-subtle uppercase">
+            Category {screen + 1} of {categories.length}
+          </p>
+          <h1 id="category-heading" className="text-3xl sm:text-4xl">
+            {category.name}
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setScreen(screen - 1)}
+          className="ml-auto min-h-11 min-w-11 shrink-0 rounded-control px-3 font-display font-semibold hover:bg-primary-hover"
+        >
+          <span aria-hidden="true">←</span>
+          {/* Phones need the room for the category's name. */}
+          <span className="max-sm:sr-only"> Back</span>
+        </button>
+      </div>
       <CategoryBallot
+        // A fresh ballot (first cookie on screen) for each category.
+        key={category.id}
         photo={category.photo}
         cookies={category.cookies}
-        ranking={rankingFor(category)}
-        onChange={(ranking) => setRankings({ ...rankings, [category.id]: ranking })}
+        places={places}
+        onChange={(next) => setMedals({ ...medals, [category.id]: next })}
+        className="min-h-0 flex-1"
+        footer={
+          <Button
+            variant="secondary"
+            size="lg"
+            fullWidth
+            disabled={left > 0}
+            onClick={() => setScreen(screen + 1)}
+            className="disabled:bg-transparent disabled:opacity-100 disabled:shadow-none disabled:ring-2 disabled:ring-primary-hover"
+          >
+            {left > 0
+              ? `Give out ${left === 1 ? '1 more medal' : left === places.length ? `all ${left} medals` : `${left} more medals`} to go on`
+              : isLast
+                ? 'Review my votes'
+                : 'Next category →'}
+          </Button>
+        }
       />
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" onClick={() => setScreen(screen - 1)}>
-          ← Back
-        </Button>
-        <Button className="ml-auto" disabled={!canGoOn} onClick={() => setScreen(screen + 1)}>
-          {isLast ? 'Review my votes' : 'Next category →'}
-        </Button>
-      </div>
-      {!canGoOn && (
-        <p className="text-right text-sm text-ink-muted">
-          Pick {picks === 1 ? 'one' : `all ${picks}`} to go on.
-        </p>
-      )}
     </section>
   )
 }

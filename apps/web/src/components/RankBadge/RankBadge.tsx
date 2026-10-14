@@ -1,7 +1,7 @@
 import { ORDINALS } from './ordinals.ts'
 
 export type Rank = 1 | 2 | 3
-export type RankBadgeSize = 'md' | 'lg'
+export type RankBadgeSize = 'sm' | 'md' | 'lg'
 
 export interface RankBadgeProps {
   rank: Rank
@@ -16,6 +16,7 @@ const rankClasses: Record<Rank, string> = {
 }
 
 const sizeClasses: Record<RankBadgeSize, string> = {
+  sm: 'size-6 text-xs',
   md: 'size-8 text-base',
   lg: 'size-12 text-2xl',
 }
