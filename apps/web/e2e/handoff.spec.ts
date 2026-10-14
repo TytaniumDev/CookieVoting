@@ -1,4 +1,5 @@
 import { devices, expect, test } from '@playwright/test'
+import { expectCategoryNames, nameCategory } from './categories.ts'
 import { signInAs } from './signIn.ts'
 
 // Owner requirement (2026-10-13): start an event on a phone, carry on from a laptop
@@ -28,18 +29,14 @@ test('two admins on a phone and a laptop set up one event together', async ({
       '../../fixtures/plates/4-cookies_stars.jpg',
       '../../fixtures/plates/5-cookies_candy-canes.jpg',
     ])
-  const headings = (page: typeof phone) =>
-    page.getByRole('list', { name: 'Categories' }).getByRole('heading')
-  await expect(headings(phone)).toHaveText(['Plate 1', 'Plate 2'], { timeout: 30_000 })
+  await expectCategoryNames(phone, ['Plate 1', 'Plate 2'])
 
   // Laptop: a co-admin opens the same link and names the plates.
   await signInAs(laptop, 'elf@example.com')
   await laptop.goto(phone.url())
-  await expect(headings(laptop)).toHaveText(['Plate 1', 'Plate 2'])
-  await laptop.getByRole('button', { name: 'Rename Plate 1' }).click()
-  await laptop.getByLabel('New name').fill('Stars')
-  await laptop.getByRole('button', { name: 'Save' }).click()
-  await expect(headings(phone)).toHaveText(['Stars', 'Plate 2'])
+  await expectCategoryNames(laptop, ['Plate 1', 'Plate 2'])
+  await nameCategory(laptop, 0, 'Stars')
+  await expectCategoryNames(phone, ['Stars', 'Plate 2'])
 
   // Both box cookies on the same plate: both are kept, and both screens agree. (Merging
   // edits that truly race is unit tested in packages/shared/src/cookies.test.ts.)

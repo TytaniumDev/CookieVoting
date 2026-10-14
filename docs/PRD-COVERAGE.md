@@ -71,7 +71,7 @@ Everything else reads or writes Firebase, so this comes first.
 | ---- | ------------------------------------------------------ | ----------------------------------------- |
 | §6.3 | Add categories by name                                 | ✅ `CategoriesStep`                       |
 | §6.3 | Name suggestions from past events, ranked by frequency | ✅ `suggestCategoryNames`                 |
-| §6.3 | Upload a JPEG/PNG plate photo to Storage               | ✅ with progress and replace              |
+| §6.3 | Upload a JPEG/PNG plate photo to Storage               | ✅ with progress                          |
 | §6.3 | Compress photos over 5 MB                              | 🔁 always downscale to 2048 px, JPEG 0.85 |
 | §6.3 | Drag-and-drop reorder, persisting `order`              | ✅ dnd-kit (touch, keyboard)              |
 | §6.3 | Delete a category only while no votes exist            | 🔁 always allowed, warns (Q2)             |

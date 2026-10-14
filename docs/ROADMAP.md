@@ -67,7 +67,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Add / rename / delete categories (owner decision Q2: delete always works, the dialog warns with the ballot count)
 - [x] Name suggestions ranked by frequency of use across past events
 - [x] Drag-to-reorder that works with touch (e.g. dnd-kit), persisting `order`
-- [x] Photo capture/upload from phone camera or gallery: EXIF-aware decode, downscale to 2048 px, JPEG 0.85, upload with progress, replace photo
+- [x] Photo capture/upload from phone camera or gallery: EXIF-aware decode, downscale to 2048 px, JPEG 0.85, upload with progress (replacing a photo was dropped 2026-10-14: delete and re-upload)
 - [x] `CookieImage` component: renders a cookie from plate photo + normalised box (ARCHITECTURE.md → Rendering a cookie)
 - [x] Stories + E2E (upload a fixture photo on the mobile profile)
 
@@ -386,3 +386,15 @@ until real-device testing (useful from phase 3).
 - Seed data has a second admin, `elf@example.com`, for two-admin tests.
 - The E2E can't make two saves truly race on the emulators; the merge itself is
   unit tested in `packages/shared/src/cookies.test.ts`.
+
+### Session 5 — 2026-10-14 (owner feedback)
+
+- Errors show in a sticky banner at the top of the page and go to Sentry
+  (`lib/monitoring.ts`; off unless `VITE_SENTRY_DSN` is set). Step tabs wrap
+  instead of scrolling on wider screens.
+- Voters see "Thanks" only once the server has their ballot (`watchSavedDoc`).
+- Category cards (owner feedback): the name is an auto-saving text field, a trash
+  icon deletes, and "Add a category", "Rename" and "Replace photo" are gone.
+  Categories come only from uploaded photos. `CategoryNameForm` was removed; the
+  E2E helpers for this live in `e2e/categories.ts`.
+- Next: admin access requests (owner chose request + approve, no email).

@@ -280,9 +280,10 @@ about 10 KB gzipped on every page and fits Sentry's free plan.
 plate photos**, a multi-select picker. Each photo uploads in turn (progress shows
 "Uploading photo 2 of 5") and only then becomes a category named "Plate N",
 numbered on from the highest existing one (`plateNames`), so an interrupted
-upload leaves no empty categories. Admins rename plates on any device. "Plate N"
-names are never offered as suggestions for later events. Categories can still be
-added by name first and given a photo with **Add photo** / **Replace photo**.
+upload leaves no empty categories. Uploading is the only way to add a category
+(owner, 2026-10-14): a wrong photo is fixed by deleting the category (trash icon,
+with a confirm) and uploading again. Admins name plates on any device. "Plate N"
+names are never offered as suggestions for later events.
 
 Each photo:
 
@@ -296,10 +297,12 @@ Each photo:
 width, height}` on the category.
 
 The work lives in `apps/web/src/lib/photo.ts` (decode, `OffscreenCanvas`
-resize, encode) and `storage.ts` (resumable upload with progress; replacing a
-photo deletes the old file after the new one is saved). Category names come
-with suggestions from past events, ranked by how often they were used
-(`suggestCategoryNames` in `packages/shared`).
+resize, encode) and `storage.ts` (resumable upload with progress). Each
+category's name is a text field on its card that saves itself after a pause in
+typing, on Enter and on leaving the field; an empty name or one another category
+has is never saved. Renames from other devices show up unless that field is
+being edited. A `<datalist>` suggests names from past events, ranked by how often
+they were used (`suggestCategoryNames` in `packages/shared`).
 
 Categories reorder by drag handle with dnd-kit (pointer, touch and keyboard
 sensors; custom screen-reader announcements). Dragging is handle-only so the
