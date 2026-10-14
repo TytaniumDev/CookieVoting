@@ -347,15 +347,25 @@ The plate editor shows the photo with cookie boxes overlaid:
 - **Tap-to-select (primary):** tap a cookie and a segmentation model running in
   the browser returns a mask, which becomes a tight bounding box. See
   [Tap-to-select](#tap-to-select) for the model and how it was chosen.
-- **Manual:** drag to draw a box; drag handles to resize; drag to move; delete.
-  `PlateEditor` (the Cookies step) does this with pointer events: one finger
-  draws, moves or resizes, and two fingers pinch-zoom and pan (Ctrl + wheel on
-  desktop). `touch-action: none` stops the browser scrolling while drawing, so
-  the photo is capped at 65% of the screen height to leave room to scroll the
-  page. Handles, numbers and outlines are counter-scaled to stay
-  finger-sized at any zoom. Keyboard users Tab to a box: arrows move it,
-  Shift + arrows resize it, Delete removes it, and **Add cookie** places a box
-  in the middle of the view. Each finished gesture is one save; deleting a
+- **Manual:** a tap that tap-to-select can't box (or any tap while it loads or
+  if it's unavailable) adds a box there, square on screen, to fit with the corner
+  handles; drag a box to move it; delete it from its baker menu (or Delete).
+  `PlateEditor` (the Cookies step) does this with pointer events and nothing
+  around the photo (owner, 2026-10-14: no zoom buttons, count line, Add cookie
+  or Delete buttons). Pinch or the scroll wheel zooms on the pointer, dragging
+  the photo pans it once zoomed in, and hints float over the photo.
+  The photo fills the window below the rows above it (at least half the window
+  height), so a 1080p laptop shows the whole step without scrolling; on short
+  screens `touch-action: none` over the photo still leaves page above and below
+  it to scroll by. The event's name sits in the red app bar (`AppBarContent`
+  portals into `AppLayout`; the cookie and "Cookie Voting" go home), the setup
+  steps are a progress stepper (`Stepper`), plates are photo thumbnails
+  (`PlateTabs`), bakers stay round chips, the whose-turn prompt floats on the
+  photo and Next plate sits under it (owner's picks, 2026-10-14). Handles,
+  numbers and outlines are counter-scaled to stay finger-sized at any zoom.
+  Keyboard users Tab to a box: arrows move it, Shift + arrows resize it, Delete
+  removes it, and an **Add cookie** button that only shows when focused places a
+  box in the middle of the view. Each finished gesture is one save; deleting a
   cookie also clears its baker assignment. Replacing a category's photo keeps
   its boxes, for the admin to adjust.
 - **Pre-outline (optional, phase 11): not shipped.** A "find all cookies"
@@ -430,7 +440,7 @@ tapping the centre of every ground-truth cookie in `fixtures/plates` (95 cookies
   real plate and requires IoU ≥ 0.8 for every cookie), so the comparison isn't
   worth a CI job unless tap accuracy disappoints on real phones.
 - If the runtime or model fails to load (old phone, blocked download), the editor
-  says so and drawing still works. A tap whose box overlaps an existing one
+  says so and taps still add boxes to fit by hand. A tap whose box overlaps an existing one
   (IoU ≥ 0.5) selects that one instead of adding a duplicate.
 
 ### Rendering a cookie

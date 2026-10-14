@@ -162,6 +162,15 @@ assignment in one step; picked from mocks (baker chips above the photo).
 - [x] No auto-advance: Next plate / Next: Voting; the Assign bakers step is gone
 - [x] PRD updated, with the bulk upload and category card changes recorded
 
+## Phase 15 — Cookies step fits a 1080p screen ✅
+
+Owner feedback (2026-10-14): no vertical scrolling on a 1080p laptop. Mocks of
+four header layouts are in the Artifact "Cookies Step Header Mocks".
+
+- [x] Remove the zoom row (−, +, Fit, Add cookie), the cookie count and the Delete cookie button
+- [x] A tap adds a box where tap-to-select can't; the scroll wheel zooms and dragging pans
+- [x] Event name in the red bar, steps as a progress stepper, plates as photo thumbnails, prompt on the photo, Next plate under it; the photo fills the rest of the window
+
 ---
 
 ## Owner actions
@@ -453,3 +462,20 @@ until real-device testing (useful from phase 3).
 - Not done: type-to-filter in `BakerMenu` (it scrolls past ~6 bakers); add it if
   rosters get long. A plate counts as done once every boxed cookie has a baker,
   even if some cookies on it aren't boxed yet (the app can't tell).
+
+### Session — 2026-10-14 (condense the Cookies step)
+
+- Shipped the removals the owner asked for: `PlateEditor` is now just the photo.
+  Drag-to-draw is gone: a tap adds a box to fit by hand when tap-to-select finds
+  nothing, and dragging empty photo pans. Hints float over the photo. A
+  focus-only Add cookie button keeps a keyboard way to add a box.
+- Two rounds of mocks ("Cookies Step Header Mocks", then "Cookies Step
+  Navigation Mocks"). The owner mixed them: event name in the red bar (D),
+  prompt on the photo (C), photo fits the window (A), steps as a progress
+  stepper (round 2, option 2) and plates as photo thumbnails (round 2, option 1).
+  He found steps, plates and bakers sharing one chip style "a big mess", and
+  didn't want Next plate in the plate row.
+- `AppBarContent` portals page content into the red bar; `Stepper` is now the
+  progress line (phones show only the current step's name); `PlateTabs` is new.
+  At 1920 × 960 the photo is 596 px tall and nothing scrolls; at 375 px the
+  whole step fits in 740 px.

@@ -1,5 +1,4 @@
 import {
-  boxFromPoints,
   clamp,
   clampBox,
   iou,
@@ -41,7 +40,10 @@ export interface PlateEditorProps {
   onChange: (cookies: Cookie[], base: readonly Cookie[]) => void
   /** Names the photo for screen readers, e.g. "Stars plate". */
   label: string
-  /** Tapping a cookie boxes it when this is ready; without it, boxes are drawn by hand. */
+  /**
+   * Tapping a cookie boxes it when this is ready; without it (or when it finds nothing),
+   * a tap adds a box there for the admin to fit with its corner handles.
+   */
   tapToSelect?: TapToSelect
   /**
    * A name tag for each cookie by id (its baker); null marks a cookie that still needs
@@ -49,12 +51,19 @@ export interface PlateEditorProps {
    */
   tags?: Readonly<Record<string, string | null>>
   /**
-   * Called when a cookie is added (by a tap, a drawn box or Add cookie), after
+   * Called when a cookie is added (by a tap or Add cookie), after
    * `onChange`. Return true to open its menu straight away.
    */
   onCreate?: (cookie: Cookie) => boolean | void
   /** With this, tapping a box (or Enter on it) opens this menu next to it. */
   renderMenu?: (cookie: Cookie, actions: MenuActions) => ReactNode
+  /**
+   * Pixels to keep free under the photo when it sizes itself to the window, for
+   * whatever the page shows below it and the page's bottom padding.
+   */
+  spaceBelow?: number
+  /** A short prompt floating at the top of the photo, e.g. whose cookie to tap next. */
+  banner?: ReactNode
   /** Makes ids for new cookies; tests pass a predictable one. */
   newId?: () => string
   className?: string
@@ -74,7 +83,7 @@ interface View {
 }
 
 type Gesture =
-  | { kind: 'draw'; start: Point; startClient: Point; current: Point }
+  | { kind: 'pan'; start: Point; startClient: Point; view: View; moved: boolean }
   | {
       kind: 'move'
       id: string
@@ -93,6 +102,8 @@ const FIT: View = { scale: 1, x: 0, y: 0 }
 const TAP_SLOP = 6
 /** A tap that finds a box overlapping an existing one this much selects that one instead. */
 const SAME_COOKIE_IOU = 0.5
+/** A box added by hand is this fraction of the photo's shorter side, before zoom. */
+const NEW_BOX_SIZE = 0.2
 /** Keyboard nudge, as a fraction of the photo; Alt nudges finer. */
 const NUDGE = 0.01
 const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se']
@@ -101,10 +112,10 @@ const MENU_WIDTH = 224
 
 const percent = (n: number) => `${n * 100}%`
 
-const TAP_HINTS: Record<TapToSelect['status'], string> = {
-  loading: 'Getting tap-to-select ready. You can drag to draw boxes meanwhile.',
-  ready: 'Tap a cookie to box it, or drag to draw a box.',
-  unavailable: "Tap-to-select didn't load on this device, so drag across each cookie to box it.",
+const TAP_HINTS: Record<TapToSelect['status'], string | null> = {
+  loading: 'Getting tap-to-select ready. Taps add a box to fit meanwhile.',
+  ready: null,
+  unavailable: "Tap-to-select didn't load here. Tap a cookie to add a box, then fit its corners.",
 }
 
 function distance(a: Point, b: Point) {
@@ -112,11 +123,12 @@ function distance(a: Point, b: Point) {
 }
 
 /**
- * The plate photo with a box over each cookie. Tap a cookie to box it (when
- * `tapToSelect` is ready) or drag on the photo to draw a box; tap a box to select it, drag it to move it, and drag its corner handles to resize it.
- * Pinch (or Ctrl + scroll) zooms and two fingers pan. With a keyboard, Tab to a box,
- * use the arrow keys to move it, Shift + arrows to resize it and Delete to remove it.
- * Edits are reported once each gesture ends, so a drag is one save.
+ * The plate photo with a box over each cookie, and nothing around it. Tap a cookie to
+ * box it: tap-to-select fits the box when it's ready, otherwise the tap adds a box there.
+ * Tap a box to select it, drag it to move it, and drag its corner handles to resize it.
+ * Pinch or the scroll wheel zooms, and dragging the photo pans it once zoomed in. With a
+ * keyboard, Tab to Add cookie or a box: arrow keys move it, Shift + arrows resize it and
+ * Delete removes it. Edits are reported once each gesture ends, so a drag is one save.
  */
 export function PlateEditor({
   photo,
@@ -127,9 +139,12 @@ export function PlateEditor({
   tags,
   onCreate,
   renderMenu,
+  banner,
+  spaceBelow = 24,
   newId = () => crypto.randomUUID(),
   className = '',
 }: PlateEditorProps) {
+  const frameRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -139,7 +154,7 @@ export function PlateEditor({
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [menuId, setMenuId] = useState<string | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
-  const [drawing, setDrawing] = useState<Box | null>(null)
+  const [maxHeight, setMaxHeight] = useState<number | null>(null)
   // Where a tap is being looked at by tap-to-select, and what it last said.
   const [finding, setFinding] = useState<Point | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -170,7 +185,10 @@ export function PlateEditor({
 
   async function findAt(point: Point) {
     const image = imageRef.current
-    if (tapToSelect?.status !== 'ready' || !image?.complete) return
+    if (tapToSelect?.status !== 'ready' || !image?.complete) {
+      addAt(point)
+      return
+    }
     setFinding(point)
     setNotice(null)
     // Let the marker paint before the model blocks the main thread.
@@ -185,7 +203,8 @@ export function PlateEditor({
     // Props may have moved on while the model ran.
     const { shown: now, cookies: base } = latest.current
     if (!box || box.width < MIN_BOX_SIZE || box.height < MIN_BOX_SIZE) {
-      setNotice("Couldn't find a cookie there. Tap its middle, or drag to draw a box.")
+      addAt(point, now, base)
+      setNotice("Couldn't find that cookie's edges. Drag the box's corners to fit it.")
       return
     }
     const found = box
@@ -247,7 +266,6 @@ export function PlateEditor({
     if (!a || !b || !rect) return
     // A second finger cancels whatever the first one started.
     setDraft(null)
-    setDrawing(null)
     gesture.current = {
       kind: 'pinch',
       distance: Math.max(distance(a, b), 1),
@@ -296,7 +314,7 @@ export function PlateEditor({
       }
     } else {
       e.preventDefault()
-      gesture.current = { kind: 'draw', start: point, startClient: client, current: point }
+      gesture.current = { kind: 'pan', start: point, startClient: client, view, moved: false }
     }
   }
 
@@ -320,11 +338,20 @@ export function PlateEditor({
       return
     }
 
+    if (g.kind === 'pan') {
+      if (!g.moved && distance(client, g.startClient) < TAP_SLOP) return
+      g.moved = true
+      setView(
+        clampView({
+          scale: g.view.scale,
+          x: g.view.x + client.x - g.startClient.x,
+          y: g.view.y + client.y - g.startClient.y,
+        }),
+      )
+      return
+    }
     const point = toPhoto(client)
-    if (g.kind === 'draw') {
-      g.current = point
-      if (distance(client, g.startClient) >= TAP_SLOP) setDrawing(boxFromPoints(g.start, point))
-    } else if (g.kind === 'move') {
+    if (g.kind === 'move') {
       if (!g.moved && distance(client, g.startClient) < TAP_SLOP) return
       g.moved = true
       g.box = moveBox(g.origin, point.x - g.start.x, point.y - g.start.y)
@@ -348,19 +375,14 @@ export function PlateEditor({
     gesture.current = null
     if (e.type === 'pointercancel') {
       setDraft(null)
-      setDrawing(null)
       return
     }
 
-    if (g.kind === 'draw') {
-      setDrawing(null)
-      const box = boxFromPoints(g.start, g.current)
-      if (box.width >= MIN_BOX_SIZE && box.height >= MIN_BOX_SIZE) {
-        add({ id: newId(), box })
-      } else {
-        setSelectedId(null)
-        if (distance({ x: e.clientX, y: e.clientY }, g.startClient) < TAP_SLOP) void findAt(g.start)
-      }
+    if (g.kind === 'pan') {
+      if (g.moved) return
+      setSelectedId(null)
+      setNotice(null)
+      void findAt(g.start)
     } else if (g.kind === 'resize' || g.moved) {
       commit(withBox(g.id, g.box))
     } else {
@@ -392,27 +414,29 @@ export function PlateEditor({
     commit(withBox(cookie.id, next))
   }
 
-  function addInView() {
-    // A box in the middle of what's on screen, for keyboard users and big fingers.
-    const rect = viewportRef.current?.getBoundingClientRect()
-    const centre = rect
-      ? toPhoto({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
-      : { x: 0.5, y: 0.5 }
-    const side = 0.15 / view.scale
-    add({
-      id: newId(),
-      box: clampBox({
-        x: centre.x - side / 2,
-        y: centre.y - side / 2,
-        width: side,
-        height: side,
-      }),
-    })
+  /** Adds a box, square on screen, centred on `point` for the admin to fit. */
+  function addAt(point: Point, now: readonly Cookie[] = shown, base: readonly Cookie[] = cookies) {
+    const side = NEW_BOX_SIZE / latest.current.view.scale
+    const aspect = photo.width / photo.height
+    const width = side * Math.min(1, 1 / aspect)
+    const height = side * Math.min(1, aspect)
+    const box = clampBox({ x: point.x - width / 2, y: point.y - height / 2, width, height })
+    add({ id: newId(), box }, now, base)
   }
 
-  // Ctrl + wheel (and trackpad pinch) zooms; plain wheel pans once zoomed in, and
-  // scrolls the page otherwise. React's wheel listener is passive, so preventDefault
-  // needs a native one, which reads the latest view and zoom through refs.
+  function addInView() {
+    // A box in the middle of what's on screen, for keyboard users.
+    const rect = viewportRef.current?.getBoundingClientRect()
+    addAt(
+      rect
+        ? toPhoto({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+        : { x: 0.5, y: 0.5 },
+    )
+  }
+
+  // The wheel (and a trackpad pinch, which arrives as Ctrl + wheel) zooms. React's wheel
+  // listener is passive, so preventDefault needs a native one, which reads the latest
+  // zoom through a ref.
   const latest = useRef({ view, zoom, shown, cookies })
   useEffect(() => {
     latest.current = { view, zoom, shown, cookies }
@@ -422,18 +446,13 @@ export function PlateEditor({
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       const rect = el.getBoundingClientRect()
-      const { view: v, zoom: zoomBy } = latest.current
-      if (e.ctrlKey) {
-        e.preventDefault()
-        zoomBy(Math.exp(-e.deltaY / 200), { x: e.clientX - rect.left, y: e.clientY - rect.top })
-      } else if (v.scale > 1) {
-        e.preventDefault()
-        setView({
-          scale: v.scale,
-          x: clamp(v.x - e.deltaX, rect.width * (1 - v.scale), 0),
-          y: clamp(v.y - e.deltaY, rect.height * (1 - v.scale), 0),
-        })
-      }
+      e.preventDefault()
+      // Lines and pages (deltaMode 1 and 2) are roughly 16 and 400 pixels.
+      const pixels = e.deltaY * ([1, 16, 400][e.deltaMode] ?? 1)
+      latest.current.zoom(Math.exp(-pixels / (e.ctrlKey ? 100 : 400)), {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     // The menu is placed in viewport pixels, so it needs the photo's size on screen.
@@ -446,6 +465,28 @@ export function PlateEditor({
       observer.disconnect()
     }
   }, [])
+
+  // The photo takes the rest of the window below it, so a laptop needn't scroll, but
+  // never less than half of it: on short screens the page scrolls instead.
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame) return
+    const update = () => {
+      const top = frame.getBoundingClientRect().top + window.scrollY
+      setMaxHeight(
+        Math.round(Math.max(window.innerHeight - top - spaceBelow, window.innerHeight / 2)),
+      )
+    }
+    update()
+    // Rows above the photo can change height (an alert appears, tabs load).
+    const observer = new ResizeObserver(update)
+    observer.observe(document.body)
+    window.addEventListener('resize', update)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [spaceBelow])
 
   /** Below the box, or above it when it sits in the lower half of what's on screen. */
   function menuPosition(box: Box): CSSProperties {
@@ -464,43 +505,23 @@ export function PlateEditor({
     '--inv': 1 / view.scale,
   } as CSSProperties
 
-  return (
-    <div className={`space-y-3 ${className}`}>
-      {tapToSelect && (
-        <p className="flex items-center gap-2 text-sm text-ink-muted">
-          {tapToSelect.status === 'loading' && <Spinner size="sm" label="" />}
-          {TAP_HINTS[tapToSelect.status]}
-        </p>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" onClick={() => zoom(1 / 1.5)} disabled={view.scale <= 1}>
-          <span aria-hidden="true" className="text-2xl">
-            −
-          </span>
-          <span className="sr-only">Zoom out</span>
-        </Button>
-        <Button variant="ghost" onClick={() => zoom(1.5)} disabled={view.scale >= MAX_SCALE}>
-          <span aria-hidden="true" className="text-2xl">
-            +
-          </span>
-          <span className="sr-only">Zoom in</span>
-        </Button>
-        <Button variant="ghost" onClick={() => setView(FIT)} disabled={view.scale === 1}>
-          Fit
-        </Button>
-        <span className="flex-1" />
-        <Button variant="secondary" onClick={addInView}>
-          Add cookie
-        </Button>
-      </div>
+  const hint = finding
+    ? 'Looking for a cookie…'
+    : (notice ?? (tapToSelect ? TAP_HINTS[tapToSelect.status] : null))
 
+  return (
+    <div className={className}>
       <div
+        ref={frameRef}
         className="relative mx-auto"
-        style={{ width: `min(100%, calc(65dvh * ${photo.width / photo.height}))` }}
+        style={{
+          width: `min(100%, calc(${maxHeight === null ? '65dvh' : `${maxHeight}px`} * ${photo.width / photo.height}))`,
+        }}
       >
         <div
           ref={viewportRef}
           role="group"
+          data-tap-to-select={tapToSelect?.status}
           aria-label={label}
           className="relative touch-none overflow-hidden rounded-card bg-surface-muted select-none"
           style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
@@ -597,19 +618,6 @@ export function PlateEditor({
                   <span className="size-4 rounded-full border-2 border-primary bg-snow shadow-card" />
                 </div>
               ))}
-            {drawing && (
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute rounded-[length:calc(4px*var(--inv))] border-[length:calc(3px*var(--inv))] border-dashed border-snow"
-                style={{
-                  left: percent(drawing.x),
-                  top: percent(drawing.y),
-                  width: percent(drawing.width),
-                  height: percent(drawing.height),
-                  boxShadow: '0 0 0 calc(1px * var(--inv)) var(--color-ink)',
-                }}
-              />
-            )}
             {finding && (
               <span
                 aria-hidden="true"
@@ -619,6 +627,33 @@ export function PlateEditor({
             )}
           </div>
         </div>
+        {banner && (
+          <div className="pointer-events-none absolute inset-x-2 top-2 z-20 flex justify-center">
+            {banner}
+          </div>
+        )}
+        {/* Over the photo, so hints cost no height; screen readers hear each change. */}
+        <p
+          aria-live="polite"
+          className={`pointer-events-none absolute inset-x-2 bottom-2 flex ${hint ? '' : 'sr-only'}`}
+        >
+          {hint && (
+            <span className="flex items-center gap-2 rounded-control bg-surface/90 px-2 py-1 text-sm text-ink shadow-card">
+              {(finding || (!notice && tapToSelect?.status === 'loading')) && (
+                <Spinner size="sm" label="" />
+              )}
+              {hint}
+            </span>
+          )}
+        </p>
+        {/* Only shows when focused: a keyboard way to add a box in the middle of the view. */}
+        <Button
+          variant="secondary"
+          onClick={addInView}
+          className="absolute top-2 right-2 z-30 not-focus-visible:sr-only"
+        >
+          Add cookie
+        </Button>
         {menuCookie && (
           <div className="absolute z-30" style={menuPosition(menuCookie.box)}>
             {renderMenu?.(menuCookie, {
@@ -627,22 +662,6 @@ export function PlateEditor({
               remove: () => remove(menuCookie.id),
             })}
           </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="flex-1 text-ink-muted" aria-live="polite">
-          {finding
-            ? 'Looking for a cookie…'
-            : (notice ??
-              `${shown.length === 1 ? '1 cookie' : `${shown.length} cookies`}${
-                selected ? `, cookie ${shown.indexOf(selected) + 1} selected` : ''
-              }`)}
-        </p>
-        {selected && (
-          <Button variant="danger" onClick={() => remove(selected.id)}>
-            Delete cookie {shown.indexOf(selected) + 1}
-          </Button>
         )}
       </div>
     </div>

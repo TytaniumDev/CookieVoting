@@ -1,25 +1,33 @@
+import { useState } from 'react'
 import { Link, Outlet } from 'react-router'
 import { Snowfall } from '../components/Snowfall/Snowfall.tsx'
+import { AppBarSlotProvider } from './AppBarSlot.tsx'
 import { ErrorProvider } from './ErrorProvider.tsx'
 
 /** One centred column with side padding, wide enough for the admin step tabs on one row. */
 const PAGE_WIDTH = 'mx-auto w-full max-w-5xl px-(--gutter)'
 
 export function AppLayout() {
+  const [slot, setSlot] = useState<HTMLElement | null>(null)
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="relative overflow-hidden bg-primary py-3 text-on-primary shadow-card">
         <Snowfall count={12} />
-        <div className={`relative ${PAGE_WIDTH}`}>
-          <Link to="/" className="font-display text-xl font-semibold">
-            🍪 Cookie Voting
+        <div className={`group relative flex items-center gap-2 ${PAGE_WIDTH}`}>
+          <Link to="/" className="-my-2 shrink-0 py-2 font-display text-xl font-semibold">
+            <span aria-hidden="true">🍪 </span>
+            {/* On phones a page's own title (data-title) needs the room; the cookie still goes home. */}
+            <span className="max-sm:group-has-[[data-title]]:sr-only">Cookie Voting</span>
           </Link>
+          <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
         </div>
       </header>
       <main className={`flex-1 py-6 ${PAGE_WIDTH}`}>
-        <ErrorProvider>
-          <Outlet />
-        </ErrorProvider>
+        <AppBarSlotProvider value={slot}>
+          <ErrorProvider>
+            <Outlet />
+          </ErrorProvider>
+        </AppBarSlotProvider>
       </main>
     </div>
   )

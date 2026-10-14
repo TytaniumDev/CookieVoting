@@ -7,8 +7,8 @@ import { BakerMenu } from '../../../components/BakerMenu/BakerMenu.tsx'
 import { Button } from '../../../components/Button/Button.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
 import { PlateEditor, type TapToSelect } from '../../../components/PlateEditor/PlateEditor.tsx'
+import { PlateTabs } from '../../../components/PlateTabs/PlateTabs.tsx'
 import { Spinner } from '../../../components/Spinner/Spinner.tsx'
-import { Stepper } from '../../../components/Stepper/Stepper.tsx'
 import { useCookieFinder } from '../../../lib/cookieFinder/useCookieFinder.ts'
 import { useBakers, type Category, type Setup } from '../../../lib/data.ts'
 import { useShowError } from '../../../lib/errors.ts'
@@ -123,37 +123,38 @@ export function CookiesStep({
     )
   }
 
-  const prompt =
-    roster.length === 0 ? null : untagged > 0 && active === null ? (
+  // A warning needs reading, so it gets a row; the usual prompt floats on the photo.
+  const warning =
+    roster.length > 0 && untagged > 0 && active === null ? (
       <Alert
         tone="warning"
         title={`${untagged === 1 ? '1 cookie needs' : `${untagged} cookies need`} a baker`}
       >
         Tap {untagged === 1 ? 'it' : 'each one'} to choose who baked it.
       </Alert>
-    ) : active !== null ? (
-      <p className="rounded-control bg-primary-subtle px-3 py-2 font-bold text-on-primary-subtle">
+    ) : null
+  const banner =
+    roster.length === 0 || warning ? null : active !== null ? (
+      <p className="rounded-full bg-primary px-4 py-1.5 font-bold text-on-primary shadow-raised">
         <span aria-hidden="true">👆 </span>Tap {nameOf.get(active)}’s cookie
       </p>
     ) : (
-      <p className="rounded-control bg-success-subtle px-3 py-2 font-bold text-on-success-subtle">
-        <span aria-hidden="true">✓ </span>Everyone has a cookie on this plate. Tap any extra
-        cookies, then go to the next plate.
+      <p className="rounded-full bg-success px-4 py-1.5 font-bold text-on-success shadow-raised">
+        <span aria-hidden="true">✓ </span>Everyone has a cookie on this plate
       </p>
     )
+  const plateIsDone = plateDone(category)
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-2xl">Cookies</h2>
-        <p className="text-ink-muted">
-          Tap each cookie to box it for the highlighted baker. Tap a box to change its baker or drag
-          it to adjust it.
-        </p>
-      </div>
-      <Stepper
-        label="Plates"
-        steps={categories.map((c) => ({ id: c.id, label: c.name, done: plateDone(c) }))}
+      <h2 className="sr-only">Cookies</h2>
+      <PlateTabs
+        plates={categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          photo: c.photo,
+          done: plateDone(c),
+        }))}
         selected={category.id}
         onSelect={goTo}
       />
@@ -169,7 +170,9 @@ export function CookiesStep({
           onSelect={(bakerId) => setPicked({ categoryId: category.id, bakerId })}
         />
       )}
-      <div aria-live="polite">{prompt}</div>
+      <div aria-live="polite" className="empty:hidden">
+        {warning}
+      </div>
       {category.photo ? (
         <PlateEditor
           key={category.id}
@@ -178,6 +181,9 @@ export function CookiesStep({
           onChange={save}
           tapToSelect={tapToSelect}
           label={`${category.name} plate`}
+          // Leaves room for the Next button under the photo.
+          spaceBelow={84}
+          banner={<div aria-live="polite">{banner}</div>}
           tags={roster.length > 0 ? tags : undefined}
           onCreate={(cookie) => {
             if (roster.length === 0) return false
@@ -214,14 +220,14 @@ export function CookiesStep({
       <div className="flex justify-end">
         {nextCategory ? (
           <Button
-            variant={plateDone(category) ? 'primary' : 'secondary'}
+            variant={plateIsDone ? 'primary' : 'secondary'}
             onClick={() => goTo(nextCategory.id)}
           >
             Next plate: {nextCategory.name} →
           </Button>
         ) : (
           <Button
-            variant={plateDone(category) ? 'primary' : 'secondary'}
+            variant={plateIsDone ? 'primary' : 'secondary'}
             onClick={() => setSearchParams({ step: 'voting' }, { replace: true })}
           >
             Next: Voting →
