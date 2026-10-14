@@ -1,6 +1,5 @@
 import type { SetupProgress } from '@cookie-voting/shared'
 import { Link } from 'react-router'
-import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Button } from '../../../components/Button/Button.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
 import { SharePanel } from '../../../components/SharePanel/SharePanel.tsx'
@@ -54,11 +53,6 @@ export function VotingStep({ event, progress }: { event: Event; progress: SetupP
             </li>
           ))}
         </ul>
-        {status.error && (
-          <Alert tone="danger" title="Voting didn't open">
-            {status.error}
-          </Alert>
-        )}
         <Button
           size="lg"
           fullWidth
@@ -87,11 +81,6 @@ export function VotingStep({ event, progress }: { event: Event; progress: SetupP
         </div>
         <SharePanel url={voterUrl(event.id)} title={event.name} />
       </Card>
-      {status.error && (
-        <Alert tone="danger" title="That didn't save">
-          {status.error}
-        </Alert>
-      )}
       <div className="flex flex-wrap gap-2">
         {event.status === 'voting' && (
           <Button onClick={() => status.change('results')} loading={status.busy}>

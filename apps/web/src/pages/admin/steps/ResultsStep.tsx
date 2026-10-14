@@ -1,5 +1,4 @@
 import { Link } from 'react-router'
-import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Button } from '../../../components/Button/Button.tsx'
 import { buttonClasses } from '../../../components/Button/buttonClasses.ts'
 import { Card } from '../../../components/Card/Card.tsx'
@@ -36,11 +35,6 @@ export function ResultsStep({ event }: { event: Event }) {
             Open results
           </Button>
         </>
-      )}
-      {status.error && (
-        <Alert tone="danger" title="That didn't save">
-          {status.error}
-        </Alert>
       )}
       {status.dialog}
     </Card>

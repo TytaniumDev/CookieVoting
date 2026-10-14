@@ -1,6 +1,7 @@
 import type { EventStatus } from '@cookie-voting/shared'
 import { useState, type ReactNode } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog.tsx'
+import { useShowError } from '../../lib/errors.ts'
 import { setEventStatus } from '../../lib/mutations.ts'
 
 interface Confirmation {
@@ -35,6 +36,12 @@ function confirmationFor(from: EventStatus, to: EventStatus): Confirmation | nul
   return null
 }
 
+const failureTitle: Record<EventStatus, string> = {
+  setup: "Voting didn't close",
+  voting: "Voting didn't open",
+  results: "Results didn't open",
+}
+
 /**
  * Changes the event's status (owner decision Q2: any status, any order), asking first
  * where voters would notice. Render `dialog` once; call `change` from buttons.
@@ -42,15 +49,14 @@ function confirmationFor(from: EventStatus, to: EventStatus): Confirmation | nul
 export function useStatusChange(eventId: string, current: EventStatus) {
   const [pending, setPending] = useState<EventStatus | null>(null)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const showError = useShowError()
 
   async function apply(status: EventStatus) {
     setBusy(true)
-    setError(null)
     try {
       await setEventStatus(eventId, status)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      showError(failureTitle[status], e)
     } finally {
       setBusy(false)
       setPending(null)
@@ -76,5 +82,5 @@ export function useStatusChange(eventId: string, current: EventStatus) {
     </ConfirmDialog>
   )
 
-  return { change, busy, error, dialog }
+  return { change, busy, dialog }
 }

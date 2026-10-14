@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router'
 import { Snowfall } from '../components/Snowfall/Snowfall.tsx'
+import { ErrorProvider } from './ErrorProvider.tsx'
 
 export function AppLayout() {
   return (
@@ -11,7 +12,9 @@ export function AppLayout() {
         </Link>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
-        <Outlet />
+        <ErrorProvider>
+          <Outlet />
+        </ErrorProvider>
       </main>
     </div>
   )

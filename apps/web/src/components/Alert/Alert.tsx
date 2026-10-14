@@ -7,6 +7,8 @@ export interface AlertProps {
   title?: string
   children: ReactNode
   className?: string
+  /** Adds a Dismiss button. */
+  onDismiss?: () => void
 }
 
 const toneClasses: Record<AlertTone, string> = {
@@ -27,7 +29,7 @@ const icons: Record<AlertTone, string> = {
  * An inline message. Danger alerts use `role="alert"` so they are announced
  * immediately; the others use the polite `role="status"`.
  */
-export function Alert({ tone = 'info', title, children, className = '' }: AlertProps) {
+export function Alert({ tone = 'info', title, children, className = '', onDismiss }: AlertProps) {
   return (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
@@ -36,10 +38,20 @@ export function Alert({ tone = 'info', title, children, className = '' }: AlertP
       <span aria-hidden="true" className="text-xl leading-6">
         {icons[tone]}
       </span>
-      <div className="space-y-1">
+      <div className="min-w-0 flex-1 space-y-1 break-words">
         {title && <p className="font-display text-lg leading-6 font-semibold">{title}</p>}
         <div>{children}</div>
       </div>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="-m-2 grid size-11 shrink-0 place-items-center rounded-control text-xl leading-none hover:bg-current/10 focus-visible:outline-2 focus-visible:outline-focus"
+        >
+          <span aria-hidden="true">×</span>
+          <span className="sr-only">Dismiss</span>
+        </button>
+      )}
     </div>
   )
 }

@@ -1,6 +1,5 @@
 import { plateNames } from '@cookie-voting/shared'
 import { useState } from 'react'
-import { Alert } from '../../../components/Alert/Alert.tsx'
 import { Card } from '../../../components/Card/Card.tsx'
 import { CategoryList } from '../../../components/CategoryList/CategoryList.tsx'
 import { CategoryNameForm } from '../../../components/CategoryNameForm/CategoryNameForm.tsx'
@@ -10,6 +9,7 @@ import {
   type PlatePhotoUploadProps,
 } from '../../../components/PlatePhotoUpload/PlatePhotoUpload.tsx'
 import { usePastCategoryNames, useResults, type Category } from '../../../lib/data.ts'
+import { useShowError } from '../../../lib/errors.ts'
 import {
   addCategory,
   deleteCategory,
@@ -17,8 +17,6 @@ import {
   reorderCategories,
 } from '../../../lib/mutations.ts'
 import { storePlatePhoto, uploadPlatePhoto } from '../../../lib/storage.ts'
-
-const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export function CategoriesStep({
   eventId,
@@ -34,7 +32,7 @@ export function CategoriesStep({
   const [bulk, setBulk] = useState<PlatePhotoUploadProps['progress']>(null)
   const [deleting, setDeleting] = useState<Category | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const showError = useShowError()
   // Shown in the new order straight away, before Firestore confirms it.
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null)
 
@@ -44,11 +42,10 @@ export function CategoriesStep({
   const ballotCount = results.status === 'ready' ? (results.data?.ballotCount ?? 0) : 0
 
   async function run(action: () => Promise<unknown>) {
-    setError(null)
     try {
       await action()
     } catch (e) {
-      setError(errorMessage(e))
+      showError("That didn't save", e)
     }
   }
 
@@ -90,12 +87,6 @@ export function CategoriesStep({
           }}
         />
       </Card>
-
-      {error && (
-        <Alert tone="danger" title="That didn't save">
-          {error}
-        </Alert>
-      )}
 
       {ordered.length === 0 ? (
         <p className="text-ink-muted">No categories yet.</p>
