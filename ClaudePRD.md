@@ -289,6 +289,8 @@ The page uses Firestore real-time listeners and updates live as new votes come i
 - Within each category, all cookies are ranked by Borda score (descending).
 - Each entry shows: rank, cropped cookie image, baker name, Borda score.
 - Ties are displayed at the same rank (e.g. two cookies tied for 2nd both show "2nd").
+- Layout (owner decision 2026-10-14): festive, like the voting page. Voters swipe between categories (or tap a category's name). Each category's top three hang from a garland as ornaments showing the cookie's photo and baker. The first time a category is shown, a timed reveal of about 5 seconds opens 3rd, then 2nd, then 1st, with confetti for the winner. The last page lists every category's cookies in one scrolling list.
+- Tapping a winner's ornament, or any cookie in the full list, shows its votes: how many voters put it 1st, 2nd and 3rd, how many left it out of their top 3, and the points each place earned.
 
 ### Overall Baker Leaderboard
 - A single leaderboard shows all bakers ranked by their total Borda score across all categories.

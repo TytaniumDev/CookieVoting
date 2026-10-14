@@ -16,7 +16,7 @@ export function BakerLeaderboard({ bakers }: BakerLeaderboardProps) {
     <Card tone="festive">
       <section aria-labelledby={headingId}>
         <h2 id={headingId} className="text-2xl">
-          Top bakers
+          Every baker
         </h2>
         {bakers.length === 0 ? (
           <p className="text-ink-muted">No bakers yet.</p>

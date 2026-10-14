@@ -30,6 +30,7 @@ const textPairs: [string, string][] = [
   ['on-primary', 'primary'],
   ['on-primary', 'primary-hover'],
   ['accent-subtle', 'primary'],
+  ['primary-subtle', 'primary-hover'],
   ['on-primary-subtle', 'primary-subtle'],
   ['secondary', 'surface'],
   ['on-secondary', 'secondary'],

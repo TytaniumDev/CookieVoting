@@ -147,6 +147,12 @@ events/{eventId}/results/live           written by Cloud Functions only
     bakers: BakerStanding[] }
 ```
 
+Each `CategoryResult` also has `ballotCount` (voters who ranked something in that
+category) and each cookie standing has `votes: [1st, 2nd, 3rd]`, the counts behind
+its points, for the results page's vote breakdown. Only totals: no ballot is
+traceable to a voter. Results written before 2026-10-14 lack both until the next
+recompute; the page then just doesn't open a breakdown.
+
 Types for ballots and results are defined in `packages/shared/src/types.ts`.
 
 - **Cookie order and numbers.** The `cookies` array order is the display order.
@@ -495,6 +501,20 @@ deny would end the listener). Cookie crops come from the category docs, which
 the page already reads for the voter flow. Voters who have voted are sent here
 from `/event/:id` when results open; others keep voting with a banner linking
 here. Ties share a competition rank (`competitionRanks`) and show "Tied 2nd".
+
+Layout (owner decision 2026-10-14, "Ornaments"): the cranberry festive page, with a
+`SlideShow` of one slide per category, then **Top bakers**, then **All results**.
+Each category slide hangs its top three from a garland as `Ornaments` (1st biggest,
+lowest, in the middle; strings start on the garland's curve, `layout.ts`). The first
+time a slide is on screen it plays a timed reveal (`reveal.ts`/`useReveal`, about
+5 s): the ornaments lower on unrolling strings, closed, then open 3rd, 2nd, 1st with
+a drumroll before each and confetti for the winner. Leaving mid-way or Skip opens
+them all; with reduced motion they start open. Top bakers uses the same ornaments,
+each baker's picture being their best-scoring cookie. All results is one vertically
+scrolling list: every category's `CategoryResults`, then `BakerLeaderboard`. Tapping
+an open ornament or a cookie row opens `VoteBreakdown`: the cookie's 1st/2nd/3rd
+vote counts, "Not in their top 3" (category voters minus those), and the points
+each place earned.
 
 ### Scoring (Cloud Functions)
 

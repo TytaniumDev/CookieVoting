@@ -79,6 +79,26 @@ describe('tallyResults', () => {
     expect(results.ballotCount).toBe(2)
   })
 
+  it("counts each cookie's 1st, 2nd and 3rd place votes and the voters per category", () => {
+    const results = tallyResults({
+      ...baseInput,
+      ballots: [
+        { sugar: ['s1', 's2', 's3'] },
+        { sugar: ['s2', 's1', 's4'] },
+        { sugar: ['s1', 's3', 's2'], choc: ['c1', 'c2'] },
+      ],
+    })
+    const sugar = results.categories[0]!
+    expect(sugar.ballotCount).toBe(3)
+    expect(Object.fromEntries(sugar.standings.map((s) => [s.cookieId, s.votes]))).toEqual({
+      s1: [2, 1, 0],
+      s2: [1, 1, 1],
+      s3: [0, 1, 1],
+      s4: [0, 0, 1],
+    })
+    expect(results.categories[1]!.ballotCount).toBe(1)
+  })
+
   it('awards 3 and 2 points in a two-cookie category', () => {
     const results = tallyResults({ ...baseInput, ballots: [{ choc: ['c2', 'c1'] }] })
     const choc = results.categories[1]!

@@ -2,8 +2,17 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // Data comes from firebase/scripts/seed.ts: bake-off-2024 has results open and 20 ballots.
 
+/** The results' last slide: every cookie of every category, in one list. */
+async function openAllResults(page: Page): Promise<Locator> {
+  await page.getByRole('button', { name: '📜 All results' }).click()
+  return page.getByRole('region', { name: 'All results' })
+}
+
 function cookieRows(page: Page, category: string): Locator {
-  return page.getByRole('region', { name: category }).getByRole('listitem')
+  return page
+    .getByRole('region', { name: 'All results' })
+    .getByRole('region', { name: category })
+    .getByRole('listitem')
 }
 
 async function pointsOf(row: Locator): Promise<number> {
@@ -22,8 +31,9 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   // One project is enough, and running both at once would mix their votes into the totals.
   test.skip(test.info().project.name !== 'mobile', 'Changes shared seed data')
   await page.goto('/event/bake-off-2024/results')
-  await expect(page.getByRole('heading', { name: 'Results 🏆' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Top bakers' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /The results are in/ })).toBeVisible()
+  await openAllResults(page)
+  await expect(page.getByRole('heading', { name: 'Every baker' })).toBeVisible()
   await expect(cookieRows(page, 'Gingerbread')).toHaveCount(6)
   const before = await totalPoints(page, 'Gingerbread')
 
@@ -45,9 +55,35 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
 
   // Voters who have voted go straight to the results, which update live.
   await expect(page).toHaveURL(/\/event\/bake-off-2024\/results$/)
+  await openAllResults(page)
   // Each voter sees the cookies in their own order, so which cookie got which medal
   // isn't known here; the three medals add 3 + 2 + 1 points between them.
   await expect.poll(() => totalPoints(page, 'Gingerbread'), { timeout: 20_000 }).toBe(before + 6)
+})
+
+test('the winners are revealed as ornaments, and tapping one shows its votes', async ({ page }) => {
+  await page.goto('/event/bake-off-2024/results')
+  const slide = page.getByRole('region', { name: 'Gingerbread', exact: true }).first()
+  await expect(page.getByText('And the winner is…')).toBeVisible({ timeout: 10_000 })
+  // Once the timed reveal is over, every ornament is open and is a button.
+  const winner = slide.getByRole('button', { name: /1st place.*See its votes/ }).first()
+  await expect(winner).toBeVisible({ timeout: 10_000 })
+  // The ornaments sway forever; with reduced motion they hold still to be clicked.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await winner.click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByText(/How the \d+ voters ranked it/)).toBeVisible()
+  await expect(dialog.getByText('Not in their top 3')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Close' }).click()
+  await expect(dialog).toBeHidden()
+
+  // The last slide lists every cookie; each one shows its votes too.
+  const all = await openAllResults(page)
+  await all
+    .getByRole('button', { name: /See its votes/ })
+    .first()
+    .click()
+  await expect(page.getByRole('dialog').getByText('1st place', { exact: true })).toBeVisible()
 })
 
 test('results say when they are not out yet', async ({ page }) => {
