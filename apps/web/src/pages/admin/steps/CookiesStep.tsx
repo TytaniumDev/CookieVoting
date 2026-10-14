@@ -40,13 +40,9 @@ export function CookiesStep({
   const category =
     requested ?? categories.find((c) => c.photo && c.cookies.length === 0) ?? categories[0]!
 
-  function save(next: Cookie[]) {
-    const kept = new Set(next.map((c) => c.id))
-    const removed = category.cookies.filter((c) => !kept.has(c.id)).map((c) => c.id)
+  function save(next: Cookie[], base: readonly Cookie[]) {
     setError(null)
-    saveCookies(eventId, category.id, next, removed).catch((e: unknown) =>
-      setError(errorMessage(e)),
-    )
+    saveCookies(eventId, category.id, base, next).catch((e: unknown) => setError(errorMessage(e)))
   }
 
   return (

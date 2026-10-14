@@ -1,20 +1,7 @@
 import { iou, type Box } from '@cookie-voting/shared'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-
-// Data comes from firebase/scripts/seed.ts; admin@example.com is on the admin list.
-async function signInAs(page: Page, email: string) {
-  await page.goto('/')
-  await expect(page.getByRole('button', { name: /sign in with google/i })).toBeVisible()
-  // Emulator builds expose this helper (src/lib/auth.ts) instead of the Google popup.
-  await page.evaluate(
-    (e) =>
-      (
-        globalThis as unknown as { signInForTests: (email: string) => Promise<void> }
-      ).signInForTests(e),
-    email,
-  )
-}
+import { signInAs } from './signIn.ts'
 
 test('people who are not admins are turned away', async ({ page }) => {
   await signInAs(page, 'grinch@example.com')

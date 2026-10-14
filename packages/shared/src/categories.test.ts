@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { suggestCategoryNames } from './categories.ts'
+import { plateNames, suggestCategoryNames } from './categories.ts'
 
 const past = [
   'Gingerbread',
@@ -35,5 +35,19 @@ describe('suggestCategoryNames', () => {
 
   it('caps the number of suggestions', () => {
     expect(suggestCategoryNames(past, [], '', 2)).toHaveLength(2)
+  })
+})
+
+describe('plateNames', () => {
+  it('numbers from 1 for a new event', () => {
+    expect(plateNames(['Stars'], 2)).toEqual(['Plate 1', 'Plate 2'])
+  })
+
+  it('carries on after the highest plate number, whatever the case', () => {
+    expect(plateNames(['Plate 1', ' plate  3', 'Plate 2b'], 1)).toEqual(['Plate 4'])
+  })
+
+  it('is never suggested for a later event', () => {
+    expect(suggestCategoryNames(['Plate 1', 'Plate 1', 'Plates'], [], '')).toEqual(['Plates'])
   })
 })

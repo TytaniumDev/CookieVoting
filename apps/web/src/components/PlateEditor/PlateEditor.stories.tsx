@@ -20,8 +20,8 @@ function Editable(props: PlateEditorProps) {
     <PlateEditor
       {...props}
       cookies={cookies}
-      onChange={(next) => {
-        props.onChange(next)
+      onChange={(next, base) => {
+        props.onChange(next, base)
         setCookies(next)
       }}
     />

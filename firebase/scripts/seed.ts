@@ -18,6 +18,8 @@ import { plateBoxes } from './plates.ts'
 export const PROJECT_ID = 'demo-cookie-voting'
 export const BUCKET = `${PROJECT_ID}.appspot.com`
 export const SEED_ADMIN_EMAIL = 'admin@example.com'
+/** A second admin, for tests where two people set up one event together. */
+export const SEED_CO_ADMIN_EMAIL = 'elf@example.com'
 
 process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:8080'
 process.env.FIREBASE_STORAGE_EMULATOR_HOST ??= '127.0.0.1:9199'
@@ -149,7 +151,8 @@ export async function seed(): Promise<void> {
     throw new Error('Refusing to seed a real project')
   const db = getFirestore(app)
 
-  await db.doc(paths.admin(SEED_ADMIN_EMAIL)).set({ addedAt: Timestamp.now() })
+  for (const email of [SEED_ADMIN_EMAIL, SEED_CO_ADMIN_EMAIL])
+    await db.doc(paths.admin(email)).set({ addedAt: Timestamp.now() })
   const bakerIds = BAKERS.map((name) => name.toLowerCase())
   await Promise.all(
     BAKERS.map((name, i) =>
