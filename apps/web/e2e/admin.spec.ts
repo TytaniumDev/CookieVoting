@@ -108,13 +108,21 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
 
 type Point = [number, number]
 
-/** Drags across a plate photo between two points given as fractions of its size. */
-async function dragOn(page: Page, plate: Locator, from: Point, to: Point) {
+/** Taps a plate photo at a point given as fractions of its size. */
+async function tapOn(page: Page, plate: Locator, [x, y]: Point) {
   const box = await plate.boundingBox()
   if (!box) throw new Error('Plate not visible')
-  await page.mouse.move(box.x + from[0] * box.width, box.y + from[1] * box.height)
+  await page.mouse.click(box.x + x * box.width, box.y + y * box.height)
+}
+
+/** Drags from the middle of an element by (dx, dy) pixels. */
+async function dragBy(page: Page, target: Locator, dx: number, dy: number) {
+  const box = await target.boundingBox()
+  if (!box) throw new Error('Not visible')
+  const [x, y] = [box.x + box.width / 2, box.y + box.height / 2]
+  await page.mouse.move(x, y)
   await page.mouse.down()
-  await page.mouse.move(box.x + to[0] * box.width, box.y + to[1] * box.height, { steps: 5 })
+  await page.mouse.move(x + dx, y + dy, { steps: 5 })
   await page.mouse.up()
 }
 
@@ -131,29 +139,28 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   const plate = page.getByRole('group', { name: 'Stars plate' })
   await expect(plate.locator('img')).toHaveJSProperty('complete', true)
   await plate.scrollIntoViewIfNeeded()
-  const drag = (from: Point, to: Point) => dragOn(page, plate, from, to)
+  const boxes = plate.getByRole('button', { name: /^cookie \d$/i })
 
-  // Draw two boxes.
-  await drag([0.1, 0.1], [0.4, 0.45])
-  await drag([0.55, 0.55], [0.85, 0.9])
-  await expect(page.getByText('2 cookies, cookie 2 selected')).toBeVisible()
+  // Tap two cookies: each gets a box, whether or not tap-to-select has loaded.
+  await tapOn(page, plate, [0.23, 0.28])
+  await expect(boxes).toHaveCount(1, { timeout: 15_000 })
+  await tapOn(page, plate, [0.71, 0.73])
+  await expect(boxes).toHaveCount(2, { timeout: 15_000 })
 
-  // Grow the selected box from its bottom-right corner.
-  await drag([0.85, 0.9], [0.95, 0.97])
+  // Grow the new box (selected) from its bottom-right corner.
   const second = plate.getByRole('button', { name: 'Cookie 2' })
-  await expect
-    .poll(async () => (await second.boundingBox())?.width)
-    .toBeGreaterThan(((await plate.boundingBox())?.width ?? 0) * 0.35)
+  const before = (await second.boundingBox())?.width ?? 0
+  await dragBy(page, plate.locator('[data-corner="se"]'), 40, 30)
+  await expect.poll(async () => (await second.boundingBox())?.width).toBeGreaterThan(before + 20)
 
-  // Saved: still there after a reload, and the step is done.
+  // Saved: still there after a reload.
   await reloadWhenSaved(page)
-  await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(2)
-  await expect(page.getByText('2 cookies')).toBeVisible()
+  await expect(boxes).toHaveCount(2)
 
-  // Delete one.
-  await plate.getByRole('button', { name: 'Cookie 1' }).click()
-  await page.getByRole('button', { name: 'Delete cookie 1' }).click()
-  await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(1)
+  // Delete one from the keyboard (with bakers, the box's menu has Delete too).
+  await plate.getByRole('button', { name: 'Cookie 1' }).focus()
+  await page.keyboard.press('Delete')
+  await expect(boxes).toHaveCount(1)
   expect(await page.evaluate('document.documentElement.scrollWidth')).toBeLessThanOrEqual(
     page.viewportSize()?.width ?? 0,
   )
@@ -174,8 +181,8 @@ test('tapping each cookie boxes it', async ({ page }, testInfo) => {
   await addCategory(page, 'Candy Canes', `${photo}.jpg`)
 
   await page.getByRole('button', { name: /^cookies/i }).click()
-  await expect(page.getByText('Tap a cookie to box it')).toBeVisible({ timeout: 60_000 })
   const plate = page.getByRole('group', { name: 'Candy Canes plate' })
+  await expect(plate).toHaveAttribute('data-tap-to-select', 'ready', { timeout: 60_000 })
   await expect(plate.locator('img')).toHaveJSProperty('complete', true)
   await plate.scrollIntoViewIfNeeded()
 
@@ -234,10 +241,10 @@ test('an admin tags cookies with bakers, opens voting and then results', async (
   const plate = page.getByRole('group', { name: 'Stars plate' })
   await expect(plate.locator('img')).toHaveJSProperty('complete', true)
   await plate.scrollIntoViewIfNeeded()
-  await dragOn(page, plate, [0.1, 0.1], [0.4, 0.45])
+  await tapOn(page, plate, [0.23, 0.28])
   await expect(plate.getByRole('button', { name: 'Cookie 1, Ann' })).toBeVisible()
   await expect(page.getByText('Tap Bob’s cookie')).toBeVisible()
-  await dragOn(page, plate, [0.55, 0.55], [0.85, 0.9])
+  await tapOn(page, plate, [0.71, 0.73])
   await expect(plate.getByRole('button', { name: 'Cookie 2, Bob' })).toBeVisible()
   await expect(page.getByText(/everyone has a cookie on this plate/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /^cookies.*\(done\)/i })).toBeVisible()

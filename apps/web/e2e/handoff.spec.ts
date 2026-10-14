@@ -51,16 +51,19 @@ test('two admins on a phone and a laptop set up one event together', async ({
   const laptopPlate = laptop.getByRole('group', { name: 'Stars plate' })
   await expect(laptopPlate.locator('img')).toHaveJSProperty('complete', true)
   const cookies = /^cookie \d/i
-  await Promise.all([
-    phone.getByRole('button', { name: 'Add cookie' }).click(),
-    laptop.getByRole('button', { name: 'Add cookie' }).click(),
-  ])
+  // Add cookie is the keyboard way in: it shows when focused.
+  await Promise.all(
+    [phone, laptop].map(async (page) => {
+      await page.getByRole('button', { name: 'Add cookie' }).focus()
+      await page.keyboard.press('Enter')
+    }),
+  )
   await expect(phonePlate.getByRole('button', { name: cookies })).toHaveCount(2)
   await expect(laptopPlate.getByRole('button', { name: cookies })).toHaveCount(2)
 
-  // A delete on the laptop shows up on the phone without a reload. The laptop's new
-  // cookie is still selected (both landed in the same spot).
-  await laptop.getByRole('button', { name: /^delete cookie \d$/i }).click()
+  // A delete on the laptop shows up on the phone without a reload.
+  await laptopPlate.getByRole('button', { name: cookies }).first().focus()
+  await laptop.keyboard.press('Delete')
   await expect(phonePlate.getByRole('button', { name: cookies })).toHaveCount(1)
 
   await laptopContext.close()

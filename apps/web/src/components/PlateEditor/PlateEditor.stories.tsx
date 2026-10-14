@@ -79,7 +79,6 @@ function drag(
 export const WithCookies: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('button', { name: /^cookie \d$/i })).toHaveLength(4)
-    await expect(canvas.getByText('4 cookies')).toBeVisible()
   },
 }
 
@@ -87,27 +86,31 @@ export const Empty: Story = {
   args: { cookies: [] },
 }
 
-export const DrawACookie: Story = {
+/** Without tap-to-select, a tap adds a box centred on it, square on screen, to fit by hand. */
+export const TapAddsABox: Story = {
+  args: { cookies: [] },
+  play: async ({ args, canvas }) => {
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.3, y: 0.3 }, { x: 0.301, y: 0.301 })
+    await expect(await canvas.findByRole('button', { name: 'Cookie 1' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    const [cookies] = (args.onChange as ReturnType<typeof fn>).mock.lastCall as [Cookie[]]
+    // The photo is 4:3, so a square box is 0.15 of its width and 0.2 of its height.
+    await expect(cookies[0]?.box.width).toBeCloseTo(0.15, 3)
+    await expect(cookies[0]?.box.height).toBeCloseTo(0.2, 3)
+    await expect(cookies[0]?.box.x).toBeCloseTo(0.225, 3)
+  },
+}
+
+/** Dragging the photo pans it (once zoomed in) and never adds a box. */
+export const DragDoesNotAdd: Story = {
   args: { cookies: [] },
   play: async ({ args, canvas }) => {
     const plate = canvas.getByRole('group', { name: 'Stars plate' })
     drag(plate, { x: 0.1, y: 0.1 }, { x: 0.4, y: 0.45 })
-    await expect(await canvas.findByRole('button', { name: 'Cookie 1' })).toBeVisible()
-    await expect(canvas.getByText(/1 cookie, cookie 1 selected/)).toBeVisible()
-    const [cookies] = (args.onChange as ReturnType<typeof fn>).mock.lastCall as [Cookie[]]
-    await expect(cookies[0]?.box.x).toBeCloseTo(0.1, 2)
-    await expect(cookies[0]?.box.width).toBeCloseTo(0.3, 2)
-  },
-}
-
-/** A tap without dragging doesn't make a tiny cookie. */
-export const TapDoesNotDraw: Story = {
-  args: { cookies: [] },
-  play: async ({ args, canvas }) => {
-    const plate = canvas.getByRole('group', { name: 'Stars plate' })
-    drag(plate, { x: 0.5, y: 0.5 }, { x: 0.501, y: 0.501 })
     await expect(args.onChange).not.toHaveBeenCalled()
-    await expect(canvas.getByText('0 cookies')).toBeVisible()
   },
 }
 
@@ -141,14 +144,6 @@ export const ResizeACookie: Story = {
   },
 }
 
-export const DeleteWithButton: Story = {
-  play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Cookie 2' }))
-    await userEvent.click(canvas.getByRole('button', { name: 'Delete cookie 2' }))
-    await expect(canvas.getByText('3 cookies')).toBeVisible()
-  },
-}
-
 export const Keyboard: Story = {
   play: async ({ args, canvas }) => {
     canvas.getByRole('button', { name: 'Cookie 1' }).focus()
@@ -159,29 +154,33 @@ export const Keyboard: Story = {
     ;[cookies] = (args.onChange as ReturnType<typeof fn>).mock.lastCall as [Cookie[]]
     await expect(cookies[0]?.box.height).toBeCloseTo(0.37, 3)
     await userEvent.keyboard('{Delete}')
-    await expect(canvas.getByText('3 cookies')).toBeVisible()
+    await expect(canvas.getAllByRole('button', { name: /^cookie \d$/i })).toHaveLength(3)
   },
 }
 
-export const AddWithButton: Story = {
+/** Add cookie only shows when focused: the keyboard way to add a box. */
+export const AddFromKeyboard: Story = {
   args: { cookies: [] },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Add cookie' }))
+    await userEvent.tab()
+    const add = canvas.getByRole('button', { name: 'Add cookie' })
+    await expect(add).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
     await expect(canvas.getByRole('button', { name: 'Cookie 1' })).toBeVisible()
-    await expect(canvas.getByRole('button', { name: 'Delete cookie 1' })).toBeVisible()
   },
 }
 
+/** The scroll wheel zooms in on the pointer and back out to fit. */
 export const Zoom: Story = {
-  play: async ({ canvas, canvasElement }) => {
-    const fit = canvas.getByRole('button', { name: 'Fit' })
-    await expect(fit).toBeDisabled()
-    await userEvent.click(canvas.getByRole('button', { name: 'Zoom in' }))
-    await expect(fit).toBeEnabled()
-    const stage = within(canvasElement).getByRole('group').firstElementChild as HTMLElement
-    await expect(stage.style.transform).toContain('scale(1.5)')
-    await userEvent.click(fit)
-    await expect(stage.style.transform).toContain('scale(1)')
+  play: async ({ canvas }) => {
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    const stage = plate.firstElementChild as HTMLElement
+    const rect = plate.getBoundingClientRect()
+    const at = { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }
+    fireEvent.wheel(plate, { ...at, deltaY: -400 })
+    await waitFor(() => expect(stage.style.transform).toMatch(/scale\(2\.7/))
+    fireEvent.wheel(plate, { ...at, deltaY: 2000 })
+    await waitFor(() => expect(stage.style.transform).toContain('scale(1)'))
   },
 }
 
@@ -209,7 +208,7 @@ export const TapToSelectLoading: Story = {
 export const TapToSelectUnavailable: Story = {
   args: { cookies: [], tapToSelect: { status: 'unavailable' } },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText(/drag across each cookie/i)).toBeVisible()
+    await expect(canvas.getByText(/tap a cookie to add a box/i)).toBeVisible()
   },
 }
 
@@ -240,19 +239,22 @@ export const TapAnExistingCookie: Story = {
     await photoLoaded(canvasElement)
     const plate = canvas.getByRole('group', { name: 'Stars plate' })
     drag(plate, { x: 0.7, y: 0.7 }, { x: 0.7, y: 0.7 })
-    await expect(await canvas.findByText('1 cookie, cookie 1 selected')).toBeVisible()
+    const cookie = canvas.getByRole('button', { name: 'Cookie 1' })
+    await waitFor(() => expect(cookie).toHaveAttribute('aria-pressed', 'true'))
     await expect(args.onChange).not.toHaveBeenCalled()
   },
 }
 
+/** When tap-to-select finds nothing, the tap still adds a box, to fit by hand. */
 export const TapFindsNothing: Story = {
   args: { cookies: [], tapToSelect: { status: 'ready', find: () => null } },
   play: async ({ args, canvas, canvasElement }) => {
     await photoLoaded(canvasElement)
     const plate = canvas.getByRole('group', { name: 'Stars plate' })
     drag(plate, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 })
-    await expect(await canvas.findByText(/couldn't find a cookie there/i)).toBeVisible()
-    await expect(args.onChange).not.toHaveBeenCalled()
+    await expect(await canvas.findByText(/couldn't find that cookie's edges/i)).toBeVisible()
+    await expect(canvas.getByRole('button', { name: 'Cookie 1' })).toBeVisible()
+    await expect(args.onChange).toHaveBeenCalledTimes(1)
   },
 }
 
@@ -302,13 +304,13 @@ export const Tagged: Story = {
   },
 }
 
-/** Drawing a box tags it with whoever is next. */
+/** A new box is tagged with whoever is next. */
 export const NewCookieIsTagged: Story = {
   args: { cookies: [] },
   render: (args) => <Tagging {...args} initialTags={{}} />,
   play: async ({ canvas }) => {
     const plate = canvas.getByRole('group', { name: 'Stars plate' })
-    drag(plate, { x: 0.1, y: 0.1 }, { x: 0.4, y: 0.45 })
+    drag(plate, { x: 0.25, y: 0.3 }, { x: 0.25, y: 0.3 })
     await expect(await canvas.findByRole('button', { name: 'Cookie 1, Alice' })).toBeVisible()
   },
 }
@@ -341,7 +343,8 @@ export const ExtraCookieAsks: Story = {
     <Tagging {...args} initialTags={{ a: 'alice', b: 'ben', c: 'carmen', d: 'dev' }} />
   ),
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Add cookie' }))
+    const plate = canvas.getByRole('group', { name: 'Stars plate' })
+    drag(plate, { x: 0.47, y: 0.5 }, { x: 0.47, y: 0.5 })
     const menu = await canvas.findByRole('dialog', { name: /^who baked cookie \d\?$/i })
     await expect(within(menu).getByRole('button', { name: 'Alice' })).toHaveFocus()
     await userEvent.click(within(menu).getByRole('button', { name: /^delete cookie \d$/i }))

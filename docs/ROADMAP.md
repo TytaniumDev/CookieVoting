@@ -162,6 +162,15 @@ assignment in one step; picked from mocks (baker chips above the photo).
 - [x] No auto-advance: Next plate / Next: Voting; the Assign bakers step is gone
 - [x] PRD updated, with the bulk upload and category card changes recorded
 
+## Phase 15 — Cookies step fits a 1080p screen 🚧
+
+Owner feedback (2026-10-14): no vertical scrolling on a 1080p laptop. Mocks of
+four header layouts are in the Artifact "Cookies Step Header Mocks".
+
+- [x] Remove the zoom row (−, +, Fit, Add cookie), the cookie count and the Delete cookie button
+- [x] A tap adds a box where tap-to-select can't; the scroll wheel zooms and dragging pans
+- [ ] Header layout from the mocks (owner to pick), the photo filling the rest of the window
+
 ---
 
 ## Owner actions
@@ -453,3 +462,14 @@ until real-device testing (useful from phase 3).
 - Not done: type-to-filter in `BakerMenu` (it scrolls past ~6 bakers); add it if
   rosters get long. A plate counts as done once every boxed cookie has a baker,
   even if some cookies on it aren't boxed yet (the app can't tell).
+
+### Session — 2026-10-14 (condense the Cookies step)
+
+- Shipped the removals the owner asked for: `PlateEditor` is now just the photo.
+  Drag-to-draw is gone: a tap adds a box to fit by hand when tap-to-select finds
+  nothing, and dragging empty photo pans. Hints float over the photo. A
+  focus-only Add cookie button keeps a keyboard way to add a box.
+- Deferred: the header layout (title and step tabs on one row, prompt on the
+  photo, Next plate in the plate row) until the owner picks from the mocks.
+  Measured at 1920 × 960: with only the removals the page is still 1203 px
+  tall, as the photo is capped at 65dvh below 495 px of header.
