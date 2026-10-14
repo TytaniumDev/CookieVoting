@@ -233,6 +233,7 @@ Voters access the app at `[domain]/event/[eventId]`. Firebase Anonymous Auth is 
 
 ### Step 2: Voting Session
 - One category is shown at a time, on a festive cranberry backdrop with falling snow. The voter moves between categories with Back and Next. A progress indicator shows which category they are on (e.g. "Category 2 of 5").
+- Each voter sees a category's cookies in their own random order, which stays the same for them on every visit (so the first cookie isn't always the same one).
 - Within each category, cookies are shown one at a time and as large as the screen allows ("Spotlight", owner decision 2026-10-14). Under the category name is a row of small photos of every cookie; tapping one shows it. The voter can also swipe the big photo sideways on a phone, or use the arrow buttons beside it, to move between cookies.
 - Under the photo are three medal buttons: 1st, 2nd and 3rd place. Tapping one gives that medal to the cookie on screen, in any order. Each button says where its medal is: "Not given yet", "Now on #2" (tapping moves it to this cookie) or "Tap to take back". The cookie's medal shows in the corner of its photo and on its small photo.
 - The Next button says how many medals are still to give ("Give out 1 more medal to go on") until every medal in the category is given. Confetti falls when the last one is.
