@@ -5,30 +5,49 @@ import { Card } from '../Card/Card.tsx'
 export interface SignInPanelProps {
   /** Signed in, but not on the admin list. */
   notAdminEmail?: string | null
+  /** Whether that account has already asked to become an admin. */
+  requested?: boolean
   error?: string | null
   busy?: boolean
   onSignIn: () => void
   onSignOut: () => void
+  onRequestAccess?: () => void
 }
 
 /** Shown on admin pages to anyone who isn't a signed-in admin. */
 export function SignInPanel({
   notAdminEmail = null,
+  requested = false,
   error = null,
   busy = false,
   onSignIn,
   onSignOut,
+  onRequestAccess,
 }: SignInPanelProps) {
   return (
     <Card tone="festive" className="mx-auto max-w-md space-y-4">
       <h1 className="text-3xl">Organisers only 🎅</h1>
       {notAdminEmail ? (
         <>
-          <Alert tone="warning" title="Not on the admin list">
-            You're signed in as <strong>{notAdminEmail}</strong>, which isn't an admin. Ask an
-            organiser to add you, or switch accounts.
-          </Alert>
-          <Button variant="secondary" fullWidth loading={busy} onClick={onSignOut}>
+          {requested ? (
+            <Alert tone="success" title="Request sent">
+              An organiser will see it on their Admins page. This page lets you in as soon as they
+              approve <strong>{notAdminEmail}</strong>.
+            </Alert>
+          ) : (
+            <>
+              <Alert tone="warning" title="Not on the admin list">
+                You're signed in as <strong>{notAdminEmail}</strong>, which isn't an admin. Ask to
+                become one, or switch accounts.
+              </Alert>
+              {onRequestAccess && (
+                <Button fullWidth loading={busy} onClick={onRequestAccess}>
+                  Ask to be an admin
+                </Button>
+              )}
+            </>
+          )}
+          <Button variant="secondary" fullWidth disabled={busy} onClick={onSignOut}>
             Sign out
           </Button>
         </>

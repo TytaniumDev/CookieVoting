@@ -143,6 +143,14 @@ carry on with any admin step on a laptop or another admin's device, kept in sync
 - [x] Plate edits from two devices or admins merge instead of overwriting (`mergeCookieEdits`, transactional `saveCookies`)
 - [x] E2E: phone and laptop, two admins, one event (`e2e/handoff.spec.ts`)
 
+## Phase 13 — Adding admins ✅
+
+Owner decision (2026-10-14): request + approve, no email.
+
+- [x] Admins page: list, add by Google email, remove (not yourself)
+- [x] Non-admins tap "Ask to be an admin"; admins see a dashboard banner and approve or decline on the Admins page; the asker is let in live
+- [x] Rules + tests for `admins/` writes and `adminRequests/`; E2E in `e2e/admins.spec.ts`
+
 ---
 
 ## Owner actions
@@ -400,4 +408,6 @@ until real-device testing (useful from phase 3).
 - Wide screens (owner feedback): pages span the screen with side padding; text,
   forms and lists stop at a readable width; tab rows never wrap and scroll only
   when they don't fit. The rule is in CLAUDE.md → Conventions.
-- Next: admin access requests (owner chose request + approve, no email).
+- Phase 13: admins page and request + approve (see above).
+- CI: owner chose to keep every check blocking; story tests and E2E to be split
+  into parallel jobs to save about a minute.

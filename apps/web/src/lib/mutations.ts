@@ -3,6 +3,8 @@ import {
   paths,
   removeBakerFromSetup,
   removedCookieIds,
+  type AdminDoc,
+  type AdminRequestDoc,
   type BakerDoc,
   type CategoryDoc,
   type Cookie,
@@ -14,10 +16,12 @@ import {
 import {
   arrayUnion,
   collection,
+  deleteDoc,
   deleteField,
   doc,
   runTransaction,
   serverTimestamp,
+  setDoc,
   updateDoc,
   writeBatch,
   type FieldValue,
@@ -26,6 +30,37 @@ import { db } from './firebase.ts'
 import { deletePlatePhoto } from './storage.ts'
 
 type NewDoc<T> = { [K in keyof T]: T[K] | FieldValue }
+
+/**
+ * Puts a Google account (a lowercase email) on the admin list, approving their request
+ * if they made one.
+ */
+export async function addAdmin(email: string, addedBy: string): Promise<void> {
+  const admin: NewDoc<AdminDoc<unknown>> = { addedAt: serverTimestamp(), addedBy }
+  const batch = writeBatch(db)
+  batch.set(doc(db, paths.admin(email)), admin)
+  batch.delete(doc(db, paths.adminRequest(email)))
+  await batch.commit()
+}
+
+/** Asks to become an admin, as the signed-in Google user. */
+export async function requestAdminAccess(email: string, name: string | null): Promise<void> {
+  const request: NewDoc<AdminRequestDoc<unknown>> = {
+    requestedAt: serverTimestamp(),
+    ...(name ? { name: name.slice(0, 100) } : {}),
+  }
+  await setDoc(doc(db, paths.adminRequest(email)), request)
+}
+
+/** Declines a request to become an admin; they can ask again. */
+export async function declineAdminRequest(email: string): Promise<void> {
+  await deleteDoc(doc(db, paths.adminRequest(email)))
+}
+
+/** Takes someone off the admin list. Rules stop admins removing themselves. */
+export async function removeAdmin(email: string): Promise<void> {
+  await deleteDoc(doc(db, paths.admin(email)))
+}
 
 /** Creates an event in `setup` with an empty roster; returns its id. */
 export async function createEvent(name: string): Promise<string> {

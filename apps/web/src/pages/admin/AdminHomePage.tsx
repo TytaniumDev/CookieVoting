@@ -7,7 +7,14 @@ import { EventCard } from '../../components/EventCard/EventCard.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { signOut } from '../../lib/auth.ts'
 import { SharePanel } from '../../components/SharePanel/SharePanel.tsx'
-import { useCategories, useEvents, useResults, useSetup, type Event } from '../../lib/data.ts'
+import {
+  useAdminRequests,
+  useCategories,
+  useEvents,
+  useResults,
+  useSetup,
+  type Event,
+} from '../../lib/data.ts'
 import { voterUrl } from '../../lib/links.ts'
 import { useStatusChange } from './useStatusChange.tsx'
 
@@ -63,6 +70,8 @@ function LiveControls({ event }: { event: Event }) {
 
 export function AdminHomePage() {
   const events = useEvents()
+  const requests = useAdminRequests()
+  const requestCount = requests.status === 'ready' ? requests.data.length : 0
 
   return (
     <section className="max-w-readable space-y-6">
@@ -72,12 +81,28 @@ export function AdminHomePage() {
           <Button variant="ghost" onClick={() => void signOut()}>
             Sign out
           </Button>
+          <Link to="/admin/admins" className={buttonClasses({ variant: 'ghost' })}>
+            Admins
+          </Link>
           <Link to="/admin/events/new" className={buttonClasses()}>
             New event
           </Link>
         </div>
       </div>
 
+      {requestCount > 0 && (
+        <Alert
+          title={
+            requestCount === 1
+              ? 'Someone wants to be an admin'
+              : `${requestCount} people want to be admins`
+          }
+        >
+          <Link to="/admin/admins" className="font-bold underline">
+            Review on the Admins page
+          </Link>
+        </Alert>
+      )}
       {events.status === 'loading' && <Spinner label="Loading events" />}
       {events.status === 'error' && (
         <Alert tone="danger" title="Couldn't load events">

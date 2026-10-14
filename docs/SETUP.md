@@ -108,7 +108,9 @@ Do this after step 2b, which would delete it.
 
 Firebase console → _Firestore_ → _Start collection_ → collection ID `admins` →
 document ID = **your Google account email in lowercase** → add a field
-`addedAt` (type _timestamp_, now) → _Save_. Repeat for any co-admins.
+`addedAt` (type _timestamp_, now) → _Save_. Only the first admin needs this:
+everyone else signs in and taps **Ask to be an admin**, and you approve them on
+the app's **Admins** page.
 
 ## 4. Deploy credentials for GitHub Actions
 
