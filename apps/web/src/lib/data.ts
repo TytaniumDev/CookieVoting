@@ -71,6 +71,21 @@ function watchDoc<T>(ref: DocumentReference<T>): Subscribe<T | null> {
     onSnapshot(ref, (snapshot) => onData(snapshot.exists() ? snapshot.data() : null), onError)
 }
 
+/**
+ * Like `watchDoc`, but a write still on its way to the server counts as not there yet,
+ * so the UI only treats it as saved once Firestore has accepted it.
+ */
+function watchSavedDoc<T>(ref: DocumentReference<T>): Subscribe<T | null> {
+  return (onData, onError) =>
+    onSnapshot(
+      ref,
+      { includeMetadataChanges: true },
+      (snapshot) =>
+        onData(snapshot.exists() && !snapshot.metadata.hasPendingWrites ? snapshot.data() : null),
+      onError,
+    )
+}
+
 function watchQuery<T>(q: Query<T>): Subscribe<T[]> {
   return (onData, onError) =>
     onSnapshot(q, (snapshot) => onData(snapshot.docs.map((d) => d.data())), onError)
@@ -106,10 +121,14 @@ export function useSetup(eventId: string): Subscription<Setup | null> {
   )
 }
 
-/** The signed-in voter's ballot, if they've voted. Pass `null` until signed in. */
+/**
+ * The signed-in voter's ballot once the server has it. Pass `null` until signed in. A
+ * ballot still being sent reads as `null`, so "Thanks for voting" never shows for a vote
+ * that a reload or a closed tab could still lose.
+ */
 export function useBallot(eventId: string, uid: string | null): Subscription<Ballot | null> {
   return useSubscription(
-    uid === null ? null : watchDoc(refs.ballot(eventId, uid) as DocumentReference<Ballot>),
+    uid === null ? null : watchSavedDoc(refs.ballot(eventId, uid) as DocumentReference<Ballot>),
     `ballot/${eventId}/${uid}`,
   )
 }
