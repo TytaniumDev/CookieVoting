@@ -1,3 +1,4 @@
+import { stableShuffle } from '@cookie-voting/shared'
 import { Navigate, useParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { Card } from '../../components/Card/Card.tsx'
@@ -39,9 +40,12 @@ export function VoterEventPage() {
     return <Spinner size="lg" label="Loading the event" className="mx-auto mt-12" />
   }
   const current = event.data!
-  const votable = categories.data.filter(
-    (c): c is VotableCategory => c.photo !== null && c.cookies.length > 0,
-  )
+  // Each voter sees the cookies in their own order, so no cookie gains from going first.
+  // It's the same order every visit (seeded by the voter's id), so cookies don't move
+  // on reload or when changing a category from the waiting room.
+  const votable = categories.data
+    .filter((c): c is VotableCategory => c.photo !== null && c.cookies.length > 0)
+    .map((c) => ({ ...c, cookies: stableShuffle(c.cookies, `${uid}:${c.id}`, (k) => k.id) }))
 
   if (ballot.data) {
     if (current.status === 'results') return <Navigate to="results" replace />

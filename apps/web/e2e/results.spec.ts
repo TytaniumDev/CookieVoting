@@ -2,11 +2,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // Data comes from firebase/scripts/seed.ts: bake-off-2024 has results open and 20 ballots.
 
-function cookieRow(page: Page, category: string, cookie: number): Locator {
-  return page
-    .getByRole('region', { name: category })
-    .getByRole('listitem')
-    .filter({ has: page.getByText(`Cookie #${cookie}`, { exact: true }) })
+function cookieRows(page: Page, category: string): Locator {
+  return page.getByRole('region', { name: category }).getByRole('listitem')
 }
 
 async function pointsOf(row: Locator): Promise<number> {
@@ -15,18 +12,20 @@ async function pointsOf(row: Locator): Promise<number> {
   return Number(match[1])
 }
 
+/** Every cookie's points in a category, added up. */
+async function totalPoints(page: Page, category: string): Promise<number> {
+  const points = await Promise.all((await cookieRows(page, category).all()).map(pointsOf))
+  return points.reduce((sum, p) => sum + p, 0)
+}
+
 test('a new vote shows up in the results with Borda points', async ({ page }) => {
   // One project is enough, and running both at once would mix their votes into the totals.
   test.skip(test.info().project.name !== 'mobile', 'Changes shared seed data')
   await page.goto('/event/bake-off-2024/results')
   await expect(page.getByRole('heading', { name: 'Results 🏆' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Top bakers' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Gingerbread' }).getByRole('listitem')).toHaveCount(
-    6,
-  )
-  const before = await Promise.all(
-    [1, 2, 3].map((n) => pointsOf(cookieRow(page, 'Gingerbread', n))),
-  )
+  await expect(cookieRows(page, 'Gingerbread')).toHaveCount(6)
+  const before = await totalPoints(page, 'Gingerbread')
 
   await page.goto('/event/bake-off-2024')
   await page.getByRole('button', { name: 'Start voting' }).click()
@@ -46,11 +45,9 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
 
   // Voters who have voted go straight to the results, which update live.
   await expect(page).toHaveURL(/\/event\/bake-off-2024\/results$/)
-  for (const [i, gain] of [3, 2, 1].entries()) {
-    await expect
-      .poll(() => pointsOf(cookieRow(page, 'Gingerbread', i + 1)), { timeout: 20_000 })
-      .toBe(before[i]! + gain)
-  }
+  // Each voter sees the cookies in their own order, so which cookie got which medal
+  // isn't known here; the three medals add 3 + 2 + 1 points between them.
+  await expect.poll(() => totalPoints(page, 'Gingerbread'), { timeout: 20_000 }).toBe(before + 6)
 })
 
 test('results say when they are not out yet', async ({ page }) => {

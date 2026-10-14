@@ -545,3 +545,14 @@ until real-device testing (useful from phase 3).
   requestAnimationFrame loop that stops once the snow settles.
 - Notes for next time: the voter a11y E2E can catch the carousel's swipe hint
   mid-fade (`color-contrast: .bottom-5`); it passed on the re-run.
+
+### Session — 2026-10-14 (shuffle cookies per voter)
+
+- Each voter sees every category's cookies in their own order: `stableShuffle`
+  in `packages/shared`, applied in `VoterEventPage` so the ballot, review and
+  waiting room all agree. Seeded by uid + category id, so it's stable across
+  reloads and edits from the waiting room; ordered by a hash of each cookie id,
+  so admin edits mid-vote don't reshuffle.
+- Voter numbers `#1…#n` follow the shuffled order, so they don't match the
+  results page's plate numbers. The results E2E now checks a category's total
+  points (+6) instead of specific cookies.
