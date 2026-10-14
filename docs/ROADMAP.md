@@ -565,3 +565,13 @@ until real-device testing (useful from phase 3).
 - Screen-reader labels ("Show cookie 3", "Cookie 3") stay, by position on the
   voter's screen, so E2E selectors are unchanged. Admin plate editor keeps its
   numbers.
+
+### Session — 2026-10-14 (no flash after changing a category)
+
+- Bug: "Save my picks" in the waiting room flashed the ballot's start page.
+  `watchSavedDoc` reported the ballot as missing while the change was a pending
+  write, so `VoterEventPage` briefly showed `BallotFlow`. It now keeps the last
+  server-accepted version during a pending write (still `null` for a ballot
+  that's never been accepted, so "Thanks" still waits for the first send).
+- The waiting-room E2E watches the DOM while saving and fails if "Start voting"
+  appears at all.
