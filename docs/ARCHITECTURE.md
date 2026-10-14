@@ -231,8 +231,20 @@ derives each step's done state from the event status, the roster, the
 categories and the assignments. A cookie only counts as assigned while its
 baker is on the roster, so removing a baker unassigns their cookies.
 
-The Assign step gives each cookie its own `BakerPicker` (an ARIA combobox over the
-event roster) that starts empty, so the last baker picked is never carried over.
+**Cookies step (owner decision, 2026-10-14):** boxing cookies and assigning bakers
+are one step. `BakerChips` shows the roster (sorted by name) as one scrolling row
+above the plate with one baker highlighted; tapping a cookie boxes it
+(`PlateEditor`'s `onCreate`) and writes `assignments.{category}.{cookie}` for that
+baker. The highlight is derived, not stored: the baker the admin tapped in the row if
+any, otherwise `nextBaker` (`packages/shared/src/setup.ts`), the first roster baker
+without a cookie on this plate. So a reassignment that leaves someone without a cookie
+brings them back, and every admin's screen agrees. With nobody left, a new cookie opens
+`BakerMenu` so the admin picks its baker (a second entry). Tapping a box opens the same
+menu with its baker marked, placed below the box or above it in the lower half. The
+plate never changes by itself: without `?category` the step opens the first unfinished
+plate and stays there, and **Next plate** / **Next: Voting** move on. A plate is done
+when it has cookies and every one has a roster baker; the Cookies step is done when
+every plate is.
 The Voting step lists what's left before **Open voting** is enabled; that's the
 only gate (owner decision Q1). Status changes go through `useStatusChange`
 (`pages/admin/useStatusChange.tsx`): any status in any order (Q2), with a

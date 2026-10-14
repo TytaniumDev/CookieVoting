@@ -151,6 +151,17 @@ Owner decision (2026-10-14): request + approve, no email.
 - [x] Non-admins tap "Ask to be an admin"; admins see a dashboard banner and approve or decline on the Admins page; the asker is let in live
 - [x] Rules + tests for `admins/` writes and `adminRequests/`; E2E in `e2e/admins.spec.ts`
 
+## Phase 14 — One Cookies step: box and tag ✅
+
+Owner feedback (2026-10-14): the Cookies step jumped to the next plate after the
+first box and didn't show what a tap did. Owner asked for boxing and baker
+assignment in one step; picked from mocks (baker chips above the photo).
+
+- [x] Baker chips row with the next baker highlighted; a tap boxes and tags (`BakerChips`, `nextBaker`)
+- [x] Tap a box to reassign or delete (`BakerMenu`); extra cookies ask who baked them
+- [x] No auto-advance: Next plate / Next: Voting; the Assign bakers step is gone
+- [x] PRD updated, with the bulk upload and category card changes recorded
+
 ---
 
 ## Owner actions
@@ -428,3 +439,17 @@ until real-device testing (useful from phase 3).
   a plain reload sometimes dropped a rename or reorder still in flight.
 - Seen once locally under load, not fixed: "an admin boxes the cookies on a plate"
   can miss the box-resize width check (admin.spec.ts, the `second.boundingBox` poll).
+
+### Session 5, continued — one Cookies step (owner feedback)
+
+- Mocked two layouts (baker chips above the photo; baker list with thumbnails) across
+  every state; built the chips (recommended). `AssignStep` and `BakerPicker` are gone;
+  `SETUP_STEPS` no longer has `assign`, and `setupProgress` adds `boxed` for the
+  Voting checklist. Old `?step=assign` links fall back to the opening step.
+- Fixed the jump: with no `?category`, the step used to pick "the first plate with no
+  cookies", which changed as soon as one was boxed. It now pins the opening plate.
+- E2E: `admin.spec.ts` tags with the chips and reassigns through the menu;
+  `handoff.spec.ts` reads the plate tabs as "Plates".
+- Not done: type-to-filter in `BakerMenu` (it scrolls past ~6 bakers); add it if
+  rosters get long. A plate counts as done once every boxed cookie has a baker,
+  even if some cookies on it aren't boxed yet (the app can't tell).

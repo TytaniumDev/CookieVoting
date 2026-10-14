@@ -1,5 +1,5 @@
 import { iou, type Box } from '@cookie-voting/shared'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { addCategory, expectCategoryNames, nameCategory } from './categories.ts'
 import { reloadWhenSaved } from './reload.ts'
@@ -106,6 +106,18 @@ test('an admin adds categories with plate photos', async ({ page }, testInfo) =>
   await expectCategoryNames(page, ['Thumbprints'])
 })
 
+type Point = [number, number]
+
+/** Drags across a plate photo between two points given as fractions of its size. */
+async function dragOn(page: Page, plate: Locator, from: Point, to: Point) {
+  const box = await plate.boundingBox()
+  if (!box) throw new Error('Plate not visible')
+  await page.mouse.move(box.x + from[0] * box.width, box.y + from[1] * box.height)
+  await page.mouse.down()
+  await page.mouse.move(box.x + to[0] * box.width, box.y + to[1] * box.height, { steps: 5 })
+  await page.mouse.up()
+}
+
 test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   const eventName = `E2E Cookies ${testInfo.project.name} ${Date.now()}`
   await signInAs(page, 'admin@example.com')
@@ -119,15 +131,7 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   const plate = page.getByRole('group', { name: 'Stars plate' })
   await expect(plate.locator('img')).toHaveJSProperty('complete', true)
   await plate.scrollIntoViewIfNeeded()
-  // Drags across the photo between two points given as fractions of its size.
-  async function drag(from: [number, number], to: [number, number]) {
-    const box = await plate.boundingBox()
-    if (!box) throw new Error('Plate not visible')
-    await page.mouse.move(box.x + from[0] * box.width, box.y + from[1] * box.height)
-    await page.mouse.down()
-    await page.mouse.move(box.x + to[0] * box.width, box.y + to[1] * box.height, { steps: 5 })
-    await page.mouse.up()
-  }
+  const drag = (from: Point, to: Point) => dragOn(page, plate, from, to)
 
   // Draw two boxes.
   await drag([0.1, 0.1], [0.4, 0.45])
@@ -144,7 +148,7 @@ test('an admin boxes the cookies on a plate', async ({ page }, testInfo) => {
   // Saved: still there after a reload, and the step is done.
   await reloadWhenSaved(page)
   await expect(plate.getByRole('button', { name: /^cookie \d$/i })).toHaveCount(2)
-  await expect(page.getByRole('button', { name: /^cookies.*\(done\)/i })).toBeVisible()
+  await expect(page.getByText('2 cookies')).toBeVisible()
 
   // Delete one.
   await plate.getByRole('button', { name: 'Cookie 1' }).click()
@@ -205,7 +209,9 @@ test('tapping each cookie boxes it', async ({ page }, testInfo) => {
   }
 })
 
-test('an admin assigns bakers, opens voting and then results', async ({ page }, testInfo) => {
+test('an admin tags cookies with bakers, opens voting and then results', async ({
+  page,
+}, testInfo) => {
   const eventName = `E2E Voting ${testInfo.project.name} ${Date.now()}`
   await signInAs(page, 'admin@example.com')
   await page.getByRole('link', { name: 'New event' }).click()
@@ -222,26 +228,35 @@ test('an admin assigns bakers, opens voting and then results', async ({ page }, 
   }
   await page.getByRole('button', { name: /^categories/i }).click()
   await addCategory(page, 'Stars', '4-cookies_stars.jpg')
+  // Cookies: each new box is tagged with the highlighted baker, who then moves on.
   await page.getByRole('button', { name: /^cookies/i }).click()
-  await page.getByRole('button', { name: 'Add cookie' }).click()
-  await page.getByRole('button', { name: 'Add cookie' }).click()
-  await expect(page.getByText(/^2 cookies/)).toBeVisible()
+  await expect(page.getByText('Tap Ann’s cookie')).toBeVisible()
+  const plate = page.getByRole('group', { name: 'Stars plate' })
+  await expect(plate.locator('img')).toHaveJSProperty('complete', true)
+  await plate.scrollIntoViewIfNeeded()
+  await dragOn(page, plate, [0.1, 0.1], [0.4, 0.45])
+  await expect(plate.getByRole('button', { name: 'Cookie 1, Ann' })).toBeVisible()
+  await expect(page.getByText('Tap Bob’s cookie')).toBeVisible()
+  await dragOn(page, plate, [0.55, 0.55], [0.85, 0.9])
+  await expect(plate.getByRole('button', { name: 'Cookie 2, Bob' })).toBeVisible()
+  await expect(page.getByText(/everyone has a cookie on this plate/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /^cookies.*\(done\)/i })).toBeVisible()
 
-  // Assign: each cookie starts empty; type to filter.
-  await page.getByRole('button', { name: /^assign bakers/i }).click()
-  await expect(page.getByText('0 of 2 assigned')).toBeVisible()
-  const first = page.getByRole('combobox', { name: 'Baker for Stars cookie 1' })
-  await first.fill('an')
-  await page.getByRole('option', { name: 'Ann' }).click()
-  await expect(first).toHaveValue('Ann')
-  const second = page.getByRole('combobox', { name: 'Baker for Stars cookie 2' })
-  await expect(second).toHaveValue('')
-  await second.click()
-  await page.getByRole('option', { name: 'Bob' }).click()
-  await expect(page.getByText('2 of 2 assigned')).toBeVisible()
+  // Reassigning: tap a box, pick another baker; Ann is next again until she's tagged.
+  await plate.getByRole('button', { name: 'Cookie 1, Ann' }).click()
+  const menu = page.getByRole('dialog', { name: 'Who baked cookie 1?' })
+  await expect(menu.getByRole('button', { name: 'Ann' })).toHaveAttribute('aria-pressed', 'true')
+  await menu.getByRole('button', { name: 'Bob' }).click()
+  await expect(plate.getByRole('button', { name: 'Cookie 1, Bob' })).toBeVisible()
+  await expect(page.getByText('Tap Ann’s cookie')).toBeVisible()
+  await plate.getByRole('button', { name: 'Cookie 2, Bob' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Ann' }).click()
+  await expect(plate.getByRole('button', { name: 'Cookie 2, Ann' })).toBeVisible()
+
+  // The last plate moves on to Voting.
+  await page.getByRole('button', { name: 'Next: Voting →' }).click()
 
   // Open voting: the voter link and a live count.
-  await page.getByRole('button', { name: /^voting/i }).click()
   await page.getByRole('button', { name: 'Open voting' }).click()
   await expect(page.getByRole('heading', { name: 'Voting is open' })).toBeVisible()
   const eventId = page.url().match(/events\/([^/?]+)/)?.[1]

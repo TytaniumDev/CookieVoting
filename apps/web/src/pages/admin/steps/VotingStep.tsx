@@ -15,16 +15,27 @@ export function VotingStep({ event, progress }: { event: Event; progress: SetupP
 
   if (event.status === 'setup') {
     const checks = [
-      { done: progress.done.bakers, label: 'Add the bakers', step: 'bakers' },
-      { done: progress.done.categories, label: 'Photograph every plate', step: 'categories' },
-      { done: progress.done.cookies, label: 'Box the cookies on every plate', step: 'cookies' },
+      { id: 'bakers', done: progress.done.bakers, label: 'Add the bakers', step: 'bakers' },
       {
-        done: progress.done.assign,
+        id: 'categories',
+        done: progress.done.categories,
+        label: 'Photograph every plate',
+        step: 'categories',
+      },
+      {
+        id: 'boxed',
+        done: progress.boxed,
+        label: 'Box the cookies on every plate',
+        step: 'cookies',
+      },
+      {
+        id: 'tagged',
+        done: progress.done.cookies,
         label:
-          progress.unassignedCookies > 0 && progress.done.cookies
-            ? `Assign a baker to every cookie (${progress.unassignedCookies} left)`
-            : 'Assign a baker to every cookie',
-        step: 'assign',
+          progress.unassignedCookies > 0 && progress.boxed
+            ? `Tag every cookie with its baker (${progress.unassignedCookies} left)`
+            : 'Tag every cookie with its baker',
+        step: 'cookies',
       },
     ]
     return (
@@ -32,7 +43,7 @@ export function VotingStep({ event, progress }: { event: Event; progress: SetupP
         <h2 className="text-2xl">Open voting</h2>
         <ul className="space-y-2">
           {checks.map((check) => (
-            <li key={check.step} className="flex items-center gap-2">
+            <li key={check.id} className="flex items-center gap-2">
               <span
                 aria-hidden="true"
                 className={`grid size-6 shrink-0 place-items-center rounded-full text-sm ${

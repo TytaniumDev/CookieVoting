@@ -43,14 +43,14 @@ test('two admins on a phone and a laptop set up one event together', async ({
   for (const page of [phone, laptop]) {
     await page.getByRole('button', { name: /^cookies/i }).click()
     await page
-      .getByRole('navigation', { name: 'Categories' })
+      .getByRole('navigation', { name: 'Plates' })
       .getByRole('button', { name: /^stars/i })
       .click()
   }
   const phonePlate = phone.getByRole('group', { name: 'Stars plate' })
   const laptopPlate = laptop.getByRole('group', { name: 'Stars plate' })
   await expect(laptopPlate.locator('img')).toHaveJSProperty('complete', true)
-  const cookies = /^cookie \d$/i
+  const cookies = /^cookie \d/i
   await Promise.all([
     phone.getByRole('button', { name: 'Add cookie' }).click(),
     laptop.getByRole('button', { name: 'Add cookie' }).click(),

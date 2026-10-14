@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CategoryDoc, SetupDoc } from './documents.ts'
-import { removeBakerFromSetup, setupProgress } from './setup.ts'
+import { nextBaker, removeBakerFromSetup, setupProgress } from './setup.ts'
 
 const box = { x: 0, y: 0, width: 0.1, height: 0.1 }
 const photo = { path: 'p', url: 'u', width: 10, height: 10 }
@@ -36,7 +36,6 @@ describe('setupProgress', () => {
       bakers: true,
       categories: true,
       cookies: true,
-      assign: true,
     })
     expect(progress.current).toBe('voting')
     expect(progress.readyToVote).toBe(true)
@@ -50,6 +49,7 @@ describe('setupProgress', () => {
       categoryIds: ['a', 'b'],
     })
     expect(progress.done.categories).toBe(false)
+    expect(progress.boxed).toBe(false)
     expect(progress.done.cookies).toBe(false)
     expect(progress.current).toBe('categories')
   })
@@ -62,7 +62,8 @@ describe('setupProgress', () => {
       categoryIds: ['a'],
     })
     expect(progress.unassignedCookies).toBe(2)
-    expect(progress.done.assign).toBe(false)
+    expect(progress.boxed).toBe(true)
+    expect(progress.done.cookies).toBe(false)
     expect(progress.readyToVote).toBe(false)
   })
 
@@ -89,5 +90,31 @@ describe('removeBakerFromSetup', () => {
       bakerIds: ['bob'],
       assignments: { a: { a2: 'bob' }, b: {} },
     })
+  })
+})
+
+describe('nextBaker', () => {
+  const roster = ['ann', 'bob', 'cat']
+
+  it('starts with the first baker on the roster', () => {
+    expect(nextBaker(roster, [], {})).toBe('ann')
+  })
+
+  it('moves on to the first baker without a cookie on the plate', () => {
+    expect(nextBaker(roster, ['c1', 'c2'], { c1: 'ann', c2: 'bob' })).toBe('cat')
+  })
+
+  it('is null once every baker has a cookie, even with untagged extras', () => {
+    expect(nextBaker(roster, ['c1', 'c2', 'c3', 'c4'], { c1: 'ann', c2: 'bob', c3: 'cat' })).toBe(
+      null,
+    )
+  })
+
+  it('comes back to a baker whose only cookie was given to someone else', () => {
+    expect(nextBaker(roster, ['c1', 'c2', 'c3'], { c1: 'ann', c2: 'cat', c3: 'cat' })).toBe('bob')
+  })
+
+  it('ignores assignments for cookies no longer on the plate', () => {
+    expect(nextBaker(roster, ['c1'], { c1: 'ann', gone: 'bob' })).toBe('bob')
   })
 })
