@@ -20,6 +20,7 @@ import { CookieThumb } from '../../components/CookieThumb/CookieThumb.tsx'
 import type { OrnamentItem } from '../../components/Ornaments/Ornaments.tsx'
 import type { RevealMode } from '../../components/Ornaments/useReveal.ts'
 import { SlideShow, type Slide } from '../../components/SlideShow/SlideShow.tsx'
+import { PageLoading } from '../../components/PageLoading/PageLoading.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { tiedRanks } from '../../components/StandingRow/tiedRanks.ts'
 import {
@@ -96,7 +97,7 @@ export function ResultsPage() {
     )
   }
   if (event.status !== 'ready') {
-    return <Spinner layout="screen" label="Loading the event" />
+    return <PageLoading label="Loading the event" />
   }
   const current = event.data!
 
@@ -127,7 +128,7 @@ export function ResultsPage() {
     )
   }
   if (results.status === 'loading') {
-    return <Spinner layout="screen" label="Loading the results" />
+    return <PageLoading label="Loading the results" />
   }
   if (results.data === null) {
     return (

@@ -4,14 +4,18 @@ import {
   type CategoryPlaces,
   type CategoryRanking,
 } from '@cookie-voting/shared'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { BallotReview } from '../../components/BallotReview/BallotReview.tsx'
 import { Button } from '../../components/Button/Button.tsx'
 import { Card } from '../../components/Card/Card.tsx'
+import { SlowNotice } from '../../components/SlowNotice/SlowNotice.tsx'
 import { submitBallot } from '../../lib/ballots.ts'
 import type { Category, Event } from '../../lib/data.ts'
+import { reconnectFirestore } from '../../lib/firebase.ts'
+import { reportSlow } from '../../lib/monitoring.ts'
+import { useTakingLong } from '../../lib/useTakingLong.ts'
 import { CategoryStep } from './CategoryStep.tsx'
 
 /** A category voters can vote in: it has a photo and cookies. */
@@ -28,17 +32,22 @@ export function BallotFlow({
   categories,
   uid,
   onSubmit,
+  onSent,
 }: {
   event: Event
   categories: readonly VotableCategory[]
   uid: string
-  /** Called as the ballot is sent, before the ballot listener can move the page on. */
+  /** Called as the ballot is sent, before the page can move on. */
   onSubmit?: () => void
+  /** Called once the server has the ballot, with the rankings it holds. */
+  onSent: (rankings: BallotRankings) => void
 }) {
   const [screen, setScreenState] = useState(LANDING)
   const [medals, setMedals] = useState<Record<string, CategoryPlaces>>({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [slow, restartWait] = useTakingLong(submitting)
+  const [reconnecting, setReconnecting] = useState(false)
   const reviewing = screen >= categories.length
 
   // Admins can edit cookies while people vote; drop medals of cookies that are gone.
@@ -58,22 +67,38 @@ export function BallotFlow({
 
   const category = categories[screen]
 
+  useEffect(() => {
+    if (slow) reportSlow('submit-ballot')
+  }, [slow])
+
   async function submit() {
     setSubmitting(true)
     setError(null)
     onSubmit?.()
     const ballot: BallotRankings = Object.fromEntries(categories.map((c) => [c.id, rankingFor(c)]))
     try {
-      await submitBallot(event.id, uid, ballot)
-      // The ballot listener moves the page on to the thank-you screen.
+      // Resolves once the server has it; the page then moves on to the thank-you screen
+      // without waiting for the ballot listener, which a stalled connection can hold up.
+      onSent(await submitBallot(event.id, uid, ballot))
     } catch (e) {
       const code = (e as { code?: string }).code
       setError(
         code === 'permission-denied'
-          ? "You've already voted on this device, or voting has closed."
+          ? 'Voting has closed, so your votes can’t be sent.'
           : "Your votes didn't send. Check your connection and try again.",
       )
       setSubmitting(false)
+    }
+  }
+
+  // The ballot stays queued while Firestore reconnects, and is resent on the new connection.
+  async function reconnect() {
+    setReconnecting(true)
+    try {
+      await reconnectFirestore()
+    } finally {
+      setReconnecting(false)
+      restartWait()
     }
   }
 
@@ -112,6 +137,16 @@ export function BallotFlow({
           <Alert tone="danger" title="Not sent">
             {error}
           </Alert>
+        )}
+        {slow && (
+          <SlowNotice
+            title="Still sending your votes"
+            onRetry={() => void reconnect()}
+            retrying={reconnecting}
+          >
+            This is taking longer than it should. Check your connection, then try again. Your picks
+            are kept.
+          </SlowNotice>
         )}
         <BallotReview
           categories={categories}

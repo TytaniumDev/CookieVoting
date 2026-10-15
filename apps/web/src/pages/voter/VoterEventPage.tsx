@@ -1,9 +1,9 @@
-import { stableShuffle } from '@cookie-voting/shared'
+import { stableShuffle, type BallotRankings } from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Navigate, useParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { Card } from '../../components/Card/Card.tsx'
-import { Spinner } from '../../components/Spinner/Spinner.tsx'
+import { PageLoading } from '../../components/PageLoading/PageLoading.tsx'
 import { useVoter } from '../../lib/auth.ts'
 import { useBallot, useCategories, useEvent } from '../../lib/data.ts'
 import { BallotFlow, type VotableCategory } from './BallotFlow.tsx'
@@ -26,6 +26,9 @@ export function VoterEventPage() {
   // Set when this visit sends a ballot after results opened, so that late voter sees
   // their picks before the results. Earlier voters still move on to the results by themselves.
   const [votedLate, setVotedLate] = useState(false)
+  // The ballot this visit sent, once the server has it. The page moves on with it rather
+  // than waiting for the ballot listener, which a stalled connection on a phone can hold up.
+  const [sent, setSent] = useState<BallotRankings | null>(null)
 
   if (event.status === 'error' || voter.status === 'error' || categories.status === 'error') {
     return (
@@ -43,7 +46,7 @@ export function VoterEventPage() {
   }
   if (event.status !== 'ready' || categories.status !== 'ready' || ballot.status !== 'ready') {
     // A ballot read can fail only if signing in failed; treat it as still loading.
-    return <Spinner layout="screen" label="Loading the event" />
+    return <PageLoading label="Loading the event" />
   }
   const current = event.data!
   // Each voter sees the cookies in their own order, so no cookie gains from going first.
@@ -53,9 +56,10 @@ export function VoterEventPage() {
     .filter((c): c is VotableCategory => c.photo !== null && c.cookies.length > 0)
     .map((c) => ({ ...c, cookies: stableShuffle(c.cookies, `${uid}:${c.id}`, (k) => k.id) }))
 
-  if (ballot.data) {
+  const saved = ballot.data ?? (sent && { rankings: sent })
+  if (saved) {
     if (current.status === 'results' && !votedLate) return <Navigate to="results" replace />
-    return <WaitingRoom event={current} categories={votable} ballot={ballot.data} uid={uid!} />
+    return <WaitingRoom event={current} categories={votable} ballot={saved} uid={uid!} />
   }
 
   if (current.status === 'setup') {
@@ -82,6 +86,7 @@ export function VoterEventPage() {
       categories={votable}
       uid={uid!}
       onSubmit={() => setVotedLate(current.status === 'results')}
+      onSent={setSent}
     />
   )
 }
