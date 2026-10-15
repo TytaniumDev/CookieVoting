@@ -36,6 +36,12 @@
     @apply font-display font-semibold tracking-tight text-balance;
   }
 
+  /* Tailwind v4 leaves buttons with the arrow cursor; show the hand on anything clickable. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   :focus-visible {
     @apply outline-3 outline-offset-2 outline-focus;
   }

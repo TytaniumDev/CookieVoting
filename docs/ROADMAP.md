@@ -636,3 +636,13 @@ until real-device testing (useful from phase 3).
   link signs a browser in anonymously, like the voting link does.
 - E2E: the late-vote test in `results.spec.ts` now starts from Vote now, goes through
   the summary, and checks the link is gone once they've voted.
+
+### Session — 2026-10-15 (cookie arrow buttons)
+
+- Ballot carousel arrows: the `‹`/`›` text glyphs sat low and left in the circle, so
+  they're now an SVG chevron on a 24×24 grid, centred by construction. They tint to
+  `primary-subtle` on hover and shrink a little when pressed.
+- App-wide: Tailwind v4 dropped `cursor: pointer` on buttons, so a base rule in
+  `index.css` puts the hand back on every enabled `button` and `[role=button]`.
+- Story `CookieCarousel/ArrowIsCentred` checks the chevron's centre against the
+  button's and the pointer cursor.
