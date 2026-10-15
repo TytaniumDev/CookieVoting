@@ -26,7 +26,8 @@ import {
   VoteBreakdown,
   type VoteBreakdownProps,
 } from '../../components/VoteBreakdown/VoteBreakdown.tsx'
-import { useCategories, useEvent, useResults } from '../../lib/data.ts'
+import { useVoter } from '../../lib/auth.ts'
+import { useBallot, useCategories, useEvent, useResults } from '../../lib/data.ts'
 import { RevealSlide } from './RevealSlide.tsx'
 
 type Plate = {
@@ -57,7 +58,8 @@ const BAKER_HINT = { label: 'See their cookies', caption: 'Tap a baker to see th
  * then every baker and every cookie in one scrolling list. Tapping a cookie shows its votes;
  * tapping a baker lists their cookies and points, and each of those shows its votes too.
  * Updates live as late votes come in. Before results open it says so, and switches over
- * by itself when they do.
+ * by itself when they do. Someone who hasn't voted yet gets a Vote now button (voting
+ * stays open while results show).
  */
 export function ResultsPage() {
   const { eventId = '' } = useParams()
@@ -66,6 +68,9 @@ export function ResultsPage() {
   // Only listen once results are open: until then the rules deny the read.
   const results = useResults(open ? eventId : null)
   const categories = useCategories(eventId)
+  // Same anonymous voter as the voting page, so this knows whether they've voted.
+  const voter = useVoter()
+  const ballot = useBallot(eventId, open && voter.status === 'ready' ? voter.data.uid : null)
   const [shown, setShown] = useState(0)
   // Slides whose reveal has played (or been skipped): they stay open.
   const [finished, setFinished] = useState<ReadonlySet<string>>(new Set())
@@ -337,6 +342,14 @@ export function ResultsPage() {
       >
         The results are in · {ballotCount} {ballotCount === 1 ? 'vote' : 'votes'}
       </h1>
+      {ballot.status === 'ready' && ballot.data === null && (
+        <Link
+          to={`/event/${eventId}`}
+          className="my-1 inline-flex min-h-11 items-center gap-1 self-center rounded-full bg-accent px-4 font-display font-semibold text-on-accent shadow-card transition-colors hover:bg-accent-hover"
+        >
+          Haven’t voted yet? Vote now <span aria-hidden="true">›</span>
+        </Link>
+      )}
       <SlideShow
         label="Results"
         slides={slides}

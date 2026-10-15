@@ -484,7 +484,9 @@ to them. A late voter, who sends their ballot while results show, lands on the
 waiting room's thank-you and their picks (read-only, since ballots can't change
 once results open) with a View results button (owner decision, 2026-10-15);
 only after that visit, or for anyone who voted earlier, does the voting link go
-straight to the results.
+straight to the results. The results page uses the same anonymous voter and,
+when they have no ballot, shows a "Haven't voted yet? Vote now" link back to
+the voting page.
 
 The waiting room (owner decision, 2026-10-14) shows one of three festive scenes
 (`WaitingScene`: dancing snowman, snow globe, oven), picked at random on each

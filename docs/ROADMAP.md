@@ -631,4 +631,8 @@ until real-device testing (useful from phase 3).
   `WaitingRoom`, which in `results` says "Thanks for voting!", links to the results
   and shows `PicksSummary` read-only (`onEdit` is now optional). Earlier voters still
   move on to the results by themselves; a reload goes straight to the results.
-- E2E: the late-vote test in `results.spec.ts` now goes through the summary.
+- Results page: someone with no ballot sees a gold "Haven't voted yet? Vote now" link
+  under the heading (owner said yes). It calls `useVoter`, so visiting the results
+  link signs a browser in anonymously, like the voting link does.
+- E2E: the late-vote test in `results.spec.ts` now starts from Vote now, goes through
+  the summary, and checks the link is gone once they've voted.

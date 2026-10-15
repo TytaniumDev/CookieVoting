@@ -37,7 +37,8 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   await expect(cookieRows(page, 'Gingerbread')).toHaveCount(6)
   const before = await totalPoints(page, 'Gingerbread')
 
-  await page.goto('/event/bake-off-2024')
+  // Not voted yet: the results offer a way in.
+  await page.getByRole('link', { name: /Haven’t voted yet\? Vote now/ }).click()
   await page.getByRole('button', { name: 'Start voting' }).click()
   for (const category of ['Gingerbread', 'Mixed Shapes']) {
     await expect(page.getByRole('heading', { name: category })).toBeVisible()
@@ -64,6 +65,7 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   // Each voter sees the cookies in their own order, so which cookie got which medal
   // isn't known here; the three medals add 3 + 2 + 1 points between them.
   await expect.poll(() => totalPoints(page, 'Gingerbread'), { timeout: 20_000 }).toBe(before + 6)
+  await expect(page.getByRole('link', { name: /Vote now/ })).toBeHidden()
 
   // Coming back to the voting link later goes straight to the results.
   await page.goto('/event/bake-off-2024')
