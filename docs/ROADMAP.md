@@ -681,3 +681,10 @@ until real-device testing (useful from phase 3).
 - Owner rejected three proposed changes as intentional spacing: narrowing the app bar
   to the voter column, pulling ghost buttons ("Sign out", ballot Back) flush with the
   edge, and centring category-card controls on the name field alone. Reverted.
+- **Link previews (2026-10-15).** Owner asked for nicer cards when sharing links in
+  iMessage and Signal (they showed a bare title and a compass icon). Added Open Graph +
+  Twitter tags, a festive 1200×630 card image, an apple-touch-icon and a drawn cookie
+  favicon (the emoji favicon didn't render for crawlers). Images come from
+  `apps/web/scripts/render-share-images.mjs`. Per-event cards deferred (see
+  ARCHITECTURE.md → Design system). iMessage caches previews per link, so a link shared
+  before this deploy may keep its old card on that phone.

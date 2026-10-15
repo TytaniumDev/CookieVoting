@@ -230,6 +230,19 @@ Fonts are self-hosted through `@fontsource-variable/*` packages (imported in
 requests, and browsers only download the Latin subset they need. Motion
 respects `prefers-reduced-motion`: snow holds still and spinners stop.
 
+**Link previews and icons.** iMessage, Signal, WhatsApp and Slack read Open Graph
+and Twitter card tags from `apps/web/index.html`; their crawlers don't run
+JavaScript, so every link (home, event, results) shows the same card: the
+1200×630 `public/og-image.png`, title "Cookie Voting" and a one-line description.
+`og:image` must be an absolute URL, so it names `https://cookie-voting.web.app`.
+`npm run share-images -w @cookie-voting/web` redraws that card, the 180 px
+`apple-touch-icon.png` and `favicon.svg` from the theme tokens (the Spinner's
+cookie); run it after a re-skin and commit the files. Per-event cards (the event's
+name in the preview) would need a Hosting rewrite of `/event/**` to a Cloud
+Function that injects tags. Hosting can't route only crawlers, so every voter's
+first page load would wait on that function, cold starts included. Not built;
+revisit if the owner wants event names in previews.
+
 ## Key flows
 
 ### Admin sign-in and setup

@@ -3,10 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#9f1d2b" />
-    <meta name="description" content="Vote for your favourite cookies!" />
+    <meta
+      name="description"
+      content="Taste the cookies, rank your top three and crown the best baker."
+    />
     <title>Cookie Voting</title>
+    <!--
+      Link previews (iMessage, Signal, WhatsApp, Slack…). Their crawlers don't run
+      JavaScript, so these static tags are all they see, on every page. Image URLs must be
+      absolute. Images are drawn by scripts/render-share-images.mjs.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cookie Voting" />
+    <meta property="og:title" content="Cookie Voting" />
+    <meta
+      property="og:description"
+      content="Taste the cookies, rank your top three and crown the best baker."
+    />
+    <meta property="og:image" content="https://cookie-voting.web.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A chocolate-chip cookie on a plate with gold, silver and bronze medals, and the words Cookie Voting"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>

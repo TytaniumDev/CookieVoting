@@ -12,7 +12,8 @@
     "test:stories": "vitest run --project storybook",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "share-images": "node scripts/render-share-images.mjs"
   },
   "dependencies": {
     "@cookie-voting/shared": "*",
