@@ -1,17 +1,26 @@
-import { maxPicksFor, type CategoryPlaces } from '@cookie-voting/shared'
-import { useState } from 'react'
+import {
+  maxPicksFor,
+  type BallotRankings,
+  type CategoryPlaces,
+  type CategoryRanking,
+} from '@cookie-voting/shared'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { buttonClasses } from '../../components/Button/buttonClasses.ts'
 import { Card } from '../../components/Card/Card.tsx'
 import { PicksSummary } from '../../components/PicksSummary/PicksSummary.tsx'
+import { SlowNotice } from '../../components/SlowNotice/SlowNotice.tsx'
 import {
   WAITING_SCENES,
   WaitingScene,
   type WaitingSceneName,
 } from '../../components/WaitingScene/WaitingScene.tsx'
 import { updateBallotCategory } from '../../lib/ballots.ts'
-import type { Ballot, Event } from '../../lib/data.ts'
+import type { Event } from '../../lib/data.ts'
+import { reconnectFirestore } from '../../lib/firebase.ts'
+import { reportSlow } from '../../lib/monitoring.ts'
+import { useTakingLong } from '../../lib/useTakingLong.ts'
 import type { VotableCategory } from './BallotFlow.tsx'
 import { CategoryStep } from './CategoryStep.tsx'
 
@@ -31,8 +40,8 @@ const COPY: Record<WaitingSceneName, { title: string; text: string }> = {
 }
 
 /** The voter's medals for a category from their sent ballot, minus cookies since deleted. */
-function sentPlaces(category: VotableCategory, ballot: Ballot): CategoryPlaces {
-  const ranking = ballot.rankings[category.id] ?? []
+function sentPlaces(category: VotableCategory, rankings: BallotRankings): CategoryPlaces {
+  const ranking = rankings[category.id] ?? []
   return Array.from({ length: maxPicksFor(category.cookies.length) }, (_, i) => {
     const id = ranking[i] ?? null
     return category.cookies.some((c) => c.id === id) ? id : null
@@ -56,7 +65,7 @@ export function WaitingRoom({
 }: {
   event: Event
   categories: readonly VotableCategory[]
-  ballot: Ballot
+  ballot: { rankings: BallotRankings }
   uid: string
 }) {
   const [scene] = useState(
@@ -68,6 +77,16 @@ export function WaitingRoom({
   const [draft, setDraft] = useState<{ categoryId: string; places: CategoryPlaces } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Changes the server has accepted this visit. The ballot listener reports them only once
+  // its own connection catches up, which a stalled connection on a phone can hold up.
+  const [savedEdits, setSavedEdits] = useState<Record<string, CategoryRanking>>({})
+  const rankings: BallotRankings = { ...ballot.rankings, ...savedEdits }
+  const [slow, restartWait] = useTakingLong(saving)
+  const [reconnecting, setReconnecting] = useState(false)
+
+  useEffect(() => {
+    if (slow) reportSlow('save-category')
+  }, [slow])
 
   const resultsOpen = event.status === 'results'
   // Picks can't change once results are open (the rules deny it).
@@ -94,13 +113,10 @@ export function WaitingRoom({
   async function save(category: VotableCategory, places: CategoryPlaces) {
     setSaving(true)
     setError(null)
+    const ranking = places.filter((id) => id !== null)
     try {
-      await updateBallotCategory(
-        event.id,
-        uid,
-        category.id,
-        places.filter((id) => id !== null),
-      )
+      await updateBallotCategory(event.id, uid, category.id, ranking)
+      setSavedEdits((edits) => ({ ...edits, [category.id]: ranking }))
       close()
     } catch (e) {
       const code = (e as { code?: string }).code
@@ -114,14 +130,34 @@ export function WaitingRoom({
     }
   }
 
+  // The change stays queued while Firestore reconnects, and is resent on the new connection.
+  async function reconnect() {
+    setReconnecting(true)
+    try {
+      await reconnectFirestore()
+    } finally {
+      setReconnecting(false)
+      restartWait()
+    }
+  }
+
   if (editing) {
-    const places = draft?.categoryId === editing.id ? draft.places : sentPlaces(editing, ballot)
+    const places = draft?.categoryId === editing.id ? draft.places : sentPlaces(editing, rankings)
     return (
       <div className="space-y-3">
         {error && (
           <Alert tone="danger" title="Not saved">
             {error}
           </Alert>
+        )}
+        {slow && (
+          <SlowNotice
+            title="Still saving your change"
+            onRetry={() => void reconnect()}
+            retrying={reconnecting}
+          >
+            This is taking longer than it should. Check your connection, then try again.
+          </SlowNotice>
         )}
         <CategoryStep
           eventName={event.name}
@@ -168,7 +204,7 @@ export function WaitingRoom({
       </Card>
       <PicksSummary
         categories={categories}
-        rankings={ballot.rankings}
+        rankings={rankings}
         onEdit={resultsOpen ? undefined : open}
       />
     </div>

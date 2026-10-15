@@ -142,3 +142,41 @@ test('unknown events say so', async ({ page }) => {
   await page.goto('/event/no-such-event')
   await expect(page.getByRole('status').filter({ hasText: 'Event not found' })).toBeVisible()
 })
+
+test('a voter gets to the waiting room even when live updates stall', async ({ page, context }) => {
+  await page.goto('/event/bake-off-2025')
+  await page.getByRole('button', { name: 'Start voting' }).click()
+  const categories = ['Gingerbread People', 'Stars', 'Candy Canes', 'Stockings', 'Trees', 'Cats']
+  for (const name of categories) {
+    await expect(page.getByRole('heading', { name })).toBeVisible()
+    await giveMedal(page, 1, '1st')
+    await giveMedal(page, 2, '2nd')
+    await giveMedal(page, 3, '3rd')
+    await page.getByRole('button', { name: /next category|review my votes/i }).click()
+  }
+  // What phones reported: the live-update connection drops and its reconnects never get
+  // an answer, while writes still go through. Hold every new listen request, then make
+  // Firestore reconnect by dropping the network for a moment.
+  await page.route('**/google.firestore.v1.Firestore/Listen/**', () => {})
+  await context.setOffline(true)
+  await context.setOffline(false)
+
+  await page.getByRole('button', { name: 'Submit my votes' }).click()
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect(page.getByRole('img', { name: '1st place' })).toHaveCount(categories.length)
+
+  // A change saves and shows straight away too.
+  await page.getByRole('button', { name: 'Change Stars' }).click()
+  await giveMedal(page, 4, '3rd')
+  await page.getByRole('button', { name: 'Save my picks' }).click()
+  await expect(
+    page.getByRole('button', { name: 'Change Stars' }).getByRole('img', { name: 'Cookie 4' }),
+  ).toBeVisible()
+
+  // Both reached the server.
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
+  await page.reload()
+  await expect(
+    page.getByRole('button', { name: 'Change Stars' }).getByRole('img', { name: 'Cookie 4' }),
+  ).toBeVisible()
+})

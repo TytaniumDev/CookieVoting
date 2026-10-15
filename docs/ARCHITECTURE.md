@@ -520,7 +520,17 @@ Selections live in React state in `BallotFlow` (`awardPlace` from
 Submit writes `events/{eventId}/ballots/{uid}` once (`lib/ballots.ts`, kept
 apart from `lib/mutations.ts` so the voter chunk doesn't load Storage). The
 page listens to the voter's own ballot doc: once it exists, the voter sees the
-waiting room (`WaitingRoom`), which moves to `/event/:id/results` when `status`
+waiting room (`WaitingRoom`). The submit itself also moves the page on as soon
+as the server accepts the write, and a saved category change shows at once,
+without waiting for that listener: Firestore reports a write as saved only once
+the listen connection has caught up too, and phones (iPhones especially) can
+leave that connection stalled while writes still go through (2026-10-15 reports:
+voters stuck on the spinning submit button). If a send or a voter page's load
+runs past 10 s (`useTakingLong`), the page says so and offers a retry
+(`SlowNotice`: reconnect Firestore for a send, which resends the queued write;
+reload for a load, `PageLoading`) and logs a Sentry warning. A resend whose
+first try already landed is refused by the rules, so `submitBallot` then reads
+the ballot back and counts it as sent. The waiting room moves to `/event/:id/results` when `status`
 becomes `results`. Voting stays open while results show, with a banner linking
 to them. A late voter, who sends their ballot while results show, lands on the
 waiting room's thank-you and their picks (read-only, since ballots can't change

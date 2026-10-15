@@ -6,7 +6,13 @@ import {
   indexedDBLocalPersistence,
   initializeAuth,
 } from 'firebase/auth'
-import { connectFirestoreEmulator, getFirestore, waitForPendingWrites } from 'firebase/firestore'
+import {
+  connectFirestoreEmulator,
+  disableNetwork,
+  enableNetwork,
+  getFirestore,
+  waitForPendingWrites,
+} from 'firebase/firestore'
 
 /**
  * Firebase client for the whole app.
@@ -59,6 +65,16 @@ export const auth = initializeAuth(app, {
   persistence: [indexedDBLocalPersistence, browserLocalPersistence],
 })
 export const db = getFirestore(app)
+
+/**
+ * Drops Firestore's connection and opens a fresh one. Phones (iOS especially) can leave a
+ * connection open that no longer delivers anything, so a write waits for its answer
+ * forever; reconnecting resends writes still waiting and restarts every listener.
+ */
+export async function reconnectFirestore(): Promise<void> {
+  await disableNetwork(db)
+  await enableNetwork(db)
+}
 
 /** Same host the page came from, so a phone on the LAN can reach a laptop's emulators. */
 export const emulatorHost = window.location.hostname

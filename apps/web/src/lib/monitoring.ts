@@ -1,6 +1,7 @@
 import {
   addIntegration,
   captureException,
+  captureMessage,
   feedbackAsyncIntegration,
   getFeedback,
   init,
@@ -107,3 +108,11 @@ export function reportError(error: unknown, action: string) {
 }
 
 export { reactErrorHandler, wrapCreateBrowserRouter } from '@sentry/react'
+
+/**
+ * Notes that something is taking far too long (a ballot still sending, a page still
+ * loading), so Sentry shows how often phones get stuck and the breadcrumbs before it.
+ */
+export function reportSlow(action: string) {
+  captureMessage(`Still waiting: ${action}`, { level: 'warning', tags: { action } })
+}

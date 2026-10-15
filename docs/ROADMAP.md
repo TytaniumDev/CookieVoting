@@ -717,6 +717,23 @@ until real-device testing (useful from phase 3).
   ARCHITECTURE.md → Design system). iMessage caches previews per link, so a link shared
   before this deploy may keep its old card on that phone.
 
+### Session — 2026-10-15 (stuck on submitting)
+
+- Two iPhone voters reported (Sentry feedback) the ballot stuck on "Submit my votes" and
+  the results stuck loading. Cause: the page moved on only when the ballot listener saw
+  the ballot as saved, and Firestore counts a write as saved only once the listen
+  connection catches up as well as the write's own answer. A stalled listen connection
+  (phones, iOS especially) left the spinner forever with no error. Reproduced in E2E by
+  holding every listen request; now the submit moves on when the write is accepted, and
+  saved category changes show straight away.
+- Anything still sending or loading after 10 s shows a "Still sending/loading" notice
+  with Try again (reconnects Firestore) or Reload, and sends a Sentry warning
+  (`Still waiting: …`), so stalls are visible and counted. Check those warnings
+  if reports continue; forcing long polling (`experimentalForceLongPolling`) is the next
+  lever if stalls turn out to be common.
+- Not App Check: the builds the reports came from didn't initialise it, and it
+  wasn't enforced.
+
 ### Session — 2026-10-15 (results on phones)
 
 - Sentry feedback (COOKIE-VOTING-3, iPhone): the winner's tag was cut off by the slide
