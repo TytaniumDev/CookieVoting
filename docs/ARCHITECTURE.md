@@ -480,7 +480,11 @@ apart from `lib/mutations.ts` so the voter chunk doesn't load Storage). The
 page listens to the voter's own ballot doc: once it exists, the voter sees the
 waiting room (`WaitingRoom`), which moves to `/event/:id/results` when `status`
 becomes `results`. Voting stays open while results show, with a banner linking
-to them.
+to them. A late voter, who sends their ballot while results show, lands on the
+waiting room's thank-you and their picks (read-only, since ballots can't change
+once results open) with a View results button (owner decision, 2026-10-15);
+only after that visit, or for anyone who voted earlier, does the voting link go
+straight to the results.
 
 The waiting room (owner decision, 2026-10-14) shows one of three festive scenes
 (`WaitingScene`: dancing snowman, snow globe, oven), picked at random on each

@@ -60,3 +60,13 @@ export const NewCategory: Story = {
     await expect(args.onEdit).toHaveBeenCalledWith('trees')
   },
 }
+
+/** Results are open, so picks can't change: plain rows, no buttons. */
+export const ReadOnly: Story = {
+  args: { onEdit: undefined },
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('img', { name: '1st place' })).toHaveLength(3)
+    await expect(canvas.queryByRole('button')).toBeNull()
+    await expect(canvas.queryByText('Tap a category to change it.')).toBeNull()
+  },
+}

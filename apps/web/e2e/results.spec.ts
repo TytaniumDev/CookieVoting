@@ -53,12 +53,21 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   }
   await page.getByRole('button', { name: 'Submit my votes' }).click()
 
-  // Voters who have voted go straight to the results, which update live.
+  // A late voter sees their picks first (read-only now), then opens the results,
+  // which update live.
+  await expect(page.getByRole('heading', { name: 'Thanks for voting!' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Change / })).toHaveCount(0)
+  await page.getByRole('link', { name: 'View results' }).click()
   await expect(page).toHaveURL(/\/event\/bake-off-2024\/results$/)
   await openAllResults(page)
   // Each voter sees the cookies in their own order, so which cookie got which medal
   // isn't known here; the three medals add 3 + 2 + 1 points between them.
   await expect.poll(() => totalPoints(page, 'Gingerbread'), { timeout: 20_000 }).toBe(before + 6)
+
+  // Coming back to the voting link later goes straight to the results.
+  await page.goto('/event/bake-off-2024')
+  await expect(page).toHaveURL(/\/event\/bake-off-2024\/results$/)
 })
 
 test('the winners are revealed as ornaments, and tapping one shows its votes', async ({ page }) => {
