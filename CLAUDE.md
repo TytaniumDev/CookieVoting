@@ -110,7 +110,9 @@ fixtures/plates/   Real plate photos for detection work and E2E
   (`ReadableLayout`, `max-w-readable`). Inside the column, content fills the
   width; grids add columns. Rows of tabs or chips never wrap: one row that
   scrolls sideways, edge to edge, only when it doesn't fit (see `Stepper`:
-  `-mx-(--gutter) px-(--gutter) overflow-x-auto`, `w-max`).
+  `-mx-(--gutter) px-(--gutter) overflow-x-auto overflow-y-hidden`, `w-max`). Sideways
+  scrollers always add `overflow-y-hidden`: on their own they also pan up and down by the
+  few px their content overflows, which fights swipes and pull-to-refresh on phones.
 - **Alignment checklist** (check screenshots at 375, ~1024 and ~1500 px before
   shipping UI):
   - Text of different sizes in one row shares a **baseline** (`items-baseline`), e.g.

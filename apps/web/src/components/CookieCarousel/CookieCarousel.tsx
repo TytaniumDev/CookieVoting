@@ -108,7 +108,7 @@ export function CookieCarousel({
         onPointerDown={voterTakesOver}
         onWheel={voterTakesOver}
         onKeyDown={voterTakesOver}
-        className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none]"
+        className="flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none]"
       >
         {cookies.map((cookie, index) => {
           const number = index + 1

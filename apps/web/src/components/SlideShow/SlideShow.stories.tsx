@@ -76,3 +76,19 @@ export const OtherSlidesInert: Story = {
     ).toBeNull()
   },
 }
+
+/** Slides only move sideways: content a little taller than a slide can't be panned. */
+export const SidewaysOnly: Story = {
+  args: {
+    slides: names.map((name) => ({
+      id: name,
+      label: name,
+      content: <h2 className="h-[30rem] shrink-0 pt-12 text-center text-4xl">{name}</h2>,
+    })),
+  },
+  play: async ({ canvas }) => {
+    const track = canvas.getByRole('region', { name: 'Results' })
+    await expect(track.scrollHeight).toBeGreaterThan(track.clientHeight)
+    await expect(getComputedStyle(track).overflowY).toBe('hidden')
+  },
+}

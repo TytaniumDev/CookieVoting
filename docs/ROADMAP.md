@@ -726,3 +726,7 @@ until real-device testing (useful from phase 3).
 - Also fixed on phones: the 3rd-place tag sat under the 1st-place ornament's cap and
   crown. The tall ornament layout now hangs 1st below the side tags (`SIDE_TAG_HEIGHT`,
   reserved in px like `TAG_HEIGHT`), shrinking the balls on short screens to fit.
+- Owner noticed the results slides could be panned freely on a phone, which fought
+  swipes and pull-to-refresh: the slide track scrolled up and down by the 12 px the
+  ornaments' swing overflowed. Every sideways scroller (`SlideShow`, `CookieCarousel`,
+  tab and chip rows) now sets `overflow-y-hidden`; rule added to CLAUDE.md.

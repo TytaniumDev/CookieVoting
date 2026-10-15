@@ -41,7 +41,7 @@ export function PlateTabs({ plates, selected, onSelect, className = '' }: PlateT
     <nav
       ref={nav}
       aria-label="Plates"
-      className={`relative -mx-(--gutter) overflow-x-auto px-(--gutter) py-1 ${className}`}
+      className={`relative -mx-(--gutter) overflow-x-auto overflow-y-hidden px-(--gutter) py-1 ${className}`}
     >
       <ul className="flex w-max gap-2">
         {plates.map((plate) => {

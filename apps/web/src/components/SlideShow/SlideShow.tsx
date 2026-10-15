@@ -97,7 +97,7 @@ export function SlideShow({
       <nav
         ref={tabs}
         aria-label={label}
-        className="-mx-(--gutter) overflow-x-auto px-(--gutter) py-1 [scrollbar-width:none]"
+        className="-mx-(--gutter) overflow-x-auto overflow-y-hidden px-(--gutter) py-1 [scrollbar-width:none]"
       >
         <ul className="mx-auto flex w-max gap-1.5">
           {slides.map((slide, index) => (
@@ -130,7 +130,7 @@ export function SlideShow({
           onPointerDown={userTakesOver}
           onWheel={userTakesOver}
           onKeyDown={userTakesOver}
-          className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none]"
+          className="flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none]"
         >
           {slides.map((slide, index) => (
             <div
