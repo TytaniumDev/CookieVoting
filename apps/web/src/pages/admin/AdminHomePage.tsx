@@ -103,7 +103,7 @@ export function AdminHomePage() {
           </Link>
         </Alert>
       )}
-      {events.status === 'loading' && <Spinner label="Loading events" />}
+      {events.status === 'loading' && <Spinner layout="section" label="Loading events" />}
       {events.status === 'error' && (
         <Alert tone="danger" title="Couldn't load events">
           {events.error.message}

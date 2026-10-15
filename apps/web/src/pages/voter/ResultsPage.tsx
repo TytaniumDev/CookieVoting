@@ -91,7 +91,7 @@ export function ResultsPage() {
     )
   }
   if (event.status !== 'ready') {
-    return <Spinner size="lg" label="Loading the event" className="mx-auto mt-12" />
+    return <Spinner layout="screen" label="Loading the event" />
   }
   const current = event.data!
 
@@ -122,12 +122,12 @@ export function ResultsPage() {
     )
   }
   if (results.status === 'loading') {
-    return <Spinner size="lg" label="Loading the results" className="mx-auto mt-12" />
+    return <Spinner layout="screen" label="Loading the results" />
   }
   if (results.data === null) {
     return (
       <Card className="space-y-3 text-center">
-        <Spinner size="lg" label="" className="mx-auto" />
+        <Spinner layout="section" size="lg" label="" className="py-0" />
         <h1 className="text-3xl">Counting the votes…</h1>
         <p className="text-ink-muted">The results will appear here in a moment.</p>
       </Card>

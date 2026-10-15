@@ -33,7 +33,7 @@ export function AdminGate() {
   }
 
   if (user.status === 'loading' || (signedIn && isAdmin.status === 'loading')) {
-    return <Spinner size="lg" label="Checking who you are" className="mx-auto mt-12" />
+    return <Spinner layout="screen" label="Checking who you are" />
   }
   if (user.status === 'error' || isAdmin.status === 'error') {
     return (

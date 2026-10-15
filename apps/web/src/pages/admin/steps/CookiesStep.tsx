@@ -50,7 +50,7 @@ export function CookiesStep({
       </Card>
     )
   }
-  if (bakers.status === 'loading') return <Spinner label="Loading bakers" />
+  if (bakers.status === 'loading') return <Spinner layout="section" label="Loading bakers" />
   if (bakers.status === 'error') {
     return (
       <Alert tone="danger" title="Couldn't load bakers">

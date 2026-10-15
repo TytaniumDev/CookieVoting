@@ -66,7 +66,7 @@ export function AdminsPage() {
         />
       )}
 
-      {admins.status === 'loading' && <Spinner label="Loading admins" />}
+      {admins.status === 'loading' && <Spinner layout="section" label="Loading admins" />}
       {admins.status === 'error' && (
         <Alert tone="danger" title="Couldn't load the admin list">
           {admins.error.message}

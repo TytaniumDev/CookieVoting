@@ -608,3 +608,15 @@ until real-device testing (useful from phase 3).
   rows without buttons.
 - New shared helper `bakerCookies`; `Ornaments`/`RevealSlide` take a `selectHint` so
   the Top bakers slide says "Tap a baker to see their cookies".
+
+### Session — 2026-10-15 (cookie loading spinner)
+
+- Owner reported spinners sitting in the top-left corner and asked for a festive one.
+  Cause: `Spinner` was an inline element, so the pages' `mx-auto mt-12` did nothing.
+- Four options mocked up ("Cookie Spinner Options" artifact); built **Nom nom**: bites
+  are masked out of a chocolate-chip cookie one by one, crumbs fall, it pops back whole.
+  Under reduced motion it's a still cookie with one bite.
+- `Spinner` gained `layout`: `inline` (buttons, hints), `section` (centred in its
+  container, label shown) and `screen` (centred in the screen under the app bar).
+  Every loading state uses it, including the pre-route `LoadingScreen` (was a bouncing
+  emoji). New `nom-*` keyframes in theme.css.
