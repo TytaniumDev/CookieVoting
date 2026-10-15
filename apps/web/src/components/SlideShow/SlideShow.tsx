@@ -165,14 +165,6 @@ export function SlideShow({
           <span aria-hidden="true">›</span>
         </button>
       </div>
-      <div aria-hidden="true" className="flex justify-center gap-1.5 py-1">
-        {slides.map((slide, index) => (
-          <span
-            key={slide.id}
-            className={`h-2 rounded-full transition-all ${index === current ? 'w-5 bg-accent' : 'w-2 bg-primary-hover'}`}
-          />
-        ))}
-      </div>
     </div>
   )
 }
