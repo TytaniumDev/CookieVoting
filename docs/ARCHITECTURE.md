@@ -205,7 +205,13 @@ must be images under 10 MB.
 Ballot _contents_ are validated by the scorer, not by rules. Unknown categories
 and cookies, duplicates and extra picks are ignored (`sanitizeRanking`).
 Anonymous auth means a determined person can vote again from a new browser,
-which the PRD accepts. App Check can be added at launch to deter scripted abuse.
+which the PRD accepts. Scripted abuse (minting anonymous accounts in a loop) is
+blocked by App Check with invisible reCAPTCHA Enterprise, initialised in
+`lib/firebase.ts` when the build has `VITE_RECAPTCHA_SITE_KEY`, and enforced by the
+owner on Cloud Firestore only (SETUP.md §7). Storage stays unenforced because photos
+load as plain download URLs. The key allows `web.app` so PR previews pass too; that
+lets another `web.app` site request tokens for our app, which is no easier than
+driving the real page in a browser.
 
 ## Design system
 
@@ -589,6 +595,7 @@ one read per update).
 | Firestore reads (tally + listeners)   | ~30K      | 50K/day      |
 | Firestore writes                      | < 1K      | 20K/day      |
 | Function invocations                  | ~250      | 2M/month     |
+| reCAPTCHA assessments (App Check)     | ~200–400  | 10K/month    |
 
 The voter bundle measured at phase 10 is about 300 KB gzipped (the Firebase
 SDK is 170 KB of it). Admins also download the tap-to-select model and runtime
