@@ -19,8 +19,8 @@ const onClasses: Record<Rank, string> = {
 /**
  * One button per medal for the cookie on screen. Each says where its medal is: not
  * given yet, on another cookie (tapping moves it here), or on this one (tapping takes
- * it back). Phones stack each button's medal over its words; wider screens put them
- * side by side.
+ * it back). Phones stack the medal, its name and the words; wider screens put the medal
+ * beside its name, with the words on their own full-width row underneath.
  */
 export function MedalButtons({ current, holders, onAward, className = '' }: MedalButtonsProps) {
   return (
@@ -38,18 +38,20 @@ export function MedalButtons({ current, holders, onAward, className = '' }: Meda
             type="button"
             aria-pressed={on}
             onClick={() => onAward(place)}
-            className={`grid min-h-19 content-center justify-items-center gap-1 rounded-card px-1 py-2 shadow-card transition-[transform,background-color] active:scale-95 sm:min-h-16 sm:grid-flow-col sm:justify-center sm:gap-2.5 ${
+            className={`grid min-h-19 content-center items-center justify-items-center gap-1 rounded-card px-1 py-2 leading-tight shadow-card transition-[transform,background-color] active:scale-95 sm:min-h-16 sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-2 sm:px-2 ${
               on ? onClasses[place] : 'bg-surface text-ink hover:bg-accent-subtle'
             }`}
           >
             <span aria-hidden="true" className="grid">
               <RankBadge rank={place} />
             </span>
-            <span className="grid justify-items-center leading-tight sm:justify-items-start">
-              <span className="font-display text-base font-semibold">{ORDINALS[place]} place</span>
-              <span className={`text-xs font-bold ${on ? '' : 'text-ink-muted'}`}>
-                {on ? 'Tap to take back' : holder === null ? 'Not given yet' : 'On another cookie'}
-              </span>
+            <span className="font-display text-base font-semibold whitespace-nowrap">
+              {ORDINALS[place]} place
+            </span>
+            <span
+              className={`text-center text-xs font-bold sm:col-span-2 ${on ? '' : 'text-ink-muted'}`}
+            >
+              {on ? 'Tap to take back' : holder === null ? 'Not given yet' : 'On another cookie'}
             </span>
           </button>
         )
