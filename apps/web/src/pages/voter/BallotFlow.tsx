@@ -27,10 +27,13 @@ export function BallotFlow({
   event,
   categories,
   uid,
+  onSubmit,
 }: {
   event: Event
   categories: readonly VotableCategory[]
   uid: string
+  /** Called as the ballot is sent, before the ballot listener can move the page on. */
+  onSubmit?: () => void
 }) {
   const [screen, setScreenState] = useState(LANDING)
   const [medals, setMedals] = useState<Record<string, CategoryPlaces>>({})
@@ -58,6 +61,7 @@ export function BallotFlow({
   async function submit() {
     setSubmitting(true)
     setError(null)
+    onSubmit?.()
     const ballot: BallotRankings = Object.fromEntries(categories.map((c) => [c.id, rankingFor(c)]))
     try {
       await submitBallot(event.id, uid, ballot)

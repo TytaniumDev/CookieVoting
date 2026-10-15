@@ -1,4 +1,5 @@
 import { stableShuffle } from '@cookie-voting/shared'
+import { useState } from 'react'
 import { Navigate, useParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { Card } from '../../components/Card/Card.tsx'
@@ -11,7 +12,9 @@ import { WaitingRoom } from './WaitingRoom.tsx'
 /**
  * The voter link (PRD §7). Signs the voter in anonymously, then shows the ballot, or
  * the waiting room once they've voted (where they can change a category), which moves
- * on to the results by itself.
+ * on to the results by itself. Someone who votes after results open lands on the
+ * waiting room's thank-you and picks first, with a button to the results; anyone else
+ * who has voted goes straight to the results.
  */
 export function VoterEventPage() {
   const { eventId = '' } = useParams()
@@ -20,6 +23,9 @@ export function VoterEventPage() {
   const uid = voter.status === 'ready' ? voter.data.uid : null
   const ballot = useBallot(eventId, uid)
   const categories = useCategories(eventId)
+  // Set when this visit sends a ballot after results opened, so that late voter sees
+  // their picks before the results. Earlier voters still move on to the results by themselves.
+  const [votedLate, setVotedLate] = useState(false)
 
   if (event.status === 'error' || voter.status === 'error' || categories.status === 'error') {
     return (
@@ -48,7 +54,7 @@ export function VoterEventPage() {
     .map((c) => ({ ...c, cookies: stableShuffle(c.cookies, `${uid}:${c.id}`, (k) => k.id) }))
 
   if (ballot.data) {
-    if (current.status === 'results') return <Navigate to="results" replace />
+    if (current.status === 'results' && !votedLate) return <Navigate to="results" replace />
     return <WaitingRoom event={current} categories={votable} ballot={ballot.data} uid={uid!} />
   }
 
@@ -70,5 +76,12 @@ export function VoterEventPage() {
       </Alert>
     )
   }
-  return <BallotFlow event={current} categories={votable} uid={uid!} />
+  return (
+    <BallotFlow
+      event={current}
+      categories={votable}
+      uid={uid!}
+      onSubmit={() => setVotedLate(current.status === 'results')}
+    />
+  )
 }

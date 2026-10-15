@@ -620,3 +620,19 @@ until real-device testing (useful from phase 3).
   container, label shown) and `screen` (centred in the screen under the app bar).
   Every loading state uses it, including the pre-route `LoadingScreen` (was a bouncing
   emoji). New `nom-*` keyframes in theme.css.
+
+### Session — 2026-10-15 (late voters see their picks first)
+
+- Owner asked for stragglers to vote after results open; that already worked (rules
+  accept ballots in `results`, the ballot shows a "Results are open" banner). The ask
+  that remained: a late voter lands on a summary with a **View results** button
+  instead of jumping straight to the results.
+- `VoterEventPage` remembers a ballot sent during `results` in this visit and shows
+  `WaitingRoom`, which in `results` says "Thanks for voting!", links to the results
+  and shows `PicksSummary` read-only (`onEdit` is now optional). Earlier voters still
+  move on to the results by themselves; a reload goes straight to the results.
+- Results page: someone with no ballot sees a gold "Haven't voted yet? Vote now" link
+  under the heading (owner said yes). It calls `useVoter`, so visiting the results
+  link signs a browser in anonymously, like the voting link does.
+- E2E: the late-vote test in `results.spec.ts` now starts from Vote now, goes through
+  the summary, and checks the link is gone once they've voted.

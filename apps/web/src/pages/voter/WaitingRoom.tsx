@@ -1,7 +1,8 @@
 import { maxPicksFor, type CategoryPlaces } from '@cookie-voting/shared'
 import { useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Alert } from '../../components/Alert/Alert.tsx'
+import { buttonClasses } from '../../components/Button/buttonClasses.ts'
 import { Card } from '../../components/Card/Card.tsx'
 import { PicksSummary } from '../../components/PicksSummary/PicksSummary.tsx'
 import {
@@ -43,6 +44,9 @@ function sentPlaces(category: VotableCategory, ballot: Ballot): CategoryPlaces {
  * festive scenes, picked afresh on each visit, and the voter's picks. Tapping a category
  * opens it (`?edit=<categoryId>`, so the phone's back button closes it) to change and
  * save, then comes back here.
+ *
+ * A late voter, who votes once results are already open, lands here too (owner decision
+ * 2026-10-15): the same thanks and their picks, read-only, with a View results button.
  */
 export function WaitingRoom({
   event,
@@ -65,7 +69,9 @@ export function WaitingRoom({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const editing = categories.find((c) => c.id === params.get('edit'))
+  const resultsOpen = event.status === 'results'
+  // Picks can't change once results are open (the rules deny it).
+  const editing = resultsOpen ? undefined : categories.find((c) => c.id === params.get('edit'))
 
   function open(categoryId: string) {
     setDraft(null)
@@ -138,13 +144,33 @@ export function WaitingRoom({
       <Card tone="festive" flush>
         <WaitingScene scene={scene} className="h-72 sm:h-90" />
         <div className="space-y-1 px-5 pt-4 pb-5 text-center sm:px-8 sm:pt-6 sm:pb-7">
-          <h1 className="text-3xl sm:text-4xl">{copy.title}</h1>
-          <p className="text-ink-muted">
-            {copy.text} The results show here as soon as they open, so you can leave this page open.
-          </p>
+          {resultsOpen ? (
+            <>
+              <h1 className="text-3xl sm:text-4xl">Thanks for voting!</h1>
+              <p className="text-ink-muted">Your votes are in, and so are the results.</p>
+              <Link
+                to="results"
+                className={`mt-3 ${buttonClasses({ size: 'lg', fullWidth: true })}`}
+              >
+                View results
+              </Link>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl sm:text-4xl">{copy.title}</h1>
+              <p className="text-ink-muted">
+                {copy.text} The results show here as soon as they open, so you can leave this page
+                open.
+              </p>
+            </>
+          )}
         </div>
       </Card>
-      <PicksSummary categories={categories} rankings={ballot.rankings} onEdit={open} />
+      <PicksSummary
+        categories={categories}
+        rankings={ballot.rankings}
+        onEdit={resultsOpen ? undefined : open}
+      />
     </div>
   )
 }
