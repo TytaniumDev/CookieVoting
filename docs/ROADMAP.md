@@ -647,21 +647,37 @@ until real-device testing (useful from phase 3).
 - Story `CookieCarousel/ArrowIsCentred` checks the chevron's centre against the
   button's and the pointer cursor.
 
+### Session — 2026-10-15 (stale chunks after a deploy)
+
+- Bug: a voting tab opened before a deploy showed React Router's "Unexpected Application
+  Error! Failed to fetch dynamically imported module …AdminHomePage-….js" when the app
+  title was tapped, because that build's chunk was gone from Hosting.
+- Lazy routes now reload the page once on a chunk-load error (`lib/staleChunk.ts`);
+  other page errors get a friendly "Oh, crumbs!" card (`RouteErrorPage`) instead of the
+  developer screen. Hosting sends `no-cache` for everything but hashed assets.
+- The app title on voter pages (`/event/:id/…`) now goes back to that event instead of
+  the admin sign-in at `/`.
+- Unit tests now unmount between tests (`afterEach(cleanup)` in `src/test/setup.ts`);
+  before, renders piled up in one document.
+- Considered making missing `/assets/**` return a real 404 (`"source": "!/assets/**"`
+  on the SPA rewrite works in the emulator) but left it: if production Hosting read the
+  glob differently, every voter link would 404. The reload handles both cases.
+
 ### Session — 2026-10-15 (alignment audit)
 
 - Owner spotted the voting page's event name sitting off the "Cookie Voting" baseline
   and asked for an audit. Screenshotted every page at 375, 1024 and 1500 px and fixed:
   - App bar: items share a baseline; one `AppBarTitle` (› + name, one style) replaces
-    three hand-styled titles; on voter pages the bar's column narrows to the readable
-    column so the logo lines up with the content.
-  - `Button`: `flush` prop pulls a ghost button out by its padding at a row edge (admin
-    dashboard "Sign out" on phones); labels that wrap stay centred and balanced.
-  - Ballot: the Next button is as tall as the medal buttons; Back meets the right edge.
+    three hand-styled titles.
+  - `Button`: labels that wrap stay centred and balanced.
+  - Ballot: the Next button is as tall as the medal buttons.
   - `EventCard` badge on the title's baseline; `Stepper`'s first circle on the column
-    edge; baker/admin list rows have even insets; category cards centre the handle and
-    delete on the name field, with the cookie count under the name's text.
+    edge; baker/admin list rows have even insets.
   - `ConfirmDialog` renders into `<body>`: a closed dialog at the end of a `space-y`
     card gave the Results and Voting steps a doubled bottom gap.
   - Results ornaments keep 72 px for the 1st-place tag, which overlapped the slide
     dots on short phones.
 - Added an alignment checklist to CLAUDE.md → Conventions.
+- Owner rejected three proposed changes as intentional spacing: narrowing the app bar
+  to the voter column, pulling ghost buttons ("Sign out", ballot Back) flush with the
+  edge, and centring category-card controls on the name field alone. Reverted.

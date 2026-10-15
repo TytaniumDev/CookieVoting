@@ -18,7 +18,7 @@ function VoterPage() {
   return (
     <>
       <AppBarTitle>Christmas Cookie Bake-Off</AppBarTitle>
-      <p>A voter page: one narrower column, with the app bar's column narrowed to match.</p>
+      <p>A voter page: the event's name in the app bar, hidden on phones.</p>
     </>
   )
 }

@@ -4,9 +4,11 @@ import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { routes } from './app/routes.ts'
 import { initMonitoring, reactErrorHandler, wrapCreateBrowserRouter } from './lib/monitoring.ts'
+import { listenForStaleChunks } from './lib/staleChunk.ts'
 import './styles/index.css'
 
 initMonitoring()
+listenForStaleChunks()
 
 const router = wrapCreateBrowserRouter(createBrowserRouter)(routes)
 

@@ -78,7 +78,7 @@ export function AdminHomePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl">Your events</h1>
         <div className="flex gap-2">
-          <Button variant="ghost" flush="start" onClick={() => void signOut()}>
+          <Button variant="ghost" onClick={() => void signOut()}>
             Sign out
           </Button>
           <Link to="/admin/admins" className={buttonClasses({ variant: 'ghost' })}>

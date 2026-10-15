@@ -55,7 +55,7 @@ export function CategoryStep({
         <button
           type="button"
           onClick={onBack}
-          className="-me-3 ml-auto min-h-11 min-w-11 shrink-0 rounded-control px-3 font-display font-semibold hover:bg-primary-hover"
+          className="ml-auto min-h-11 min-w-11 shrink-0 rounded-control px-3 font-display font-semibold hover:bg-primary-hover"
         >
           <span aria-hidden="true">←</span>
           {/* Phones need the room for the category's name. */}

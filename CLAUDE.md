@@ -116,15 +116,14 @@ fixtures/plates/   Real plate photos for detection work and E2E
   - Text of different sizes in one row shares a **baseline** (`items-baseline`), e.g.
     a title and its badge, or "Cookie Voting" and the page title in the app bar
     (`AppBarTitle`). Use `items-center` only when one side has no text (icons, photos).
-  - **Edges line up.** The first thing in a row meets the column edge: pull out
-    padding that only shows on hover (`Button flush="start"|"end"` for ghost buttons,
-    `-ms-*` on rows of padded items like `Stepper`). The app bar's column matches the
-    page's (`ReadableLayout` narrows it).
   - **Even insets.** A card or list row has the same inset on both sides, counting a
-    trailing ghost button's padding; captions under an input start where its text does.
+    trailing ghost button's padding.
   - **Controls in one row are one height** (grid/flex stretch, not `items-center` on
-    mismatched `min-h-*`), and icons centre on the control they belong to, not on a
-    control plus its caption.
+    mismatched `min-h-*`).
+  - Deliberate space between widgets is intended, not a misalignment: a ghost
+    button's padding at a row's edge, a handle centred beside a field and its caption,
+    and the app bar keeping the admin-width column over voter pages. The owner reviewed
+    these and kept them.
   - **Nothing hidden takes space:** modal dialogs render into `<body>` (see
     `ConfirmDialog`); a closed `<dialog>` left as the last child of a `space-y-*` stack
     still gets its sibling a margin.
