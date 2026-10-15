@@ -681,3 +681,14 @@ until real-device testing (useful from phase 3).
 - Owner rejected three proposed changes as intentional spacing: narrowing the app bar
   to the voter column, pulling ghost buttons ("Sign out", ballot Back) flush with the
   edge, and centring category-card controls on the name field alone. Reverted.
+
+### Session — 2026-10-15 (feedback button)
+
+- Owner asked for a way to leave feedback or report a bug with screenshots. Picked
+  Sentry's feedback widget (already used for errors) with session replay for phones,
+  where Sentry offers no screenshots; no GitHub issue copying. See ARCHITECTURE.md →
+  Errors → Feedback.
+- 💬 _Feedback_ in the app bar (`FeedbackButton`, icon only under 640 px), only in
+  deploy builds. Form and replay load lazily from Sentry's CDN.
+- To read reports: Sentry connector, org `tytaniumdev`, project `cookie-voting`,
+  query `issue.category:feedback`; a report links its replay.
