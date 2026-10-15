@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseOptions } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import {
   browserLocalPersistence,
   connectAuthEmulator,
@@ -15,6 +16,10 @@ import { connectFirestoreEmulator, getFirestore, waitForPendingWrites } from 'fi
  * - **Production**: the web config comes from Firebase Hosting's reserved
  *   `/__/firebase/init.json` URL, which serves the config of the project the site is
  *   deployed to (live site and preview channels alike), so nothing can drift.
+ *
+ * - **App Check** (production builds with `VITE_RECAPTCHA_SITE_KEY`): every request carries
+ *   an invisible reCAPTCHA Enterprise attestation, so once the owner enforces it, scripts
+ *   can't mint anonymous accounts and cast ballots outside the real page (docs/SETUP.md §7).
  *
  * Uses top-level await so importers get ready-to-use services. Storage lives in
  * `storage.ts` so voters, who never upload, don't download its SDK.
@@ -38,6 +43,16 @@ async function loadHostingConfig(): Promise<FirebaseOptions> {
 const config = usingEmulators ? emulatorConfig : await loadHostingConfig()
 
 export const app = initializeApp(config)
+
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+// Before any other service sends a request, so the first one already carries a token.
+if (!usingEmulators && recaptchaSiteKey) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  })
+}
+
 // initializeAuth rather than getAuth leaves out the popup/redirect code voters never use.
 // Admin Google sign-in passes `browserPopupRedirectResolver` to signInWithPopup instead.
 export const auth = initializeAuth(app, {

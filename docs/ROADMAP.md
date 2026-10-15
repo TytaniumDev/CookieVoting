@@ -124,7 +124,8 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Accessibility and 375 px layout pass on every voter screen (`e2e/voter-a11y.spec.ts`)
 - [x] Desktop: the voting grid widens so a plate fits on a laptop screen too
 - [x] Production check of the deploy workflow (every merge to `main` deploys green); no workflow uses the old `FIREBASE_TOKEN` / `VITE_*` secrets any more
-- [ ] App Check (reCAPTCHA Enterprise) on Firestore/Storage: waiting on the owner's call
+- [x] App Check (reCAPTCHA Enterprise) in the web app, on when `RECAPTCHA_SITE_KEY` exists
+- [ ] Owner: create the key and enforce App Check on Cloud Firestore (SETUP.md §7)
 - [ ] Owner: delete the old secrets, then a dry-run event on real phones (Owner actions below)
 
 ## Phase 11 — Optional: pre-outline all cookies ✅ (measured, not shipped)
@@ -213,6 +214,7 @@ until real-device testing (useful from phase 3).
 - [ ] Delete the unused `FIREBASE_TOKEN` and `VITE_*` repository secrets (GitHub → Settings → Secrets and variables → Actions)
 - [x] Storage service agent may read Firestore (SETUP.md §4e), done 2026-10-14
 - [ ] Sentry secrets in Doppler, synced to GitHub (SETUP.md §6)
+- [ ] App Check: reCAPTCHA key, `RECAPTCHA_SITE_KEY` in Doppler, then enforce on Cloud Firestore (SETUP.md §7)
 - [ ] Dry run: create a small event, vote from two or three real phones, open results
 
 ---
@@ -692,6 +694,18 @@ until real-device testing (useful from phase 3).
   deploy builds. Form and replay load lazily from Sentry's CDN.
 - To read reports: Sentry connector, org `tytaniumdev`, project `cookie-voting`,
   query `issue.category:feedback`; a report links its replay.
+
+### Session — 2026-10-15 (bot protection)
+
+- Owner asked whether bots could flood the voting link. Today a script can mint
+  anonymous accounts and cast one ballot each; the only brake is Firebase Auth's default
+  sign-up limit of about 100 new accounts per IP per hour.
+- Added App Check with invisible reCAPTCHA Enterprise (`lib/firebase.ts`), on in
+  production and preview builds when the `RECAPTCHA_SITE_KEY` secret exists; never on
+  the emulators. Enforcement is the owner's console switch (SETUP.md §7), Firestore
+  only: photos load as plain download URLs that would fail under Storage enforcement.
+- Considered and not built: an admin tool to void a burst of suspicious ballots.
+  Revisit if bogus votes ever get through.
 
 ### Session — 2026-10-15 (link previews)
 
