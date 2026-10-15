@@ -313,6 +313,16 @@ builds. No user details or cookies are sent. With an auth token, the deploy buil
 uploads hidden source maps and deletes them, so they're never served. It costs
 about 10 KB gzipped on every page and fits Sentry's free plan.
 
+**After a deploy**, a tab opened earlier still asks for the old build's lazy chunks,
+which Hosting no longer has. Every route's `lazy` goes through `loadChunk`
+(`lib/staleChunk.ts`): on a chunk-load error it reloads the page once (a
+`sessionStorage` timestamp stops a loop) and keeps the router's loading state until
+then; Vite's `vite:preloadError` does the same. If the reload didn't help, or a page
+throws, the route `ErrorBoundary` (`pages/RouteErrorPage.tsx`) shows a friendly
+"Try again" card under the app bar and reports to Sentry. Hosting serves everything
+with `Cache-Control: no-cache` (revalidate via ETag) except the hashed `/assets/**`
+and fonts, which stay immutable, so a reload always gets the current `index.html`.
+
 ### Photo upload (admin, phone)
 
 **Bulk (owner decision, 2026-10-13):** the Categories step opens with **Upload

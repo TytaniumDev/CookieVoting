@@ -646,3 +646,19 @@ until real-device testing (useful from phase 3).
   `index.css` puts the hand back on every enabled `button` and `[role=button]`.
 - Story `CookieCarousel/ArrowIsCentred` checks the chevron's centre against the
   button's and the pointer cursor.
+
+### Session — 2026-10-15 (stale chunks after a deploy)
+
+- Bug: a voting tab opened before a deploy showed React Router's "Unexpected Application
+  Error! Failed to fetch dynamically imported module …AdminHomePage-….js" when the app
+  title was tapped, because that build's chunk was gone from Hosting.
+- Lazy routes now reload the page once on a chunk-load error (`lib/staleChunk.ts`);
+  other page errors get a friendly "Oh, crumbs!" card (`RouteErrorPage`) instead of the
+  developer screen. Hosting sends `no-cache` for everything but hashed assets.
+- The app title on voter pages (`/event/:id/…`) now goes back to that event instead of
+  the admin sign-in at `/`.
+- Unit tests now unmount between tests (`afterEach(cleanup)` in `src/test/setup.ts`);
+  before, renders piled up in one document.
+- Considered making missing `/assets/**` return a real 404 (`"source": "!/assets/**"`
+  on the SPA rewrite works in the emulator) but left it: if production Hosting read the
+  glob differently, every voter link would 404. The reload handles both cases.
