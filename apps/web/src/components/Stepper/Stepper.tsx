@@ -47,7 +47,7 @@ export function Stepper<Id extends string>({
     <nav
       ref={nav}
       aria-label={label}
-      className={`relative -mx-(--gutter) overflow-x-auto px-(--gutter) ${className}`}
+      className={`relative -mx-(--gutter) overflow-x-auto overflow-y-hidden px-(--gutter) ${className}`}
     >
       <ol className="-ms-1 flex w-max items-center sm:-ms-1.5">
         {steps.map((step, index) => {

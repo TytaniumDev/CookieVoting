@@ -716,3 +716,17 @@ until real-device testing (useful from phase 3).
   `apps/web/scripts/render-share-images.mjs`. Per-event cards deferred (see
   ARCHITECTURE.md → Design system). iMessage caches previews per link, so a link shared
   before this deploy may keep its old card on that phone.
+
+### Session — 2026-10-15 (results on phones)
+
+- Sentry feedback (COOKIE-VOTING-3, iPhone): the winner's tag was cut off by the slide
+  dots under the results. Owner agreed: removed the dots from `SlideShow`. The tab row
+  above (which scrolls, with the next tab peeking at the edge), swiping and the arrows
+  on wider screens still show there are more slides.
+- Also fixed on phones: the 3rd-place tag sat under the 1st-place ornament's cap and
+  crown. The tall ornament layout now hangs 1st below the side tags (`SIDE_TAG_HEIGHT`,
+  reserved in px like `TAG_HEIGHT`), shrinking the balls on short screens to fit.
+- Owner noticed the results slides could be panned freely on a phone, which fought
+  swipes and pull-to-refresh: the slide track scrolled up and down by the 12 px the
+  ornaments' swing overflowed. Every sideways scroller (`SlideShow`, `CookieCarousel`,
+  tab and chip rows) now sets `overflow-y-hidden`; rule added to CLAUDE.md.
