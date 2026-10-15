@@ -49,7 +49,7 @@ export function Stepper<Id extends string>({
       aria-label={label}
       className={`relative -mx-(--gutter) overflow-x-auto px-(--gutter) ${className}`}
     >
-      <ol className="flex w-max items-center">
+      <ol className="-ms-1 flex w-max items-center sm:-ms-1.5">
         {steps.map((step, index) => {
           const isSelected = step.id === selected
           const previous = steps[index - 1]

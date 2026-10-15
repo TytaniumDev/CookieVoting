@@ -29,7 +29,7 @@ export function EventCard({ name, status, createdAt, to, currentStep, children }
   return (
     <div className="rounded-card border border-border bg-surface shadow-card transition-shadow has-[a:hover]:shadow-raised">
       <Link to={to} className="block p-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-xl">{name}</h2>
           <Badge tone={tone}>{label}</Badge>
         </div>

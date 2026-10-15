@@ -111,6 +111,25 @@ fixtures/plates/   Real plate photos for detection work and E2E
   width; grids add columns. Rows of tabs or chips never wrap: one row that
   scrolls sideways, edge to edge, only when it doesn't fit (see `Stepper`:
   `-mx-(--gutter) px-(--gutter) overflow-x-auto`, `w-max`).
+- **Alignment checklist** (check screenshots at 375, ~1024 and ~1500 px before
+  shipping UI):
+  - Text of different sizes in one row shares a **baseline** (`items-baseline`), e.g.
+    a title and its badge, or "Cookie Voting" and the page title in the app bar
+    (`AppBarTitle`). Use `items-center` only when one side has no text (icons, photos).
+  - **Even insets.** A card or list row has the same inset on both sides, counting a
+    trailing ghost button's padding.
+  - **Controls in one row are one height** (grid/flex stretch, not `items-center` on
+    mismatched `min-h-*`).
+  - Deliberate space between widgets is intended, not a misalignment: a ghost
+    button's padding at a row's edge, a handle centred beside a field and its caption,
+    and the app bar keeping the admin-width column over voter pages. The owner reviewed
+    these and kept them.
+  - **Nothing hidden takes space:** modal dialogs render into `<body>` (see
+    `ConfirmDialog`); a closed `<dialog>` left as the last child of a `space-y-*` stack
+    still gets its sibling a margin.
+  - **Fixed-size labels on scaled art** (ornament tags) get room reserved in px, not as
+    a share of the scaled design.
+  - Button labels may wrap: they stay centred and balanced (`buttonClasses`).
 - **Pages are lazy routes** in `apps/web/src/app/routes.ts`. Keep heavy admin-only
   dependencies (e.g. the segmentation model) out of voter chunks.
 - **Firestore listeners** must be unsubscribed on unmount (PRD: infrequent use,

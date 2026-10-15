@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { garlandY, layoutOrnaments } from './layout.ts'
+import { garlandY, layoutOrnaments, TAG_HEIGHT } from './layout.ts'
 
 describe('garlandY', () => {
   it('follows the garland path through its end points', () => {
@@ -18,6 +18,17 @@ describe('layoutOrnaments', () => {
     expect(first!.ballTop).toBeGreaterThan(second!.ballTop + second!.size)
     expect(second!.x).toBeLessThan(first!.x)
     expect(third!.x).toBeGreaterThan(first!.x)
+  })
+
+  it('leaves room for the 1st-place tag under its ball, which does not scale', () => {
+    for (const [width, height] of [
+      [343, 416],
+      [343, 343],
+      [656, 372],
+    ] as const) {
+      const [first] = layoutOrnaments(width, height, 3).ornaments
+      expect(first!.ballTop + first!.size + TAG_HEIGHT).toBeLessThanOrEqual(height)
+    }
   })
 
   it('starts every string on the garland, above its ball', () => {

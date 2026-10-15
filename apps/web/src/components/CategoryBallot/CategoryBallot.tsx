@@ -63,7 +63,7 @@ export function CategoryBallot({
         onCurrentChange={setCurrent}
         className="min-h-0 flex-1"
       />
-      <div className="grid items-center gap-3 sm:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_18rem]">
         <MedalButtons
           current={shown + 1}
           holders={places.map(numberOf)}

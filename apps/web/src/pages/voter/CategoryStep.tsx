@@ -1,5 +1,5 @@
 import type { CategoryPlaces } from '@cookie-voting/shared'
-import { AppBarContent } from '../../app/AppBarSlot.tsx'
+import { AppBarTitle } from '../../app/AppBarSlot.tsx'
 import { Button } from '../../components/Button/Button.tsx'
 import { CategoryBallot } from '../../components/CategoryBallot/CategoryBallot.tsx'
 import type { VotableCategory } from './BallotFlow.tsx'
@@ -42,9 +42,7 @@ export function CategoryStep({
       className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
       aria-labelledby="category-heading"
     >
-      <AppBarContent>
-        <span className="truncate text-sm font-bold opacity-90 max-sm:hidden">{eventName}</span>
-      </AppBarContent>
+      <AppBarTitle>{eventName}</AppBarTitle>
       <div className="flex items-end gap-3">
         <div className="min-w-0">
           <p className="text-sm font-extrabold tracking-wider text-accent-subtle uppercase">
