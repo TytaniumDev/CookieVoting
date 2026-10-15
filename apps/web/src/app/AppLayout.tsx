@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, Outlet, useMatch } from 'react-router'
+import { FeedbackButton } from '../components/FeedbackButton/FeedbackButton.tsx'
 import { Snowfall } from '../components/Snowfall/Snowfall.tsx'
+import { monitoringEnabled } from '../lib/monitoring.ts'
 import { AppBarSlotProvider } from './AppBarSlot.tsx'
 import { ErrorProvider } from './ErrorProvider.tsx'
 
@@ -25,6 +27,12 @@ export function AppLayout() {
             <span className="max-sm:group-has-[[data-title]]:sr-only">Cookie Voting</span>
           </Link>
           <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
+          {/* Off in dev and tests, where nothing reaches Sentry. */}
+          {monitoringEnabled && (
+            <div className="ml-auto">
+              <FeedbackButton />
+            </div>
+          )}
         </div>
       </header>
       <main className={`relative flex-1 py-6 ${PAGE_WIDTH}`}>

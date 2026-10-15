@@ -662,3 +662,14 @@ until real-device testing (useful from phase 3).
 - Considered making missing `/assets/**` return a real 404 (`"source": "!/assets/**"`
   on the SPA rewrite works in the emulator) but left it: if production Hosting read the
   glob differently, every voter link would 404. The reload handles both cases.
+
+### Session — 2026-10-15 (feedback button)
+
+- Owner asked for a way to leave feedback or report a bug with screenshots. Picked
+  Sentry's feedback widget (already used for errors) with session replay for phones,
+  where Sentry offers no screenshots; no GitHub issue copying. See ARCHITECTURE.md →
+  Errors → Feedback.
+- 💬 _Feedback_ in the app bar (`FeedbackButton`, icon only under 640 px), only in
+  deploy builds. Form and replay load lazily from Sentry's CDN.
+- To read reports: Sentry connector, org `tytaniumdev`, project `cookie-voting`,
+  query `issue.category:feedback`; a report links its replay.
