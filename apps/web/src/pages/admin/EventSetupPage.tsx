@@ -32,7 +32,7 @@ export function EventSetupPage() {
   const [pinnedStep, setPinnedStep] = useState<SetupStep | null>(null)
 
   if (event.status === 'loading' || categories.status === 'loading' || setup.status === 'loading') {
-    return <Spinner size="lg" label="Loading the event" className="mx-auto mt-12" />
+    return <Spinner layout="screen" label="Loading the event" />
   }
   if (event.status === 'error' || categories.status === 'error' || setup.status === 'error') {
     return (

@@ -127,6 +127,11 @@
   --animate-bob: bob 2.2s ease-in-out infinite;
   --animate-fill: fill 0.7s cubic-bezier(0.3, 1, 0.4, 1) 0.15s both;
 
+  /* Loading spinner (Spinner): bites out of a cookie, crumbs, then it's whole again */
+  --animate-nom-bite: nom-bite 3.2s infinite both;
+  --animate-nom-crumb: nom-crumb 3.2s ease-in infinite both;
+  --animate-nom-squash: nom-squash 3.2s ease-in-out infinite;
+
   @keyframes snowfall {
     from {
       transform: translate3d(0, -10%, 0);
@@ -354,6 +359,55 @@
   @keyframes fill {
     from {
       width: 0;
+    }
+  }
+
+  @keyframes nom-bite {
+    0% {
+      scale: 0;
+      animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1);
+    }
+    8%,
+    72% {
+      scale: 1;
+      animation-timing-function: ease-in;
+    }
+    82%,
+    100% {
+      scale: 0;
+    }
+  }
+
+  @keyframes nom-crumb {
+    0% {
+      translate: 0 0;
+      opacity: 0;
+    }
+    3% {
+      opacity: 1;
+    }
+    25% {
+      translate: var(--crumb-dx, 2px) 14px;
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes nom-squash {
+    0%,
+    76% {
+      scale: 1;
+    }
+    84% {
+      scale: 0.9;
+    }
+    92% {
+      scale: 1.06;
+    }
+    100% {
+      scale: 1;
     }
   }
 }

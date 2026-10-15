@@ -37,7 +37,7 @@ export function VoterEventPage() {
   }
   if (event.status !== 'ready' || categories.status !== 'ready' || ballot.status !== 'ready') {
     // A ballot read can fail only if signing in failed; treat it as still loading.
-    return <Spinner size="lg" label="Loading the event" className="mx-auto mt-12" />
+    return <Spinner layout="screen" label="Loading the event" />
   }
   const current = event.data!
   // Each voter sees the cookies in their own order, so no cookie gains from going first.
