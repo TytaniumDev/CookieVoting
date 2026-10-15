@@ -326,6 +326,19 @@ builds. No user details or cookies are sent. With an auth token, the deploy buil
 uploads hidden source maps and deletes them, so they're never served. It costs
 about 10 KB gzipped on every page and fits Sentry's free plan.
 
+**Feedback** (owner decision, 2026-10-15): a 💬 _Feedback_ button in the app bar
+(`FeedbackButton`, shown only when Sentry is on) opens Sentry's feedback form, sent
+to the same project. No name or email fields (voters are anonymous). Laptops can add
+a screenshot and highlight or hide parts of it; Sentry turns screenshots off on
+phones and tablets, so instead every report carries a **session replay** of the last
+minute. Replay only buffers in memory and is sent when the form opens, never for
+errors (`beforeErrorSampling`), which keeps the free plan's 50 replays a month for
+feedback. Text and photos show in replays; typed input stays masked. The form, the
+screenshot editor and replay (~50 KB) download from Sentry's CDN after load, so the
+app bundle grows by only a few KB. Claude reads reports through the Sentry connector
+(`issue.category:feedback` in the `cookie-voting` project); they aren't copied to
+GitHub (owner: not worth the overhead).
+
 **After a deploy**, a tab opened earlier still asks for the old build's lazy chunks,
 which Hosting no longer has. Every route's `lazy` goes through `loadChunk`
 (`lib/staleChunk.ts`): on a chunk-load error it reloads the page once (a
