@@ -20,7 +20,25 @@ function scrollBehavior(): ScrollBehavior {
 }
 
 const arrowClasses =
-  'absolute top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface pb-0.5 font-display text-3xl leading-none font-bold text-primary shadow-raised disabled:invisible sm:size-13'
+  'absolute top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-primary shadow-raised transition hover:bg-primary-subtle hover:text-primary-hover active:scale-90 disabled:invisible sm:size-13'
+
+/** A chevron drawn on a square grid, so it sits in the middle of the round button. */
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-6 sm:size-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={direction === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'} />
+    </svg>
+  )
+}
 
 /**
  * One cookie at a time, as big as the space allows. On phones the photo follows a finger
@@ -131,7 +149,7 @@ export function CookieCarousel({
         onClick={() => onCurrentChange(current - 1)}
         className={`${arrowClasses} left-1 sm:left-(--gutter)`}
       >
-        <span aria-hidden="true">‹</span>
+        <Chevron direction="left" />
       </button>
       <button
         type="button"
@@ -140,7 +158,7 @@ export function CookieCarousel({
         onClick={() => onCurrentChange(current + 1)}
         className={`${arrowClasses} right-1 sm:right-(--gutter)`}
       >
-        <span aria-hidden="true">›</span>
+        <Chevron direction="right" />
       </button>
       {cookies.length > 1 && (
         <p

@@ -58,6 +58,24 @@ export const ArrowsStepThrough: Story = {
   },
 }
 
+/** The chevron sits in the middle of the round button, which shows the hand cursor. */
+export const ArrowIsCentred: Story = {
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Next cookie' })
+    const icon = button.querySelector('svg')
+    if (!icon) throw new Error('No chevron')
+    const outer = button.getBoundingClientRect()
+    const inner = icon.getBoundingClientRect()
+    await expect(
+      Math.abs(inner.left + inner.width / 2 - (outer.left + outer.width / 2)),
+    ).toBeLessThan(0.5)
+    await expect(
+      Math.abs(inner.top + inner.height / 2 - (outer.top + outer.height / 2)),
+    ).toBeLessThan(0.5)
+    await expect(getComputedStyle(button).cursor).toBe('pointer')
+  },
+}
+
 export const LastCookie: Story = {
   args: { current: 5 },
   play: async ({ canvas }) => {
