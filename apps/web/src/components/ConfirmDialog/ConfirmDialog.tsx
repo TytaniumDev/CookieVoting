@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '../Button/Button.tsx'
 
 export interface ConfirmDialogProps {
@@ -16,7 +17,8 @@ export interface ConfirmDialogProps {
 
 /**
  * A modal question built on the native `<dialog>`, so focus trapping, Escape and the
- * backdrop come from the browser.
+ * backdrop come from the browser. It renders into `<body>`: a closed dialog left inside a
+ * card or a `space-y-*` stack would still count as its last child and add a gap.
  */
 export function ConfirmDialog({
   open,
@@ -39,7 +41,7 @@ export function ConfirmDialog({
     if (!open && dialog.open) dialog.close()
   }, [open])
 
-  return (
+  return createPortal(
     <dialog
       ref={ref}
       aria-labelledby={titleId}
@@ -61,6 +63,7 @@ export function ConfirmDialog({
           {confirmLabel}
         </Button>
       </div>
-    </dialog>
+    </dialog>,
+    document.body,
   )
 }

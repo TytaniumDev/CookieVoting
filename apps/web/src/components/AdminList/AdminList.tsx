@@ -53,7 +53,7 @@ export function AdminList({
           {admins.map((admin) => (
             <li
               key={admin.email}
-              className="flex items-center justify-between gap-2 py-1 pr-1 pl-4"
+              className="flex items-center justify-between gap-2 py-1 pr-1 pl-5"
             >
               <span className="min-w-0 py-2">
                 <span className="block truncate font-bold">{admin.email}</span>
@@ -64,7 +64,7 @@ export function AdminList({
                 )}
               </span>
               {admin.email === currentEmail ? (
-                <Badge className="mr-3">You</Badge>
+                <Badge className="mr-4">You</Badge>
               ) : (
                 <Button
                   variant="ghost"

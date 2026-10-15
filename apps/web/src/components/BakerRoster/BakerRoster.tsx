@@ -62,7 +62,7 @@ export function BakerRoster({
         ) : (
           <ul className="divide-y divide-border rounded-card border border-border bg-surface">
             {roster.map((baker) => (
-              <li key={baker.id} className="flex items-center justify-between gap-2 py-1 pr-1 pl-4">
+              <li key={baker.id} className="flex items-center justify-between gap-2 py-1 pr-1 pl-5">
                 <span className="font-bold">{baker.name}</span>
                 <Button
                   variant="ghost"

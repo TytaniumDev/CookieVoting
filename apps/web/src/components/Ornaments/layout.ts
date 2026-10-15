@@ -53,6 +53,12 @@ const WIDE: Design = {
   ],
 }
 
+/**
+ * The gift tag under the 1st-place ball, in px: its margin, name and points. Tags keep
+ * their size while the balls scale, so this is kept free below the lowest ball.
+ */
+export const TAG_HEIGHT = 72
+
 export interface PlacedOrnament {
   /** Centre of the ball, from the left edge of the area. */
   x: number
@@ -75,7 +81,11 @@ export interface OrnamentLayout {
  */
 export function layoutOrnaments(width: number, height: number, count: number): OrnamentLayout {
   const design = width / Math.max(height, 1) >= 1.25 ? WIDE : TALL
-  const scale = Math.min(width / design.width, height / design.height, 1.5)
+  const lowest = design.spots[0].top + design.spots[0].size
+  const scale = Math.max(
+    Math.min(width / design.width, height / design.height, (height - TAG_HEIGHT) / lowest, 1.5),
+    0,
+  )
   const left = (width - design.width * scale) / 2
   const garlandHeight = GARLAND_HEIGHT * scale
   const ornaments = design.spots.slice(0, count).map((spot) => {
