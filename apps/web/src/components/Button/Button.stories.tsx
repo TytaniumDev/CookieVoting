@@ -52,3 +52,22 @@ export const KeyboardFocus: Story = {
     await expect(canvas.getByRole('button')).toHaveFocus()
   },
 }
+
+/** A ghost button at the start of a row: its text, not its padding, meets the edge. */
+export const FlushStart: Story = {
+  args: { variant: 'ghost', flush: 'start', children: 'Sign out' },
+  parameters: { layout: 'padded' },
+  decorators: [
+    (Story) => (
+      <div data-testid="row" className="flex gap-2">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    const row = canvas.getByTestId('row').getBoundingClientRect()
+    const range = document.createRange()
+    range.selectNodeContents(canvas.getByRole('button'))
+    await expect(Math.abs(range.getBoundingClientRect().left - row.left)).toBeLessThan(1)
+  },
+}

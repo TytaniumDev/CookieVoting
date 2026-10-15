@@ -6,7 +6,7 @@ import {
 } from '@cookie-voting/shared'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
-import { AppBarContent } from '../../app/AppBarSlot.tsx'
+import { AppBarTitle } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import { Spinner } from '../../components/Spinner/Spinner.tsx'
 import { Stepper } from '../../components/Stepper/Stepper.tsx'
@@ -63,14 +63,7 @@ export function EventSetupPage() {
   return (
     <section className="space-y-4">
       {/* The event's name sits in the red bar, where the cookie leads back to all events. */}
-      <AppBarContent>
-        <span aria-hidden="true" className="opacity-60">
-          ›
-        </span>
-        <h1 data-title className="truncate font-sans text-lg font-bold" title={event.data.name}>
-          {event.data.name}
-        </h1>
-      </AppBarContent>
+      <AppBarTitle pageHeading>{event.data.name}</AppBarTitle>
       <Stepper
         steps={SETUP_STEPS.map((id) => ({
           id,

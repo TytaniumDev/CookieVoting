@@ -10,8 +10,19 @@ const variantClasses: Record<ButtonVariant, string> = {
 
 // Both sizes meet the 44px minimum touch target for phone users.
 const sizeClasses: Record<ButtonSize, string> = {
-  md: 'min-h-11 px-4 text-base',
-  lg: 'min-h-14 px-6 text-lg',
+  md: 'min-h-11 px-4 py-2 text-base',
+  lg: 'min-h-14 px-6 py-2 text-lg',
+}
+
+/**
+ * A ghost button has no background at rest, so its padding reads as a stray indent at
+ * the edge of a row. `flush` pulls it out by its padding so its text lines up with the
+ * content edge beside it; the hover background and touch target keep their size.
+ */
+export type ButtonFlush = 'start' | 'end'
+const flushClasses: Record<ButtonSize, Record<ButtonFlush, string>> = {
+  md: { start: '-ms-4', end: '-me-4' },
+  lg: { start: '-ms-6', end: '-me-6' },
 }
 
 /** Button styles for other elements, e.g. a router `Link` that should look like a button. */
@@ -19,6 +30,12 @@ export function buttonClasses({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
-}: { variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean } = {}): string {
-  return `inline-flex items-center justify-center gap-2 rounded-control font-display font-semibold transition-colors active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''}`
+  flush,
+}: {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  fullWidth?: boolean
+  flush?: ButtonFlush
+} = {}): string {
+  return `inline-flex items-center justify-center gap-2 rounded-control text-center leading-tight text-balance font-display font-semibold transition-colors active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${flush ? flushClasses[size][flush] : ''}`
 }

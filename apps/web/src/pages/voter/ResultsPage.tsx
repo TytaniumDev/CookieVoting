@@ -6,7 +6,7 @@ import {
 } from '@cookie-voting/shared'
 import { useCallback, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
-import { AppBarContent } from '../../app/AppBarSlot.tsx'
+import { AppBarTitle } from '../../app/AppBarSlot.tsx'
 import { Alert } from '../../components/Alert/Alert.tsx'
 import {
   BakerBreakdown,
@@ -333,9 +333,7 @@ export function ResultsPage() {
       aria-labelledby="results-heading"
       className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
     >
-      <AppBarContent>
-        <span className="truncate text-sm font-bold opacity-90 max-sm:hidden">{current.name}</span>
-      </AppBarContent>
+      <AppBarTitle>{current.name}</AppBarTitle>
       <h1
         id="results-heading"
         className="text-center font-sans text-sm font-extrabold tracking-wider text-accent-subtle uppercase"

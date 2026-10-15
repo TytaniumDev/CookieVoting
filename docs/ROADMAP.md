@@ -646,3 +646,22 @@ until real-device testing (useful from phase 3).
   `index.css` puts the hand back on every enabled `button` and `[role=button]`.
 - Story `CookieCarousel/ArrowIsCentred` checks the chevron's centre against the
   button's and the pointer cursor.
+
+### Session — 2026-10-15 (alignment audit)
+
+- Owner spotted the voting page's event name sitting off the "Cookie Voting" baseline
+  and asked for an audit. Screenshotted every page at 375, 1024 and 1500 px and fixed:
+  - App bar: items share a baseline; one `AppBarTitle` (› + name, one style) replaces
+    three hand-styled titles; on voter pages the bar's column narrows to the readable
+    column so the logo lines up with the content.
+  - `Button`: `flush` prop pulls a ghost button out by its padding at a row edge (admin
+    dashboard "Sign out" on phones); labels that wrap stay centred and balanced.
+  - Ballot: the Next button is as tall as the medal buttons; Back meets the right edge.
+  - `EventCard` badge on the title's baseline; `Stepper`'s first circle on the column
+    edge; baker/admin list rows have even insets; category cards centre the handle and
+    delete on the name field, with the cookie count under the name's text.
+  - `ConfirmDialog` renders into `<body>`: a closed dialog at the end of a `space-y`
+    card gave the Results and Voting steps a doubled bottom gap.
+  - Results ornaments keep 72 px for the 1st-place tag, which overlapped the slide
+    dots on short phones.
+- Added an alignment checklist to CLAUDE.md → Conventions.

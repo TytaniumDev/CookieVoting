@@ -118,7 +118,7 @@ function NameField({
         className={`min-h-11 w-full min-w-0 rounded-control border-2 bg-surface px-2 text-lg font-bold text-ink ${duplicate ? 'border-danger' : 'border-border hover:border-border-strong'}`}
       />
       {duplicate && (
-        <p id={errorId} className="text-sm font-bold text-danger">
+        <p id={errorId} className="col-start-2 px-2.5 text-sm font-bold text-danger">
           Another category has that name.
         </p>
       )}
@@ -180,40 +180,42 @@ function CategoryRow({
           📷
         </div>
       )}
-      <div className="flex items-center gap-2">
+      {/* Handle, name and delete share the first row, centred on the name; notes go under the name. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1">
         <button
           ref={setActivatorNodeRef}
           type="button"
           aria-label={`Reorder ${category.name}`}
-          className="grid min-h-11 min-w-11 shrink-0 cursor-grab touch-none place-items-center rounded-control text-xl text-ink-muted hover:bg-surface-muted"
+          className="row-start-1 grid min-h-11 min-w-11 shrink-0 cursor-grab touch-none place-items-center rounded-control text-xl text-ink-muted hover:bg-surface-muted"
           {...attributes}
           {...listeners}
         >
           <span aria-hidden="true">⠿</span>
         </button>
-        <div className="min-w-0 flex-1 space-y-1">
-          <NameField
-            name={category.name}
-            otherNames={otherNames}
-            suggestionsId={suggestionsId}
-            onSave={(name) => onRename(category.id, name)}
-          />
+        <NameField
+          name={category.name}
+          otherNames={otherNames}
+          suggestionsId={suggestionsId}
+          onSave={(name) => onRename(category.id, name)}
+        />
+        <button
+          type="button"
+          aria-label={`Delete ${category.name}`}
+          onClick={() => onDelete(category.id)}
+          className="col-start-3 row-start-1 grid min-h-11 min-w-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-danger-subtle hover:text-danger"
+        >
+          <TrashIcon />
+        </button>
+        <div className="col-start-2">
           {category.photo ? (
-            <p className="px-2 text-sm text-ink-muted">
+            // Lines up with the name's text inside its box (border + padding).
+            <p className="px-2.5 text-sm text-ink-muted">
               {category.cookieCount === 1 ? '1 cookie' : `${category.cookieCount} cookies`}
             </p>
           ) : (
             <Badge tone="warning">Needs a photo</Badge>
           )}
         </div>
-        <button
-          type="button"
-          aria-label={`Delete ${category.name}`}
-          onClick={() => onDelete(category.id)}
-          className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-danger-subtle hover:text-danger"
-        >
-          <TrashIcon />
-        </button>
       </div>
     </li>
   )
