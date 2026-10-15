@@ -49,4 +49,12 @@ describe('routes', () => {
     renderAt('/nope')
     expect(await screen.findByRole('heading', { name: /crumbs/i })).toBeInTheDocument()
   })
+
+  it('takes voters back to their event from the app title', async () => {
+    renderAt('/event/abc123/results')
+    expect(await screen.findByRole('link', { name: /cookie voting/i })).toHaveAttribute(
+      'href',
+      '/event/abc123',
+    )
+  })
 })
