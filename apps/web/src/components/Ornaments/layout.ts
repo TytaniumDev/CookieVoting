@@ -29,6 +29,8 @@ interface Design {
   height: number
   /** In place order: 1st, 2nd, 3rd. 1st hangs lowest and biggest, in the middle. */
   spots: readonly [Spot, Spot, Spot]
+  /** 1st hangs below the others' tags, which would otherwise sit over its ball. */
+  stacked: boolean
 }
 
 /** Phones and other tall spaces. */
@@ -40,6 +42,7 @@ const TALL: Design = {
     { x: 0.2, top: 58, size: 116 },
     { x: 0.8, top: 78, size: 112 },
   ],
+  stacked: true,
 }
 
 /** Laptops: short and wide. */
@@ -51,6 +54,7 @@ const WIDE: Design = {
     { x: 0.18, top: 60, size: 150 },
     { x: 0.82, top: 70, size: 145 },
   ],
+  stacked: false,
 }
 
 /**
@@ -58,6 +62,9 @@ const WIDE: Design = {
  * their size while the balls scale, so this is kept free below the lowest ball.
  */
 export const TAG_HEIGHT = 72
+
+/** The gift tag under a 2nd- or 3rd-place ball, in px: its margin, name and points. */
+export const SIDE_TAG_HEIGHT = 68
 
 export interface PlacedOrnament {
   /** Centre of the ball, from the left edge of the area. */
@@ -81,19 +88,32 @@ export interface OrnamentLayout {
  */
 export function layoutOrnaments(width: number, height: number, count: number): OrnamentLayout {
   const design = width / Math.max(height, 1) >= 1.25 ? WIDE : TALL
-  const lowest = design.spots[0].top + design.spots[0].size
+  const [first, ...sides] = design.spots
+  const lowest = first.top + first.size
+  // Bottom of the lower side ball, in design px: its tag hangs below it at a fixed size.
+  const sideBottom = design.stacked ? Math.max(...sides.map((s) => s.top + s.size)) : 0
   const scale = Math.max(
-    Math.min(width / design.width, height / design.height, (height - TAG_HEIGHT) / lowest, 1.5),
+    Math.min(
+      width / design.width,
+      height / design.height,
+      (height - TAG_HEIGHT) / lowest,
+      design.stacked ? (height - TAG_HEIGHT - SIDE_TAG_HEIGHT) / (sideBottom + first.size) : 1.5,
+      1.5,
+    ),
     0,
   )
   const left = (width - design.width * scale) / 2
   const garlandHeight = GARLAND_HEIGHT * scale
-  const ornaments = design.spots.slice(0, count).map((spot) => {
+  const ornaments = design.spots.slice(0, count).map((spot, index) => {
     const x = left + spot.x * design.width * scale
+    const top = spot.top * scale
     return {
       x,
       hookY: garlandY((x / Math.max(width, 1)) * 400) * scale,
-      ballTop: spot.top * scale,
+      ballTop:
+        index === 0 && design.stacked && count > 1
+          ? Math.max(top, sideBottom * scale + SIDE_TAG_HEIGHT)
+          : top,
       size: spot.size * scale,
     }
   })

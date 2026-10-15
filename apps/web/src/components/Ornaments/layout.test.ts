@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { garlandY, layoutOrnaments, TAG_HEIGHT } from './layout.ts'
+import { garlandY, layoutOrnaments, SIDE_TAG_HEIGHT, TAG_HEIGHT } from './layout.ts'
 
 describe('garlandY', () => {
   it('follows the garland path through its end points', () => {
@@ -28,6 +28,20 @@ describe('layoutOrnaments', () => {
     ] as const) {
       const [first] = layoutOrnaments(width, height, 3).ornaments
       expect(first!.ballTop + first!.size + TAG_HEIGHT).toBeLessThanOrEqual(height)
+    }
+  })
+
+  it('hangs 1st below the side tags on a phone, so they never cover its ball', () => {
+    for (const [width, height] of [
+      [343, 480],
+      [343, 416],
+      [358, 400],
+    ] as const) {
+      const [first, second, third] = layoutOrnaments(width, height, 3).ornaments
+      for (const side of [second!, third!]) {
+        expect(first!.ballTop).toBeGreaterThanOrEqual(side.ballTop + side.size + SIDE_TAG_HEIGHT)
+      }
+      expect(first!.ballTop + first!.size + TAG_HEIGHT).toBeLessThanOrEqual(height + 0.001)
     }
   })
 

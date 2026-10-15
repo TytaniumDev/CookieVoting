@@ -46,7 +46,7 @@ export function CookieStrip({
   return (
     <div
       ref={row}
-      className={`relative -mx-(--gutter) overflow-x-auto px-(--gutter) pt-3 pb-1 [scrollbar-width:none] ${className}`}
+      className={`relative -mx-(--gutter) overflow-x-auto overflow-y-hidden px-(--gutter) pt-3 pb-1 [scrollbar-width:none] ${className}`}
     >
       <ul className="mx-auto flex w-max gap-2 sm:gap-3">
         {cookies.map((cookie, index) => {
