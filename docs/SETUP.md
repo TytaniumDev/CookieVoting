@@ -190,3 +190,28 @@ and syncs them to the repo.
 _GitHub_ → sync that config to `TytaniumDev/CookieVoting` (Actions secrets).
 The next deploy picks them up. Production errors are tagged `production`,
 PR previews `preview`, and each with the deployed commit as the release.
+
+## 7. Bot protection with App Check
+
+Without this, a script can create anonymous accounts and cast a ballot from each.
+App Check makes every request prove it comes from the real page in a real browser
+(invisible reCAPTCHA Enterprise; voters see nothing). Free up to 10K checks a month,
+and each voter costs about one per hour on the site. It's off until the key exists.
+
+1. **Create the key.** [Google Cloud console](https://console.cloud.google.com/security/recaptcha?project=cookie-voting)
+   → _Security_ → _reCAPTCHA_ → _Create key_. Type _Website_; domains
+   `cookie-voting.web.app`, `cookie-voting.firebaseapp.com` and `web.app` (the last
+   one lets PR preview links, `cookie-voting--pr…web.app`, pass too). Leave the
+   checkbox challenge off. Copy the key ID.
+2. **Register it.** Firebase console → _App Check_ → _Apps_ → the web app →
+   _reCAPTCHA Enterprise_ → paste the key ID → _Save_.
+3. **Ship it.** Add `RECAPTCHA_SITE_KEY` (the same key ID) to the `cookie-voting`
+   Doppler config next to the Sentry secrets, so it syncs to GitHub. The next deploy
+   turns App Check on in the web app.
+4. **Enforce it.** After that deploy, open the site and vote on a test event. Then
+   _App Check_ → _APIs_ → _Cloud Firestore_ should show nearly all requests as
+   _Verified_; click _Enforce_. From then on, requests without a valid token are
+   refused. Don't enforce _Cloud Storage_: photos load as plain image links, which
+   carry no token.
+
+To undo, click _Unenforce_ on the same page; nothing else changes.
