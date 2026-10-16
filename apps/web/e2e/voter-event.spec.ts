@@ -15,7 +15,16 @@ async function giveMedal(page: Page, cookie: number, place: string) {
 test('a voter ranks every category and submits once', async ({ page }) => {
   await page.goto('/event/bake-off-2025')
   await expect(page.getByRole('heading', { name: 'Christmas Cookie Bake-Off 2025' })).toBeVisible()
+  // Safari 26 tints its toolbars from the page background: cream here, cranberry on the ballot.
+  const cream = 'rgb(251, 246, 238)'
+  const cranberry = 'rgb(159, 29, 43)'
+  for (const root of ['html', 'body']) {
+    await expect(page.locator(root)).toHaveCSS('background-color', cream)
+  }
   await page.getByRole('button', { name: 'Start voting' }).click()
+  for (const root of ['html', 'body']) {
+    await expect(page.locator(root)).toHaveCSS('background-color', cranberry)
+  }
 
   const categories = ['Gingerbread People', 'Stars', 'Candy Canes', 'Stockings', 'Trees', 'Cats']
   for (const [i, name] of categories.entries()) {

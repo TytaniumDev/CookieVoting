@@ -747,3 +747,16 @@ until real-device testing (useful from phase 3).
   swipes and pull-to-refresh: the slide track scrolled up and down by the 12 px the
   ornaments' swing overflowed. Every sideways scroller (`SlideShow`, `CookieCarousel`,
   tab and chip rows) now sets `overflow-y-hidden`; rule added to CLAUDE.md.
+
+### Session — 2026-10-16 (browser toolbars match the page)
+
+- Owner's iPhone screenshot showed cream Safari bars around the cranberry ballot. Safari 26
+  ignores theme-color and tints from the html/body background, which was always cream.
+  html/body now turn cranberry on `data-festive` pages; theme-color stays for Android
+  Chrome and older Safari. Added safe-area insets and `color-scheme: light`. Details in
+  ARCHITECTURE.md → Design system → Browser toolbars.
+- `Confetti` now unmounts after it falls (Safari samples empty fixed layers).
+- Fixed a pre-existing flake in `voter-a11y.spec.ts`: axe sometimes checked the swipe hint
+  mid-fade; the test now waits for its animation to finish.
+- Can't be verified in CI: check on a real iPhone (Safari 26) after deploy, with a fresh
+  load. Open: other app-like features (manifest, Web Share, wake lock…) offered to owner.
