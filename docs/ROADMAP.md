@@ -747,3 +747,14 @@ until real-device testing (useful from phase 3).
   swipes and pull-to-refresh: the slide track scrolled up and down by the 12 px the
   ornaments' swing overflowed. Every sideways scroller (`SlideShow`, `CookieCarousel`,
   tab and chip rows) now sets `overflow-y-hidden`; rule added to CLAUDE.md.
+
+### Session — 2026-10-16 (Sentry feedback round 2)
+
+- COOKIE-VOTING-4 (iPhone): after "Submit my votes" the waiting room kept the review
+  screen's scroll position, so the thanks started off screen and it looked like nothing
+  happened. The app has no `ScrollRestoration`, and submitting swaps the page in place;
+  `WaitingRoom` now scrolls to the top when it appears. E2E asserts it (failed before).
+- COOKIE-VOTING-2 (results stuck loading) was already fixed by the stuck-submitting work
+  above; marked resolved in Sentry.
+- COOKIE-VOTING-5 asks for pull-down-to-close on the results pop-ups: a design change,
+  put to the owner.

@@ -43,9 +43,13 @@ test('a voter ranks every category and submits once', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Review my votes' }).click()
 
+  // Sent from the bottom of the review, the waiting room still opens at the top.
+  await page.evaluate('window.scrollTo({ top: document.body.scrollHeight })')
+  await expect.poll(() => page.evaluate('window.scrollY')).toBeGreaterThan(0)
   await page.getByRole('button', { name: 'Submit my votes' }).click()
   // The waiting room: one of three scenes at random, then the voter's picks.
   await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
+  await expect.poll(() => page.evaluate('window.scrollY')).toBe(0)
   await expect(page.getByRole('img', { name: '1st place' })).toHaveCount(categories.length)
 
   // Same device later: still voted, no second ballot.
