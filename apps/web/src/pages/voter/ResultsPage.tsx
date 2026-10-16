@@ -17,6 +17,7 @@ import { buttonClasses } from '../../components/Button/buttonClasses.ts'
 import { Card } from '../../components/Card/Card.tsx'
 import { CategoryResults } from '../../components/CategoryResults/CategoryResults.tsx'
 import { CookieThumb } from '../../components/CookieThumb/CookieThumb.tsx'
+import { FeedbackButton } from '../../components/FeedbackButton/FeedbackButton.tsx'
 import type { OrnamentItem } from '../../components/Ornaments/Ornaments.tsx'
 import type { RevealMode } from '../../components/Ornaments/useReveal.ts'
 import { SlideShow, type Slide } from '../../components/SlideShow/SlideShow.tsx'
@@ -29,6 +30,7 @@ import {
 } from '../../components/VoteBreakdown/VoteBreakdown.tsx'
 import { useVoter } from '../../lib/auth.ts'
 import { useBallot, useCategories, useEvent, useResults } from '../../lib/data.ts'
+import { monitoringEnabled } from '../../lib/monitoring.ts'
 import { useWakeLock } from '../../lib/wakeLock.ts'
 import { RevealSlide } from './RevealSlide.tsx'
 
@@ -335,19 +337,31 @@ export function ResultsPage() {
   }
 
   return (
-    // `data-festive` turns the page cranberry, with snow (AppLayout).
+    // `data-festive` turns the page cranberry, with snow; `data-no-app-bar` drops the app
+    // bar on phones (owner decision 2026-10-16), where the slides need the room and this
+    // page's own row carries the vote count and the feedback button (AppLayout).
     <section
       data-festive
+      data-no-app-bar
       aria-labelledby="results-heading"
-      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
+      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary max-sm:h-[max(34rem,calc(100dvh-2.25rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] [&_:focus-visible]:outline-focus-inverse"
     >
       <AppBarTitle>{current.name}</AppBarTitle>
-      <h1
-        id="results-heading"
-        className="text-center font-sans text-sm font-extrabold tracking-wider text-accent-subtle uppercase"
-      >
-        The results are in · {ballotCount} {ballotCount === 1 ? 'vote' : 'votes'}
-      </h1>
+      <div className="flex min-h-11 items-center justify-between gap-2 sm:min-h-0 sm:justify-center">
+        <h1
+          id="results-heading"
+          className="font-sans text-sm font-extrabold tracking-wider text-accent-subtle uppercase sm:text-center"
+        >
+          <span className="max-sm:hidden">The results are in · </span>
+          {ballotCount} {ballotCount === 1 ? 'vote' : 'votes'}
+        </h1>
+        {/* The app bar's button, which phones don't show on this page. Off in dev and tests. */}
+        {monitoringEnabled && (
+          <div className="-mr-2 sm:hidden">
+            <FeedbackButton />
+          </div>
+        )}
+      </div>
       {ballot.status === 'ready' && ballot.data === null && (
         <Link
           to={`/event/${eventId}`}

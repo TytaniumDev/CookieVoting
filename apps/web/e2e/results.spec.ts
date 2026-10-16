@@ -31,7 +31,9 @@ test('a new vote shows up in the results with Borda points', async ({ page }) =>
   // One project is enough, and running both at once would mix their votes into the totals.
   test.skip(test.info().project.name !== 'mobile', 'Changes shared seed data')
   await page.goto('/event/bake-off-2024/results')
-  await expect(page.getByRole('heading', { name: /The results are in/ })).toBeVisible()
+  // Phones drop the app bar here: the page's own row has the vote count.
+  await expect(page.getByRole('heading', { name: /^\d+ votes$/ })).toBeVisible()
+  await expect(page.getByRole('banner')).toBeHidden()
   await openAllResults(page)
   await expect(page.getByRole('heading', { name: 'Bakers', exact: true })).toBeVisible()
   await expect(cookieRows(page, 'Gingerbread')).toHaveCount(6)
