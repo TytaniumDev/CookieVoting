@@ -39,7 +39,7 @@ export function CategoryStep({
     // `data-festive` turns the page cranberry, with snow (AppLayout).
     <section
       data-festive
-      className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
+      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
       aria-labelledby="category-heading"
     >
       <AppBarTitle>{eventName}</AppBarTitle>

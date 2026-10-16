@@ -36,6 +36,11 @@
     @apply bg-background;
   }
 
+  /* Scrolling to a focused field or an anchor stops below the pinned app bar. */
+  html {
+    scroll-padding-top: var(--app-bar-height, 0px);
+  }
+
   html:has([data-festive]),
   html:has([data-festive]) body {
     @apply bg-primary;
@@ -61,5 +66,22 @@
 
   :focus-visible {
     @apply outline-3 outline-offset-2 outline-focus;
+  }
+}
+
+/*
+ * Page changes (next category, to the results) crossfade where view transitions are
+ * supported; the app bar is its own group, so it stays put. Off under reduced motion.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
