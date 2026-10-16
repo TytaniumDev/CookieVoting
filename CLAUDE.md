@@ -66,6 +66,23 @@ env -u HTTPS_PROXY -u https_proxy -u GLOBAL_AGENT_HTTPS_PROXY -u npm_config_http
 When a new tool needs installing for every session (e.g. emulator downloads),
 add it to the hook and keep the hook idempotent. CI installs its own Chromium.
 
+## Pull requests and merging
+
+The owner doesn't review or merge PRs; threads do. `main` is protected: the five CI checks
+(lint/types/unit/build, story tests, E2E mobile and desktop, emulators) must pass, admins
+included, but the branch doesn't have to be up to date with `main`.
+
+- **Turn on squash auto-merge as soon as the PR is open** (GitHub MCP
+  `enable_pr_auto_merge`, `mergeMethod: SQUASH`). It merges when CI goes green even if the
+  session is idle. If GitHub says the PR is already clean, squash-merge it directly. Leave
+  it off only while a question for the owner is open on the PR.
+- **Merge conflicts stop CI from running at all**, so no green or red event ever arrives.
+  When another PR merges first, merge `main` into the branch (no rebase or force-push), run
+  `npm run check`, push; auto-merge stays on.
+- Never make a check optional or skip a test to get green (owner decision).
+- A scheduled sweep every two hours fixes conflicts and red CI on quiet `claude/*` PRs and
+  turns auto-merge on where it's missing. It's a safety net, not the plan.
+
 ## Firebase projects
 
 - **Production: `cookie-voting`**, an existing project reused from the previous

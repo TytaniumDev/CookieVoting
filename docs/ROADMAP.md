@@ -783,3 +783,11 @@ until real-device testing (useful from phase 3).
   the swap async); they now wait for the new screen's heading.
 - Check on real phones after deploy: Add to Home Screen on iPhone and Android, the reveal
   keeping the screen on, and Safari 26's top bar on cream pages with the pinned bar.
+
+### Session — 2026-10-16 (reliable auto-merge)
+
+- PR #76 stalled: #77 merged a minute after its last push and left it conflicted, and
+  GitHub runs no CI on a conflicted PR, so the waiting thread never woke.
+- Repo now allows auto-merge, and `main` requires the five CI checks (not strict, admins
+  enforced). Threads turn on squash auto-merge when they open a PR; see CLAUDE.md →
+  Pull requests and merging. A two-hourly sweep fixes quiet PRs left conflicted or red.
