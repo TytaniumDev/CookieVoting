@@ -84,6 +84,12 @@ export function WaitingRoom({
   const [slow, restartWait] = useTakingLong(saving)
   const [reconnecting, setReconnecting] = useState(false)
 
+  // Arriving from the ballot's review screen keeps its scroll position, so the thanks
+  // would start off screen and sending would look like it did nothing (COOKIE-VOTING-4).
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
+
   useEffect(() => {
     if (slow) reportSlow('save-category')
   }, [slow])
