@@ -76,7 +76,7 @@ export const OpenAndClose: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: "See Ann's cookies" }))
     await expect(screen.getByRole('dialog', { name: "Ann's cookies" })).toBeVisible()
-    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.getByRole('dialog', { hidden: true })).not.toBeVisible())
   },
 }

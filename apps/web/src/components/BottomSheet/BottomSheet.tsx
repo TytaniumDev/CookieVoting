@@ -60,7 +60,11 @@ export function BottomSheet({ open, onClose, labelledBy, header, children }: Bot
             {header}
           </div>
           {children && (
-            <div className="grid min-h-0 gap-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5">
+            // Focusable so keyboards can scroll it when nothing inside takes focus.
+            <div
+              tabIndex={0}
+              className="grid min-h-0 gap-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5"
+            >
               {children}
             </div>
           )}
