@@ -137,6 +137,51 @@ test('tapping a baker lists their cookies, and each cookie shows its votes', asy
   await expect(baker).toBeHidden()
 })
 
+test('on a phone the baker pop-up is a bottom sheet that drags down to close', async ({ page }) => {
+  test.skip(test.info().project.name !== 'mobile', 'Touch drag is for phones')
+  await page.goto('/event/bake-off-2024/results')
+  const all = await openAllResults(page)
+  await all
+    .getByRole('region', { name: 'Bakers', exact: true })
+    .getByRole('button', { name: /See their cookies/ })
+    .first()
+    .click()
+  const baker = page.getByRole('dialog').filter({ hasText: /of \d+ bakers/ })
+  await expect(baker).toBeVisible()
+  // Sits on the bottom edge once it has slid up.
+  const height = page.viewportSize()!.height
+  await expect
+    .poll(async () =>
+      Math.round((await baker.boundingBox())!.y + (await baker.boundingBox())!.height),
+    )
+    .toBe(height)
+
+  // Drags from the baker's name, via touch events (Chromium's CDP).
+  const cdp = await page.context().newCDPSession(page)
+  const name = (await baker.getByRole('heading', { level: 2 }).boundingBox())!
+  const drag = async (distance: number) => {
+    const x = name.x + 10
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x, y: name.y }],
+    })
+    for (let i = 1; i <= 10; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x, y: name.y + (distance * i) / 10 }],
+      })
+      await page.waitForTimeout(30)
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  }
+  // A short pull springs back; a long one closes it.
+  await drag(60)
+  await page.waitForTimeout(400)
+  await expect(baker).toBeVisible()
+  await drag(240)
+  await expect(baker).toBeHidden()
+})
+
 test('results say when they are not out yet', async ({ page }) => {
   await page.goto('/event/bake-off-2025/results')
   await expect(page.getByRole('heading', { name: "The results aren't out yet" })).toBeVisible()

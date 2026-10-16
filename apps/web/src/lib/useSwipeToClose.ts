@@ -4,17 +4,23 @@ import { useEffect, useRef, type RefObject } from 'react'
 const CLOSE_DISTANCE = 110
 const CLOSE_SPEED = 0.6
 
+/** Whether the touch landed in something inside `dialog` that's scrolled away from its top. */
+function scrolledDown(target: EventTarget | null, dialog: HTMLElement): boolean {
+  for (let el = target instanceof Element ? target : null; el; el = el.parentElement) {
+    if (el.scrollTop > 0) return true
+    if (el === dialog) break
+  }
+  return false
+}
+
 /**
- * MOCKUP (COOKIE-VOTING-5): drag a modal `<dialog>` down to close it, like an iOS sheet.
- * A drag starts only from the top of the dialog's scroll, so scrolling a long pop-up
- * still works; the dialog follows the finger, and letting go past the threshold slides it away and calls `onClose`. Touch only: mice keep the ✕ and
- * the backdrop.
+ * Drag a modal `<dialog>` down to close it, like an iOS sheet (see `BottomSheet`). A drag
+ * starts only where nothing under the finger is scrolled down, so scrolling a long list
+ * still works. The dialog follows the finger and springs back, or slides away and calls
+ * `onClose` when let go far enough down or flicked. Touch only: mice keep the ✕ and the
+ * backdrop.
  */
-export function useSwipeToClose(
-  ref: RefObject<HTMLDialogElement | null>,
-  onClose: () => void,
-  enabled: boolean,
-) {
+export function useSwipeToClose(ref: RefObject<HTMLDialogElement | null>, onClose: () => void) {
   // Callers pass a fresh function each render; don't restart a drag for it.
   const close = useRef(onClose)
   useEffect(() => {
@@ -23,7 +29,7 @@ export function useSwipeToClose(
 
   useEffect(() => {
     const dialog = ref.current
-    if (!dialog || !enabled) return
+    if (!dialog) return
     let startY = 0
     let startT = 0
     let lastY = 0
@@ -41,7 +47,7 @@ export function useSwipeToClose(
       if (!touch || e.touches.length > 1) return
       startY = lastY = touch.clientY
       startT = lastT = e.timeStamp
-      fromTop = dialog.scrollTop <= 0
+      fromTop = !scrolledDown(e.target, dialog)
       dragging = false
     }
     const onMove = (e: TouchEvent) => {
@@ -89,5 +95,5 @@ export function useSwipeToClose(
       dialog.removeEventListener('touchcancel', onEnd)
       move(0, false)
     }
-  }, [ref, enabled])
+  }, [ref])
 }

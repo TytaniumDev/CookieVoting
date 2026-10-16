@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -7,11 +6,11 @@ import {
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
+  type RefObject,
 } from 'react'
+import { BottomSheet } from '../BottomSheet/BottomSheet.tsx'
 import { ordinal } from '../RankBadge/ordinals.ts'
 import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
-import { popupClasses, popupStyle } from '../../lib/popupStyle.ts'
-import { useSwipeToClose } from '../../lib/useSwipeToClose.ts'
 
 export interface BakerBreakdownCookie {
   /** Unique within the baker, e.g. the cookie id. */
@@ -76,103 +75,105 @@ const SPRING = 'ease-[cubic-bezier(0.3,1.6,0.45,1)]'
  * Every cookie one baker entered, best first, with where it placed and its points
  * (owner decision 2026-10-14). A bar shows how the cookies make up the baker's total:
  * hovering or tapping a piece lights up its cookie's row, with a bubble naming it, and
- * hovering a row lights up its piece. Tapping a row shows that cookie's votes. A modal
- * on the native `<dialog>`, like `VoteBreakdown`, which can open on top of it.
+ * hovering a row lights up its piece. Tapping a row shows that cookie's votes. A
+ * `BottomSheet`, like `VoteBreakdown`, which can open on top of it; the baker and the bar
+ * stay pinned while only the cookie list scrolls (owner decision 2026-10-16).
  */
 export function BakerBreakdown({ baker, onClose }: BakerBreakdownProps) {
-  const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  const open = baker !== null
-  const [style] = useState(popupStyle)
-  useSwipeToClose(ref, onClose, style !== 'card')
-
-  useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
+  // The cookie lit up on the bar and in the list, for the baker it was lit for.
+  const [lit, setLit] = useState<{ baker: string; i: number } | null>(null)
+  const active = baker && lit?.baker === baker.name ? lit.i : null
+  const onActive = (i: number | null) =>
+    setLit(baker && i !== null ? { baker: baker.name, i } : null)
+  const rowRefs = useRef<(HTMLLIElement | null)[]>([])
 
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby={titleId}
-      onCancel={(e) => {
-        e.preventDefault()
-        onClose()
-      }}
-      // A click on the backdrop lands on the dialog itself.
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      className={popupClasses(style)}
-    >
-      {baker && (
-        <div className="relative grid gap-3 p-5">
-          {style === 'sheet' && (
-            <span
-              aria-hidden="true"
-              className="absolute top-2 left-1/2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-border"
-            />
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute top-2.5 right-2.5 grid size-11 place-items-center rounded-full bg-surface-muted text-lg font-extrabold"
-          >
-            <span aria-hidden="true">✕</span>
-          </button>
-          <div className="flex items-center gap-4 pr-10">
-            <span
-              className={`relative block size-26 shrink-0 rounded-full bg-surface p-1 ring-5 ${
-                baker.rank <= 3 ? ringClasses[baker.rank as Rank] : 'ring-border'
-              }`}
-            >
-              {baker.picture}
-              {baker.rank <= 3 && (
-                <RankBadge rank={baker.rank as Rank} className="absolute -right-1 -bottom-1" />
-              )}
-            </span>
-            <div className="min-w-0">
-              <h2 id={titleId} className="truncate text-3xl text-primary">
-                {baker.name}
-              </h2>
-              <p className="font-bold text-ink-muted">
-                {baker.tied ? 'Tied ' : ''}
-                {ordinal(baker.rank)} of {baker.bakers} bakers
-              </p>
-              <p className="font-display text-xl font-bold">{pts(baker.points)} in all</p>
+    <BottomSheet
+      open={baker !== null}
+      onClose={onClose}
+      labelledBy={titleId}
+      header={
+        baker && (
+          <>
+            <div className="flex items-center gap-4 pr-10">
+              <span
+                className={`relative block size-26 shrink-0 rounded-full bg-surface p-1 ring-5 ${
+                  baker.rank <= 3 ? ringClasses[baker.rank as Rank] : 'ring-border'
+                }`}
+              >
+                {baker.picture}
+                {baker.rank <= 3 && (
+                  <RankBadge rank={baker.rank as Rank} className="absolute -right-1 -bottom-1" />
+                )}
+              </span>
+              <div className="min-w-0">
+                <h2 id={titleId} className="truncate text-3xl text-primary">
+                  {baker.name}
+                </h2>
+                <p className="font-bold text-ink-muted">
+                  {baker.tied ? 'Tied ' : ''}
+                  {ordinal(baker.rank)} of {baker.bakers} bakers
+                </p>
+                <p className="font-display text-xl font-bold">{pts(baker.points)} in all</p>
+              </div>
             </div>
-          </div>
-          <h3 className="mt-1 font-sans text-sm font-extrabold tracking-wider text-ink-muted uppercase">
-            {baker.cookies.length} {baker.cookies.length === 1 ? 'cookie' : 'cookies'}
-            {baker.cookies.some((c) => c.onSelect) && ' · tap one for its votes'}
-          </h3>
-          {baker.cookies.length === 0 ? (
-            <p className="text-ink-muted">No cookies in the results.</p>
-          ) : (
-            <Breakdown name={baker.name} total={baker.points} cookies={baker.cookies} />
-          )}
-        </div>
-      )}
-    </dialog>
+            <h3 className="mt-1 font-sans text-sm font-extrabold tracking-wider text-ink-muted uppercase">
+              {baker.cookies.length} {baker.cookies.length === 1 ? 'cookie' : 'cookies'}
+              {baker.cookies.some((c) => c.onSelect) && ' · tap one for its votes'}
+            </h3>
+            {baker.points > 0 && (
+              <PointsBar
+                name={baker.name}
+                total={baker.points}
+                cookies={baker.cookies}
+                active={active}
+                onActive={onActive}
+                rowRefs={rowRefs}
+              />
+            )}
+          </>
+        )
+      }
+    >
+      {baker &&
+        (baker.cookies.length === 0 ? (
+          <p className="text-ink-muted">No cookies in the results.</p>
+        ) : (
+          <CookieList
+            cookies={baker.cookies}
+            active={active}
+            onActive={onActive}
+            rowRefs={rowRefs}
+          />
+        ))}
+    </BottomSheet>
   )
 }
 
-function Breakdown({
+const share = (points: number, total: number) => (total > 0 ? (points / total) * 100 : 0)
+// A mouse leaving clears the lit cookie; a tap stays lit until the next tap.
+const leaving = (onActive: (i: number | null) => void) => (e: PointerEvent) =>
+  e.pointerType === 'mouse' && onActive(null)
+
+/** How the baker's points split across their cookies; pinned above the scrolling list. */
+function PointsBar({
   name,
   total,
   cookies,
+  active,
+  onActive,
+  rowRefs,
 }: {
   name: string
   total: number
   cookies: readonly BakerBreakdownCookie[]
+  active: number | null
+  onActive: (i: number | null) => void
+  rowRefs: RefObject<(HTMLLIElement | null)[]>
 }) {
-  // The cookie lit up on the bar and in the list.
-  const [active, onActive] = useState<number | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
   const tipRef = useRef<HTMLDivElement>(null)
-  const rowRefs = useRef<(HTMLLIElement | null)[]>([])
-  const share = (points: number) => (total > 0 ? (points / total) * 100 : 0)
   const current = active === null ? undefined : cookies[active]
 
   useLayoutEffect(() => {
@@ -195,83 +196,93 @@ function Breakdown({
     onActive(i)
     rowRefs.current[i]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
-  // A mouse leaving clears it; a tap stays lit until the next tap.
-  const leave = (e: PointerEvent) => e.pointerType === 'mouse' && onActive(null)
 
   return (
-    <>
-      {total > 0 && (
-        <div className="relative">
-          <div
-            ref={tipRef}
-            aria-hidden="true"
-            className={`pointer-events-none absolute bottom-[calc(100%-0.25rem)] z-10 flex items-center gap-2 rounded-xl bg-ink px-3 py-1 text-sm font-bold whitespace-nowrap text-on-primary shadow-raised transition-[opacity,translate] duration-150 after:absolute after:top-full after:left-(--arrow) after:-translate-x-1/2 after:border-6 after:border-transparent after:border-t-ink ${
-              current ? 'opacity-100' : 'translate-y-1 opacity-0'
-            }`}
-          >
-            {current && (
-              <>
-                <span className="font-display font-semibold">{current.category}</span>
-                <span className="font-display text-accent">{pts(current.points)}</span>
-                <span>{Math.round(share(current.points))}%</span>
-              </>
-            )}
-          </div>
-          <div
-            ref={barRef}
-            role="group"
-            aria-label={`How ${name}'s ${pts(total)} split across their cookies`}
-            onPointerLeave={leave}
-            className="flex h-11 items-center gap-0.5"
-          >
-            {cookies.map((cookie, i) =>
-              cookie.points === 0 ? null : (
-                <button
-                  key={cookie.id}
-                  type="button"
-                  data-i={i}
-                  aria-label={`${cookie.category}: ${pts(cookie.points)}, ${Math.round(share(cookie.points))}% of the total`}
-                  onPointerEnter={() => fromBar(i)}
-                  onFocus={() => fromBar(i)}
-                  onClick={() => fromBar(i)}
-                  style={{ width: `${share(cookie.points)}%` }}
-                  className="flex h-full min-w-0 items-center first:*:rounded-l-full last:*:rounded-r-full"
-                >
-                  <span
-                    style={{ backgroundColor: swatch(i) }}
-                    className={`block w-full motion-safe:animate-fill motion-safe:transition-[height,opacity,border-radius,box-shadow] motion-safe:duration-200 ${SPRING} ${
-                      active === null
-                        ? 'h-[18px]'
-                        : active === i
-                          ? 'h-7 rounded-lg! shadow-card'
-                          : 'h-[18px] opacity-35'
-                    }`}
-                  />
-                </button>
-              ),
-            )}
-          </div>
-        </div>
-      )}
-      <ol onPointerLeave={leave} className="-mx-1 grid">
-        {cookies.map((cookie, i) => (
-          <li
-            key={cookie.id}
-            ref={(el) => {
-              rowRefs.current[i] = el
-            }}
-            className="border-t border-border first:border-t-0"
-          >
-            <CookieRow
-              cookie={cookie}
-              color={swatch(i)}
-              lit={active === i}
-              onLight={() => onActive(i)}
-            />
-          </li>
-        ))}
-      </ol>
-    </>
+    <div className="relative">
+      <div
+        ref={tipRef}
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-[calc(100%-0.25rem)] z-10 flex items-center gap-2 rounded-xl bg-ink px-3 py-1 text-sm font-bold whitespace-nowrap text-on-primary shadow-raised transition-[opacity,translate] duration-150 after:absolute after:top-full after:left-(--arrow) after:-translate-x-1/2 after:border-6 after:border-transparent after:border-t-ink ${
+          current ? 'opacity-100' : 'translate-y-1 opacity-0'
+        }`}
+      >
+        {current && (
+          <>
+            <span className="font-display font-semibold">{current.category}</span>
+            <span className="font-display text-accent">{pts(current.points)}</span>
+            <span>{Math.round(share(current.points, total))}%</span>
+          </>
+        )}
+      </div>
+      <div
+        ref={barRef}
+        role="group"
+        aria-label={`How ${name}'s ${pts(total)} split across their cookies`}
+        onPointerLeave={leaving(onActive)}
+        className="flex h-11 items-center gap-0.5"
+      >
+        {cookies.map((cookie, i) =>
+          cookie.points === 0 ? null : (
+            <button
+              key={cookie.id}
+              type="button"
+              data-i={i}
+              aria-label={`${cookie.category}: ${pts(cookie.points)}, ${Math.round(share(cookie.points, total))}% of the total`}
+              onPointerEnter={() => fromBar(i)}
+              onFocus={() => fromBar(i)}
+              onClick={() => fromBar(i)}
+              style={{ width: `${share(cookie.points, total)}%` }}
+              className="flex h-full min-w-0 items-center first:*:rounded-l-full last:*:rounded-r-full"
+            >
+              <span
+                style={{ backgroundColor: swatch(i) }}
+                className={`block w-full motion-safe:animate-fill motion-safe:transition-[height,opacity,border-radius,box-shadow] motion-safe:duration-200 ${SPRING} ${
+                  active === null
+                    ? 'h-[18px]'
+                    : active === i
+                      ? 'h-7 rounded-lg! shadow-card'
+                      : 'h-[18px] opacity-35'
+                }`}
+              />
+            </button>
+          ),
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** The baker's cookies, best first: the part of the sheet that scrolls. */
+function CookieList({
+  cookies,
+  active,
+  onActive,
+  rowRefs,
+}: {
+  cookies: readonly BakerBreakdownCookie[]
+  active: number | null
+  onActive: (i: number | null) => void
+  rowRefs: RefObject<(HTMLLIElement | null)[]>
+}) {
+  return (
+    <ol onPointerLeave={leaving(onActive)} className="-mx-1 grid">
+      {cookies.map((cookie, i) => (
+        <li
+          key={cookie.id}
+          ref={(el) => {
+            rowRefs.current[i] = el
+          }}
+          className="border-t border-border first:border-t-0"
+        >
+          <CookieRow
+            cookie={cookie}
+            color={swatch(i)}
+            lit={active === i}
+            onLight={() => onActive(i)}
+          />
+        </li>
+      ))}
+    </ol>
   )
 }
 
