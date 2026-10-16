@@ -37,6 +37,10 @@ test('every voter screen is accessible and fits 375 px', async ({ page }) => {
     await page.getByRole('button', { name: new RegExp(`^${place} place`) }).click()
   }
   await page.getByRole('button', { name: 'Next category →' }).waitFor()
+  // The swipe hint fades in and out; mid-fade its text is too faint for axe, so check after.
+  await page.evaluate(
+    "Promise.all(document.getAnimations().filter((a) => a.animationName === 'hint').map((a) => a.finished))",
+  )
   await checkScreen(page, 'category')
 
   await page.goto('/event/bake-off-2024/results')

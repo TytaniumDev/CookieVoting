@@ -249,6 +249,23 @@ Function that injects tags. Hosting can't route only crawlers, so every voter's
 first page load would wait on that function, cold starts included. Not built;
 revisit if the owner wants event names in previews.
 
+**Browser toolbars.** Mobile browsers tint their bars to match the page in different
+ways, so the app covers all three:
+
+- `<meta name="theme-color">` (cranberry, the app bar's colour) tints the top bar in
+  Chrome and Samsung Internet on Android and in Safari before 26.
+- Safari 26 (Liquid Glass) ignores theme-color. It samples full-width fixed elements at
+  the top and bottom edges, and falls back to the html/body background, which is also
+  what shows behind overscroll. `index.css` sets both to cream, or cranberry when the page
+  holds a `data-festive` element (ballot, results), so Safari's bars match each page. The
+  app bar scrolls away, so on cream pages Safari's top bar is cream too.
+- Don't leave full-screen fixed layers mounted when idle: Safari samples them even when
+  empty and loses the page colour. `Confetti` unmounts once every piece has fallen.
+- `viewport-fit=cover` draws under the notch and, in a home-screen app, the status bar, so
+  `--gutter` is at least the side safe-area inset and the app bar and page bottom add the
+  top and bottom insets. `color-scheme: light` keeps form controls and browser fallbacks
+  light on phones in dark mode (the app has no dark theme).
+
 ## Key flows
 
 ### Admin sign-in and setup

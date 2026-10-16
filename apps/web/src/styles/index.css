@@ -9,23 +9,40 @@
    * same amount so they run to the screen edge on phones.
    */
   :root {
-    --gutter: 1rem;
+    /*
+     * At least the notch's inset: with viewport-fit=cover, a phone held sideways draws the
+     * page under its notch, and a home-screen app draws under the status bar.
+     */
+    --gutter: max(1rem, env(safe-area-inset-left), env(safe-area-inset-right));
 
     @media (width >= 40rem) {
-      --gutter: 1.5rem;
+      --gutter: max(1.5rem, env(safe-area-inset-left), env(safe-area-inset-right));
     }
     @media (width >= 64rem) {
-      --gutter: 2rem;
+      --gutter: max(2rem, env(safe-area-inset-left), env(safe-area-inset-right));
     }
+
+    /* No dark theme: keep form controls, scrollbars and browser fallbacks light. */
+    color-scheme: light;
   }
 
-  html {
-    /* Keep the cream background behind iOS overscroll. */
+  /*
+   * The page's own background, on both html and body. Safari 26 tints its status bar and
+   * toolbar from it (it ignores theme-color), and it shows behind iOS overscroll. A page
+   * that marks itself `data-festive` (the ballot, results) is cranberry edge to edge.
+   */
+  html,
+  body {
     @apply bg-background;
   }
 
+  html:has([data-festive]),
+  html:has([data-festive]) body {
+    @apply bg-primary;
+  }
+
   body {
-    @apply bg-background font-sans text-base/relaxed text-ink antialiased;
+    @apply font-sans text-base/relaxed text-ink antialiased;
     min-height: 100dvh;
   }
 

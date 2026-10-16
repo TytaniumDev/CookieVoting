@@ -15,7 +15,7 @@ export interface ErrorBannerProps {
 export function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
   if (errors.length === 0) return null
   return (
-    <div className="sticky top-2 z-30 mb-4 space-y-2 shadow-card">
+    <div className="sticky top-[calc(--spacing(2)+env(safe-area-inset-top))] z-30 mb-4 space-y-2 shadow-card">
       {errors.map((error) => (
         <Alert
           key={error.id}

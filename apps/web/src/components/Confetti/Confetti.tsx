@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 export interface ConfettiProps {
   /** Number of pieces. */
@@ -16,12 +16,18 @@ function fraction(i: number, seed: number): number {
  * A one-off shower of confetti over the whole screen, for the results reveal. It is
  * decorative (hidden from assistive tech, ignores pointer events), falls once and
  * leaves the screen, and isn't shown at all under `prefers-reduced-motion`.
+ *
+ * Once every piece has fallen it unmounts its layer: Safari 26 samples full-screen fixed
+ * elements, even empty ones, to tint its toolbars, and would otherwise lose the page colour.
  */
 export function Confetti({ count = 60 }: ConfettiProps) {
+  const [fallen, setFallen] = useState(0)
+  if (fallen >= count) return null
   return (
     <div
       aria-hidden="true"
       data-testid="confetti"
+      onAnimationEnd={() => setFallen((n) => n + 1)}
       className="pointer-events-none fixed inset-0 z-50 overflow-hidden motion-reduce:hidden"
     >
       {Array.from({ length: count }, (_, i) => (

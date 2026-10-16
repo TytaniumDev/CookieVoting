@@ -18,7 +18,8 @@ export function AppLayout() {
     // A page that marks itself `data-festive` (the ballot) gets a cranberry backdrop with snow.
     <div className="group/page relative flex min-h-dvh flex-col has-[[data-festive]]:bg-primary">
       <Snowfall count={30} className="hidden group-has-[[data-festive]]/page:block" />
-      <header className="relative overflow-hidden bg-primary py-3 text-on-primary shadow-card">
+      {/* Under the status bar in a home-screen app (viewport-fit=cover), so pad it clear. */}
+      <header className="relative overflow-hidden bg-primary pt-[calc(--spacing(3)+env(safe-area-inset-top))] pb-3 text-on-primary shadow-card">
         <Snowfall count={12} />
         {/* Items share a text baseline, so a page's title sits level with "Cookie Voting". */}
         <div className={`group relative flex items-baseline gap-2 ${PAGE_WIDTH}`}>
@@ -36,7 +37,9 @@ export function AppLayout() {
           )}
         </div>
       </header>
-      <main className={`relative flex-1 py-6 ${PAGE_WIDTH}`}>
+      <main
+        className={`relative flex-1 pt-6 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] ${PAGE_WIDTH}`}
+      >
         <AppBarSlotProvider value={slot}>
           <ErrorProvider>
             <Outlet />
