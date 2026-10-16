@@ -125,7 +125,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Desktop: the voting grid widens so a plate fits on a laptop screen too
 - [x] Production check of the deploy workflow (every merge to `main` deploys green); no workflow uses the old `FIREBASE_TOKEN` / `VITE_*` secrets any more
 - [x] App Check (reCAPTCHA Enterprise) in the web app, on when `RECAPTCHA_SITE_KEY` exists
-- [ ] Owner: create the key and enforce App Check on Cloud Firestore (SETUP.md §7)
+- [x] App Check key registered and enforced on Cloud Firestore (2026-10-16)
 - [ ] Owner: delete the old secrets, then a dry-run event on real phones (Owner actions below)
 
 ## Phase 11 — Optional: pre-outline all cookies ✅ (measured, not shipped)
@@ -214,7 +214,7 @@ until real-device testing (useful from phase 3).
 - [ ] Delete the unused `FIREBASE_TOKEN` and `VITE_*` repository secrets (GitHub → Settings → Secrets and variables → Actions)
 - [x] Storage service agent may read Firestore (SETUP.md §4e), done 2026-10-14
 - [ ] Sentry secrets in Doppler, synced to GitHub (SETUP.md §6)
-- [ ] App Check: reCAPTCHA key, `RECAPTCHA_SITE_KEY` in Doppler, then enforce on Cloud Firestore (SETUP.md §7)
+- [x] App Check: reCAPTCHA key, `RECAPTCHA_SITE_KEY` in Doppler, enforced on Cloud Firestore (SETUP.md §7), done 2026-10-16 from the owner's Mac
 - [ ] Dry run: create a small event, vote from two or three real phones, open results
 
 ---
@@ -748,6 +748,17 @@ until real-device testing (useful from phase 3).
   ornaments' swing overflowed. Every sideways scroller (`SlideShow`, `CookieCarousel`,
   tab and chip rows) now sets `overflow-y-hidden`; rule added to CLAUDE.md.
 
+### Session — 2026-10-16 (Sentry feedback round 2)
+
+- COOKIE-VOTING-4 (iPhone): after "Submit my votes" the waiting room kept the review
+  screen's scroll position, so the thanks started off screen and it looked like nothing
+  happened. The app has no `ScrollRestoration`, and submitting swaps the page in place;
+  `WaitingRoom` now scrolls to the top when it appears. E2E asserts it (failed before).
+- COOKIE-VOTING-2 (results stuck loading) was already fixed by the stuck-submitting work
+  above; marked resolved in Sentry.
+- COOKIE-VOTING-5 asks for pull-down-to-close on the results pop-ups: a design change,
+  put to the owner.
+
 ### Session — 2026-10-16 (browser toolbars match the page)
 
 - Owner's iPhone screenshot showed cream Safari bars around the cranberry ballot. Safari 26
@@ -759,4 +770,4 @@ until real-device testing (useful from phase 3).
 - Fixed a pre-existing flake in `voter-a11y.spec.ts`: axe sometimes checked the swipe hint
   mid-fade; the test now waits for its animation to finish.
 - Can't be verified in CI: check on a real iPhone (Safari 26) after deploy, with a fresh
-  load. Open: other app-like features (manifest, Web Share, wake lock…) offered to owner.
+  load. Owner then asked for all the app-like features offered (next session).
