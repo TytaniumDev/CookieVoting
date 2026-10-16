@@ -42,10 +42,12 @@ export function AppLayout() {
         Pinned to the top, like an app's title bar; it also keeps Safari 26's top bar
         cranberry on cream pages. In a home-screen app it sits under the status bar
         (viewport-fit=cover), so it pads itself clear. Named so page transitions leave it be.
+        A page that marks itself `data-no-app-bar` (the results) has no bar on phones: it
+        shows its own compact row instead, and the page pads itself clear of the status bar.
       */}
       <header
         ref={appBarRef}
-        className="sticky top-0 z-40 overflow-hidden bg-primary [view-transition-name:app-bar] pt-[calc(--spacing(3)+env(safe-area-inset-top))] pb-3 text-on-primary shadow-card"
+        className="sticky top-0 z-40 overflow-hidden bg-primary [view-transition-name:app-bar] pt-[calc(--spacing(3)+env(safe-area-inset-top))] pb-3 text-on-primary shadow-card max-sm:group-has-[[data-no-app-bar]]/page:hidden"
       >
         <Snowfall count={12} />
         {/* Items share a text baseline, so a page's title sits level with "Cookie Voting". */}
@@ -71,7 +73,7 @@ export function AppLayout() {
       <main
         // Festive pages run to the bottom of the screen and keep their own space there, so
         // what scrolls inside them isn't cut off short of the edge.
-        className={`relative flex-1 pt-6 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] group-has-[[data-festive]]/page:pb-0 ${PAGE_WIDTH}`}
+        className={`relative flex-1 pt-6 max-sm:group-has-[[data-no-app-bar]]/page:pt-[calc(--spacing(3)+env(safe-area-inset-top))] pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] group-has-[[data-festive]]/page:pb-0 ${PAGE_WIDTH}`}
       >
         <AppBarSlotProvider value={slot}>
           <ErrorProvider>
