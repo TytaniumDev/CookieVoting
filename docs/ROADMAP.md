@@ -125,7 +125,7 @@ ARCHITECTURE.md → Firebase project and environments, and `docs/SETUP.md`).
 - [x] Desktop: the voting grid widens so a plate fits on a laptop screen too
 - [x] Production check of the deploy workflow (every merge to `main` deploys green); no workflow uses the old `FIREBASE_TOKEN` / `VITE_*` secrets any more
 - [x] App Check (reCAPTCHA Enterprise) in the web app, on when `RECAPTCHA_SITE_KEY` exists
-- [ ] Owner: create the key and enforce App Check on Cloud Firestore (SETUP.md §7)
+- [x] App Check key registered and enforced on Cloud Firestore (2026-10-16)
 - [ ] Owner: delete the old secrets, then a dry-run event on real phones (Owner actions below)
 
 ## Phase 11 — Optional: pre-outline all cookies ✅ (measured, not shipped)
@@ -214,7 +214,7 @@ until real-device testing (useful from phase 3).
 - [ ] Delete the unused `FIREBASE_TOKEN` and `VITE_*` repository secrets (GitHub → Settings → Secrets and variables → Actions)
 - [x] Storage service agent may read Firestore (SETUP.md §4e), done 2026-10-14
 - [ ] Sentry secrets in Doppler, synced to GitHub (SETUP.md §6)
-- [ ] App Check: reCAPTCHA key, `RECAPTCHA_SITE_KEY` in Doppler, then enforce on Cloud Firestore (SETUP.md §7)
+- [x] App Check: reCAPTCHA key, `RECAPTCHA_SITE_KEY` in Doppler, enforced on Cloud Firestore (SETUP.md §7), done 2026-10-16 from the owner's Mac
 - [ ] Dry run: create a small event, vote from two or three real phones, open results
 
 ---
