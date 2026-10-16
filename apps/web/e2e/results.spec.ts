@@ -204,7 +204,7 @@ test('the results reach the bottom of the screen, with every tag in view', async
   // Starts the ornaments open, without the timed reveal.
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/event/bake-off-2024/results')
-  await expect(page.getByRole('heading', { name: /The results are in/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /\d+ votes$/ })).toBeVisible()
   const viewport = page.viewportSize()!
 
   // The 1st-place tag, the lowest thing on the slide, sits fully on screen.
