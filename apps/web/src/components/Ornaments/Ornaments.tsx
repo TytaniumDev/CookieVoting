@@ -77,7 +77,10 @@ export function Ornaments({
   className = '',
 }: OrnamentsProps) {
   const [ref, { width, height }] = useSize<HTMLDivElement>()
-  const layout = layoutOrnaments(width, height, items.length)
+  const layout = layoutOrnaments(width, height, items.length, {
+    first: items[0]?.tied,
+    sides: items.slice(1).some((item) => item.tied),
+  })
 
   return (
     <div ref={ref} className={`relative ${reveal.dropped ? '' : 'invisible'} ${className}`}>
@@ -195,9 +198,14 @@ export function Ornaments({
                   {ball}
                 </span>
               )}
+              {/*
+                One line each, so the tag is as tall as the layout keeps free; wider than the
+                ball if it needs to be, but never past the edge of the area.
+              */}
               <span
                 aria-hidden="true"
-                className={`mt-2.5 max-w-[10rem] rounded-[0.625rem] bg-surface px-2.5 pt-0.5 pb-1 text-center text-ink shadow-card transition duration-500 ${
+                style={{ maxWidth: Math.min(160, 2 * Math.min(spot.x, width - spot.x) - 8) }}
+                className={`mt-2.5 w-max rounded-[0.625rem] bg-surface px-2.5 pt-0.5 pb-1 text-center text-ink shadow-card transition duration-500 ${
                   open ? '' : '-translate-y-3 opacity-0'
                 }`}
               >
@@ -206,9 +214,11 @@ export function Ornaments({
                 >
                   {item.name}
                 </span>
-                <span className="block text-sm font-bold text-ink-muted">{item.detail}</span>
+                <span className="block truncate text-sm font-bold text-ink-muted">
+                  {item.detail}
+                </span>
                 {item.tied && (
-                  <span className="block text-xs font-extrabold tracking-wide text-primary uppercase">
+                  <span className="block truncate text-xs font-extrabold tracking-wide text-primary uppercase">
                     Tied {ordinal(item.rank)}
                   </span>
                 )}

@@ -69,7 +69,9 @@ export function AppLayout() {
         </div>
       </header>
       <main
-        className={`relative flex-1 pt-6 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] ${PAGE_WIDTH}`}
+        // Festive pages run to the bottom of the screen and keep their own space there, so
+        // what scrolls inside them isn't cut off short of the edge.
+        className={`relative flex-1 pt-6 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] group-has-[[data-festive]]/page:pb-0 ${PAGE_WIDTH}`}
       >
         <AppBarSlotProvider value={slot}>
           <ErrorProvider>

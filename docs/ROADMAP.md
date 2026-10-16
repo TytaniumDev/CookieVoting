@@ -797,3 +797,13 @@ until real-device testing (useful from phase 3).
 - Repo now allows auto-merge, and `main` requires the five CI checks (not strict, admins
   enforced). Threads turn on squash auto-merge when they open a PR; see CLAUDE.md →
   Pull requests and merging. A two-hourly sweep fixes quiet PRs left conflicted or red.
+
+### Session — 2026-10-16 (results cut off at the bottom on phones)
+
+- The festive pages (ballot, results) stopped 1.5rem short of the screen's bottom edge, so
+  the All results list was cut off mid-row above a red band. They now run to the edge
+  (`festiveScreen.ts`) and keep that space inside instead: the list scrolls under it.
+- Ornament tags assumed one height: a tie's "Tied 1st" line and "pts in all" wrapping on
+  a ball-wide tag pushed the winner's tag off the bottom. Tags are now one line per row
+  (wider than the ball if needed, never past the edge) and the layout reserves the tie
+  line (`layoutOrnaments` `ties`).

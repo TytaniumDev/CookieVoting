@@ -4,6 +4,7 @@ import { Ornaments, type OrnamentItem } from '../../components/Ornaments/Ornamen
 import { useReveal, type RevealMode } from '../../components/Ornaments/useReveal.ts'
 import type { RevealState } from '../../components/Ornaments/reveal.ts'
 import { ordinal } from '../../components/RankBadge/ordinals.ts'
+import { FESTIVE_BOTTOM } from './festiveScreen.ts'
 
 export interface RevealSlideProps {
   title: string
@@ -62,7 +63,10 @@ export function RevealSlide({
   const line = caption(items, reveal, mode, onSelect ? selectHint.caption : null)
   const celebrating = mode === 'play' && items.length > 0 && reveal.opened === items.length
   return (
-    <section aria-labelledby={headingId} className="relative flex min-h-0 flex-1 flex-col">
+    <section
+      aria-labelledby={headingId}
+      className={`relative flex min-h-0 flex-1 flex-col ${FESTIVE_BOTTOM}`}
+    >
       <h2 id={headingId} className="text-center text-3xl sm:text-4xl">
         {title}
       </h2>
@@ -88,7 +92,7 @@ export function RevealSlide({
         <button
           type="button"
           onClick={onDone}
-          className="absolute right-0 bottom-0 min-h-11 rounded-full bg-ink/55 px-4 text-sm font-extrabold text-on-primary"
+          className="absolute right-0 bottom-[calc(--spacing(6)+env(safe-area-inset-bottom))] min-h-11 rounded-full bg-ink/55 px-4 text-sm font-extrabold text-on-primary"
         >
           Skip
         </button>

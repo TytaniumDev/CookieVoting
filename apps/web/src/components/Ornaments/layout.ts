@@ -66,6 +66,17 @@ export const TAG_HEIGHT = 72
 /** The gift tag under a 2nd- or 3rd-place ball, in px: its margin, name and points. */
 export const SIDE_TAG_HEIGHT = 68
 
+/** The "Tied 1st" line a tag gains when its place is shared, in px. */
+export const TIE_LINE_HEIGHT = 16
+
+/** Which tags carry a "Tied …" line, so they get room for it. */
+export interface TagTies {
+  /** The 1st-place tag. */
+  first?: boolean
+  /** Either side tag (2nd or 3rd); the lower one decides where 1st hangs. */
+  sides?: boolean
+}
+
 export interface PlacedOrnament {
   /** Centre of the ball, from the left edge of the area. */
   x: number
@@ -84,10 +95,17 @@ export interface OrnamentLayout {
 
 /**
  * Fits the design that suits a `width` × `height` area into it and places up to three
- * ornaments, in place order.
+ * ornaments, in place order, leaving room for their tags (taller when `ties` say so).
  */
-export function layoutOrnaments(width: number, height: number, count: number): OrnamentLayout {
+export function layoutOrnaments(
+  width: number,
+  height: number,
+  count: number,
+  ties: TagTies = {},
+): OrnamentLayout {
   const design = width / Math.max(height, 1) >= 1.25 ? WIDE : TALL
+  const tag = TAG_HEIGHT + (ties.first ? TIE_LINE_HEIGHT : 0)
+  const sideTag = SIDE_TAG_HEIGHT + (ties.sides ? TIE_LINE_HEIGHT : 0)
   const [first, ...sides] = design.spots
   const lowest = first.top + first.size
   // Bottom of the lower side ball, in design px: its tag hangs below it at a fixed size.
@@ -96,8 +114,8 @@ export function layoutOrnaments(width: number, height: number, count: number): O
     Math.min(
       width / design.width,
       height / design.height,
-      (height - TAG_HEIGHT) / lowest,
-      design.stacked ? (height - TAG_HEIGHT - SIDE_TAG_HEIGHT) / (sideBottom + first.size) : 1.5,
+      (height - tag) / lowest,
+      design.stacked ? (height - tag - sideTag) / (sideBottom + first.size) : 1.5,
       1.5,
     ),
     0,
@@ -112,7 +130,7 @@ export function layoutOrnaments(width: number, height: number, count: number): O
       hookY: garlandY((x / Math.max(width, 1)) * 400) * scale,
       ballTop:
         index === 0 && design.stacked && count > 1
-          ? Math.max(top, sideBottom * scale + SIDE_TAG_HEIGHT)
+          ? Math.max(top, sideBottom * scale + sideTag)
           : top,
       size: spot.size * scale,
     }

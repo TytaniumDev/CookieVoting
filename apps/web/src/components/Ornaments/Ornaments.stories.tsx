@@ -69,6 +69,25 @@ export const Tied: Story = {
   },
 }
 
+/** 1st shared too: the taller tags still fit (on a phone, 1st hangs below them). */
+export const TiedFirst: Story = {
+  args: {
+    className: 'h-[27.5rem] max-w-[22.375rem]',
+    items: [
+      { ...items[0]!, tied: true },
+      { ...items[1]!, rank: 1, tied: true },
+      { ...items[2]!, detail: '24 pts in all' },
+    ],
+  },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.getAllByRole('img', { name: /tied 1st place/ })).toHaveLength(2)
+    // The winner's tag, lowest of all, ends inside the area: nothing below it is cut off.
+    const area = canvasElement.querySelector('.relative')!.getBoundingClientRect()
+    const tag = canvas.getByText('Ann').parentElement!.getBoundingClientRect()
+    await expect(tag.bottom).toBeLessThanOrEqual(area.bottom + 0.5)
+  },
+}
+
 /** A category with only two cookies hangs two ornaments. */
 export const TwoCookies: Story = { args: { items: items.slice(0, 2), reveal: revealed(2) } }
 
