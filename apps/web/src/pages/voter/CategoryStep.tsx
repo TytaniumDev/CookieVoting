@@ -3,6 +3,7 @@ import { AppBarTitle } from '../../app/AppBarSlot.tsx'
 import { Button } from '../../components/Button/Button.tsx'
 import { CategoryBallot } from '../../components/CategoryBallot/CategoryBallot.tsx'
 import type { VotableCategory } from './BallotFlow.tsx'
+import { FESTIVE_BOTTOM, FESTIVE_SCREEN } from './festiveScreen.ts'
 
 export interface CategoryStepProps {
   eventName: string
@@ -39,7 +40,7 @@ export function CategoryStep({
     // `data-festive` turns the page cranberry, with snow (AppLayout).
     <section
       data-festive
-      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
+      className={`flex ${FESTIVE_SCREEN} ${FESTIVE_BOTTOM} flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse`}
       aria-labelledby="category-heading"
     >
       <AppBarTitle>{eventName}</AppBarTitle>

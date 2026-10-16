@@ -199,3 +199,27 @@ test('results for an unknown event say so', async ({ page }) => {
   await page.goto('/event/no-such-event/results')
   await expect(page.getByText('Event not found')).toBeVisible()
 })
+
+test('the results reach the bottom of the screen, with every tag in view', async ({ page }) => {
+  // Starts the ornaments open, without the timed reveal.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/event/bake-off-2024/results')
+  await expect(page.getByRole('heading', { name: /\d+ votes$/ })).toBeVisible()
+  const viewport = page.viewportSize()!
+
+  // The 1st-place tag, the lowest thing on the slide, sits fully on screen.
+  await page.getByRole('button', { name: 'Mixed Shapes' }).click()
+  const slide = page.getByRole('group', { name: 'Mixed Shapes' })
+  const winner = slide.getByRole('button', { name: /1st place/ }).last()
+  await expect(winner).toBeVisible()
+  const tag = (await winner.locator('xpath=following-sibling::span[1]').boundingBox())!
+  expect(tag.y + tag.height).toBeLessThanOrEqual(viewport.height)
+
+  // The list of every result scrolls right to the bottom edge, not to a band above it.
+  await openAllResults(page)
+  const list = page
+    .getByRole('heading', { name: 'Bakers', exact: true })
+    .locator('xpath=ancestor::div[contains(@class,"overflow-y-auto")][1]')
+  const box = (await list.boundingBox())!
+  expect(box.y + box.height).toBeGreaterThanOrEqual(viewport.height - 1)
+})

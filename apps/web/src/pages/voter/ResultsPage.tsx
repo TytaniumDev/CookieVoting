@@ -32,6 +32,7 @@ import { useVoter } from '../../lib/auth.ts'
 import { useBallot, useCategories, useEvent, useResults } from '../../lib/data.ts'
 import { monitoringEnabled } from '../../lib/monitoring.ts'
 import { useWakeLock } from '../../lib/wakeLock.ts'
+import { FESTIVE_BOTTOM, FESTIVE_SCREEN, FESTIVE_SCREEN_NO_APP_BAR } from './festiveScreen.ts'
 import { RevealSlide } from './RevealSlide.tsx'
 
 type Plate = {
@@ -264,7 +265,9 @@ export function ResultsPage() {
           <h2 id="all-results-heading" className="text-center text-3xl sm:text-4xl">
             All results
           </h2>
-          <div className="-mx-1 mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1 pb-4 text-ink *:shrink-0">
+          <div
+            className={`-mx-1 mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1 ${FESTIVE_BOTTOM} text-ink *:shrink-0`}
+          >
             <BakerLeaderboard
               bakers={bakers}
               cookieCount={(bakerId) => cookiesOf(bakerId).length}
@@ -344,7 +347,7 @@ export function ResultsPage() {
       data-festive
       data-no-app-bar
       aria-labelledby="results-heading"
-      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary max-sm:h-[max(34rem,calc(100dvh-2.25rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] [&_:focus-visible]:outline-focus-inverse"
+      className={`flex ${FESTIVE_SCREEN} ${FESTIVE_SCREEN_NO_APP_BAR} flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse`}
     >
       <AppBarTitle>{current.name}</AppBarTitle>
       <div className="flex min-h-11 items-center justify-between gap-2 sm:min-h-0 sm:justify-center">

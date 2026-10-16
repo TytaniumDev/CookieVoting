@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { garlandY, layoutOrnaments, SIDE_TAG_HEIGHT, TAG_HEIGHT } from './layout.ts'
+import {
+  garlandY,
+  layoutOrnaments,
+  SIDE_TAG_HEIGHT,
+  TAG_HEIGHT,
+  TIE_LINE_HEIGHT,
+} from './layout.ts'
 
 describe('garlandY', () => {
   it('follows the garland path through its end points', () => {
@@ -42,6 +48,33 @@ describe('layoutOrnaments', () => {
         expect(first!.ballTop).toBeGreaterThanOrEqual(side.ballTop + side.size + SIDE_TAG_HEIGHT)
       }
       expect(first!.ballTop + first!.size + TAG_HEIGHT).toBeLessThanOrEqual(height + 0.001)
+    }
+  })
+
+  it('leaves room for the "Tied" line on a tied 1st-place tag', () => {
+    for (const [width, height] of [
+      [358, 440],
+      [343, 416],
+      [656, 372],
+    ] as const) {
+      const [first] = layoutOrnaments(width, height, 3, { first: true, sides: true }).ornaments
+      expect(first!.ballTop + first!.size + TAG_HEIGHT + TIE_LINE_HEIGHT).toBeLessThanOrEqual(
+        height + 0.001,
+      )
+    }
+  })
+
+  it('hangs 1st below tied side tags on a phone, "Tied" line included', () => {
+    for (const [width, height] of [
+      [358, 440],
+      [343, 416],
+    ] as const) {
+      const [first, second, third] = layoutOrnaments(width, height, 3, { sides: true }).ornaments
+      for (const side of [second!, third!]) {
+        expect(first!.ballTop).toBeGreaterThanOrEqual(
+          side.ballTop + side.size + SIDE_TAG_HEIGHT + TIE_LINE_HEIGHT,
+        )
+      }
     }
   })
 
