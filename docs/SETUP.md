@@ -215,3 +215,5 @@ and each voter costs about one per hour on the site. It's off until the key exis
    carry no token.
 
 To undo, click _Unenforce_ on the same page; nothing else changes.
+
+**Done 2026-10-16:** reused the existing score-based key "CookieVoting" (`6Ld_XTEsAAAAAOYBwm-drZmNZG8mgwZdXHCxzF_A`, now also allowing `web.app`); Firestore enforced, Storage and Authentication not.
