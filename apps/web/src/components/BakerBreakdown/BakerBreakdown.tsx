@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { ordinal } from '../RankBadge/ordinals.ts'
 import { RankBadge, type Rank } from '../RankBadge/RankBadge.tsx'
+import { popupClasses, popupStyle } from '../../lib/popupStyle.ts'
+import { useSwipeToClose } from '../../lib/useSwipeToClose.ts'
 
 export interface BakerBreakdownCookie {
   /** Unique within the baker, e.g. the cookie id. */
@@ -81,6 +83,8 @@ export function BakerBreakdown({ baker, onClose }: BakerBreakdownProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const open = baker !== null
+  const [style] = useState(popupStyle)
+  useSwipeToClose(ref, onClose, style !== 'card')
 
   useEffect(() => {
     const dialog = ref.current
@@ -99,10 +103,16 @@ export function BakerBreakdown({ baker, onClose }: BakerBreakdownProps) {
       }}
       // A click on the backdrop lands on the dialog itself.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-[1.5rem] bg-background p-0 text-ink shadow-raised backdrop:bg-ink/55"
+      className={popupClasses(style)}
     >
       {baker && (
         <div className="relative grid gap-3 p-5">
+          {style === 'sheet' && (
+            <span
+              aria-hidden="true"
+              className="absolute top-2 left-1/2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-border"
+            />
+          )}
           <button
             type="button"
             onClick={onClose}
