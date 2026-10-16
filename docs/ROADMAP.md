@@ -771,3 +771,15 @@ until real-device testing (useful from phase 3).
   mid-fade; the test now waits for its animation to finish.
 - Can't be verified in CI: check on a real iPhone (Safari 26) after deploy, with a fresh
   load. Owner then asked for all the app-like features offered (next session).
+
+### Session — 2026-10-16 (app-like touches)
+
+- Owner asked for all five ideas offered: web app manifest and home-screen icons, pinned
+  app bar, screen wake lock on the results page, view transitions between ballot screens
+  and voter pages, and a buzz on giving a medal (Android only). See ARCHITECTURE.md →
+  Design system → App-like touches.
+- Ballot and results heights now subtract the safe-area insets, for the standalone app.
+- Two E2E steps scrolled before the next ballot screen rendered (the view transition makes
+  the swap async); they now wait for the new screen's heading.
+- Check on real phones after deploy: Add to Home Screen on iPhone and Android, the reveal
+  keeping the screen on, and Safari 26's top bar on cream pages with the pinned bar.

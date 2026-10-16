@@ -6,6 +6,7 @@ import {
   type PlatePhoto,
 } from '@cookie-voting/shared'
 import { useState, type ReactNode } from 'react'
+import { buzz } from '../../lib/haptics.ts'
 import { Confetti } from '../Confetti/Confetti.tsx'
 import { CookieCarousel } from '../CookieCarousel/CookieCarousel.tsx'
 import { CookieStrip } from '../CookieStrip/CookieStrip.tsx'
@@ -69,6 +70,7 @@ export function CategoryBallot({
           holders={places.map(numberOf)}
           onAward={(place) => {
             const next = awardPlace(places, cookie.id, place)
+            buzz()
             if (!allPlacesGiven(places) && allPlacesGiven(next)) setCelebrations((n) => n + 1)
             onChange(next)
           }}

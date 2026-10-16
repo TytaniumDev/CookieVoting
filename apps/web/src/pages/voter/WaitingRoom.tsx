@@ -192,6 +192,7 @@ export function WaitingRoom({
               <p className="text-ink-muted">Your votes are in, and so are the results.</p>
               <Link
                 to="results"
+                viewTransition
                 className={`mt-3 ${buttonClasses({ size: 'lg', fullWidth: true })}`}
               >
                 View results

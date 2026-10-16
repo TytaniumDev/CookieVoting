@@ -51,10 +51,13 @@ test('a voter ranks every category and submits once', async ({ page }) => {
     await page.getByRole('button', { name: /next category/i }).click()
   }
   await page.getByRole('button', { name: 'Review my votes' }).click()
+  await expect(page.getByRole('heading', { name: 'Check your votes' })).toBeVisible()
 
   // Sent from the bottom of the review, the waiting room still opens at the top.
   await page.evaluate('window.scrollTo({ top: document.body.scrollHeight })')
   await expect.poll(() => page.evaluate('window.scrollY')).toBeGreaterThan(0)
+  // The app bar stays pinned to the top while scrolling.
+  expect((await page.getByRole('banner').boundingBox())?.y).toBe(0)
   await page.getByRole('button', { name: 'Submit my votes' }).click()
   // The waiting room: one of three scenes at random, then the voter's picks.
   await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()
