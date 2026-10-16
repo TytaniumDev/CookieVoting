@@ -16,6 +16,7 @@ import type { Category, Event } from '../../lib/data.ts'
 import { reconnectFirestore } from '../../lib/firebase.ts'
 import { reportSlow } from '../../lib/monitoring.ts'
 import { useTakingLong } from '../../lib/useTakingLong.ts'
+import { withViewTransition } from '../../lib/viewTransition.ts'
 import { CategoryStep } from './CategoryStep.tsx'
 
 /** A category voters can vote in: it has a photo and cookies. */
@@ -61,8 +62,10 @@ export function BallotFlow({
     placesFor(category).filter((id) => id !== null)
 
   function setScreen(next: number) {
-    setScreenState(next)
-    window.scrollTo({ top: 0 })
+    withViewTransition(() => {
+      setScreenState(next)
+      window.scrollTo({ top: 0 })
+    })
   }
 
   const category = categories[screen]
@@ -108,7 +111,10 @@ export function BallotFlow({
         <h1 className="text-3xl">{event.name}</h1>
         {event.status === 'results' && (
           <Alert title="Results are open">
-            You can still vote. <Link to="results">See the results</Link>
+            You can still vote.{' '}
+            <Link to="results" viewTransition>
+              See the results
+            </Link>
           </Alert>
         )}
         <p>

@@ -11,11 +11,11 @@ export interface ErrorBannerProps {
   onDismiss: (id: number) => void
 }
 
-/** Errors pinned to the top of the screen until dismissed. Renders nothing when empty. */
+/** Errors pinned to the top of the screen (under the app bar) until dismissed. Renders nothing when empty. */
 export function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
   if (errors.length === 0) return null
   return (
-    <div className="sticky top-2 z-30 mb-4 space-y-2 shadow-card">
+    <div className="sticky top-[calc(var(--app-bar-height,0px)+--spacing(2))] z-30 mb-4 space-y-2 shadow-card">
       {errors.map((error) => (
         <Alert
           key={error.id}

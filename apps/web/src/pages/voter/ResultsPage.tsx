@@ -29,6 +29,7 @@ import {
 } from '../../components/VoteBreakdown/VoteBreakdown.tsx'
 import { useVoter } from '../../lib/auth.ts'
 import { useBallot, useCategories, useEvent, useResults } from '../../lib/data.ts'
+import { useWakeLock } from '../../lib/wakeLock.ts'
 import { RevealSlide } from './RevealSlide.tsx'
 
 type Plate = {
@@ -64,6 +65,8 @@ const BAKER_HINT = { label: 'See their cookies', caption: 'Tap a baker to see th
  */
 export function ResultsPage() {
   const { eventId = '' } = useParams()
+  // People leave this page open, on a phone or a TV, waiting for and watching the reveal.
+  useWakeLock()
   const event = useEvent(eventId)
   const open = event.status === 'ready' && event.data?.status === 'results'
   // Only listen once results are open: until then the rules deny the read.
@@ -112,7 +115,11 @@ export function ResultsPage() {
           They'll show here as soon as the organisers open them. You can leave this page open.
         </p>
         {current.status === 'voting' && (
-          <Link to={`/event/${eventId}`} className={buttonClasses({ variant: 'secondary' })}>
+          <Link
+            to={`/event/${eventId}`}
+            viewTransition
+            className={buttonClasses({ variant: 'secondary' })}
+          >
             Go vote
           </Link>
         )}
@@ -332,7 +339,7 @@ export function ResultsPage() {
     <section
       data-festive
       aria-labelledby="results-heading"
-      className="flex h-[max(34rem,calc(100dvh-6.5rem))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
+      className="flex h-[max(34rem,calc(100dvh-6.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col gap-1 text-on-primary [&_:focus-visible]:outline-focus-inverse"
     >
       <AppBarTitle>{current.name}</AppBarTitle>
       <h1
@@ -344,6 +351,7 @@ export function ResultsPage() {
       {ballot.status === 'ready' && ballot.data === null && (
         <Link
           to={`/event/${eventId}`}
+          viewTransition
           className="my-1 inline-flex min-h-11 items-center gap-1 self-center rounded-full bg-accent px-4 font-display font-semibold text-on-accent shadow-card transition-colors hover:bg-accent-hover"
         >
           Haven’t voted yet? Vote now <span aria-hidden="true">›</span>

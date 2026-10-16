@@ -15,7 +15,16 @@ async function giveMedal(page: Page, cookie: number, place: string) {
 test('a voter ranks every category and submits once', async ({ page }) => {
   await page.goto('/event/bake-off-2025')
   await expect(page.getByRole('heading', { name: 'Christmas Cookie Bake-Off 2025' })).toBeVisible()
+  // Safari 26 tints its toolbars from the page background: cream here, cranberry on the ballot.
+  const cream = 'rgb(251, 246, 238)'
+  const cranberry = 'rgb(159, 29, 43)'
+  for (const root of ['html', 'body']) {
+    await expect(page.locator(root)).toHaveCSS('background-color', cream)
+  }
   await page.getByRole('button', { name: 'Start voting' }).click()
+  for (const root of ['html', 'body']) {
+    await expect(page.locator(root)).toHaveCSS('background-color', cranberry)
+  }
 
   const categories = ['Gingerbread People', 'Stars', 'Candy Canes', 'Stockings', 'Trees', 'Cats']
   for (const [i, name] of categories.entries()) {
@@ -42,10 +51,13 @@ test('a voter ranks every category and submits once', async ({ page }) => {
     await page.getByRole('button', { name: /next category/i }).click()
   }
   await page.getByRole('button', { name: 'Review my votes' }).click()
+  await expect(page.getByRole('heading', { name: 'Check your votes' })).toBeVisible()
 
   // Sent from the bottom of the review, the waiting room still opens at the top.
   await page.evaluate('window.scrollTo({ top: document.body.scrollHeight })')
   await expect.poll(() => page.evaluate('window.scrollY')).toBeGreaterThan(0)
+  // The app bar stays pinned to the top while scrolling.
+  expect((await page.getByRole('banner').boundingBox())?.y).toBe(0)
   await page.getByRole('button', { name: 'Submit my votes' }).click()
   // The waiting room: one of three scenes at random, then the voter's picks.
   await expect(page.getByRole('heading', { name: 'Your picks' })).toBeVisible()

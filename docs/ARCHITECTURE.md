@@ -249,6 +249,40 @@ Function that injects tags. Hosting can't route only crawlers, so every voter's
 first page load would wait on that function, cold starts included. Not built;
 revisit if the owner wants event names in previews.
 
+**Browser toolbars.** Mobile browsers tint their bars to match the page in different
+ways, so the app covers all three:
+
+- `<meta name="theme-color">` (cranberry, the app bar's colour) tints the top bar in
+  Chrome and Samsung Internet on Android and in Safari before 26.
+- Safari 26 (Liquid Glass) ignores theme-color. It samples full-width fixed elements at
+  the top and bottom edges, and falls back to the html/body background, which is also
+  what shows behind overscroll. `index.css` sets both to cream, or cranberry when the page
+  holds a `data-festive` element (ballot, results), so Safari's bars match each page. The
+  app bar is pinned (`sticky`), which may also keep Safari's top bar cranberry on cream
+  pages; reports differ on whether Safari samples sticky elements.
+- Don't leave full-screen fixed layers mounted when idle: Safari samples them even when
+  empty and loses the page colour. `Confetti` unmounts once every piece has fallen.
+- `viewport-fit=cover` draws under the notch and, in a home-screen app, the status bar, so
+  `--gutter` is at least the side safe-area inset and the app bar and page bottom add the
+  top and bottom insets. `color-scheme: light` keeps form controls and browser fallbacks
+  light on phones in dark mode (the app has no dark theme).
+
+**App-like touches** (owner asked for all of them, 2026-10-16):
+
+- **Add to Home Screen.** `public/manifest.webmanifest` (drawn with the icons by
+  `npm run share-images`) opens the app standalone with a cranberry launch screen. It has
+  no `start_url`, so it defaults to the page it was added from: a voter's icon opens their
+  event, not admin sign-in. On iOS the status bar is `black-translucent` over the app bar.
+- **Pinned app bar.** `AppLayout`'s header is `sticky`; it publishes its height as
+  `--app-bar-height` for `ErrorBanner` and `scroll-padding-top`.
+- **Screen stays on** on the results page (`useWakeLock`, Safari 16.4+ and Chrome), for a
+  phone or TV left showing the reveal.
+- **View transitions**: ballot screens change through `withViewTransition`, and voter
+  links pass `viewTransition`; a 0.2 s crossfade with the app bar held still, off under
+  reduced motion. Unsupported browsers swap instantly.
+- **Buzz** on giving a medal (`buzz`, `navigator.vibrate`): Android only, iOS Safari has no
+  vibration API.
+
 ## Key flows
 
 ### Admin sign-in and setup

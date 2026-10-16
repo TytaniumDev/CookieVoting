@@ -3,6 +3,9 @@
 //   public/apple-touch-icon.png 180×180 icon for iOS (home screen, and iMessage when a
 //                               page has no og:image)
 //   public/favicon.svg          the browser tab icon
+//   public/icon-192.png, icon-512.png, icon-maskable-512.png
+//                               Add to Home Screen icons (Android, desktop Chrome)
+//   public/manifest.webmanifest the web app manifest, with the brand colours
 //
 // Run after changing the palette or the drawing, then commit the files it writes:
 //   npm run share-images -w @cookie-voting/web
@@ -107,24 +110,52 @@ const card = page(
   </svg>`,
 )
 
-// iOS rounds the corners itself and needs an opaque square.
-const touchIcon = page(
-  180,
-  180,
-  `<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-    <rect width="180" height="180" fill="${c('primary')}"/>
-    <svg x="22" y="22" width="136" height="136" viewBox="0 0 48 48" overflow="visible">${cookie({ stroke: 2.5 })}</svg>
+/**
+ * The cookie on a cranberry square, `cookieShare` of its width. iOS and Android round or
+ * crop the corners themselves, so it's an opaque square.
+ */
+const appIcon = (size, cookieShare) => {
+  const inner = Math.round(size * cookieShare)
+  const at = (size - inner) / 2
+  return page(
+    size,
+    size,
+    `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${size}" height="${size}" fill="${c('primary')}"/>
+    <svg x="${at}" y="${at}" width="${inner}" height="${inner}" viewBox="0 0 48 48" overflow="visible">${cookie({ stroke: 2.5 })}</svg>
   </svg>`,
-)
+  )
+}
+
+// Maskable icons get cropped to as little as the middle 80% circle, so the cookie shrinks.
+const icons = [
+  ['apple-touch-icon.png', appIcon(180, 136 / 180), 180, 180],
+  ['icon-192.png', appIcon(192, 136 / 180), 192, 192],
+  ['icon-512.png', appIcon(512, 136 / 180), 512, 512],
+  ['icon-maskable-512.png', appIcon(512, 0.56), 512, 512],
+]
+
+// No start_url: it defaults to the page it was added from, so a voter's icon opens their
+// event, not admin sign-in.
+const manifest = {
+  name: 'Cookie Voting',
+  short_name: 'Cookie Voting',
+  description: 'Taste the cookies, rank your top three and crown the best baker.',
+  display: 'standalone',
+  background_color: c('primary'),
+  theme_color: c('primary'),
+  icons: [
+    { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ],
+}
 
 const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">${cookie({ stroke: 3 }).replace(/\s*\n\s*/g, '')}</svg>\n`
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined })
 try {
-  for (const [file, html, width, height] of [
-    ['og-image.png', card, 1200, 630],
-    ['apple-touch-icon.png', touchIcon, 180, 180],
-  ]) {
+  for (const [file, html, width, height] of [['og-image.png', card, 1200, 630], ...icons]) {
     const tab = await browser.newPage({ viewport: { width, height } })
     await tab.setContent(html, { waitUntil: 'load' })
     await tab.evaluate(() => document.fonts.ready)
@@ -135,4 +166,5 @@ try {
   await browser.close()
 }
 writeFileSync(join(publicDir, 'favicon.svg'), favicon)
-console.log('Wrote og-image.png, apple-touch-icon.png and favicon.svg to apps/web/public')
+writeFileSync(join(publicDir, 'manifest.webmanifest'), `${JSON.stringify(manifest, null, 2)}\n`)
+console.log('Wrote the link card, icons, favicon and manifest to apps/web/public')
