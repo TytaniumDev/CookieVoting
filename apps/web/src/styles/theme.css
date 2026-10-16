@@ -103,6 +103,7 @@
   --animate-confetti: confetti ease-in forwards;
   --animate-hint: hint 3.2s ease-in-out 1s both;
   --animate-pop: pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+  --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
 
   /* Waiting-screen scenes (WaitingScene) */
   --animate-speech: speech 1.8s ease-out forwards;
@@ -163,6 +164,12 @@
   }
 
   /* A medal landing on a cookie */
+  /* A bottom sheet sliding up into place */
+  @keyframes sheet-up {
+    from {
+      translate: 0 100%;
+    }
+  }
   @keyframes pop {
     from {
       transform: scale(0.2) rotate(-30deg);

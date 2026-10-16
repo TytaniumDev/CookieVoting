@@ -756,8 +756,14 @@ until real-device testing (useful from phase 3).
   `WaitingRoom` now scrolls to the top when it appears. E2E asserts it (failed before).
 - COOKIE-VOTING-2 (results stuck loading) was already fixed by the stuck-submitting work
   above; marked resolved in Sentry.
-- COOKIE-VOTING-5 asks for pull-down-to-close on the results pop-ups: a design change,
-  put to the owner.
+- COOKIE-VOTING-5: a tester kept trying to pull the results pop-ups down to close them.
+  The owner tried both mockups on a preview and picked a bottom sheet. New `BottomSheet`
+  component: slides up from the bottom on phones, with a grab handle, and drags down to
+  close (`useSwipeToClose`: touch only, and only when nothing under the finger is
+  scrolled down). Wider screens keep the centred card. `BakerBreakdown` and
+  `VoteBreakdown` use it. The owner also asked that only the baker's cookie list scroll:
+  the sheet's `header` (name, rank, points bar) stays pinned. A mobile E2E drags the
+  sheet with CDP touch events.
 
 ### Session — 2026-10-16 (browser toolbars match the page)
 
